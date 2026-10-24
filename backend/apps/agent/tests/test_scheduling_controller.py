@@ -285,7 +285,7 @@ class ExecutionGuardTests(unittest.TestCase):
             job['job_sha256'] = digest(job)
             path = Path(tmp) / 'job.json'
             path.write_text(json.dumps(job), encoding='utf-8')
-            result = subprocess.run(['rtk', 'proxy', sys.executable, '-X', 'utf8', '-m',
+            result = subprocess.run([sys.executable, '-X', 'utf8', '-m',
                 'apps.agent.tests.scheduling_characterization.execution', 'finite-probe', '--job', str(path),
                 '--output', str(Path(tmp) / 'new')], capture_output=True, text=True,
                 env=dict(os.environ, B3_TEST_DATABASE='{}'), timeout=30)

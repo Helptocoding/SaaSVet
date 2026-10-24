@@ -1,0 +1,2543 @@
+{
+  "schema": "e4-causal-sql-microbenchmark-v1",
+  "head": "6e59f6c05514ad6eca0985796e538de4fd749560",
+  "not_profile_beta_1": true,
+  "database": "test_e4_causal_6e59",
+  "port": 35445,
+  "fsync": "on",
+  "synchronous_commit": "on",
+  "points": [
+    {
+      "label": "G-clustered-1",
+      "conversations": 354,
+      "messages": 10000,
+      "noisy_pending": 200,
+      "due_turnworks": 0,
+      "ineligible_turnworks": 50,
+      "active_organizations": 3,
+      "layout": "clustered",
+      "selector_query_count": 1,
+      "selector_wall_ms": {
+        "p50": 64.5459999977902,
+        "p95": 89.37539999897126,
+        "max": 89.37539999897126
+      },
+      "selector_sql": null,
+      "selected_candidate_ids": [
+        1,
+        2,
+        3
+      ],
+      "explain_estimate": {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 472969.11,
+          "Total Cost": 472969.14,
+          "Plan Rows": 1,
+          "Plan Width": 24,
+          "Plans": [
+            {
+              "Node Type": "Subquery Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Alias": "qualify",
+              "Startup Cost": 472969.11,
+              "Total Cost": 472969.14,
+              "Plan Rows": 1,
+              "Plan Width": 24,
+              "Filter": "(qualify.qual0 = 1)",
+              "Plans": [
+                {
+                  "Node Type": "Sort",
+                  "Parent Relationship": "Subquery",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 472969.11,
+                  "Total Cost": 472969.11,
+                  "Plan Rows": 2,
+                  "Plan Width": 40,
+                  "Sort Key": [
+                    "((SubPlan 1)) NULLS FIRST",
+                    "agent_conversation.last_activity_at",
+                    "agent_conversation.id"
+                  ],
+                  "Plans": [
+                    {
+                      "Node Type": "WindowAgg",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 236705.03,
+                      "Total Cost": 472969.1,
+                      "Plan Rows": 2,
+                      "Plan Width": 40,
+                      "Run Condition": "(row_number() OVER (?) <= 1)",
+                      "Plans": [
+                        {
+                          "Node Type": "Incremental Sort",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 236705.03,
+                          "Total Cost": 472963.7,
+                          "Plan Rows": 2,
+                          "Plan Width": 24,
+                          "Sort Key": [
+                            "agent_conversation.organization_id",
+                            "agent_conversation.last_activity_at",
+                            "agent_conversation.id"
+                          ],
+                          "Presorted Key": [
+                            "agent_conversation.organization_id"
+                          ],
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Left",
+                              "Startup Cost": 446.44,
+                              "Total Cost": 472963.61,
+                              "Plan Rows": 1,
+                              "Plan Width": 24,
+                              "Inner Unique": false,
+                              "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 2))",
+                              "Plans": [
+                                {
+                                  "Node Type": "Nested Loop",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Join Type": "Anti",
+                                  "Startup Cost": 223.02,
+                                  "Total Cost": 472739.83,
+                                  "Plan Rows": 2,
+                                  "Plan Width": 24,
+                                  "Inner Unique": false,
+                                  "Join Filter": "(u0.organization_id = agent_conversation.organization_id)",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Index Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Scan Direction": "Forward",
+                                      "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                      "Relation Name": "agent_conversation",
+                                      "Alias": "agent_conversation",
+                                      "Startup Cost": 222.87,
+                                      "Total Cost": 472724.73,
+                                      "Plan Rows": 266,
+                                      "Plan Width": 24,
+                                      "Filter": "(is_active AND ((hashed SubPlan 3) OR ((SubPlan 4) IS NULL) OR (NOT (SubPlan 8))))",
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Bitmap Heap Scan",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 3",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Relation Name": "channels_message",
+                                          "Alias": "u0_3",
+                                          "Startup Cost": 6.33,
+                                          "Total Cost": 222.72,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                          "Filter": "(is_active AND ((semantic_type)::text = 'safety_signal'::text))",
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Bitmap Index Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Index Name": "message_send_ready",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 6.33,
+                                              "Plan Rows": 204,
+                                              "Plan Width": 0,
+                                              "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Limit",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 4",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Startup Cost": 2.68,
+                                          "Total Cost": 2.68,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Sort",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Startup Cost": 2.68,
+                                              "Total Cost": 2.69,
+                                              "Plan Rows": 3,
+                                              "Plan Width": 8,
+                                              "Sort Key": [
+                                                "u0_4.claimed_at DESC"
+                                              ],
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Alias": "u0_4",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 2.66,
+                                                  "Plan Rows": 3,
+                                                  "Plan Width": 8,
+                                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 8",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Join Type": "Anti",
+                                          "Startup Cost": 9.15,
+                                          "Total Cost": 1332.0,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 0,
+                                          "Inner Unique": false,
+                                          "Join Filter": "(u0_8.organization_id = v0.organization_id)",
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Limit",
+                                              "Parent Relationship": "InitPlan",
+                                              "Subplan Name": "InitPlan 7 (returns $7)",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Startup Cost": 2.68,
+                                              "Total Cost": 2.68,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Sort",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.69,
+                                                  "Plan Rows": 3,
+                                                  "Plan Width": 8,
+                                                  "Sort Key": [
+                                                    "u0_7.claimed_at DESC"
+                                                  ],
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Seq Scan",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Relation Name": "agent_turnwork",
+                                                      "Alias": "u0_7",
+                                                      "Startup Cost": 0.0,
+                                                      "Total Cost": 2.66,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Bitmap Heap Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Relation Name": "channels_message",
+                                              "Alias": "v0",
+                                              "Startup Cost": 6.33,
+                                              "Total Cost": 1318.2,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                              "Filter": "(is_active AND (turn_work_id IS NULL) AND (available_at > '2026-10-03 06:12:17.581694+00'::timestamp with time zone) AND (available_at <= '2026-10-03 06:12:18.581694+00'::timestamp with time zone) AND (organization_id <> agent_conversation.organization_id) AND ((semantic_type)::text <> 'safety_signal'::text) AND (((SubPlan 5) IS NULL) OR ((SubPlan 6) < $7)))",
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Bitmap Index Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Index Name": "message_send_ready",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 6.33,
+                                                  "Plan Rows": 204,
+                                                  "Plan Width": 0,
+                                                  "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Parent Relationship": "SubPlan",
+                                                  "Subplan Name": "SubPlan 5",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.68,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 8,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Startup Cost": 2.68,
+                                                      "Total Cost": 2.69,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Sort Key": [
+                                                        "u0_5.claimed_at DESC"
+                                                      ],
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Parent Relationship": "Outer",
+                                                          "Parallel Aware": false,
+                                                          "Async Capable": false,
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Alias": "u0_5",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 2.66,
+                                                          "Plan Rows": 3,
+                                                          "Plan Width": 8,
+                                                          "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = v0.organization_id))"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Parent Relationship": "SubPlan",
+                                                  "Subplan Name": "SubPlan 6",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.68,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 8,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Startup Cost": 2.68,
+                                                      "Total Cost": 2.69,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Sort Key": [
+                                                        "u0_6.claimed_at DESC"
+                                                      ],
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Parent Relationship": "Outer",
+                                                          "Parallel Aware": false,
+                                                          "Async Capable": false,
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Alias": "u0_6",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 2.66,
+                                                          "Plan Rows": 3,
+                                                          "Plan Width": 8,
+                                                          "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = v0.organization_id))"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Nested Loop",
+                                              "Parent Relationship": "Inner",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Join Type": "Inner",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 11.11,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Inner Unique": true,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Alias": "u0_8",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 2.93,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 24,
+                                                  "Filter": "(is_active AND ((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))"
+                                                },
+                                                {
+                                                  "Node Type": "Index Scan",
+                                                  "Parent Relationship": "Inner",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Scan Direction": "Forward",
+                                                  "Index Name": "agent_conversation_pkey",
+                                                  "Relation Name": "agent_conversation",
+                                                  "Alias": "u2_1",
+                                                  "Startup Cost": 0.15,
+                                                  "Total Cost": 8.17,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 24,
+                                                  "Index Cond": "(id = u0_8.conversation_id)",
+                                                  "Filter": "((organization_id = u0_8.organization_id) AND (ownership_epoch = u0_8.ownership_epoch))"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Node Type": "Materialize",
+                                      "Parent Relationship": "Inner",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Startup Cost": 0.15,
+                                      "Total Cost": 11.11,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 8,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Parent Relationship": "Outer",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Join Type": "Inner",
+                                          "Startup Cost": 0.15,
+                                          "Total Cost": 11.11,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Inner Unique": true,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Seq Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Relation Name": "agent_turnwork",
+                                              "Alias": "u0",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 2.93,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Filter": "(is_active AND ((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))"
+                                            },
+                                            {
+                                              "Node Type": "Index Scan",
+                                              "Parent Relationship": "Inner",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Scan Direction": "Forward",
+                                              "Index Name": "agent_conversation_pkey",
+                                              "Relation Name": "agent_conversation",
+                                              "Alias": "u2",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 8.17,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Index Cond": "(id = u0.conversation_id)",
+                                              "Filter": "((organization_id = u0.organization_id) AND (ownership_epoch = u0.ownership_epoch))"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Forward",
+                                  "Index Name": "agent_turnwork_conversation_id_e15ceb51",
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "agent_turnwork",
+                                  "Startup Cost": 0.14,
+                                  "Total Cost": 0.22,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 32,
+                                  "Index Cond": "(conversation_id = agent_conversation.id)"
+                                },
+                                {
+                                  "Node Type": "Bitmap Heap Scan",
+                                  "Parent Relationship": "SubPlan",
+                                  "Subplan Name": "SubPlan 2",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "channels_message",
+                                  "Alias": "u0_2",
+                                  "Startup Cost": 6.38,
+                                  "Total Cost": 222.77,
+                                  "Plan Rows": 203,
+                                  "Plan Width": 8,
+                                  "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                  "Filter": "(is_active AND (turn_work_id IS NULL) AND ((available_at IS NULL) OR (available_at <= '2026-10-03 06:12:17.581694+00'::timestamp with time zone)))",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Bitmap Index Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Index Name": "message_send_ready",
+                                      "Startup Cost": 0.0,
+                                      "Total Cost": 6.33,
+                                      "Plan Rows": 204,
+                                      "Plan Width": 0,
+                                      "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Limit",
+                          "Parent Relationship": "SubPlan",
+                          "Subplan Name": "SubPlan 1",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 2.68,
+                          "Total Cost": 2.68,
+                          "Plan Rows": 1,
+                          "Plan Width": 8,
+                          "Plans": [
+                            {
+                              "Node Type": "Sort",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Startup Cost": 2.68,
+                              "Total Cost": 2.69,
+                              "Plan Rows": 3,
+                              "Plan Width": 8,
+                              "Sort Key": [
+                                "u0_1.claimed_at DESC"
+                              ],
+                              "Plans": [
+                                {
+                                  "Node Type": "Seq Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "u0_1",
+                                  "Startup Cost": 0.0,
+                                  "Total Cost": 2.66,
+                                  "Plan Rows": 3,
+                                  "Plan Width": 8,
+                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "explain_analyze_execution_ms": 40.352,
+      "explain_analyze_planning_ms": 3.108,
+      "message_nodes": [
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 1,
+          "rows_per_loop": 203,
+          "hit": 8,
+          "read": 0,
+          "time_per_loop_ms": 0.066
+        },
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 352,
+          "rows_per_loop": 0,
+          "hit": 2816,
+          "read": 0,
+          "time_per_loop_ms": 0.076
+        },
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 1,
+          "rows_per_loop": 0,
+          "hit": 8,
+          "read": 0,
+          "time_per_loop_ms": 0.082
+        }
+      ],
+      "claim_query_count": 33,
+      "claim_wall_ms": 59.52329999854555,
+      "claim_query_ms": [
+        0.0,
+        0.0,
+        1.0,
+        2.0,
+        1.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        4.0,
+        2.0,
+        1.0,
+        1.0,
+        2.0,
+        0.0
+      ]
+    },
+    {
+      "label": "G-spread-1",
+      "conversations": 354,
+      "messages": 10000,
+      "noisy_pending": 200,
+      "due_turnworks": 0,
+      "ineligible_turnworks": 50,
+      "active_organizations": 3,
+      "layout": "spread",
+      "selector_query_count": 1,
+      "selector_wall_ms": {
+        "p50": 111.12219999995432,
+        "p95": 166.94570000254316,
+        "max": 166.94570000254316
+      },
+      "selector_sql": null,
+      "selected_candidate_ids": [
+        355,
+        356,
+        357
+      ],
+      "explain_estimate": {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 472969.11,
+          "Total Cost": 472969.14,
+          "Plan Rows": 1,
+          "Plan Width": 24,
+          "Plans": [
+            {
+              "Node Type": "Subquery Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Alias": "qualify",
+              "Startup Cost": 472969.11,
+              "Total Cost": 472969.14,
+              "Plan Rows": 1,
+              "Plan Width": 24,
+              "Filter": "(qualify.qual0 = 1)",
+              "Plans": [
+                {
+                  "Node Type": "Sort",
+                  "Parent Relationship": "Subquery",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 472969.11,
+                  "Total Cost": 472969.11,
+                  "Plan Rows": 2,
+                  "Plan Width": 40,
+                  "Sort Key": [
+                    "((SubPlan 1)) NULLS FIRST",
+                    "agent_conversation.last_activity_at",
+                    "agent_conversation.id"
+                  ],
+                  "Plans": [
+                    {
+                      "Node Type": "WindowAgg",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 236705.03,
+                      "Total Cost": 472969.1,
+                      "Plan Rows": 2,
+                      "Plan Width": 40,
+                      "Run Condition": "(row_number() OVER (?) <= 1)",
+                      "Plans": [
+                        {
+                          "Node Type": "Incremental Sort",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 236705.03,
+                          "Total Cost": 472963.7,
+                          "Plan Rows": 2,
+                          "Plan Width": 24,
+                          "Sort Key": [
+                            "agent_conversation.organization_id",
+                            "agent_conversation.last_activity_at",
+                            "agent_conversation.id"
+                          ],
+                          "Presorted Key": [
+                            "agent_conversation.organization_id"
+                          ],
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Left",
+                              "Startup Cost": 446.44,
+                              "Total Cost": 472963.61,
+                              "Plan Rows": 1,
+                              "Plan Width": 24,
+                              "Inner Unique": false,
+                              "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 2))",
+                              "Plans": [
+                                {
+                                  "Node Type": "Nested Loop",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Join Type": "Anti",
+                                  "Startup Cost": 223.02,
+                                  "Total Cost": 472739.83,
+                                  "Plan Rows": 2,
+                                  "Plan Width": 24,
+                                  "Inner Unique": false,
+                                  "Join Filter": "(u0.organization_id = agent_conversation.organization_id)",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Index Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Scan Direction": "Forward",
+                                      "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                      "Relation Name": "agent_conversation",
+                                      "Alias": "agent_conversation",
+                                      "Startup Cost": 222.87,
+                                      "Total Cost": 472724.73,
+                                      "Plan Rows": 266,
+                                      "Plan Width": 24,
+                                      "Filter": "(is_active AND ((hashed SubPlan 3) OR ((SubPlan 4) IS NULL) OR (NOT (SubPlan 8))))",
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Bitmap Heap Scan",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 3",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Relation Name": "channels_message",
+                                          "Alias": "u0_3",
+                                          "Startup Cost": 6.33,
+                                          "Total Cost": 222.72,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                          "Filter": "(is_active AND ((semantic_type)::text = 'safety_signal'::text))",
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Bitmap Index Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Index Name": "message_send_ready",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 6.33,
+                                              "Plan Rows": 204,
+                                              "Plan Width": 0,
+                                              "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Limit",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 4",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Startup Cost": 2.68,
+                                          "Total Cost": 2.68,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Sort",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Startup Cost": 2.68,
+                                              "Total Cost": 2.69,
+                                              "Plan Rows": 3,
+                                              "Plan Width": 8,
+                                              "Sort Key": [
+                                                "u0_4.claimed_at DESC"
+                                              ],
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Alias": "u0_4",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 2.66,
+                                                  "Plan Rows": 3,
+                                                  "Plan Width": 8,
+                                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 8",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Join Type": "Anti",
+                                          "Startup Cost": 9.15,
+                                          "Total Cost": 1332.0,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 0,
+                                          "Inner Unique": false,
+                                          "Join Filter": "(u0_8.organization_id = v0.organization_id)",
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Limit",
+                                              "Parent Relationship": "InitPlan",
+                                              "Subplan Name": "InitPlan 7 (returns $7)",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Startup Cost": 2.68,
+                                              "Total Cost": 2.68,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Sort",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.69,
+                                                  "Plan Rows": 3,
+                                                  "Plan Width": 8,
+                                                  "Sort Key": [
+                                                    "u0_7.claimed_at DESC"
+                                                  ],
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Seq Scan",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Relation Name": "agent_turnwork",
+                                                      "Alias": "u0_7",
+                                                      "Startup Cost": 0.0,
+                                                      "Total Cost": 2.66,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Bitmap Heap Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Relation Name": "channels_message",
+                                              "Alias": "v0",
+                                              "Startup Cost": 6.33,
+                                              "Total Cost": 1318.2,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                              "Filter": "(is_active AND (turn_work_id IS NULL) AND (available_at > '2026-10-03 06:12:26.933212+00'::timestamp with time zone) AND (available_at <= '2026-10-03 06:12:27.933212+00'::timestamp with time zone) AND (organization_id <> agent_conversation.organization_id) AND ((semantic_type)::text <> 'safety_signal'::text) AND (((SubPlan 5) IS NULL) OR ((SubPlan 6) < $7)))",
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Bitmap Index Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Index Name": "message_send_ready",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 6.33,
+                                                  "Plan Rows": 204,
+                                                  "Plan Width": 0,
+                                                  "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Parent Relationship": "SubPlan",
+                                                  "Subplan Name": "SubPlan 5",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.68,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 8,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Startup Cost": 2.68,
+                                                      "Total Cost": 2.69,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Sort Key": [
+                                                        "u0_5.claimed_at DESC"
+                                                      ],
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Parent Relationship": "Outer",
+                                                          "Parallel Aware": false,
+                                                          "Async Capable": false,
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Alias": "u0_5",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 2.66,
+                                                          "Plan Rows": 3,
+                                                          "Plan Width": 8,
+                                                          "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = v0.organization_id))"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Parent Relationship": "SubPlan",
+                                                  "Subplan Name": "SubPlan 6",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.68,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 8,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Startup Cost": 2.68,
+                                                      "Total Cost": 2.69,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Sort Key": [
+                                                        "u0_6.claimed_at DESC"
+                                                      ],
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Parent Relationship": "Outer",
+                                                          "Parallel Aware": false,
+                                                          "Async Capable": false,
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Alias": "u0_6",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 2.66,
+                                                          "Plan Rows": 3,
+                                                          "Plan Width": 8,
+                                                          "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = v0.organization_id))"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Nested Loop",
+                                              "Parent Relationship": "Inner",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Join Type": "Inner",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 11.11,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Inner Unique": true,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Alias": "u0_8",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 2.93,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 24,
+                                                  "Filter": "(is_active AND ((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))"
+                                                },
+                                                {
+                                                  "Node Type": "Index Scan",
+                                                  "Parent Relationship": "Inner",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Scan Direction": "Forward",
+                                                  "Index Name": "agent_conversation_pkey",
+                                                  "Relation Name": "agent_conversation",
+                                                  "Alias": "u2_1",
+                                                  "Startup Cost": 0.15,
+                                                  "Total Cost": 8.17,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 24,
+                                                  "Index Cond": "(id = u0_8.conversation_id)",
+                                                  "Filter": "((organization_id = u0_8.organization_id) AND (ownership_epoch = u0_8.ownership_epoch))"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Node Type": "Materialize",
+                                      "Parent Relationship": "Inner",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Startup Cost": 0.15,
+                                      "Total Cost": 11.11,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 8,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Parent Relationship": "Outer",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Join Type": "Inner",
+                                          "Startup Cost": 0.15,
+                                          "Total Cost": 11.11,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Inner Unique": true,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Seq Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Relation Name": "agent_turnwork",
+                                              "Alias": "u0",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 2.93,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Filter": "(is_active AND ((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))"
+                                            },
+                                            {
+                                              "Node Type": "Index Scan",
+                                              "Parent Relationship": "Inner",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Scan Direction": "Forward",
+                                              "Index Name": "agent_conversation_pkey",
+                                              "Relation Name": "agent_conversation",
+                                              "Alias": "u2",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 8.17,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Index Cond": "(id = u0.conversation_id)",
+                                              "Filter": "((organization_id = u0.organization_id) AND (ownership_epoch = u0.ownership_epoch))"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Forward",
+                                  "Index Name": "agent_turnwork_conversation_id_e15ceb51",
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "agent_turnwork",
+                                  "Startup Cost": 0.14,
+                                  "Total Cost": 0.22,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 32,
+                                  "Index Cond": "(conversation_id = agent_conversation.id)"
+                                },
+                                {
+                                  "Node Type": "Bitmap Heap Scan",
+                                  "Parent Relationship": "SubPlan",
+                                  "Subplan Name": "SubPlan 2",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "channels_message",
+                                  "Alias": "u0_2",
+                                  "Startup Cost": 6.38,
+                                  "Total Cost": 222.77,
+                                  "Plan Rows": 203,
+                                  "Plan Width": 8,
+                                  "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                  "Filter": "(is_active AND (turn_work_id IS NULL) AND ((available_at IS NULL) OR (available_at <= '2026-10-03 06:12:26.933212+00'::timestamp with time zone)))",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Bitmap Index Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Index Name": "message_send_ready",
+                                      "Startup Cost": 0.0,
+                                      "Total Cost": 6.33,
+                                      "Plan Rows": 204,
+                                      "Plan Width": 0,
+                                      "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Limit",
+                          "Parent Relationship": "SubPlan",
+                          "Subplan Name": "SubPlan 1",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 2.68,
+                          "Total Cost": 2.68,
+                          "Plan Rows": 1,
+                          "Plan Width": 8,
+                          "Plans": [
+                            {
+                              "Node Type": "Sort",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Startup Cost": 2.68,
+                              "Total Cost": 2.69,
+                              "Plan Rows": 3,
+                              "Plan Width": 8,
+                              "Sort Key": [
+                                "u0_1.claimed_at DESC"
+                              ],
+                              "Plans": [
+                                {
+                                  "Node Type": "Seq Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "u0_1",
+                                  "Startup Cost": 0.0,
+                                  "Total Cost": 2.66,
+                                  "Plan Rows": 3,
+                                  "Plan Width": 8,
+                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "explain_analyze_execution_ms": 68.778,
+      "explain_analyze_planning_ms": 6.472,
+      "message_nodes": [
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 1,
+          "rows_per_loop": 203,
+          "hit": 34,
+          "read": 0,
+          "time_per_loop_ms": 0.434
+        },
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 352,
+          "rows_per_loop": 0,
+          "hit": 11968,
+          "read": 0,
+          "time_per_loop_ms": 0.141
+        },
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 1,
+          "rows_per_loop": 0,
+          "hit": 34,
+          "read": 0,
+          "time_per_loop_ms": 0.262
+        }
+      ],
+      "claim_query_count": 33,
+      "claim_wall_ms": 51.63429999811342,
+      "claim_query_ms": [
+        0.0,
+        1.0,
+        1.0,
+        2.0,
+        2.0,
+        0.0,
+        1.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.0,
+        3.0,
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "label": "G-clustered-2",
+      "conversations": 354,
+      "messages": 10000,
+      "noisy_pending": 200,
+      "due_turnworks": 0,
+      "ineligible_turnworks": 50,
+      "active_organizations": 3,
+      "layout": "clustered",
+      "selector_query_count": 1,
+      "selector_wall_ms": {
+        "p50": 102.5766000020667,
+        "p95": 201.59690000218689,
+        "max": 201.59690000218689
+      },
+      "selector_sql": null,
+      "selected_candidate_ids": [
+        709,
+        710,
+        711
+      ],
+      "explain_estimate": {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 472969.11,
+          "Total Cost": 472969.14,
+          "Plan Rows": 1,
+          "Plan Width": 24,
+          "Plans": [
+            {
+              "Node Type": "Subquery Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Alias": "qualify",
+              "Startup Cost": 472969.11,
+              "Total Cost": 472969.14,
+              "Plan Rows": 1,
+              "Plan Width": 24,
+              "Filter": "(qualify.qual0 = 1)",
+              "Plans": [
+                {
+                  "Node Type": "Sort",
+                  "Parent Relationship": "Subquery",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 472969.11,
+                  "Total Cost": 472969.11,
+                  "Plan Rows": 2,
+                  "Plan Width": 40,
+                  "Sort Key": [
+                    "((SubPlan 1)) NULLS FIRST",
+                    "agent_conversation.last_activity_at",
+                    "agent_conversation.id"
+                  ],
+                  "Plans": [
+                    {
+                      "Node Type": "WindowAgg",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 236705.03,
+                      "Total Cost": 472969.1,
+                      "Plan Rows": 2,
+                      "Plan Width": 40,
+                      "Run Condition": "(row_number() OVER (?) <= 1)",
+                      "Plans": [
+                        {
+                          "Node Type": "Incremental Sort",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 236705.03,
+                          "Total Cost": 472963.7,
+                          "Plan Rows": 2,
+                          "Plan Width": 24,
+                          "Sort Key": [
+                            "agent_conversation.organization_id",
+                            "agent_conversation.last_activity_at",
+                            "agent_conversation.id"
+                          ],
+                          "Presorted Key": [
+                            "agent_conversation.organization_id"
+                          ],
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Left",
+                              "Startup Cost": 446.44,
+                              "Total Cost": 472963.61,
+                              "Plan Rows": 1,
+                              "Plan Width": 24,
+                              "Inner Unique": false,
+                              "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 2))",
+                              "Plans": [
+                                {
+                                  "Node Type": "Nested Loop",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Join Type": "Anti",
+                                  "Startup Cost": 223.02,
+                                  "Total Cost": 472739.83,
+                                  "Plan Rows": 2,
+                                  "Plan Width": 24,
+                                  "Inner Unique": false,
+                                  "Join Filter": "(u0.organization_id = agent_conversation.organization_id)",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Index Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Scan Direction": "Forward",
+                                      "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                      "Relation Name": "agent_conversation",
+                                      "Alias": "agent_conversation",
+                                      "Startup Cost": 222.87,
+                                      "Total Cost": 472724.73,
+                                      "Plan Rows": 266,
+                                      "Plan Width": 24,
+                                      "Filter": "(is_active AND ((hashed SubPlan 3) OR ((SubPlan 4) IS NULL) OR (NOT (SubPlan 8))))",
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Bitmap Heap Scan",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 3",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Relation Name": "channels_message",
+                                          "Alias": "u0_3",
+                                          "Startup Cost": 6.33,
+                                          "Total Cost": 222.72,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                          "Filter": "(is_active AND ((semantic_type)::text = 'safety_signal'::text))",
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Bitmap Index Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Index Name": "message_send_ready",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 6.33,
+                                              "Plan Rows": 204,
+                                              "Plan Width": 0,
+                                              "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Limit",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 4",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Startup Cost": 2.68,
+                                          "Total Cost": 2.68,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Sort",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Startup Cost": 2.68,
+                                              "Total Cost": 2.69,
+                                              "Plan Rows": 3,
+                                              "Plan Width": 8,
+                                              "Sort Key": [
+                                                "u0_4.claimed_at DESC"
+                                              ],
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Alias": "u0_4",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 2.66,
+                                                  "Plan Rows": 3,
+                                                  "Plan Width": 8,
+                                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 8",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Join Type": "Anti",
+                                          "Startup Cost": 9.15,
+                                          "Total Cost": 1332.0,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 0,
+                                          "Inner Unique": false,
+                                          "Join Filter": "(u0_8.organization_id = v0.organization_id)",
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Limit",
+                                              "Parent Relationship": "InitPlan",
+                                              "Subplan Name": "InitPlan 7 (returns $7)",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Startup Cost": 2.68,
+                                              "Total Cost": 2.68,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Sort",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.69,
+                                                  "Plan Rows": 3,
+                                                  "Plan Width": 8,
+                                                  "Sort Key": [
+                                                    "u0_7.claimed_at DESC"
+                                                  ],
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Seq Scan",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Relation Name": "agent_turnwork",
+                                                      "Alias": "u0_7",
+                                                      "Startup Cost": 0.0,
+                                                      "Total Cost": 2.66,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Bitmap Heap Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Relation Name": "channels_message",
+                                              "Alias": "v0",
+                                              "Startup Cost": 6.33,
+                                              "Total Cost": 1318.2,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                              "Filter": "(is_active AND (turn_work_id IS NULL) AND (available_at > '2026-10-03 06:12:36.519486+00'::timestamp with time zone) AND (available_at <= '2026-10-03 06:12:37.519486+00'::timestamp with time zone) AND (organization_id <> agent_conversation.organization_id) AND ((semantic_type)::text <> 'safety_signal'::text) AND (((SubPlan 5) IS NULL) OR ((SubPlan 6) < $7)))",
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Bitmap Index Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Index Name": "message_send_ready",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 6.33,
+                                                  "Plan Rows": 204,
+                                                  "Plan Width": 0,
+                                                  "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Parent Relationship": "SubPlan",
+                                                  "Subplan Name": "SubPlan 5",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.68,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 8,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Startup Cost": 2.68,
+                                                      "Total Cost": 2.69,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Sort Key": [
+                                                        "u0_5.claimed_at DESC"
+                                                      ],
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Parent Relationship": "Outer",
+                                                          "Parallel Aware": false,
+                                                          "Async Capable": false,
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Alias": "u0_5",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 2.66,
+                                                          "Plan Rows": 3,
+                                                          "Plan Width": 8,
+                                                          "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = v0.organization_id))"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Parent Relationship": "SubPlan",
+                                                  "Subplan Name": "SubPlan 6",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.68,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 8,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Startup Cost": 2.68,
+                                                      "Total Cost": 2.69,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Sort Key": [
+                                                        "u0_6.claimed_at DESC"
+                                                      ],
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Parent Relationship": "Outer",
+                                                          "Parallel Aware": false,
+                                                          "Async Capable": false,
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Alias": "u0_6",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 2.66,
+                                                          "Plan Rows": 3,
+                                                          "Plan Width": 8,
+                                                          "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = v0.organization_id))"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Nested Loop",
+                                              "Parent Relationship": "Inner",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Join Type": "Inner",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 11.11,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Inner Unique": true,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Alias": "u0_8",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 2.93,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 24,
+                                                  "Filter": "(is_active AND ((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))"
+                                                },
+                                                {
+                                                  "Node Type": "Index Scan",
+                                                  "Parent Relationship": "Inner",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Scan Direction": "Forward",
+                                                  "Index Name": "agent_conversation_pkey",
+                                                  "Relation Name": "agent_conversation",
+                                                  "Alias": "u2_1",
+                                                  "Startup Cost": 0.15,
+                                                  "Total Cost": 8.17,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 24,
+                                                  "Index Cond": "(id = u0_8.conversation_id)",
+                                                  "Filter": "((organization_id = u0_8.organization_id) AND (ownership_epoch = u0_8.ownership_epoch))"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Node Type": "Materialize",
+                                      "Parent Relationship": "Inner",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Startup Cost": 0.15,
+                                      "Total Cost": 11.11,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 8,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Parent Relationship": "Outer",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Join Type": "Inner",
+                                          "Startup Cost": 0.15,
+                                          "Total Cost": 11.11,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Inner Unique": true,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Seq Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Relation Name": "agent_turnwork",
+                                              "Alias": "u0",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 2.93,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Filter": "(is_active AND ((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))"
+                                            },
+                                            {
+                                              "Node Type": "Index Scan",
+                                              "Parent Relationship": "Inner",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Scan Direction": "Forward",
+                                              "Index Name": "agent_conversation_pkey",
+                                              "Relation Name": "agent_conversation",
+                                              "Alias": "u2",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 8.17,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Index Cond": "(id = u0.conversation_id)",
+                                              "Filter": "((organization_id = u0.organization_id) AND (ownership_epoch = u0.ownership_epoch))"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Forward",
+                                  "Index Name": "agent_turnwork_conversation_id_e15ceb51",
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "agent_turnwork",
+                                  "Startup Cost": 0.14,
+                                  "Total Cost": 0.22,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 32,
+                                  "Index Cond": "(conversation_id = agent_conversation.id)"
+                                },
+                                {
+                                  "Node Type": "Bitmap Heap Scan",
+                                  "Parent Relationship": "SubPlan",
+                                  "Subplan Name": "SubPlan 2",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "channels_message",
+                                  "Alias": "u0_2",
+                                  "Startup Cost": 6.38,
+                                  "Total Cost": 222.77,
+                                  "Plan Rows": 203,
+                                  "Plan Width": 8,
+                                  "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                  "Filter": "(is_active AND (turn_work_id IS NULL) AND ((available_at IS NULL) OR (available_at <= '2026-10-03 06:12:36.519486+00'::timestamp with time zone)))",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Bitmap Index Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Index Name": "message_send_ready",
+                                      "Startup Cost": 0.0,
+                                      "Total Cost": 6.33,
+                                      "Plan Rows": 204,
+                                      "Plan Width": 0,
+                                      "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Limit",
+                          "Parent Relationship": "SubPlan",
+                          "Subplan Name": "SubPlan 1",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 2.68,
+                          "Total Cost": 2.68,
+                          "Plan Rows": 1,
+                          "Plan Width": 8,
+                          "Plans": [
+                            {
+                              "Node Type": "Sort",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Startup Cost": 2.68,
+                              "Total Cost": 2.69,
+                              "Plan Rows": 3,
+                              "Plan Width": 8,
+                              "Sort Key": [
+                                "u0_1.claimed_at DESC"
+                              ],
+                              "Plans": [
+                                {
+                                  "Node Type": "Seq Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "u0_1",
+                                  "Startup Cost": 0.0,
+                                  "Total Cost": 2.66,
+                                  "Plan Rows": 3,
+                                  "Plan Width": 8,
+                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "explain_analyze_execution_ms": 64.277,
+      "explain_analyze_planning_ms": 7.615,
+      "message_nodes": [
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 1,
+          "rows_per_loop": 203,
+          "hit": 8,
+          "read": 0,
+          "time_per_loop_ms": 0.147
+        },
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 352,
+          "rows_per_loop": 0,
+          "hit": 2816,
+          "read": 0,
+          "time_per_loop_ms": 0.121
+        },
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 1,
+          "rows_per_loop": 0,
+          "hit": 8,
+          "read": 0,
+          "time_per_loop_ms": 0.079
+        }
+      ],
+      "claim_query_count": 33,
+      "claim_wall_ms": 76.08740000068792,
+      "claim_query_ms": [
+        0.0,
+        1.0,
+        1.0,
+        2.0,
+        1.0,
+        0.0,
+        1.0,
+        2.0,
+        1.0,
+        1.0,
+        2.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        3.0,
+        4.0,
+        1.0,
+        1.0,
+        2.0,
+        0.0
+      ]
+    },
+    {
+      "label": "G-spread-2",
+      "conversations": 354,
+      "messages": 10000,
+      "noisy_pending": 200,
+      "due_turnworks": 0,
+      "ineligible_turnworks": 50,
+      "active_organizations": 3,
+      "layout": "spread",
+      "selector_query_count": 1,
+      "selector_wall_ms": {
+        "p50": 77.09039999826928,
+        "p95": 89.34399999998277,
+        "max": 89.34399999998277
+      },
+      "selector_sql": null,
+      "selected_candidate_ids": [
+        1063,
+        1064,
+        1065
+      ],
+      "explain_estimate": {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 472969.11,
+          "Total Cost": 472969.14,
+          "Plan Rows": 1,
+          "Plan Width": 24,
+          "Plans": [
+            {
+              "Node Type": "Subquery Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Alias": "qualify",
+              "Startup Cost": 472969.11,
+              "Total Cost": 472969.14,
+              "Plan Rows": 1,
+              "Plan Width": 24,
+              "Filter": "(qualify.qual0 = 1)",
+              "Plans": [
+                {
+                  "Node Type": "Sort",
+                  "Parent Relationship": "Subquery",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 472969.11,
+                  "Total Cost": 472969.11,
+                  "Plan Rows": 2,
+                  "Plan Width": 40,
+                  "Sort Key": [
+                    "((SubPlan 1)) NULLS FIRST",
+                    "agent_conversation.last_activity_at",
+                    "agent_conversation.id"
+                  ],
+                  "Plans": [
+                    {
+                      "Node Type": "WindowAgg",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 236705.03,
+                      "Total Cost": 472969.1,
+                      "Plan Rows": 2,
+                      "Plan Width": 40,
+                      "Run Condition": "(row_number() OVER (?) <= 1)",
+                      "Plans": [
+                        {
+                          "Node Type": "Incremental Sort",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 236705.03,
+                          "Total Cost": 472963.7,
+                          "Plan Rows": 2,
+                          "Plan Width": 24,
+                          "Sort Key": [
+                            "agent_conversation.organization_id",
+                            "agent_conversation.last_activity_at",
+                            "agent_conversation.id"
+                          ],
+                          "Presorted Key": [
+                            "agent_conversation.organization_id"
+                          ],
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Left",
+                              "Startup Cost": 446.44,
+                              "Total Cost": 472963.61,
+                              "Plan Rows": 1,
+                              "Plan Width": 24,
+                              "Inner Unique": false,
+                              "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 2))",
+                              "Plans": [
+                                {
+                                  "Node Type": "Nested Loop",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Join Type": "Anti",
+                                  "Startup Cost": 223.02,
+                                  "Total Cost": 472739.83,
+                                  "Plan Rows": 2,
+                                  "Plan Width": 24,
+                                  "Inner Unique": false,
+                                  "Join Filter": "(u0.organization_id = agent_conversation.organization_id)",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Index Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Scan Direction": "Forward",
+                                      "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                      "Relation Name": "agent_conversation",
+                                      "Alias": "agent_conversation",
+                                      "Startup Cost": 222.87,
+                                      "Total Cost": 472724.73,
+                                      "Plan Rows": 266,
+                                      "Plan Width": 24,
+                                      "Filter": "(is_active AND ((hashed SubPlan 3) OR ((SubPlan 4) IS NULL) OR (NOT (SubPlan 8))))",
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Bitmap Heap Scan",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 3",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Relation Name": "channels_message",
+                                          "Alias": "u0_3",
+                                          "Startup Cost": 6.33,
+                                          "Total Cost": 222.72,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                          "Filter": "(is_active AND ((semantic_type)::text = 'safety_signal'::text))",
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Bitmap Index Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Index Name": "message_send_ready",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 6.33,
+                                              "Plan Rows": 204,
+                                              "Plan Width": 0,
+                                              "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Limit",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 4",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Startup Cost": 2.68,
+                                          "Total Cost": 2.68,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Sort",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Startup Cost": 2.68,
+                                              "Total Cost": 2.69,
+                                              "Plan Rows": 3,
+                                              "Plan Width": 8,
+                                              "Sort Key": [
+                                                "u0_4.claimed_at DESC"
+                                              ],
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Alias": "u0_4",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 2.66,
+                                                  "Plan Rows": 3,
+                                                  "Plan Width": 8,
+                                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 8",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Join Type": "Anti",
+                                          "Startup Cost": 9.15,
+                                          "Total Cost": 1332.0,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 0,
+                                          "Inner Unique": false,
+                                          "Join Filter": "(u0_8.organization_id = v0.organization_id)",
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Limit",
+                                              "Parent Relationship": "InitPlan",
+                                              "Subplan Name": "InitPlan 7 (returns $7)",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Startup Cost": 2.68,
+                                              "Total Cost": 2.68,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Sort",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.69,
+                                                  "Plan Rows": 3,
+                                                  "Plan Width": 8,
+                                                  "Sort Key": [
+                                                    "u0_7.claimed_at DESC"
+                                                  ],
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Seq Scan",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Relation Name": "agent_turnwork",
+                                                      "Alias": "u0_7",
+                                                      "Startup Cost": 0.0,
+                                                      "Total Cost": 2.66,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Bitmap Heap Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Relation Name": "channels_message",
+                                              "Alias": "v0",
+                                              "Startup Cost": 6.33,
+                                              "Total Cost": 1318.2,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                              "Filter": "(is_active AND (turn_work_id IS NULL) AND (available_at > '2026-10-03 06:12:44.570381+00'::timestamp with time zone) AND (available_at <= '2026-10-03 06:12:45.570381+00'::timestamp with time zone) AND (organization_id <> agent_conversation.organization_id) AND ((semantic_type)::text <> 'safety_signal'::text) AND (((SubPlan 5) IS NULL) OR ((SubPlan 6) < $7)))",
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Bitmap Index Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Index Name": "message_send_ready",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 6.33,
+                                                  "Plan Rows": 204,
+                                                  "Plan Width": 0,
+                                                  "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Parent Relationship": "SubPlan",
+                                                  "Subplan Name": "SubPlan 5",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.68,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 8,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Startup Cost": 2.68,
+                                                      "Total Cost": 2.69,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Sort Key": [
+                                                        "u0_5.claimed_at DESC"
+                                                      ],
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Parent Relationship": "Outer",
+                                                          "Parallel Aware": false,
+                                                          "Async Capable": false,
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Alias": "u0_5",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 2.66,
+                                                          "Plan Rows": 3,
+                                                          "Plan Width": 8,
+                                                          "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = v0.organization_id))"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Parent Relationship": "SubPlan",
+                                                  "Subplan Name": "SubPlan 6",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 2.68,
+                                                  "Total Cost": 2.68,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 8,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Startup Cost": 2.68,
+                                                      "Total Cost": 2.69,
+                                                      "Plan Rows": 3,
+                                                      "Plan Width": 8,
+                                                      "Sort Key": [
+                                                        "u0_6.claimed_at DESC"
+                                                      ],
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Parent Relationship": "Outer",
+                                                          "Parallel Aware": false,
+                                                          "Async Capable": false,
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Alias": "u0_6",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 2.66,
+                                                          "Plan Rows": 3,
+                                                          "Plan Width": 8,
+                                                          "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = v0.organization_id))"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Nested Loop",
+                                              "Parent Relationship": "Inner",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Join Type": "Inner",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 11.11,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Inner Unique": true,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Alias": "u0_8",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 2.93,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 24,
+                                                  "Filter": "(is_active AND ((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))"
+                                                },
+                                                {
+                                                  "Node Type": "Index Scan",
+                                                  "Parent Relationship": "Inner",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Scan Direction": "Forward",
+                                                  "Index Name": "agent_conversation_pkey",
+                                                  "Relation Name": "agent_conversation",
+                                                  "Alias": "u2_1",
+                                                  "Startup Cost": 0.15,
+                                                  "Total Cost": 8.17,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 24,
+                                                  "Index Cond": "(id = u0_8.conversation_id)",
+                                                  "Filter": "((organization_id = u0_8.organization_id) AND (ownership_epoch = u0_8.ownership_epoch))"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Node Type": "Materialize",
+                                      "Parent Relationship": "Inner",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Startup Cost": 0.15,
+                                      "Total Cost": 11.11,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 8,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Parent Relationship": "Outer",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Join Type": "Inner",
+                                          "Startup Cost": 0.15,
+                                          "Total Cost": 11.11,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Inner Unique": true,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Seq Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Relation Name": "agent_turnwork",
+                                              "Alias": "u0",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 2.93,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Filter": "(is_active AND ((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))"
+                                            },
+                                            {
+                                              "Node Type": "Index Scan",
+                                              "Parent Relationship": "Inner",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Scan Direction": "Forward",
+                                              "Index Name": "agent_conversation_pkey",
+                                              "Relation Name": "agent_conversation",
+                                              "Alias": "u2",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 8.17,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Index Cond": "(id = u0.conversation_id)",
+                                              "Filter": "((organization_id = u0.organization_id) AND (ownership_epoch = u0.ownership_epoch))"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Forward",
+                                  "Index Name": "agent_turnwork_conversation_id_e15ceb51",
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "agent_turnwork",
+                                  "Startup Cost": 0.14,
+                                  "Total Cost": 0.22,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 32,
+                                  "Index Cond": "(conversation_id = agent_conversation.id)"
+                                },
+                                {
+                                  "Node Type": "Bitmap Heap Scan",
+                                  "Parent Relationship": "SubPlan",
+                                  "Subplan Name": "SubPlan 2",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "channels_message",
+                                  "Alias": "u0_2",
+                                  "Startup Cost": 6.38,
+                                  "Total Cost": 222.77,
+                                  "Plan Rows": 203,
+                                  "Plan Width": 8,
+                                  "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                  "Filter": "(is_active AND (turn_work_id IS NULL) AND ((available_at IS NULL) OR (available_at <= '2026-10-03 06:12:44.570381+00'::timestamp with time zone)))",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Bitmap Index Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Index Name": "message_send_ready",
+                                      "Startup Cost": 0.0,
+                                      "Total Cost": 6.33,
+                                      "Plan Rows": 204,
+                                      "Plan Width": 0,
+                                      "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Limit",
+                          "Parent Relationship": "SubPlan",
+                          "Subplan Name": "SubPlan 1",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 2.68,
+                          "Total Cost": 2.68,
+                          "Plan Rows": 1,
+                          "Plan Width": 8,
+                          "Plans": [
+                            {
+                              "Node Type": "Sort",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Startup Cost": 2.68,
+                              "Total Cost": 2.69,
+                              "Plan Rows": 3,
+                              "Plan Width": 8,
+                              "Sort Key": [
+                                "u0_1.claimed_at DESC"
+                              ],
+                              "Plans": [
+                                {
+                                  "Node Type": "Seq Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "u0_1",
+                                  "Startup Cost": 0.0,
+                                  "Total Cost": 2.66,
+                                  "Plan Rows": 3,
+                                  "Plan Width": 8,
+                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "explain_analyze_execution_ms": 50.942,
+      "explain_analyze_planning_ms": 2.572,
+      "message_nodes": [
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 1,
+          "rows_per_loop": 203,
+          "hit": 34,
+          "read": 0,
+          "time_per_loop_ms": 0.095
+        },
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 352,
+          "rows_per_loop": 0,
+          "hit": 11968,
+          "read": 0,
+          "time_per_loop_ms": 0.105
+        },
+        {
+          "type": "Bitmap Heap Scan",
+          "loops": 1,
+          "rows_per_loop": 0,
+          "hit": 34,
+          "read": 0,
+          "time_per_loop_ms": 0.112
+        }
+      ],
+      "claim_query_count": 33,
+      "claim_wall_ms": 64.29740000021411,
+      "claim_query_ms": [
+        0.0,
+        1.0,
+        1.0,
+        2.0,
+        1.0,
+        0.0,
+        1.0,
+        2.0,
+        1.0,
+        1.0,
+        2.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        4.0,
+        3.0,
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ]
+    }
+  ],
+  "cleanup": {
+    "clients": 0,
+    "waiting_locks": 0,
+    "prepared_transactions": 0,
+    "database_dropped": "test_e4_causal_6e59",
+    "port_closed": true,
+    "data_dir_removed": true
+  }
+}

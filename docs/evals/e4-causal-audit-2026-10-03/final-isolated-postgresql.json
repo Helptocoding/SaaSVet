@@ -1,0 +1,3540 @@
+{
+  "head": "6e59f6c05514ad6eca0985796e538de4fd749560",
+  "historical": false,
+  "not_profile": true,
+  "observer_only": true,
+  "manual_analyze": false,
+  "manual_vacuum": false,
+  "runtime_modified": false,
+  "port": 35446,
+  "scope": "Stationary synthetic SQL cohort; no worker workload, no p95 gate, no historical reconstruction.",
+  "python_pid": 29792,
+  "backend_pid": 63432,
+  "synthetic_clock": "2026-10-03 07:10:18.199236+00:00",
+  "conversations": 354,
+  "messages": 10000,
+  "organizations": 3,
+  "due_turnworks": 0,
+  "ineligible_pending_turnworks": 50,
+  "completed_turnworks": 3,
+  "fixture_builder": "def install_data(orgs, channels, contacts, label, conversations, messages,\n                 noise=0, due_work=0, active_orgs=3, layout=\"clustered\"):\n    from django.db import connection, transaction\n    from django.utils import timezone\n    from apps.agent.models import Conversation, TurnWork\n    from apps.channels.models import Message\n\n    assert conversations >= 100 and messages >= conversations\n    assert 0 <= noise <= conversations - 60\n    assert 0 <= due_work <= 50\n    assert 1 <= active_orgs <= 3\n    assert layout in (\"clustered\", \"spread\")\n    fixed = timezone.now() - timedelta(minutes=3)\n    targets = [0, 1, 2] + list(range(3, 3 + noise)) + [conversations - 1]\n    max_stride = (messages - conversations) // conversations\n    positions = {}\n    for rank, conv_index in enumerate(targets):\n        stride = (round(rank * max_stride / (len(targets) - 1))\n                  if layout == \"spread\" else 0)\n        position = conv_index + stride * conversations\n        assert position < messages and position not in positions\n        positions[position] = conv_index\n    future_position = next(position for position, conv_index in positions.items()\n                           if conv_index == conversations - 1)\n    with transaction.atomic():\n        conversation_rows = []\n        for i in range(conversations):\n            if active_orgs == 3:\n                org_index = i if i < 2 else 2\n            else:\n                org_index = i % active_orgs\n            conversation_rows.append(Conversation(\n                organization=orgs[org_index], channel_account=channels[org_index],\n                contact=contacts[org_index],\n                last_activity_at=fixed - timedelta(seconds=conversations - i),\n            ))\n        created_conversations = Conversation.all_objects.bulk_create(conversation_rows, batch_size=500)\n        message_rows = []\n        for i in range(messages):\n            conv_index = i % conversations\n            conv = created_conversations[conv_index]\n            pending = i in positions\n            availability = (fixed + timedelta(milliseconds=500)\n                            if i == future_position\n                            else fixed - timedelta(seconds=2))\n            message_rows.append(Message(\n                organization_id=conv.organization_id, channel_account_id=conv.channel_account_id,\n                conversation_id=conv.pk, contact_id=conv.contact_id,\n                direction=\"in\", author_type=\"client\", body=\"synthetic\",\n                status=\"pending\" if pending else \"processed\", available_at=availability,\n            ))\n        created_messages = Message.all_objects.bulk_create(message_rows, batch_size=500)\n        # Three completed works establish a non-null last-claim ordering in each org.\n        completed_indices = [conversations - 54, conversations - 53, conversations - 52]\n        completed = []\n        for rank, idx in enumerate(completed_indices):\n            conv, anchor = created_conversations[idx], created_messages[idx]\n            completed.append(TurnWork(\n                organization_id=conv.organization_id, conversation_id=conv.pk,\n                anchor_message_id=anchor.pk, anchor_created_at=anchor.created_at,\n                cursor_message_id=anchor.pk, cursor_created_at=anchor.created_at,\n                context_at=fixed, clinic_timezone=\"UTC\", status=\"COMPLETED\",\n                claimed_at=fixed - timedelta(seconds=60 - rank * 10),\n                completed_at=fixed - timedelta(seconds=50 - rank * 10),\n                outcome_code=\"synthetic\",\n            ))\n        pending = []\n        for rank, idx in enumerate(range(conversations - 51, conversations - 1)):\n            conv, anchor = created_conversations[idx], created_messages[idx]\n            pending.append(TurnWork(\n                organization_id=conv.organization_id, conversation_id=conv.pk,\n                anchor_message_id=anchor.pk, anchor_created_at=anchor.created_at,\n                cursor_message_id=anchor.pk, cursor_created_at=anchor.created_at,\n                context_at=fixed, clinic_timezone=\"UTC\", status=\"PENDING\",\n                next_attempt_at=(fixed - timedelta(seconds=1) if rank < due_work\n                                 else fixed + timedelta(days=1)),\n            ))\n        works = TurnWork.all_objects.bulk_create(completed + pending, batch_size=500)\n        anchor_updates = []\n        for idx, work in zip(completed_indices + list(range(conversations - 51, conversations - 1)), works):\n            anchor = created_messages[idx]\n            anchor.turn_work_id = work.pk\n            anchor_updates.append(anchor)\n        Message.all_objects.bulk_update(anchor_updates, [\"turn_work\"], batch_size=500)\n    with connection.cursor() as cursor:\n        cursor.execute(\"SELECT count(*) FROM agent_conversation\")\n        assert cursor.fetchone()[0] == conversations\n        cursor.execute(\"SELECT count(*) FROM channels_message\")\n        assert cursor.fetchone()[0] == messages\n    return fixed, created_conversations[0].pk\n",
+  "instrumentation_extension": "pg_visibility; read visibility map; no maintenance",
+  "before_selector": {
+    "timestamp_utc": "2026-10-03T07:13:30.560591+00:00",
+    "settings": [
+      {
+        "name": "autovacuum",
+        "setting": "on"
+      },
+      {
+        "name": "autovacuum_analyze_scale_factor",
+        "setting": "0.1"
+      },
+      {
+        "name": "autovacuum_analyze_threshold",
+        "setting": "50"
+      },
+      {
+        "name": "autovacuum_naptime",
+        "setting": "60"
+      },
+      {
+        "name": "effective_cache_size",
+        "setting": "524288"
+      },
+      {
+        "name": "fsync",
+        "setting": "on"
+      },
+      {
+        "name": "random_page_cost",
+        "setting": "4"
+      },
+      {
+        "name": "seq_page_cost",
+        "setting": "1"
+      },
+      {
+        "name": "shared_buffers",
+        "setting": "16384"
+      },
+      {
+        "name": "synchronous_commit",
+        "setting": "on"
+      },
+      {
+        "name": "track_io_timing",
+        "setting": "off"
+      },
+      {
+        "name": "work_mem",
+        "setting": "4096"
+      }
+    ],
+    "relations": [
+      {
+        "relname": "agent_conversation",
+        "relpages": 0,
+        "reltuples": -1.0,
+        "relallvisible": 0,
+        "heap_bytes": 57344,
+        "total_bytes": 327680
+      },
+      {
+        "relname": "agent_turnwork",
+        "relpages": 0,
+        "reltuples": -1.0,
+        "relallvisible": 0,
+        "heap_bytes": 16384,
+        "total_bytes": 204800
+      },
+      {
+        "relname": "channels_message",
+        "relpages": 0,
+        "reltuples": -1.0,
+        "relallvisible": 0,
+        "heap_bytes": 1687552,
+        "total_bytes": 4530176
+      }
+    ],
+    "pg_stats": [],
+    "table_stats": [
+      {
+        "relname": "agent_conversation",
+        "n_live_tup": 354,
+        "n_dead_tup": 0,
+        "n_mod_since_analyze": 354,
+        "last_vacuum": null,
+        "last_autovacuum": null,
+        "last_analyze": null,
+        "last_autoanalyze": null,
+        "analyze_count": 0,
+        "autoanalyze_count": 0
+      },
+      {
+        "relname": "agent_turnwork",
+        "n_live_tup": 53,
+        "n_dead_tup": 0,
+        "n_mod_since_analyze": 53,
+        "last_vacuum": null,
+        "last_autovacuum": null,
+        "last_analyze": null,
+        "last_autoanalyze": null,
+        "analyze_count": 0,
+        "autoanalyze_count": 0
+      },
+      {
+        "relname": "channels_message",
+        "n_live_tup": 10000,
+        "n_dead_tup": 53,
+        "n_mod_since_analyze": 10053,
+        "last_vacuum": null,
+        "last_autovacuum": null,
+        "last_analyze": null,
+        "last_autoanalyze": null,
+        "analyze_count": 0,
+        "autoanalyze_count": 0
+      }
+    ],
+    "message_physical": [
+      {
+        "status": "pending",
+        "rows": 204,
+        "occupied_heap_blocks": 32,
+        "min_block": 0.0,
+        "max_block": 202.0
+      },
+      {
+        "status": "processed",
+        "rows": 9796,
+        "occupied_heap_blocks": 206,
+        "min_block": 0.0,
+        "max_block": 205.0
+      }
+    ],
+    "visibility": {
+      "agent_conversation": {
+        "all_visible": 0,
+        "all_frozen": 0
+      },
+      "channels_message": {
+        "all_visible": 0,
+        "all_frozen": 0
+      },
+      "agent_turnwork": {
+        "all_visible": 0,
+        "all_frozen": 0
+      }
+    },
+    "connections": [
+      {
+        "pid": 63432,
+        "backend_type": "client backend",
+        "state": "idle",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "xact_start": null,
+        "query_start": "2026-10-03 01:13:30.223431-06:00"
+      },
+      {
+        "pid": 64080,
+        "backend_type": "client backend",
+        "state": "active",
+        "wait_event_type": null,
+        "wait_event": null,
+        "xact_start": "2026-10-03 01:13:30.983180-06:00",
+        "query_start": "2026-10-03 01:13:30.983180-06:00"
+      }
+    ],
+    "locks": [
+      {
+        "pid": 64080,
+        "locktype": "relation",
+        "relation": "pg_authid",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64080,
+        "locktype": "relation",
+        "relation": "pg_authid_oid_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64080,
+        "locktype": "relation",
+        "relation": "pg_authid_rolname_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64080,
+        "locktype": "relation",
+        "relation": "pg_database",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64080,
+        "locktype": "relation",
+        "relation": "pg_database_datname_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64080,
+        "locktype": "relation",
+        "relation": "pg_database_oid_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64080,
+        "locktype": "relation",
+        "relation": "pg_locks",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64080,
+        "locktype": "relation",
+        "relation": "pg_stat_activity",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64080,
+        "locktype": "virtualxid",
+        "relation": null,
+        "mode": "ExclusiveLock",
+        "granted": true
+      }
+    ]
+  },
+  "explain_estimate_later": [
+    {
+      "Plan": {
+        "Node Type": "Limit",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 12528.62,
+        "Total Cost": 12529.22,
+        "Plan Rows": 1,
+        "Plan Width": 24,
+        "Plans": [
+          {
+            "Node Type": "Subquery Scan",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Alias": "qualify",
+            "Startup Cost": 12528.62,
+            "Total Cost": 12529.22,
+            "Plan Rows": 1,
+            "Plan Width": 24,
+            "Filter": "(qualify.qual0 = 1)",
+            "Plans": [
+              {
+                "Node Type": "Sort",
+                "Parent Relationship": "Subquery",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 12528.62,
+                "Total Cost": 12528.72,
+                "Plan Rows": 40,
+                "Plan Width": 40,
+                "Sort Key": [
+                  "((SubPlan 1)) NULLS FIRST",
+                  "agent_conversation.last_activity_at",
+                  "agent_conversation.id"
+                ],
+                "Plans": [
+                  {
+                    "Node Type": "WindowAgg",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 321.71,
+                    "Total Cost": 12527.56,
+                    "Plan Rows": 40,
+                    "Plan Width": 40,
+                    "Run Condition": "(row_number() OVER (?) <= 1)",
+                    "Plans": [
+                      {
+                        "Node Type": "Incremental Sort",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Startup Cost": 321.71,
+                        "Total Cost": 12199.66,
+                        "Plan Rows": 40,
+                        "Plan Width": 24,
+                        "Sort Key": [
+                          "agent_conversation.organization_id",
+                          "agent_conversation.last_activity_at",
+                          "agent_conversation.id"
+                        ],
+                        "Presorted Key": [
+                          "agent_conversation.organization_id"
+                        ],
+                        "Plans": [
+                          {
+                            "Node Type": "Nested Loop",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Join Type": "Anti",
+                            "Startup Cost": 17.18,
+                            "Total Cost": 12197.86,
+                            "Plan Rows": 40,
+                            "Plan Width": 24,
+                            "Inner Unique": false,
+                            "Join Filter": "(u0.organization_id = agent_conversation.organization_id)",
+                            "Plans": [
+                              {
+                                "Node Type": "Nested Loop",
+                                "Parent Relationship": "Outer",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Join Type": "Left",
+                                "Startup Cost": 16.89,
+                                "Total Cost": 12180.91,
+                                "Plan Rows": 40,
+                                "Plan Width": 24,
+                                "Inner Unique": false,
+                                "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 2))",
+                                "Plans": [
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Parent Relationship": "Outer",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Scan Direction": "Forward",
+                                    "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                    "Relation Name": "agent_conversation",
+                                    "Alias": "agent_conversation",
+                                    "Startup Cost": 8.45,
+                                    "Total Cost": 12109.4,
+                                    "Plan Rows": 79,
+                                    "Plan Width": 24,
+                                    "Filter": "(is_active AND ((hashed SubPlan 3) OR ((SubPlan 4) IS NULL) OR (NOT (SubPlan 8))))",
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Parent Relationship": "SubPlan",
+                                        "Subplan Name": "SubPlan 3",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Scan Direction": "Forward",
+                                        "Index Name": "message_send_ready",
+                                        "Relation Name": "channels_message",
+                                        "Alias": "u0_3",
+                                        "Startup Cost": 0.28,
+                                        "Total Cost": 8.3,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 8,
+                                        "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                        "Filter": "(is_active AND ((semantic_type)::text = 'safety_signal'::text))"
+                                      },
+                                      {
+                                        "Node Type": "Limit",
+                                        "Parent Relationship": "SubPlan",
+                                        "Subplan Name": "SubPlan 4",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Startup Cost": 8.17,
+                                        "Total Cost": 8.18,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 8,
+                                        "Plans": [
+                                          {
+                                            "Node Type": "Sort",
+                                            "Parent Relationship": "Outer",
+                                            "Parallel Aware": false,
+                                            "Async Capable": false,
+                                            "Startup Cost": 8.17,
+                                            "Total Cost": 8.18,
+                                            "Plan Rows": 1,
+                                            "Plan Width": 8,
+                                            "Sort Key": [
+                                              "u0_4.claimed_at DESC"
+                                            ],
+                                            "Plans": [
+                                              {
+                                                "Node Type": "Index Scan",
+                                                "Parent Relationship": "Outer",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Scan Direction": "Forward",
+                                                "Index Name": "agent_turnwork_organization_id_4c7f7bfe",
+                                                "Relation Name": "agent_turnwork",
+                                                "Alias": "u0_4",
+                                                "Startup Cost": 0.14,
+                                                "Total Cost": 8.16,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 8,
+                                                "Index Cond": "(organization_id = agent_conversation.organization_id)",
+                                                "Filter": "(is_active AND (claimed_at IS NOT NULL))"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "Node Type": "Nested Loop",
+                                        "Parent Relationship": "SubPlan",
+                                        "Subplan Name": "SubPlan 8",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Join Type": "Anti",
+                                        "Startup Cost": 8.75,
+                                        "Total Cost": 49.2,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 0,
+                                        "Inner Unique": false,
+                                        "Join Filter": "(u0_8.organization_id = v0.organization_id)",
+                                        "Plans": [
+                                          {
+                                            "Node Type": "Limit",
+                                            "Parent Relationship": "InitPlan",
+                                            "Subplan Name": "InitPlan 7 (returns $7)",
+                                            "Parallel Aware": false,
+                                            "Async Capable": false,
+                                            "Startup Cost": 8.17,
+                                            "Total Cost": 8.18,
+                                            "Plan Rows": 1,
+                                            "Plan Width": 8,
+                                            "Plans": [
+                                              {
+                                                "Node Type": "Sort",
+                                                "Parent Relationship": "Outer",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Startup Cost": 8.17,
+                                                "Total Cost": 8.18,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 8,
+                                                "Sort Key": [
+                                                  "u0_7.claimed_at DESC"
+                                                ],
+                                                "Plans": [
+                                                  {
+                                                    "Node Type": "Index Scan",
+                                                    "Parent Relationship": "Outer",
+                                                    "Parallel Aware": false,
+                                                    "Async Capable": false,
+                                                    "Scan Direction": "Forward",
+                                                    "Index Name": "agent_turnwork_organization_id_4c7f7bfe",
+                                                    "Relation Name": "agent_turnwork",
+                                                    "Alias": "u0_7",
+                                                    "Startup Cost": 0.14,
+                                                    "Total Cost": 8.16,
+                                                    "Plan Rows": 1,
+                                                    "Plan Width": 8,
+                                                    "Index Cond": "(organization_id = agent_conversation.organization_id)",
+                                                    "Filter": "(is_active AND (claimed_at IS NOT NULL))"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "Node Type": "Index Scan",
+                                            "Parent Relationship": "Outer",
+                                            "Parallel Aware": false,
+                                            "Async Capable": false,
+                                            "Scan Direction": "Forward",
+                                            "Index Name": "message_send_ready",
+                                            "Relation Name": "channels_message",
+                                            "Alias": "v0",
+                                            "Startup Cost": 0.28,
+                                            "Total Cost": 24.67,
+                                            "Plan Rows": 1,
+                                            "Plan Width": 8,
+                                            "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                            "Filter": "(is_active AND (turn_work_id IS NULL) AND (available_at > '2026-10-03 07:10:18.199236+00'::timestamp with time zone) AND (available_at <= '2026-10-03 07:10:19.199236+00'::timestamp with time zone) AND (organization_id <> agent_conversation.organization_id) AND ((semantic_type)::text <> 'safety_signal'::text) AND (((SubPlan 5) IS NULL) OR ((SubPlan 6) < $7)))",
+                                            "Plans": [
+                                              {
+                                                "Node Type": "Limit",
+                                                "Parent Relationship": "SubPlan",
+                                                "Subplan Name": "SubPlan 5",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Startup Cost": 8.17,
+                                                "Total Cost": 8.18,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 8,
+                                                "Plans": [
+                                                  {
+                                                    "Node Type": "Sort",
+                                                    "Parent Relationship": "Outer",
+                                                    "Parallel Aware": false,
+                                                    "Async Capable": false,
+                                                    "Startup Cost": 8.17,
+                                                    "Total Cost": 8.18,
+                                                    "Plan Rows": 1,
+                                                    "Plan Width": 8,
+                                                    "Sort Key": [
+                                                      "u0_5.claimed_at DESC"
+                                                    ],
+                                                    "Plans": [
+                                                      {
+                                                        "Node Type": "Index Scan",
+                                                        "Parent Relationship": "Outer",
+                                                        "Parallel Aware": false,
+                                                        "Async Capable": false,
+                                                        "Scan Direction": "Forward",
+                                                        "Index Name": "agent_turnwork_organization_id_4c7f7bfe",
+                                                        "Relation Name": "agent_turnwork",
+                                                        "Alias": "u0_5",
+                                                        "Startup Cost": 0.14,
+                                                        "Total Cost": 8.16,
+                                                        "Plan Rows": 1,
+                                                        "Plan Width": 8,
+                                                        "Index Cond": "(organization_id = v0.organization_id)",
+                                                        "Filter": "(is_active AND (claimed_at IS NOT NULL))"
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "Node Type": "Limit",
+                                                "Parent Relationship": "SubPlan",
+                                                "Subplan Name": "SubPlan 6",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Startup Cost": 8.17,
+                                                "Total Cost": 8.18,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 8,
+                                                "Plans": [
+                                                  {
+                                                    "Node Type": "Sort",
+                                                    "Parent Relationship": "Outer",
+                                                    "Parallel Aware": false,
+                                                    "Async Capable": false,
+                                                    "Startup Cost": 8.17,
+                                                    "Total Cost": 8.18,
+                                                    "Plan Rows": 1,
+                                                    "Plan Width": 8,
+                                                    "Sort Key": [
+                                                      "u0_6.claimed_at DESC"
+                                                    ],
+                                                    "Plans": [
+                                                      {
+                                                        "Node Type": "Index Scan",
+                                                        "Parent Relationship": "Outer",
+                                                        "Parallel Aware": false,
+                                                        "Async Capable": false,
+                                                        "Scan Direction": "Forward",
+                                                        "Index Name": "agent_turnwork_organization_id_4c7f7bfe",
+                                                        "Relation Name": "agent_turnwork",
+                                                        "Alias": "u0_6",
+                                                        "Startup Cost": 0.14,
+                                                        "Total Cost": 8.16,
+                                                        "Plan Rows": 1,
+                                                        "Plan Width": 8,
+                                                        "Index Cond": "(organization_id = v0.organization_id)",
+                                                        "Filter": "(is_active AND (claimed_at IS NOT NULL))"
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "Node Type": "Nested Loop",
+                                            "Parent Relationship": "Inner",
+                                            "Parallel Aware": false,
+                                            "Async Capable": false,
+                                            "Join Type": "Inner",
+                                            "Startup Cost": 0.29,
+                                            "Total Cost": 16.35,
+                                            "Plan Rows": 1,
+                                            "Plan Width": 8,
+                                            "Inner Unique": true,
+                                            "Plans": [
+                                              {
+                                                "Node Type": "Index Scan",
+                                                "Parent Relationship": "Outer",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Scan Direction": "Forward",
+                                                "Index Name": "turnwork_poll_retry",
+                                                "Relation Name": "agent_turnwork",
+                                                "Alias": "u0_8",
+                                                "Startup Cost": 0.14,
+                                                "Total Cost": 8.17,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 24,
+                                                "Index Cond": "((status)::text = 'PROCESSING'::text)",
+                                                "Filter": "(is_active AND (lease_expires_at > statement_timestamp()))"
+                                              },
+                                              {
+                                                "Node Type": "Index Scan",
+                                                "Parent Relationship": "Inner",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Scan Direction": "Forward",
+                                                "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                                "Relation Name": "agent_conversation",
+                                                "Alias": "u2_1",
+                                                "Startup Cost": 0.14,
+                                                "Total Cost": 8.17,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 24,
+                                                "Index Cond": "(organization_id = u0_8.organization_id)",
+                                                "Filter": "((id = u0_8.conversation_id) AND (ownership_epoch = u0_8.ownership_epoch))"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Parent Relationship": "Inner",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Scan Direction": "Forward",
+                                    "Index Name": "agent_turnwork_conversation_id_e15ceb51",
+                                    "Relation Name": "agent_turnwork",
+                                    "Alias": "agent_turnwork",
+                                    "Startup Cost": 0.14,
+                                    "Total Cost": 0.77,
+                                    "Plan Rows": 1,
+                                    "Plan Width": 62,
+                                    "Index Cond": "(conversation_id = agent_conversation.id)"
+                                  },
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Parent Relationship": "SubPlan",
+                                    "Subplan Name": "SubPlan 2",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Scan Direction": "Forward",
+                                    "Index Name": "message_send_ready",
+                                    "Relation Name": "channels_message",
+                                    "Alias": "u0_2",
+                                    "Startup Cost": 0.28,
+                                    "Total Cost": 8.3,
+                                    "Plan Rows": 1,
+                                    "Plan Width": 8,
+                                    "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                    "Filter": "(is_active AND (turn_work_id IS NULL) AND ((available_at IS NULL) OR (available_at <= '2026-10-03 07:10:18.199236+00'::timestamp with time zone)))"
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Materialize",
+                                "Parent Relationship": "Inner",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Startup Cost": 0.29,
+                                "Total Cost": 16.35,
+                                "Plan Rows": 1,
+                                "Plan Width": 8,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Parent Relationship": "Outer",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Join Type": "Inner",
+                                    "Startup Cost": 0.29,
+                                    "Total Cost": 16.35,
+                                    "Plan Rows": 1,
+                                    "Plan Width": 8,
+                                    "Inner Unique": true,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Parent Relationship": "Outer",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Scan Direction": "Forward",
+                                        "Index Name": "turnwork_poll_retry",
+                                        "Relation Name": "agent_turnwork",
+                                        "Alias": "u0",
+                                        "Startup Cost": 0.14,
+                                        "Total Cost": 8.17,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 24,
+                                        "Index Cond": "((status)::text = 'PROCESSING'::text)",
+                                        "Filter": "(is_active AND (lease_expires_at > statement_timestamp()))"
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Parent Relationship": "Inner",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Scan Direction": "Forward",
+                                        "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                        "Relation Name": "agent_conversation",
+                                        "Alias": "u2",
+                                        "Startup Cost": 0.14,
+                                        "Total Cost": 8.17,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 24,
+                                        "Index Cond": "(organization_id = u0.organization_id)",
+                                        "Filter": "((id = u0.conversation_id) AND (ownership_epoch = u0.ownership_epoch))"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Limit",
+                        "Parent Relationship": "SubPlan",
+                        "Subplan Name": "SubPlan 1",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Startup Cost": 8.17,
+                        "Total Cost": 8.18,
+                        "Plan Rows": 1,
+                        "Plan Width": 8,
+                        "Plans": [
+                          {
+                            "Node Type": "Sort",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Startup Cost": 8.17,
+                            "Total Cost": 8.18,
+                            "Plan Rows": 1,
+                            "Plan Width": 8,
+                            "Sort Key": [
+                              "u0_1.claimed_at DESC"
+                            ],
+                            "Plans": [
+                              {
+                                "Node Type": "Index Scan",
+                                "Parent Relationship": "Outer",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Scan Direction": "Forward",
+                                "Index Name": "agent_turnwork_organization_id_4c7f7bfe",
+                                "Relation Name": "agent_turnwork",
+                                "Alias": "u0_1",
+                                "Startup Cost": 0.14,
+                                "Total Cost": 8.16,
+                                "Plan Rows": 1,
+                                "Plan Width": 8,
+                                "Index Cond": "(organization_id = agent_conversation.organization_id)",
+                                "Filter": "(is_active AND (claimed_at IS NOT NULL))"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "explain_analyze_later": [
+    {
+      "Plan": {
+        "Node Type": "Limit",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 12528.62,
+        "Total Cost": 12529.22,
+        "Plan Rows": 1,
+        "Plan Width": 24,
+        "Actual Startup Time": 130.532,
+        "Actual Total Time": 130.543,
+        "Actual Rows": 3,
+        "Actual Loops": 1,
+        "Output": [
+          "qualify.pk",
+          "qualify.qual1",
+          "qualify.qual2"
+        ],
+        "Shared Hit Blocks": 13518,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "Subquery Scan",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Alias": "qualify",
+            "Startup Cost": 12528.62,
+            "Total Cost": 12529.22,
+            "Plan Rows": 1,
+            "Plan Width": 24,
+            "Actual Startup Time": 130.531,
+            "Actual Total Time": 130.541,
+            "Actual Rows": 3,
+            "Actual Loops": 1,
+            "Output": [
+              "qualify.pk",
+              "qualify.qual1",
+              "qualify.qual2"
+            ],
+            "Filter": "(qualify.qual0 = 1)",
+            "Rows Removed by Filter": 0,
+            "Shared Hit Blocks": 13518,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Sort",
+                "Parent Relationship": "Subquery",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 12528.62,
+                "Total Cost": 12528.72,
+                "Plan Rows": 40,
+                "Plan Width": 40,
+                "Actual Startup Time": 130.529,
+                "Actual Total Time": 130.537,
+                "Actual Rows": 3,
+                "Actual Loops": 1,
+                "Output": [
+                  "agent_conversation.id",
+                  "(row_number() OVER (?))",
+                  "((SubPlan 1))",
+                  "agent_conversation.last_activity_at",
+                  "agent_conversation.organization_id"
+                ],
+                "Sort Key": [
+                  "((SubPlan 1)) NULLS FIRST",
+                  "agent_conversation.last_activity_at",
+                  "agent_conversation.id"
+                ],
+                "Sort Method": "quicksort",
+                "Sort Space Used": 25,
+                "Sort Space Type": "Memory",
+                "Shared Hit Blocks": 13518,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "WindowAgg",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 321.71,
+                    "Total Cost": 12527.56,
+                    "Plan Rows": 40,
+                    "Plan Width": 40,
+                    "Actual Startup Time": 21.966,
+                    "Actual Total Time": 130.517,
+                    "Actual Rows": 3,
+                    "Actual Loops": 1,
+                    "Output": [
+                      "agent_conversation.id",
+                      "row_number() OVER (?)",
+                      "(SubPlan 1)",
+                      "agent_conversation.last_activity_at",
+                      "agent_conversation.organization_id"
+                    ],
+                    "Run Condition": "(row_number() OVER (?) <= 1)",
+                    "Shared Hit Blocks": 13518,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Incremental Sort",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Startup Cost": 321.71,
+                        "Total Cost": 12199.66,
+                        "Plan Rows": 40,
+                        "Plan Width": 24,
+                        "Actual Startup Time": 21.878,
+                        "Actual Total Time": 130.275,
+                        "Actual Rows": 203,
+                        "Actual Loops": 1,
+                        "Output": [
+                          "agent_conversation.id",
+                          "agent_conversation.last_activity_at",
+                          "agent_conversation.organization_id"
+                        ],
+                        "Sort Key": [
+                          "agent_conversation.organization_id",
+                          "agent_conversation.last_activity_at",
+                          "agent_conversation.id"
+                        ],
+                        "Presorted Key": [
+                          "agent_conversation.organization_id"
+                        ],
+                        "Full-sort Groups": {
+                          "Group Count": 1,
+                          "Sort Methods Used": [
+                            "quicksort"
+                          ],
+                          "Sort Space Memory": {
+                            "Average Sort Space Used": 28,
+                            "Peak Sort Space Used": 28
+                          }
+                        },
+                        "Pre-sorted Groups": {
+                          "Group Count": 3,
+                          "Sort Methods Used": [
+                            "quicksort"
+                          ],
+                          "Sort Space Memory": {
+                            "Average Sort Space Used": 25,
+                            "Peak Sort Space Used": 25
+                          }
+                        },
+                        "Shared Hit Blocks": 13510,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Nested Loop",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Join Type": "Anti",
+                            "Startup Cost": 17.18,
+                            "Total Cost": 12197.86,
+                            "Plan Rows": 40,
+                            "Plan Width": 24,
+                            "Actual Startup Time": 0.983,
+                            "Actual Total Time": 129.776,
+                            "Actual Rows": 203,
+                            "Actual Loops": 1,
+                            "Output": [
+                              "agent_conversation.id",
+                              "agent_conversation.last_activity_at",
+                              "agent_conversation.organization_id"
+                            ],
+                            "Inner Unique": false,
+                            "Join Filter": "(u0.organization_id = agent_conversation.organization_id)",
+                            "Rows Removed by Join Filter": 0,
+                            "Shared Hit Blocks": 13510,
+                            "Shared Read Blocks": 0,
+                            "Shared Dirtied Blocks": 0,
+                            "Shared Written Blocks": 0,
+                            "Local Hit Blocks": 0,
+                            "Local Read Blocks": 0,
+                            "Local Dirtied Blocks": 0,
+                            "Local Written Blocks": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Nested Loop",
+                                "Parent Relationship": "Outer",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Join Type": "Left",
+                                "Startup Cost": 16.89,
+                                "Total Cost": 12180.91,
+                                "Plan Rows": 40,
+                                "Plan Width": 24,
+                                "Actual Startup Time": 0.951,
+                                "Actual Total Time": 129.489,
+                                "Actual Rows": 203,
+                                "Actual Loops": 1,
+                                "Output": [
+                                  "agent_conversation.id",
+                                  "agent_conversation.organization_id",
+                                  "agent_conversation.last_activity_at"
+                                ],
+                                "Inner Unique": false,
+                                "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 2))",
+                                "Rows Removed by Filter": 151,
+                                "Shared Hit Blocks": 13509,
+                                "Shared Read Blocks": 0,
+                                "Shared Dirtied Blocks": 0,
+                                "Shared Written Blocks": 0,
+                                "Local Hit Blocks": 0,
+                                "Local Read Blocks": 0,
+                                "Local Dirtied Blocks": 0,
+                                "Local Written Blocks": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Parent Relationship": "Outer",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Scan Direction": "Forward",
+                                    "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                    "Relation Name": "agent_conversation",
+                                    "Schema": "public",
+                                    "Alias": "agent_conversation",
+                                    "Startup Cost": 8.45,
+                                    "Total Cost": 12109.4,
+                                    "Plan Rows": 79,
+                                    "Plan Width": 24,
+                                    "Actual Startup Time": 0.394,
+                                    "Actual Total Time": 125.996,
+                                    "Actual Rows": 354,
+                                    "Actual Loops": 1,
+                                    "Output": [
+                                      "agent_conversation.id",
+                                      "agent_conversation.organization_id",
+                                      "agent_conversation.last_activity_at"
+                                    ],
+                                    "Filter": "(agent_conversation.is_active AND ((hashed SubPlan 3) OR ((SubPlan 4) IS NULL) OR (NOT (SubPlan 8))))",
+                                    "Rows Removed by Filter": 0,
+                                    "Shared Hit Blocks": 13068,
+                                    "Shared Read Blocks": 0,
+                                    "Shared Dirtied Blocks": 0,
+                                    "Shared Written Blocks": 0,
+                                    "Local Hit Blocks": 0,
+                                    "Local Read Blocks": 0,
+                                    "Local Dirtied Blocks": 0,
+                                    "Local Written Blocks": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Parent Relationship": "SubPlan",
+                                        "Subplan Name": "SubPlan 3",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Scan Direction": "Forward",
+                                        "Index Name": "message_send_ready",
+                                        "Relation Name": "channels_message",
+                                        "Schema": "public",
+                                        "Alias": "u0_3",
+                                        "Startup Cost": 0.28,
+                                        "Total Cost": 8.3,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 8,
+                                        "Actual Startup Time": 0.321,
+                                        "Actual Total Time": 0.321,
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 1,
+                                        "Output": [
+                                          "u0_3.conversation_id"
+                                        ],
+                                        "Index Cond": "(((u0_3.direction)::text = 'in'::text) AND ((u0_3.status)::text = 'pending'::text))",
+                                        "Rows Removed by Index Recheck": 0,
+                                        "Filter": "(u0_3.is_active AND ((u0_3.semantic_type)::text = 'safety_signal'::text))",
+                                        "Rows Removed by Filter": 204,
+                                        "Shared Hit Blocks": 34,
+                                        "Shared Read Blocks": 0,
+                                        "Shared Dirtied Blocks": 0,
+                                        "Shared Written Blocks": 0,
+                                        "Local Hit Blocks": 0,
+                                        "Local Read Blocks": 0,
+                                        "Local Dirtied Blocks": 0,
+                                        "Local Written Blocks": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0
+                                      },
+                                      {
+                                        "Node Type": "Limit",
+                                        "Parent Relationship": "SubPlan",
+                                        "Subplan Name": "SubPlan 4",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Startup Cost": 8.17,
+                                        "Total Cost": 8.18,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 8,
+                                        "Actual Startup Time": 0.055,
+                                        "Actual Total Time": 0.055,
+                                        "Actual Rows": 1,
+                                        "Actual Loops": 354,
+                                        "Output": [
+                                          "u0_4.claimed_at"
+                                        ],
+                                        "Shared Hit Blocks": 1058,
+                                        "Shared Read Blocks": 0,
+                                        "Shared Dirtied Blocks": 0,
+                                        "Shared Written Blocks": 0,
+                                        "Local Hit Blocks": 0,
+                                        "Local Read Blocks": 0,
+                                        "Local Dirtied Blocks": 0,
+                                        "Local Written Blocks": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Plans": [
+                                          {
+                                            "Node Type": "Sort",
+                                            "Parent Relationship": "Outer",
+                                            "Parallel Aware": false,
+                                            "Async Capable": false,
+                                            "Startup Cost": 8.17,
+                                            "Total Cost": 8.18,
+                                            "Plan Rows": 1,
+                                            "Plan Width": 8,
+                                            "Actual Startup Time": 0.052,
+                                            "Actual Total Time": 0.052,
+                                            "Actual Rows": 1,
+                                            "Actual Loops": 354,
+                                            "Output": [
+                                              "u0_4.claimed_at"
+                                            ],
+                                            "Sort Key": [
+                                              "u0_4.claimed_at DESC"
+                                            ],
+                                            "Sort Method": "top-N heapsort",
+                                            "Sort Space Used": 25,
+                                            "Sort Space Type": "Memory",
+                                            "Shared Hit Blocks": 1058,
+                                            "Shared Read Blocks": 0,
+                                            "Shared Dirtied Blocks": 0,
+                                            "Shared Written Blocks": 0,
+                                            "Local Hit Blocks": 0,
+                                            "Local Read Blocks": 0,
+                                            "Local Dirtied Blocks": 0,
+                                            "Local Written Blocks": 0,
+                                            "Temp Read Blocks": 0,
+                                            "Temp Written Blocks": 0,
+                                            "Plans": [
+                                              {
+                                                "Node Type": "Index Scan",
+                                                "Parent Relationship": "Outer",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Scan Direction": "Forward",
+                                                "Index Name": "agent_turnwork_organization_id_4c7f7bfe",
+                                                "Relation Name": "agent_turnwork",
+                                                "Schema": "public",
+                                                "Alias": "u0_4",
+                                                "Startup Cost": 0.14,
+                                                "Total Cost": 8.16,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 8,
+                                                "Actual Startup Time": 0.008,
+                                                "Actual Total Time": 0.046,
+                                                "Actual Rows": 3,
+                                                "Actual Loops": 354,
+                                                "Output": [
+                                                  "u0_4.claimed_at"
+                                                ],
+                                                "Index Cond": "(u0_4.organization_id = agent_conversation.organization_id)",
+                                                "Rows Removed by Index Recheck": 0,
+                                                "Filter": "(u0_4.is_active AND (u0_4.claimed_at IS NOT NULL))",
+                                                "Rows Removed by Filter": 50,
+                                                "Shared Hit Blocks": 1058,
+                                                "Shared Read Blocks": 0,
+                                                "Shared Dirtied Blocks": 0,
+                                                "Shared Written Blocks": 0,
+                                                "Local Hit Blocks": 0,
+                                                "Local Read Blocks": 0,
+                                                "Local Dirtied Blocks": 0,
+                                                "Local Written Blocks": 0,
+                                                "Temp Read Blocks": 0,
+                                                "Temp Written Blocks": 0
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "Node Type": "Nested Loop",
+                                        "Parent Relationship": "SubPlan",
+                                        "Subplan Name": "SubPlan 8",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Join Type": "Anti",
+                                        "Startup Cost": 8.75,
+                                        "Total Cost": 49.2,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 0,
+                                        "Actual Startup Time": 0.294,
+                                        "Actual Total Time": 0.294,
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 352,
+                                        "Inner Unique": false,
+                                        "Join Filter": "(u0_8.organization_id = v0.organization_id)",
+                                        "Rows Removed by Join Filter": 0,
+                                        "Shared Hit Blocks": 11968,
+                                        "Shared Read Blocks": 0,
+                                        "Shared Dirtied Blocks": 0,
+                                        "Shared Written Blocks": 0,
+                                        "Local Hit Blocks": 0,
+                                        "Local Read Blocks": 0,
+                                        "Local Dirtied Blocks": 0,
+                                        "Local Written Blocks": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Plans": [
+                                          {
+                                            "Node Type": "Limit",
+                                            "Parent Relationship": "InitPlan",
+                                            "Subplan Name": "InitPlan 7 (returns $7)",
+                                            "Parallel Aware": false,
+                                            "Async Capable": false,
+                                            "Startup Cost": 8.17,
+                                            "Total Cost": 8.18,
+                                            "Plan Rows": 1,
+                                            "Plan Width": 8,
+                                            "Actual Startup Time": 0.0,
+                                            "Actual Total Time": 0.0,
+                                            "Actual Rows": 0,
+                                            "Actual Loops": 0,
+                                            "Output": [
+                                              "u0_7.claimed_at"
+                                            ],
+                                            "Shared Hit Blocks": 0,
+                                            "Shared Read Blocks": 0,
+                                            "Shared Dirtied Blocks": 0,
+                                            "Shared Written Blocks": 0,
+                                            "Local Hit Blocks": 0,
+                                            "Local Read Blocks": 0,
+                                            "Local Dirtied Blocks": 0,
+                                            "Local Written Blocks": 0,
+                                            "Temp Read Blocks": 0,
+                                            "Temp Written Blocks": 0,
+                                            "Plans": [
+                                              {
+                                                "Node Type": "Sort",
+                                                "Parent Relationship": "Outer",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Startup Cost": 8.17,
+                                                "Total Cost": 8.18,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 8,
+                                                "Actual Startup Time": 0.0,
+                                                "Actual Total Time": 0.0,
+                                                "Actual Rows": 0,
+                                                "Actual Loops": 0,
+                                                "Output": [
+                                                  "u0_7.claimed_at"
+                                                ],
+                                                "Sort Key": [
+                                                  "u0_7.claimed_at DESC"
+                                                ],
+                                                "Shared Hit Blocks": 0,
+                                                "Shared Read Blocks": 0,
+                                                "Shared Dirtied Blocks": 0,
+                                                "Shared Written Blocks": 0,
+                                                "Local Hit Blocks": 0,
+                                                "Local Read Blocks": 0,
+                                                "Local Dirtied Blocks": 0,
+                                                "Local Written Blocks": 0,
+                                                "Temp Read Blocks": 0,
+                                                "Temp Written Blocks": 0,
+                                                "Plans": [
+                                                  {
+                                                    "Node Type": "Index Scan",
+                                                    "Parent Relationship": "Outer",
+                                                    "Parallel Aware": false,
+                                                    "Async Capable": false,
+                                                    "Scan Direction": "Forward",
+                                                    "Index Name": "agent_turnwork_organization_id_4c7f7bfe",
+                                                    "Relation Name": "agent_turnwork",
+                                                    "Schema": "public",
+                                                    "Alias": "u0_7",
+                                                    "Startup Cost": 0.14,
+                                                    "Total Cost": 8.16,
+                                                    "Plan Rows": 1,
+                                                    "Plan Width": 8,
+                                                    "Actual Startup Time": 0.0,
+                                                    "Actual Total Time": 0.0,
+                                                    "Actual Rows": 0,
+                                                    "Actual Loops": 0,
+                                                    "Output": [
+                                                      "u0_7.claimed_at"
+                                                    ],
+                                                    "Index Cond": "(u0_7.organization_id = agent_conversation.organization_id)",
+                                                    "Rows Removed by Index Recheck": 0,
+                                                    "Filter": "(u0_7.is_active AND (u0_7.claimed_at IS NOT NULL))",
+                                                    "Rows Removed by Filter": 0,
+                                                    "Shared Hit Blocks": 0,
+                                                    "Shared Read Blocks": 0,
+                                                    "Shared Dirtied Blocks": 0,
+                                                    "Shared Written Blocks": 0,
+                                                    "Local Hit Blocks": 0,
+                                                    "Local Read Blocks": 0,
+                                                    "Local Dirtied Blocks": 0,
+                                                    "Local Written Blocks": 0,
+                                                    "Temp Read Blocks": 0,
+                                                    "Temp Written Blocks": 0
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "Node Type": "Index Scan",
+                                            "Parent Relationship": "Outer",
+                                            "Parallel Aware": false,
+                                            "Async Capable": false,
+                                            "Scan Direction": "Forward",
+                                            "Index Name": "message_send_ready",
+                                            "Relation Name": "channels_message",
+                                            "Schema": "public",
+                                            "Alias": "v0",
+                                            "Startup Cost": 0.28,
+                                            "Total Cost": 24.67,
+                                            "Plan Rows": 1,
+                                            "Plan Width": 8,
+                                            "Actual Startup Time": 0.293,
+                                            "Actual Total Time": 0.293,
+                                            "Actual Rows": 0,
+                                            "Actual Loops": 352,
+                                            "Output": [
+                                              "v0.organization_id"
+                                            ],
+                                            "Index Cond": "(((v0.direction)::text = 'in'::text) AND ((v0.status)::text = 'pending'::text))",
+                                            "Rows Removed by Index Recheck": 0,
+                                            "Filter": "(v0.is_active AND (v0.turn_work_id IS NULL) AND (v0.available_at > '2026-10-03 07:10:18.199236+00'::timestamp with time zone) AND (v0.available_at <= '2026-10-03 07:10:19.199236+00'::timestamp with time zone) AND (v0.organization_id <> agent_conversation.organization_id) AND ((v0.semantic_type)::text <> 'safety_signal'::text) AND (((SubPlan 5) IS NULL) OR ((SubPlan 6) < $7)))",
+                                            "Rows Removed by Filter": 204,
+                                            "Shared Hit Blocks": 11968,
+                                            "Shared Read Blocks": 0,
+                                            "Shared Dirtied Blocks": 0,
+                                            "Shared Written Blocks": 0,
+                                            "Local Hit Blocks": 0,
+                                            "Local Read Blocks": 0,
+                                            "Local Dirtied Blocks": 0,
+                                            "Local Written Blocks": 0,
+                                            "Temp Read Blocks": 0,
+                                            "Temp Written Blocks": 0,
+                                            "Plans": [
+                                              {
+                                                "Node Type": "Limit",
+                                                "Parent Relationship": "SubPlan",
+                                                "Subplan Name": "SubPlan 5",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Startup Cost": 8.17,
+                                                "Total Cost": 8.18,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 8,
+                                                "Actual Startup Time": 0.0,
+                                                "Actual Total Time": 0.0,
+                                                "Actual Rows": 0,
+                                                "Actual Loops": 0,
+                                                "Output": [
+                                                  "u0_5.claimed_at"
+                                                ],
+                                                "Shared Hit Blocks": 0,
+                                                "Shared Read Blocks": 0,
+                                                "Shared Dirtied Blocks": 0,
+                                                "Shared Written Blocks": 0,
+                                                "Local Hit Blocks": 0,
+                                                "Local Read Blocks": 0,
+                                                "Local Dirtied Blocks": 0,
+                                                "Local Written Blocks": 0,
+                                                "Temp Read Blocks": 0,
+                                                "Temp Written Blocks": 0,
+                                                "Plans": [
+                                                  {
+                                                    "Node Type": "Sort",
+                                                    "Parent Relationship": "Outer",
+                                                    "Parallel Aware": false,
+                                                    "Async Capable": false,
+                                                    "Startup Cost": 8.17,
+                                                    "Total Cost": 8.18,
+                                                    "Plan Rows": 1,
+                                                    "Plan Width": 8,
+                                                    "Actual Startup Time": 0.0,
+                                                    "Actual Total Time": 0.0,
+                                                    "Actual Rows": 0,
+                                                    "Actual Loops": 0,
+                                                    "Output": [
+                                                      "u0_5.claimed_at"
+                                                    ],
+                                                    "Sort Key": [
+                                                      "u0_5.claimed_at DESC"
+                                                    ],
+                                                    "Shared Hit Blocks": 0,
+                                                    "Shared Read Blocks": 0,
+                                                    "Shared Dirtied Blocks": 0,
+                                                    "Shared Written Blocks": 0,
+                                                    "Local Hit Blocks": 0,
+                                                    "Local Read Blocks": 0,
+                                                    "Local Dirtied Blocks": 0,
+                                                    "Local Written Blocks": 0,
+                                                    "Temp Read Blocks": 0,
+                                                    "Temp Written Blocks": 0,
+                                                    "Plans": [
+                                                      {
+                                                        "Node Type": "Index Scan",
+                                                        "Parent Relationship": "Outer",
+                                                        "Parallel Aware": false,
+                                                        "Async Capable": false,
+                                                        "Scan Direction": "Forward",
+                                                        "Index Name": "agent_turnwork_organization_id_4c7f7bfe",
+                                                        "Relation Name": "agent_turnwork",
+                                                        "Schema": "public",
+                                                        "Alias": "u0_5",
+                                                        "Startup Cost": 0.14,
+                                                        "Total Cost": 8.16,
+                                                        "Plan Rows": 1,
+                                                        "Plan Width": 8,
+                                                        "Actual Startup Time": 0.0,
+                                                        "Actual Total Time": 0.0,
+                                                        "Actual Rows": 0,
+                                                        "Actual Loops": 0,
+                                                        "Output": [
+                                                          "u0_5.claimed_at"
+                                                        ],
+                                                        "Index Cond": "(u0_5.organization_id = v0.organization_id)",
+                                                        "Rows Removed by Index Recheck": 0,
+                                                        "Filter": "(u0_5.is_active AND (u0_5.claimed_at IS NOT NULL))",
+                                                        "Rows Removed by Filter": 0,
+                                                        "Shared Hit Blocks": 0,
+                                                        "Shared Read Blocks": 0,
+                                                        "Shared Dirtied Blocks": 0,
+                                                        "Shared Written Blocks": 0,
+                                                        "Local Hit Blocks": 0,
+                                                        "Local Read Blocks": 0,
+                                                        "Local Dirtied Blocks": 0,
+                                                        "Local Written Blocks": 0,
+                                                        "Temp Read Blocks": 0,
+                                                        "Temp Written Blocks": 0
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "Node Type": "Limit",
+                                                "Parent Relationship": "SubPlan",
+                                                "Subplan Name": "SubPlan 6",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Startup Cost": 8.17,
+                                                "Total Cost": 8.18,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 8,
+                                                "Actual Startup Time": 0.0,
+                                                "Actual Total Time": 0.0,
+                                                "Actual Rows": 0,
+                                                "Actual Loops": 0,
+                                                "Output": [
+                                                  "u0_6.claimed_at"
+                                                ],
+                                                "Shared Hit Blocks": 0,
+                                                "Shared Read Blocks": 0,
+                                                "Shared Dirtied Blocks": 0,
+                                                "Shared Written Blocks": 0,
+                                                "Local Hit Blocks": 0,
+                                                "Local Read Blocks": 0,
+                                                "Local Dirtied Blocks": 0,
+                                                "Local Written Blocks": 0,
+                                                "Temp Read Blocks": 0,
+                                                "Temp Written Blocks": 0,
+                                                "Plans": [
+                                                  {
+                                                    "Node Type": "Sort",
+                                                    "Parent Relationship": "Outer",
+                                                    "Parallel Aware": false,
+                                                    "Async Capable": false,
+                                                    "Startup Cost": 8.17,
+                                                    "Total Cost": 8.18,
+                                                    "Plan Rows": 1,
+                                                    "Plan Width": 8,
+                                                    "Actual Startup Time": 0.0,
+                                                    "Actual Total Time": 0.0,
+                                                    "Actual Rows": 0,
+                                                    "Actual Loops": 0,
+                                                    "Output": [
+                                                      "u0_6.claimed_at"
+                                                    ],
+                                                    "Sort Key": [
+                                                      "u0_6.claimed_at DESC"
+                                                    ],
+                                                    "Shared Hit Blocks": 0,
+                                                    "Shared Read Blocks": 0,
+                                                    "Shared Dirtied Blocks": 0,
+                                                    "Shared Written Blocks": 0,
+                                                    "Local Hit Blocks": 0,
+                                                    "Local Read Blocks": 0,
+                                                    "Local Dirtied Blocks": 0,
+                                                    "Local Written Blocks": 0,
+                                                    "Temp Read Blocks": 0,
+                                                    "Temp Written Blocks": 0,
+                                                    "Plans": [
+                                                      {
+                                                        "Node Type": "Index Scan",
+                                                        "Parent Relationship": "Outer",
+                                                        "Parallel Aware": false,
+                                                        "Async Capable": false,
+                                                        "Scan Direction": "Forward",
+                                                        "Index Name": "agent_turnwork_organization_id_4c7f7bfe",
+                                                        "Relation Name": "agent_turnwork",
+                                                        "Schema": "public",
+                                                        "Alias": "u0_6",
+                                                        "Startup Cost": 0.14,
+                                                        "Total Cost": 8.16,
+                                                        "Plan Rows": 1,
+                                                        "Plan Width": 8,
+                                                        "Actual Startup Time": 0.0,
+                                                        "Actual Total Time": 0.0,
+                                                        "Actual Rows": 0,
+                                                        "Actual Loops": 0,
+                                                        "Output": [
+                                                          "u0_6.claimed_at"
+                                                        ],
+                                                        "Index Cond": "(u0_6.organization_id = v0.organization_id)",
+                                                        "Rows Removed by Index Recheck": 0,
+                                                        "Filter": "(u0_6.is_active AND (u0_6.claimed_at IS NOT NULL))",
+                                                        "Rows Removed by Filter": 0,
+                                                        "Shared Hit Blocks": 0,
+                                                        "Shared Read Blocks": 0,
+                                                        "Shared Dirtied Blocks": 0,
+                                                        "Shared Written Blocks": 0,
+                                                        "Local Hit Blocks": 0,
+                                                        "Local Read Blocks": 0,
+                                                        "Local Dirtied Blocks": 0,
+                                                        "Local Written Blocks": 0,
+                                                        "Temp Read Blocks": 0,
+                                                        "Temp Written Blocks": 0
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "Node Type": "Nested Loop",
+                                            "Parent Relationship": "Inner",
+                                            "Parallel Aware": false,
+                                            "Async Capable": false,
+                                            "Join Type": "Inner",
+                                            "Startup Cost": 0.29,
+                                            "Total Cost": 16.35,
+                                            "Plan Rows": 1,
+                                            "Plan Width": 8,
+                                            "Actual Startup Time": 0.0,
+                                            "Actual Total Time": 0.0,
+                                            "Actual Rows": 0,
+                                            "Actual Loops": 0,
+                                            "Output": [
+                                              "u0_8.organization_id"
+                                            ],
+                                            "Inner Unique": true,
+                                            "Shared Hit Blocks": 0,
+                                            "Shared Read Blocks": 0,
+                                            "Shared Dirtied Blocks": 0,
+                                            "Shared Written Blocks": 0,
+                                            "Local Hit Blocks": 0,
+                                            "Local Read Blocks": 0,
+                                            "Local Dirtied Blocks": 0,
+                                            "Local Written Blocks": 0,
+                                            "Temp Read Blocks": 0,
+                                            "Temp Written Blocks": 0,
+                                            "Plans": [
+                                              {
+                                                "Node Type": "Index Scan",
+                                                "Parent Relationship": "Outer",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Scan Direction": "Forward",
+                                                "Index Name": "turnwork_poll_retry",
+                                                "Relation Name": "agent_turnwork",
+                                                "Schema": "public",
+                                                "Alias": "u0_8",
+                                                "Startup Cost": 0.14,
+                                                "Total Cost": 8.17,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 24,
+                                                "Actual Startup Time": 0.0,
+                                                "Actual Total Time": 0.0,
+                                                "Actual Rows": 0,
+                                                "Actual Loops": 0,
+                                                "Output": [
+                                                  "u0_8.conversation_id",
+                                                  "u0_8.organization_id",
+                                                  "u0_8.ownership_epoch"
+                                                ],
+                                                "Index Cond": "((u0_8.status)::text = 'PROCESSING'::text)",
+                                                "Rows Removed by Index Recheck": 0,
+                                                "Filter": "(u0_8.is_active AND (u0_8.lease_expires_at > statement_timestamp()))",
+                                                "Rows Removed by Filter": 0,
+                                                "Shared Hit Blocks": 0,
+                                                "Shared Read Blocks": 0,
+                                                "Shared Dirtied Blocks": 0,
+                                                "Shared Written Blocks": 0,
+                                                "Local Hit Blocks": 0,
+                                                "Local Read Blocks": 0,
+                                                "Local Dirtied Blocks": 0,
+                                                "Local Written Blocks": 0,
+                                                "Temp Read Blocks": 0,
+                                                "Temp Written Blocks": 0
+                                              },
+                                              {
+                                                "Node Type": "Index Scan",
+                                                "Parent Relationship": "Inner",
+                                                "Parallel Aware": false,
+                                                "Async Capable": false,
+                                                "Scan Direction": "Forward",
+                                                "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                                "Relation Name": "agent_conversation",
+                                                "Schema": "public",
+                                                "Alias": "u2_1",
+                                                "Startup Cost": 0.14,
+                                                "Total Cost": 8.17,
+                                                "Plan Rows": 1,
+                                                "Plan Width": 24,
+                                                "Actual Startup Time": 0.0,
+                                                "Actual Total Time": 0.0,
+                                                "Actual Rows": 0,
+                                                "Actual Loops": 0,
+                                                "Output": [
+                                                  "u2_1.id",
+                                                  "u2_1.organization_id",
+                                                  "u2_1.ownership_epoch"
+                                                ],
+                                                "Index Cond": "(u2_1.organization_id = u0_8.organization_id)",
+                                                "Rows Removed by Index Recheck": 0,
+                                                "Filter": "((u2_1.id = u0_8.conversation_id) AND (u2_1.ownership_epoch = u0_8.ownership_epoch))",
+                                                "Rows Removed by Filter": 0,
+                                                "Shared Hit Blocks": 0,
+                                                "Shared Read Blocks": 0,
+                                                "Shared Dirtied Blocks": 0,
+                                                "Shared Written Blocks": 0,
+                                                "Local Hit Blocks": 0,
+                                                "Local Read Blocks": 0,
+                                                "Local Dirtied Blocks": 0,
+                                                "Local Written Blocks": 0,
+                                                "Temp Read Blocks": 0,
+                                                "Temp Written Blocks": 0
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Parent Relationship": "Inner",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Scan Direction": "Forward",
+                                    "Index Name": "agent_turnwork_conversation_id_e15ceb51",
+                                    "Relation Name": "agent_turnwork",
+                                    "Schema": "public",
+                                    "Alias": "agent_turnwork",
+                                    "Startup Cost": 0.14,
+                                    "Total Cost": 0.77,
+                                    "Plan Rows": 1,
+                                    "Plan Width": 62,
+                                    "Actual Startup Time": 0.004,
+                                    "Actual Total Time": 0.004,
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 354,
+                                    "Output": [
+                                      "agent_turnwork.lease_expires_at",
+                                      "agent_turnwork.status",
+                                      "agent_turnwork.next_attempt_at",
+                                      "agent_turnwork.conversation_id"
+                                    ],
+                                    "Index Cond": "(agent_turnwork.conversation_id = agent_conversation.id)",
+                                    "Rows Removed by Index Recheck": 0,
+                                    "Shared Hit Blocks": 407,
+                                    "Shared Read Blocks": 0,
+                                    "Shared Dirtied Blocks": 0,
+                                    "Shared Written Blocks": 0,
+                                    "Local Hit Blocks": 0,
+                                    "Local Read Blocks": 0,
+                                    "Local Dirtied Blocks": 0,
+                                    "Local Written Blocks": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0
+                                  },
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Parent Relationship": "SubPlan",
+                                    "Subplan Name": "SubPlan 2",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Scan Direction": "Forward",
+                                    "Index Name": "message_send_ready",
+                                    "Relation Name": "channels_message",
+                                    "Schema": "public",
+                                    "Alias": "u0_2",
+                                    "Startup Cost": 0.28,
+                                    "Total Cost": 8.3,
+                                    "Plan Rows": 1,
+                                    "Plan Width": 8,
+                                    "Actual Startup Time": 0.078,
+                                    "Actual Total Time": 0.386,
+                                    "Actual Rows": 203,
+                                    "Actual Loops": 1,
+                                    "Output": [
+                                      "u0_2.conversation_id"
+                                    ],
+                                    "Index Cond": "(((u0_2.direction)::text = 'in'::text) AND ((u0_2.status)::text = 'pending'::text))",
+                                    "Rows Removed by Index Recheck": 0,
+                                    "Filter": "(u0_2.is_active AND (u0_2.turn_work_id IS NULL) AND ((u0_2.available_at IS NULL) OR (u0_2.available_at <= '2026-10-03 07:10:18.199236+00'::timestamp with time zone)))",
+                                    "Rows Removed by Filter": 1,
+                                    "Shared Hit Blocks": 34,
+                                    "Shared Read Blocks": 0,
+                                    "Shared Dirtied Blocks": 0,
+                                    "Shared Written Blocks": 0,
+                                    "Local Hit Blocks": 0,
+                                    "Local Read Blocks": 0,
+                                    "Local Dirtied Blocks": 0,
+                                    "Local Written Blocks": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Materialize",
+                                "Parent Relationship": "Inner",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Startup Cost": 0.29,
+                                "Total Cost": 16.35,
+                                "Plan Rows": 1,
+                                "Plan Width": 8,
+                                "Actual Startup Time": 0.0,
+                                "Actual Total Time": 0.0,
+                                "Actual Rows": 0,
+                                "Actual Loops": 203,
+                                "Output": [
+                                  "u0.organization_id"
+                                ],
+                                "Shared Hit Blocks": 1,
+                                "Shared Read Blocks": 0,
+                                "Shared Dirtied Blocks": 0,
+                                "Shared Written Blocks": 0,
+                                "Local Hit Blocks": 0,
+                                "Local Read Blocks": 0,
+                                "Local Dirtied Blocks": 0,
+                                "Local Written Blocks": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Parent Relationship": "Outer",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Join Type": "Inner",
+                                    "Startup Cost": 0.29,
+                                    "Total Cost": 16.35,
+                                    "Plan Rows": 1,
+                                    "Plan Width": 8,
+                                    "Actual Startup Time": 0.016,
+                                    "Actual Total Time": 0.017,
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 1,
+                                    "Output": [
+                                      "u0.organization_id"
+                                    ],
+                                    "Inner Unique": true,
+                                    "Shared Hit Blocks": 1,
+                                    "Shared Read Blocks": 0,
+                                    "Shared Dirtied Blocks": 0,
+                                    "Shared Written Blocks": 0,
+                                    "Local Hit Blocks": 0,
+                                    "Local Read Blocks": 0,
+                                    "Local Dirtied Blocks": 0,
+                                    "Local Written Blocks": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Parent Relationship": "Outer",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Scan Direction": "Forward",
+                                        "Index Name": "turnwork_poll_retry",
+                                        "Relation Name": "agent_turnwork",
+                                        "Schema": "public",
+                                        "Alias": "u0",
+                                        "Startup Cost": 0.14,
+                                        "Total Cost": 8.17,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 24,
+                                        "Actual Startup Time": 0.016,
+                                        "Actual Total Time": 0.016,
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 1,
+                                        "Output": [
+                                          "u0.conversation_id",
+                                          "u0.organization_id",
+                                          "u0.ownership_epoch"
+                                        ],
+                                        "Index Cond": "((u0.status)::text = 'PROCESSING'::text)",
+                                        "Rows Removed by Index Recheck": 0,
+                                        "Filter": "(u0.is_active AND (u0.lease_expires_at > statement_timestamp()))",
+                                        "Rows Removed by Filter": 0,
+                                        "Shared Hit Blocks": 1,
+                                        "Shared Read Blocks": 0,
+                                        "Shared Dirtied Blocks": 0,
+                                        "Shared Written Blocks": 0,
+                                        "Local Hit Blocks": 0,
+                                        "Local Read Blocks": 0,
+                                        "Local Dirtied Blocks": 0,
+                                        "Local Written Blocks": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Parent Relationship": "Inner",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Scan Direction": "Forward",
+                                        "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                        "Relation Name": "agent_conversation",
+                                        "Schema": "public",
+                                        "Alias": "u2",
+                                        "Startup Cost": 0.14,
+                                        "Total Cost": 8.17,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 24,
+                                        "Actual Startup Time": 0.0,
+                                        "Actual Total Time": 0.0,
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Output": [
+                                          "u2.id",
+                                          "u2.organization_id",
+                                          "u2.ownership_epoch"
+                                        ],
+                                        "Index Cond": "(u2.organization_id = u0.organization_id)",
+                                        "Rows Removed by Index Recheck": 0,
+                                        "Filter": "((u2.id = u0.conversation_id) AND (u2.ownership_epoch = u0.ownership_epoch))",
+                                        "Rows Removed by Filter": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Shared Dirtied Blocks": 0,
+                                        "Shared Written Blocks": 0,
+                                        "Local Hit Blocks": 0,
+                                        "Local Read Blocks": 0,
+                                        "Local Dirtied Blocks": 0,
+                                        "Local Written Blocks": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Limit",
+                        "Parent Relationship": "SubPlan",
+                        "Subplan Name": "SubPlan 1",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Startup Cost": 8.17,
+                        "Total Cost": 8.18,
+                        "Plan Rows": 1,
+                        "Plan Width": 8,
+                        "Actual Startup Time": 0.035,
+                        "Actual Total Time": 0.035,
+                        "Actual Rows": 0,
+                        "Actual Loops": 4,
+                        "Output": [
+                          "u0_1.claimed_at"
+                        ],
+                        "Shared Hit Blocks": 8,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Sort",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Startup Cost": 8.17,
+                            "Total Cost": 8.18,
+                            "Plan Rows": 1,
+                            "Plan Width": 8,
+                            "Actual Startup Time": 0.033,
+                            "Actual Total Time": 0.034,
+                            "Actual Rows": 0,
+                            "Actual Loops": 4,
+                            "Output": [
+                              "u0_1.claimed_at"
+                            ],
+                            "Sort Key": [
+                              "u0_1.claimed_at DESC"
+                            ],
+                            "Sort Method": "top-N heapsort",
+                            "Sort Space Used": 25,
+                            "Sort Space Type": "Memory",
+                            "Shared Hit Blocks": 8,
+                            "Shared Read Blocks": 0,
+                            "Shared Dirtied Blocks": 0,
+                            "Shared Written Blocks": 0,
+                            "Local Hit Blocks": 0,
+                            "Local Read Blocks": 0,
+                            "Local Dirtied Blocks": 0,
+                            "Local Written Blocks": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Index Scan",
+                                "Parent Relationship": "Outer",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Scan Direction": "Forward",
+                                "Index Name": "agent_turnwork_organization_id_4c7f7bfe",
+                                "Relation Name": "agent_turnwork",
+                                "Schema": "public",
+                                "Alias": "u0_1",
+                                "Startup Cost": 0.14,
+                                "Total Cost": 8.16,
+                                "Plan Rows": 1,
+                                "Plan Width": 8,
+                                "Actual Startup Time": 0.01,
+                                "Actual Total Time": 0.022,
+                                "Actual Rows": 2,
+                                "Actual Loops": 4,
+                                "Output": [
+                                  "u0_1.claimed_at"
+                                ],
+                                "Index Cond": "(u0_1.organization_id = agent_conversation.organization_id)",
+                                "Rows Removed by Index Recheck": 0,
+                                "Filter": "(u0_1.is_active AND (u0_1.claimed_at IS NOT NULL))",
+                                "Rows Removed by Filter": 25,
+                                "Shared Hit Blocks": 8,
+                                "Shared Read Blocks": 0,
+                                "Shared Dirtied Blocks": 0,
+                                "Shared Written Blocks": 0,
+                                "Local Hit Blocks": 0,
+                                "Local Read Blocks": 0,
+                                "Local Dirtied Blocks": 0,
+                                "Local Written Blocks": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Planning": {
+        "Shared Hit Blocks": 21,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 9.492,
+      "Triggers": [],
+      "Execution Time": 131.087
+    }
+  ],
+  "after_selector": {
+    "timestamp_utc": "2026-10-03T07:13:32.061094+00:00",
+    "settings": [
+      {
+        "name": "autovacuum",
+        "setting": "on"
+      },
+      {
+        "name": "autovacuum_analyze_scale_factor",
+        "setting": "0.1"
+      },
+      {
+        "name": "autovacuum_analyze_threshold",
+        "setting": "50"
+      },
+      {
+        "name": "autovacuum_naptime",
+        "setting": "60"
+      },
+      {
+        "name": "effective_cache_size",
+        "setting": "524288"
+      },
+      {
+        "name": "fsync",
+        "setting": "on"
+      },
+      {
+        "name": "random_page_cost",
+        "setting": "4"
+      },
+      {
+        "name": "seq_page_cost",
+        "setting": "1"
+      },
+      {
+        "name": "shared_buffers",
+        "setting": "16384"
+      },
+      {
+        "name": "synchronous_commit",
+        "setting": "on"
+      },
+      {
+        "name": "track_io_timing",
+        "setting": "off"
+      },
+      {
+        "name": "work_mem",
+        "setting": "4096"
+      }
+    ],
+    "relations": [
+      {
+        "relname": "agent_conversation",
+        "relpages": 0,
+        "reltuples": -1.0,
+        "relallvisible": 0,
+        "heap_bytes": 57344,
+        "total_bytes": 327680
+      },
+      {
+        "relname": "agent_turnwork",
+        "relpages": 0,
+        "reltuples": -1.0,
+        "relallvisible": 0,
+        "heap_bytes": 16384,
+        "total_bytes": 204800
+      },
+      {
+        "relname": "channels_message",
+        "relpages": 0,
+        "reltuples": -1.0,
+        "relallvisible": 0,
+        "heap_bytes": 1687552,
+        "total_bytes": 4530176
+      }
+    ],
+    "pg_stats": [],
+    "table_stats": [
+      {
+        "relname": "agent_conversation",
+        "n_live_tup": 354,
+        "n_dead_tup": 0,
+        "n_mod_since_analyze": 354,
+        "last_vacuum": null,
+        "last_autovacuum": null,
+        "last_analyze": null,
+        "last_autoanalyze": null,
+        "analyze_count": 0,
+        "autoanalyze_count": 0
+      },
+      {
+        "relname": "agent_turnwork",
+        "n_live_tup": 53,
+        "n_dead_tup": 0,
+        "n_mod_since_analyze": 53,
+        "last_vacuum": null,
+        "last_autovacuum": null,
+        "last_analyze": null,
+        "last_autoanalyze": null,
+        "analyze_count": 0,
+        "autoanalyze_count": 0
+      },
+      {
+        "relname": "channels_message",
+        "n_live_tup": 10000,
+        "n_dead_tup": 53,
+        "n_mod_since_analyze": 10053,
+        "last_vacuum": null,
+        "last_autovacuum": null,
+        "last_analyze": null,
+        "last_autoanalyze": null,
+        "analyze_count": 0,
+        "autoanalyze_count": 0
+      }
+    ],
+    "message_physical": [
+      {
+        "status": "pending",
+        "rows": 204,
+        "occupied_heap_blocks": 32,
+        "min_block": 0.0,
+        "max_block": 202.0
+      },
+      {
+        "status": "processed",
+        "rows": 9796,
+        "occupied_heap_blocks": 206,
+        "min_block": 0.0,
+        "max_block": 205.0
+      }
+    ],
+    "visibility": {
+      "agent_conversation": {
+        "all_visible": 0,
+        "all_frozen": 0
+      },
+      "channels_message": {
+        "all_visible": 0,
+        "all_frozen": 0
+      },
+      "agent_turnwork": {
+        "all_visible": 0,
+        "all_frozen": 0
+      }
+    },
+    "connections": [
+      {
+        "pid": 60588,
+        "backend_type": "client backend",
+        "state": "idle",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "xact_start": null,
+        "query_start": "2026-10-03 01:13:32.318934-06:00"
+      },
+      {
+        "pid": 63432,
+        "backend_type": "client backend",
+        "state": "idle",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "xact_start": null,
+        "query_start": "2026-10-03 01:13:31.646662-06:00"
+      },
+      {
+        "pid": 64876,
+        "backend_type": "client backend",
+        "state": "active",
+        "wait_event_type": null,
+        "wait_event": null,
+        "xact_start": "2026-10-03 01:13:32.310873-06:00",
+        "query_start": "2026-10-03 01:13:32.310873-06:00"
+      }
+    ],
+    "locks": [
+      {
+        "pid": 64876,
+        "locktype": "relation",
+        "relation": "pg_authid",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64876,
+        "locktype": "relation",
+        "relation": "pg_authid_oid_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64876,
+        "locktype": "relation",
+        "relation": "pg_authid_rolname_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64876,
+        "locktype": "relation",
+        "relation": "pg_database",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64876,
+        "locktype": "relation",
+        "relation": "pg_database_datname_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64876,
+        "locktype": "relation",
+        "relation": "pg_database_oid_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64876,
+        "locktype": "relation",
+        "relation": "pg_locks",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64876,
+        "locktype": "relation",
+        "relation": "pg_stat_activity",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 64876,
+        "locktype": "virtualxid",
+        "relation": null,
+        "mode": "ExclusiveLock",
+        "granted": true
+      }
+    ]
+  },
+  "isolated_claim": {
+    "turn_work_id": 54,
+    "conversation_id": 1,
+    "claimed_at": "2026-10-03 07:13:32.349253+00:00",
+    "query_count": 33,
+    "queries": [
+      {
+        "sql": "SAVEPOINT \"s66596_x184\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.324595+00:00",
+        "end_utc": "2026-10-03T07:13:32.325466+00:00",
+        "start_perf_ns": 28538488564500,
+        "end_perf_ns": 28538489408100,
+        "client_execute_ms": 0.8436
+      },
+      {
+        "sql": "SELECT \"agent_conversation\".\"organization_id\" AS \"organization_id\" FROM \"agent_conversation\" WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"id\" = %s) ORDER BY \"agent_conversation\".\"id\" ASC LIMIT 1",
+        "params": [
+          1
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.326924+00:00",
+        "end_utc": "2026-10-03T07:13:32.327845+00:00",
+        "start_perf_ns": 28538490892000,
+        "end_perf_ns": 28538491787300,
+        "client_execute_ms": 0.8953
+      },
+      {
+        "sql": "SELECT \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\" FROM \"organizations_organization\" WHERE \"organizations_organization\".\"id\" = %s ORDER BY \"organizations_organization\".\"id\" ASC LIMIT 1 FOR NO KEY UPDATE SKIP LOCKED",
+        "params": [
+          1
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.331164+00:00",
+        "end_utc": "2026-10-03T07:13:32.332271+00:00",
+        "start_perf_ns": 28538495131100,
+        "end_perf_ns": 28538496213900,
+        "client_execute_ms": 1.0828
+      },
+      {
+        "sql": "SELECT \"agent_conversation\".\"id\", \"agent_conversation\".\"organization_id\", \"agent_conversation\".\"created_at\", \"agent_conversation\".\"updated_at\", \"agent_conversation\".\"created_by_id\", \"agent_conversation\".\"updated_by_id\", \"agent_conversation\".\"is_active\", \"agent_conversation\".\"public_id\", \"agent_conversation\".\"channel_account_id\", \"agent_conversation\".\"contact_id\", \"agent_conversation\".\"state\", \"agent_conversation\".\"closed_at\", \"agent_conversation\".\"close_reason\", \"agent_conversation\".\"last_inbound_at\", \"agent_conversation\".\"last_activity_at\", \"agent_conversation\".\"claimed_by_id\", \"agent_conversation\".\"claimed_at\", \"agent_conversation\".\"flow\", \"agent_conversation\".\"intake_path\", \"agent_conversation\".\"total_llm_calls\", \"agent_conversation\".\"processing_until\", \"agent_conversation\".\"ownership_epoch\", \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\", \"channels_channelaccount\".\"id\", \"channels_channelaccount\".\"organization_id\", \"channels_channelaccount\".\"created_at\", \"channels_channelaccount\".\"updated_at\", \"channels_channelaccount\".\"created_by_id\", \"channels_channelaccount\".\"updated_by_id\", \"channels_channelaccount\".\"is_active\", \"channels_channelaccount\".\"public_id\", \"channels_channelaccount\".\"channel_type\", \"channels_channelaccount\".\"external_account_id\", \"channels_channelaccount\".\"display_number\", \"channels_channelaccount\".\"provider_credentials_ref\", \"channels_channelaccount\".\"access_token_encrypted\", \"channels_channelaccount\".\"access_token_last4\", \"channels_channelaccount\".\"status\", \"agent_contactidentity\".\"id\", \"agent_contactidentity\".\"organization_id\", \"agent_contactidentity\".\"created_at\", \"agent_contactidentity\".\"updated_at\", \"agent_contactidentity\".\"created_by_id\", \"agent_contactidentity\".\"updated_by_id\", \"agent_contactidentity\".\"is_active\", \"agent_contactidentity\".\"public_id\", \"agent_contactidentity\".\"authorization_revision\", \"agent_contactidentity\".\"channel_type\", \"agent_contactidentity\".\"external_id\", \"agent_contactidentity\".\"phone_normalized\", \"agent_contactidentity\".\"owner_id\", \"agent_contactidentity\".\"verification_level\", \"agent_contactidentity\".\"verified_at\", \"agent_contactidentity\".\"display_name\", \"agent_contactidentity\".\"is_blocked\", \"agent_contactidentity\".\"proactive_opt_out\", \"agent_contactidentity\".\"is_ambiguous\", \"agent_contactidentity\".\"auto_rematch_blocked\", \"agent_contactidentity\".\"linked_via\", \"agent_contactidentity\".\"privacy_notice_sent_at\" FROM \"agent_conversation\" INNER JOIN \"organizations_organization\" ON (\"agent_conversation\".\"organization_id\" = \"organizations_organization\".\"id\") INNER JOIN \"channels_channelaccount\" ON (\"agent_conversation\".\"channel_account_id\" = \"channels_channelaccount\".\"id\") INNER JOIN \"agent_contactidentity\" ON (\"agent_conversation\".\"contact_id\" = \"agent_contactidentity\".\"id\") WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"organization_id\" = %s AND \"agent_conversation\".\"id\" = %s) ORDER BY \"agent_conversation\".\"id\" ASC LIMIT 1 FOR UPDATE OF \"agent_conversation\" SKIP LOCKED",
+        "params": [
+          1,
+          1
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.339832+00:00",
+        "end_utc": "2026-10-03T07:13:32.343561+00:00",
+        "start_perf_ns": 28538503800800,
+        "end_perf_ns": 28538507503600,
+        "client_execute_ms": 3.7028
+      },
+      {
+        "sql": "SELECT %s AS \"a\" FROM \"agent_turnwork\" INNER JOIN \"agent_conversation\" ON (\"agent_turnwork\".\"conversation_id\" = \"agent_conversation\".\"id\") WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_conversation\".\"organization_id\" = (\"agent_turnwork\".\"organization_id\") AND \"agent_conversation\".\"ownership_epoch\" = (\"agent_turnwork\".\"ownership_epoch\") AND \"agent_turnwork\".\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"status\" = %s) LIMIT 1",
+        "params": [
+          1,
+          1,
+          "PROCESSING"
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.347015+00:00",
+        "end_utc": "2026-10-03T07:13:32.348679+00:00",
+        "start_perf_ns": 28538510980600,
+        "end_perf_ns": 28538512620400,
+        "client_execute_ms": 1.6398
+      },
+      {
+        "sql": "SELECT statement_timestamp()",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.348918+00:00",
+        "end_utc": "2026-10-03T07:13:32.349871+00:00",
+        "start_perf_ns": 28538512883100,
+        "end_perf_ns": 28538513813000,
+        "client_execute_ms": 0.9299
+      },
+      {
+        "sql": "SELECT \"agent_turnwork\".\"id\", \"agent_turnwork\".\"organization_id\", \"agent_turnwork\".\"created_at\", \"agent_turnwork\".\"updated_at\", \"agent_turnwork\".\"created_by_id\", \"agent_turnwork\".\"updated_by_id\", \"agent_turnwork\".\"is_active\", \"agent_turnwork\".\"conversation_id\", \"agent_turnwork\".\"anchor_message_id\", \"agent_turnwork\".\"anchor_created_at\", \"agent_turnwork\".\"cursor_message_id\", \"agent_turnwork\".\"cursor_created_at\", \"agent_turnwork\".\"context_at\", \"agent_turnwork\".\"clinic_timezone\", \"agent_turnwork\".\"status\", \"agent_turnwork\".\"lease_token\", \"agent_turnwork\".\"lease_expires_at\", \"agent_turnwork\".\"attempts\", \"agent_turnwork\".\"next_attempt_at\", \"agent_turnwork\".\"claimed_at\", \"agent_turnwork\".\"completed_at\", \"agent_turnwork\".\"outcome_code\", \"agent_turnwork\".\"ownership_epoch\", \"agent_turnwork\".\"llm_calls_admitted\", \"agent_turnwork\".\"llm_output_tokens_reserved\", \"agent_turnwork\".\"llm_call_limit\", \"agent_turnwork\".\"llm_output_token_limit\" FROM \"agent_turnwork\" WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"conversation_id\" = %s AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"status\" IN (%s, %s)) ORDER BY \"agent_turnwork\".\"id\" ASC LIMIT 1 FOR UPDATE",
+        "params": [
+          1,
+          1,
+          "PENDING",
+          "PROCESSING"
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.359981+00:00",
+        "end_utc": "2026-10-03T07:13:32.361591+00:00",
+        "start_perf_ns": 28538523952500,
+        "end_perf_ns": 28538525533700,
+        "client_execute_ms": 1.5812
+      },
+      {
+        "sql": "SELECT \"channels_message\".\"id\", \"channels_message\".\"organization_id\", \"channels_message\".\"created_at\", \"channels_message\".\"updated_at\", \"channels_message\".\"created_by_id\", \"channels_message\".\"updated_by_id\", \"channels_message\".\"is_active\", \"channels_message\".\"channel_account_id\", \"channels_message\".\"conversation_id\", \"channels_message\".\"contact_id\", \"channels_message\".\"direction\", \"channels_message\".\"author_type\", \"channels_message\".\"human_author_id\", \"channels_message\".\"payload_type\", \"channels_message\".\"semantic_type\", \"channels_message\".\"operation_key\", \"channels_message\".\"idempotency_key\", \"channels_message\".\"body\", \"channels_message\".\"external_message_id\", \"channels_message\".\"raw_metadata\", \"channels_message\".\"status\", \"channels_message\".\"attempts\", \"channels_message\".\"next_attempt_at\", \"channels_message\".\"failure_reason\", \"channels_message\".\"send_token\", \"channels_message\".\"send_started_at\", \"channels_message\".\"send_lease_until\", \"channels_message\".\"send_admitted_at\", \"channels_message\".\"provider_accepted_at\", \"channels_message\".\"delivered_at\", \"channels_message\".\"read_at\", \"channels_message\".\"uncertain_at\", \"channels_message\".\"supersedes_message_id\", \"channels_message\".\"available_at\", \"channels_message\".\"process_attempts\", \"channels_message\".\"turn_work_id\", \"channels_message\".\"output_ordinal\", \"channels_message\".\"origin_epoch\" FROM \"channels_message\" WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"conversation_id\" = %s AND \"channels_message\".\"direction\" = %s AND \"channels_message\".\"status\" = %s AND \"channels_message\".\"turn_work_id\" IS NULL AND (\"channels_message\".\"available_at\" IS NULL OR \"channels_message\".\"available_at\" <= %s)) ORDER BY \"channels_message\".\"created_at\" ASC, \"channels_message\".\"id\" ASC",
+        "params": [
+          1,
+          1,
+          "in",
+          "pending",
+          "2026-10-03 07:10:18.199236+00:00"
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.371119+00:00",
+        "end_utc": "2026-10-03T07:13:32.373247+00:00",
+        "start_perf_ns": 28538535088100,
+        "end_perf_ns": 28538537189000,
+        "client_execute_ms": 2.1009
+      },
+      {
+        "sql": "SELECT %s AS \"a\" FROM \"organizations_organization\" WHERE \"organizations_organization\".\"id\" = %s LIMIT 1",
+        "params": [
+          1,
+          1
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.376231+00:00",
+        "end_utc": "2026-10-03T07:13:32.377051+00:00",
+        "start_perf_ns": 28538540202300,
+        "end_perf_ns": 28538540993300,
+        "client_execute_ms": 0.791
+      },
+      {
+        "sql": "SELECT %s AS \"a\" FROM \"agent_conversation\" WHERE \"agent_conversation\".\"id\" = %s LIMIT 1",
+        "params": [
+          1,
+          1
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.378070+00:00",
+        "end_utc": "2026-10-03T07:13:32.380116+00:00",
+        "start_perf_ns": 28538542036600,
+        "end_perf_ns": 28538544059100,
+        "client_execute_ms": 2.0225
+      },
+      {
+        "sql": "SELECT %s AS \"a\" FROM \"channels_message\" WHERE \"channels_message\".\"id\" = %s LIMIT 1",
+        "params": [
+          1,
+          1
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.381123+00:00",
+        "end_utc": "2026-10-03T07:13:32.383289+00:00",
+        "start_perf_ns": 28538545085300,
+        "end_perf_ns": 28538547230500,
+        "client_execute_ms": 2.1452
+      },
+      {
+        "sql": "SAVEPOINT \"s66596_x185\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.386924+00:00",
+        "end_utc": "2026-10-03T07:13:32.387385+00:00",
+        "start_perf_ns": 28538550896200,
+        "end_perf_ns": 28538551328800,
+        "client_execute_ms": 0.4326
+      },
+      {
+        "sql": "SELECT %s AS \"_check\" WHERE COALESCE((%s <= %s), %s)",
+        "params": [
+          1,
+          0,
+          30,
+          true
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.388145+00:00",
+        "end_utc": "2026-10-03T07:13:32.388889+00:00",
+        "start_perf_ns": 28538552111200,
+        "end_perf_ns": 28538552832400,
+        "client_execute_ms": 0.7212
+      },
+      {
+        "sql": "RELEASE SAVEPOINT \"s66596_x185\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.389081+00:00",
+        "end_utc": "2026-10-03T07:13:32.389483+00:00",
+        "start_perf_ns": 28538553041400,
+        "end_perf_ns": 28538553425400,
+        "client_execute_ms": 0.384
+      },
+      {
+        "sql": "SAVEPOINT \"s66596_x186\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.392024+00:00",
+        "end_utc": "2026-10-03T07:13:32.392532+00:00",
+        "start_perf_ns": 28538555996000,
+        "end_perf_ns": 28538556474800,
+        "client_execute_ms": 0.4788
+      },
+      {
+        "sql": "SELECT %s AS \"_check\" WHERE COALESCE((%s <= %s), %s)",
+        "params": [
+          1,
+          0,
+          18000,
+          true
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.393357+00:00",
+        "end_utc": "2026-10-03T07:13:32.394149+00:00",
+        "start_perf_ns": 28538557325500,
+        "end_perf_ns": 28538558093300,
+        "client_execute_ms": 0.7678
+      },
+      {
+        "sql": "RELEASE SAVEPOINT \"s66596_x186\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.394341+00:00",
+        "end_utc": "2026-10-03T07:13:32.394934+00:00",
+        "start_perf_ns": 28538558302100,
+        "end_perf_ns": 28538558877300,
+        "client_execute_ms": 0.5752
+      },
+      {
+        "sql": "SELECT %s AS \"a\" FROM \"agent_turnwork\" WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"anchor_message_id\" = %s AND \"agent_turnwork\".\"conversation_id\" = %s) LIMIT 1",
+        "params": [
+          1,
+          1,
+          1
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.396187+00:00",
+        "end_utc": "2026-10-03T07:13:32.397035+00:00",
+        "start_perf_ns": 28538560154500,
+        "end_perf_ns": 28538560978900,
+        "client_execute_ms": 0.8244
+      },
+      {
+        "sql": "SAVEPOINT \"s66596_x187\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.399006+00:00",
+        "end_utc": "2026-10-03T07:13:32.399422+00:00",
+        "start_perf_ns": 28538562970600,
+        "end_perf_ns": 28538563365900,
+        "client_execute_ms": 0.3953
+      },
+      {
+        "sql": "SELECT %s AS \"_check\" WHERE COALESCE((%s IN (%s, %s) AND EXISTS(SELECT %s AS \"a\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"conversation_id\" = %s AND U0.\"status\" IN (%s, %s)) LIMIT 1)), %s)",
+        "params": [
+          1,
+          "PENDING",
+          "PENDING",
+          "PROCESSING",
+          1,
+          1,
+          "PENDING",
+          "PROCESSING",
+          true
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.401233+00:00",
+        "end_utc": "2026-10-03T07:13:32.402975+00:00",
+        "start_perf_ns": 28538565198500,
+        "end_perf_ns": 28538566916900,
+        "client_execute_ms": 1.7184
+      },
+      {
+        "sql": "RELEASE SAVEPOINT \"s66596_x187\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.403188+00:00",
+        "end_utc": "2026-10-03T07:13:32.403777+00:00",
+        "start_perf_ns": 28538567151600,
+        "end_perf_ns": 28538567720100,
+        "client_execute_ms": 0.5685
+      },
+      {
+        "sql": "SAVEPOINT \"s66596_x188\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.406312+00:00",
+        "end_utc": "2026-10-03T07:13:32.406802+00:00",
+        "start_perf_ns": 28538570281900,
+        "end_perf_ns": 28538570746100,
+        "client_execute_ms": 0.4642
+      },
+      {
+        "sql": "SELECT %s AS \"_check\" WHERE COALESCE((NOT (%s = %s)), %s)",
+        "params": [
+          1,
+          "PENDING",
+          "PROCESSING",
+          true
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.407321+00:00",
+        "end_utc": "2026-10-03T07:13:32.407840+00:00",
+        "start_perf_ns": 28538571280400,
+        "end_perf_ns": 28538571784500,
+        "client_execute_ms": 0.5041
+      },
+      {
+        "sql": "RELEASE SAVEPOINT \"s66596_x188\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.407957+00:00",
+        "end_utc": "2026-10-03T07:13:32.408262+00:00",
+        "start_perf_ns": 28538571911600,
+        "end_perf_ns": 28538572206300,
+        "client_execute_ms": 0.2947
+      },
+      {
+        "sql": "SAVEPOINT \"s66596_x189\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.410640+00:00",
+        "end_utc": "2026-10-03T07:13:32.411110+00:00",
+        "start_perf_ns": 28538574609300,
+        "end_perf_ns": 28538575053200,
+        "client_execute_ms": 0.4439
+      },
+      {
+        "sql": "SELECT %s AS \"_check\" WHERE COALESCE((NOT (%s = %s)), %s)",
+        "params": [
+          1,
+          "PENDING",
+          "COMPLETED",
+          true
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.411944+00:00",
+        "end_utc": "2026-10-03T07:13:32.412519+00:00",
+        "start_perf_ns": 28538575910900,
+        "end_perf_ns": 28538576462500,
+        "client_execute_ms": 0.5516
+      },
+      {
+        "sql": "RELEASE SAVEPOINT \"s66596_x189\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.412698+00:00",
+        "end_utc": "2026-10-03T07:13:32.413045+00:00",
+        "start_perf_ns": 28538576657900,
+        "end_perf_ns": 28538576989500,
+        "client_execute_ms": 0.3316
+      },
+      {
+        "sql": "INSERT INTO \"agent_turnwork\" (\"organization_id\", \"created_at\", \"updated_at\", \"created_by_id\", \"updated_by_id\", \"is_active\", \"conversation_id\", \"anchor_message_id\", \"anchor_created_at\", \"cursor_message_id\", \"cursor_created_at\", \"context_at\", \"clinic_timezone\", \"status\", \"lease_token\", \"lease_expires_at\", \"attempts\", \"next_attempt_at\", \"claimed_at\", \"completed_at\", \"outcome_code\", \"ownership_epoch\", \"llm_calls_admitted\", \"llm_output_tokens_reserved\", \"llm_call_limit\", \"llm_output_token_limit\") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING \"agent_turnwork\".\"id\"",
+        "params": [
+          1,
+          "2026-10-03 07:13:32.413643+00:00",
+          "2026-10-03 07:13:32.413660+00:00",
+          null,
+          null,
+          true,
+          1,
+          1,
+          "2026-10-03 07:13:22.229854+00:00",
+          1,
+          "2026-10-03 07:13:22.229854+00:00",
+          "2026-10-03 07:13:32.349253+00:00",
+          "UTC",
+          "PENDING",
+          null,
+          null,
+          0,
+          null,
+          null,
+          null,
+          "",
+          0,
+          0,
+          0,
+          30,
+          18000
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.413976+00:00",
+        "end_utc": "2026-10-03T07:13:32.415134+00:00",
+        "start_perf_ns": 28538577933800,
+        "end_perf_ns": 28538579078700,
+        "client_execute_ms": 1.1449
+      },
+      {
+        "sql": "UPDATE \"channels_message\" SET \"turn_work_id\" = %s WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"conversation_id\" = %s AND \"channels_message\".\"id\" IN (%s) AND \"channels_message\".\"turn_work_id\" IS NULL)",
+        "params": [
+          54,
+          1,
+          1,
+          1
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.416276+00:00",
+        "end_utc": "2026-10-03T07:13:32.418620+00:00",
+        "start_perf_ns": 28538580237100,
+        "end_perf_ns": 28538582561700,
+        "client_execute_ms": 2.3246
+      },
+      {
+        "sql": "UPDATE \"agent_turnwork\" SET \"status\" = %s, \"lease_token\" = %s, \"lease_expires_at\" = %s, \"claimed_at\" = %s, \"attempts\" = (\"agent_turnwork\".\"attempts\" + %s), \"next_attempt_at\" = NULL WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"lease_token\" IS NULL AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"ownership_epoch\" = %s AND \"agent_turnwork\".\"id\" = %s AND \"agent_turnwork\".\"status\" = %s)",
+        "params": [
+          "PROCESSING",
+          "fbf7a858-42ac-47bd-b472-821fc73d5a87",
+          "2026-10-03 07:28:32.349253+00:00",
+          "2026-10-03 07:13:32.349253+00:00",
+          1,
+          1,
+          0,
+          54,
+          "PENDING"
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.420600+00:00",
+        "end_utc": "2026-10-03T07:13:32.422517+00:00",
+        "start_perf_ns": 28538584567700,
+        "end_perf_ns": 28538586460100,
+        "client_execute_ms": 1.8924
+      },
+      {
+        "sql": "UPDATE \"channels_message\" SET \"process_attempts\" = (\"channels_message\".\"process_attempts\" + %s) WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"direction\" = %s AND \"channels_message\".\"turn_work_id\" = %s)",
+        "params": [
+          1,
+          1,
+          "in",
+          54
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.424096+00:00",
+        "end_utc": "2026-10-03T07:13:32.426881+00:00",
+        "start_perf_ns": 28538588065500,
+        "end_perf_ns": 28538590824600,
+        "client_execute_ms": 2.7591
+      },
+      {
+        "sql": "UPDATE \"agent_conversation\" SET \"processing_until\" = %s WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"id\" = %s)",
+        "params": [
+          "2026-10-03 07:28:32.349253+00:00",
+          1
+        ],
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.427659+00:00",
+        "end_utc": "2026-10-03T07:13:32.429515+00:00",
+        "start_perf_ns": 28538591619600,
+        "end_perf_ns": 28538593457100,
+        "client_execute_ms": 1.8375
+      },
+      {
+        "sql": "RELEASE SAVEPOINT \"s66596_x184\"",
+        "params": null,
+        "many": false,
+        "start_utc": "2026-10-03T07:13:32.429917+00:00",
+        "end_utc": "2026-10-03T07:13:32.430477+00:00",
+        "start_perf_ns": 28538593885500,
+        "end_perf_ns": 28538594420800,
+        "client_execute_ms": 0.5353
+      }
+    ],
+    "rollback": true,
+    "count_scope": "claim_turn SQL including nested savepoint; outer BEGIN/ROLLBACK and observer reads excluded"
+  },
+  "selector_runs": [
+    {
+      "repeat": 0,
+      "start_utc": "2026-10-03T07:13:31.026578+00:00",
+      "end_utc": "2026-10-03T07:13:31.246726+00:00",
+      "complete_client_wall_ms": 220.1388,
+      "ids": [
+        1,
+        2,
+        3
+      ],
+      "query_count": 1,
+      "queries": [
+        {
+          "sql": "SELECT \"pk\" FROM ( SELECT * FROM ( SELECT \"agent_conversation\".\"id\" AS \"pk\", ROW_NUMBER() OVER (PARTITION BY \"agent_conversation\".\"organization_id\" ORDER BY \"agent_conversation\".\"last_activity_at\" ASC, \"agent_conversation\".\"id\" ASC) AS \"qual0\", (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) AS \"qual1\", \"agent_conversation\".\"last_activity_at\" AS \"qual2\" FROM \"agent_conversation\" LEFT OUTER JOIN \"agent_turnwork\" ON (\"agent_conversation\".\"id\" = \"agent_turnwork\".\"conversation_id\") WHERE (\"agent_conversation\".\"is_active\" AND ((\"agent_turnwork\".\"lease_expires_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = %s) OR (\"agent_turnwork\".\"next_attempt_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = %s) OR (\"agent_turnwork\".\"next_attempt_at\" IS NULL AND \"agent_turnwork\".\"status\" = %s) OR \"agent_conversation\".\"id\" IN (SELECT U0.\"conversation_id\" AS \"conversation_id\" FROM \"channels_message\" U0 WHERE (U0.\"is_active\" AND U0.\"direction\" = %s AND U0.\"status\" = %s AND U0.\"turn_work_id\" IS NULL AND (U0.\"available_at\" IS NULL OR U0.\"available_at\" <= %s)))) AND NOT EXISTS(SELECT %s AS \"a\" FROM \"agent_turnwork\" U0 INNER JOIN \"agent_conversation\" U2 ON (U0.\"conversation_id\" = U2.\"id\") WHERE (U0.\"is_active\" AND U2.\"organization_id\" = (U0.\"organization_id\") AND U2.\"ownership_epoch\" = (U0.\"ownership_epoch\") AND U0.\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\") AND U0.\"status\" = %s) LIMIT 1) AND (\"agent_conversation\".\"id\" IN (SELECT U0.\"conversation_id\" AS \"conversation_id\" FROM \"channels_message\" U0 WHERE (U0.\"is_active\" AND U0.\"direction\" = %s AND U0.\"semantic_type\" = %s AND U0.\"status\" = %s)) OR (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) IS NULL OR NOT EXISTS(SELECT %s AS \"a\" FROM \"channels_message\" V0 WHERE (V0.\"is_active\" AND V0.\"available_at\" > %s AND V0.\"available_at\" <= %s AND V0.\"direction\" = %s AND V0.\"status\" = %s AND V0.\"turn_work_id\" IS NULL AND NOT (V0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) AND NOT (V0.\"semantic_type\" = %s) AND NOT EXISTS(SELECT %s AS \"a\" FROM \"agent_turnwork\" U0 INNER JOIN \"agent_conversation\" U2 ON (U0.\"conversation_id\" = U2.\"id\") WHERE (U0.\"is_active\" AND U2.\"organization_id\" = (U0.\"organization_id\") AND U2.\"ownership_epoch\" = (U0.\"ownership_epoch\") AND U0.\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND U0.\"organization_id\" = (V0.\"organization_id\") AND U0.\"status\" = %s) LIMIT 1) AND ((SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (V0.\"organization_id\")) ORDER BY 1 DESC LIMIT 1) IS NULL OR (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (V0.\"organization_id\")) ORDER BY 1 DESC LIMIT 1) < (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1))) LIMIT 1))) ORDER BY (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) ASC NULLS FIRST, \"agent_conversation\".\"last_activity_at\" ASC, 1 ASC ) \"qualify\" WHERE \"qual0\" = %s ) \"qualify_mask\" ORDER BY \"qual1\" ASC NULLS FIRST, \"qual2\" ASC, 1 ASC LIMIT 3",
+          "params": [
+            "PROCESSING",
+            "PENDING",
+            "PENDING",
+            "in",
+            "pending",
+            "2026-10-03 07:10:18.199236+00:00",
+            1,
+            "PROCESSING",
+            "in",
+            "safety_signal",
+            "pending",
+            1,
+            "2026-10-03 07:10:18.199236+00:00",
+            "2026-10-03 07:10:19.199236+00:00",
+            "in",
+            "pending",
+            "safety_signal",
+            1,
+            "PROCESSING",
+            1
+          ],
+          "many": false,
+          "start_utc": "2026-10-03T07:13:31.104724+00:00",
+          "end_utc": "2026-10-03T07:13:31.246346+00:00",
+          "start_perf_ns": 28537268696600,
+          "end_perf_ns": 28537410288500,
+          "client_execute_ms": 141.5919
+        }
+      ]
+    },
+    {
+      "repeat": 1,
+      "start_utc": "2026-10-03T07:13:31.246754+00:00",
+      "end_utc": "2026-10-03T07:13:31.463655+00:00",
+      "complete_client_wall_ms": 216.9061,
+      "ids": [
+        1,
+        2,
+        3
+      ],
+      "query_count": 1,
+      "queries": [
+        {
+          "sql": "SELECT \"pk\" FROM ( SELECT * FROM ( SELECT \"agent_conversation\".\"id\" AS \"pk\", ROW_NUMBER() OVER (PARTITION BY \"agent_conversation\".\"organization_id\" ORDER BY \"agent_conversation\".\"last_activity_at\" ASC, \"agent_conversation\".\"id\" ASC) AS \"qual0\", (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) AS \"qual1\", \"agent_conversation\".\"last_activity_at\" AS \"qual2\" FROM \"agent_conversation\" LEFT OUTER JOIN \"agent_turnwork\" ON (\"agent_conversation\".\"id\" = \"agent_turnwork\".\"conversation_id\") WHERE (\"agent_conversation\".\"is_active\" AND ((\"agent_turnwork\".\"lease_expires_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = %s) OR (\"agent_turnwork\".\"next_attempt_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = %s) OR (\"agent_turnwork\".\"next_attempt_at\" IS NULL AND \"agent_turnwork\".\"status\" = %s) OR \"agent_conversation\".\"id\" IN (SELECT U0.\"conversation_id\" AS \"conversation_id\" FROM \"channels_message\" U0 WHERE (U0.\"is_active\" AND U0.\"direction\" = %s AND U0.\"status\" = %s AND U0.\"turn_work_id\" IS NULL AND (U0.\"available_at\" IS NULL OR U0.\"available_at\" <= %s)))) AND NOT EXISTS(SELECT %s AS \"a\" FROM \"agent_turnwork\" U0 INNER JOIN \"agent_conversation\" U2 ON (U0.\"conversation_id\" = U2.\"id\") WHERE (U0.\"is_active\" AND U2.\"organization_id\" = (U0.\"organization_id\") AND U2.\"ownership_epoch\" = (U0.\"ownership_epoch\") AND U0.\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\") AND U0.\"status\" = %s) LIMIT 1) AND (\"agent_conversation\".\"id\" IN (SELECT U0.\"conversation_id\" AS \"conversation_id\" FROM \"channels_message\" U0 WHERE (U0.\"is_active\" AND U0.\"direction\" = %s AND U0.\"semantic_type\" = %s AND U0.\"status\" = %s)) OR (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) IS NULL OR NOT EXISTS(SELECT %s AS \"a\" FROM \"channels_message\" V0 WHERE (V0.\"is_active\" AND V0.\"available_at\" > %s AND V0.\"available_at\" <= %s AND V0.\"direction\" = %s AND V0.\"status\" = %s AND V0.\"turn_work_id\" IS NULL AND NOT (V0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) AND NOT (V0.\"semantic_type\" = %s) AND NOT EXISTS(SELECT %s AS \"a\" FROM \"agent_turnwork\" U0 INNER JOIN \"agent_conversation\" U2 ON (U0.\"conversation_id\" = U2.\"id\") WHERE (U0.\"is_active\" AND U2.\"organization_id\" = (U0.\"organization_id\") AND U2.\"ownership_epoch\" = (U0.\"ownership_epoch\") AND U0.\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND U0.\"organization_id\" = (V0.\"organization_id\") AND U0.\"status\" = %s) LIMIT 1) AND ((SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (V0.\"organization_id\")) ORDER BY 1 DESC LIMIT 1) IS NULL OR (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (V0.\"organization_id\")) ORDER BY 1 DESC LIMIT 1) < (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1))) LIMIT 1))) ORDER BY (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) ASC NULLS FIRST, \"agent_conversation\".\"last_activity_at\" ASC, 1 ASC ) \"qualify\" WHERE \"qual0\" = %s ) \"qualify_mask\" ORDER BY \"qual1\" ASC NULLS FIRST, \"qual2\" ASC, 1 ASC LIMIT 3",
+          "params": [
+            "PROCESSING",
+            "PENDING",
+            "PENDING",
+            "in",
+            "pending",
+            "2026-10-03 07:10:18.199236+00:00",
+            1,
+            "PROCESSING",
+            "in",
+            "safety_signal",
+            "pending",
+            1,
+            "2026-10-03 07:10:18.199236+00:00",
+            "2026-10-03 07:10:19.199236+00:00",
+            "in",
+            "pending",
+            "safety_signal",
+            1,
+            "PROCESSING",
+            1
+          ],
+          "many": false,
+          "start_utc": "2026-10-03T07:13:31.303290+00:00",
+          "end_utc": "2026-10-03T07:13:31.463298+00:00",
+          "start_perf_ns": 28537467285500,
+          "end_perf_ns": 28537627240700,
+          "client_execute_ms": 159.9552
+        }
+      ]
+    },
+    {
+      "repeat": 2,
+      "start_utc": "2026-10-03T07:13:31.463679+00:00",
+      "end_utc": "2026-10-03T07:13:31.632603+00:00",
+      "complete_client_wall_ms": 168.9552,
+      "ids": [
+        1,
+        2,
+        3
+      ],
+      "query_count": 1,
+      "queries": [
+        {
+          "sql": "SELECT \"pk\" FROM ( SELECT * FROM ( SELECT \"agent_conversation\".\"id\" AS \"pk\", ROW_NUMBER() OVER (PARTITION BY \"agent_conversation\".\"organization_id\" ORDER BY \"agent_conversation\".\"last_activity_at\" ASC, \"agent_conversation\".\"id\" ASC) AS \"qual0\", (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) AS \"qual1\", \"agent_conversation\".\"last_activity_at\" AS \"qual2\" FROM \"agent_conversation\" LEFT OUTER JOIN \"agent_turnwork\" ON (\"agent_conversation\".\"id\" = \"agent_turnwork\".\"conversation_id\") WHERE (\"agent_conversation\".\"is_active\" AND ((\"agent_turnwork\".\"lease_expires_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = %s) OR (\"agent_turnwork\".\"next_attempt_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = %s) OR (\"agent_turnwork\".\"next_attempt_at\" IS NULL AND \"agent_turnwork\".\"status\" = %s) OR \"agent_conversation\".\"id\" IN (SELECT U0.\"conversation_id\" AS \"conversation_id\" FROM \"channels_message\" U0 WHERE (U0.\"is_active\" AND U0.\"direction\" = %s AND U0.\"status\" = %s AND U0.\"turn_work_id\" IS NULL AND (U0.\"available_at\" IS NULL OR U0.\"available_at\" <= %s)))) AND NOT EXISTS(SELECT %s AS \"a\" FROM \"agent_turnwork\" U0 INNER JOIN \"agent_conversation\" U2 ON (U0.\"conversation_id\" = U2.\"id\") WHERE (U0.\"is_active\" AND U2.\"organization_id\" = (U0.\"organization_id\") AND U2.\"ownership_epoch\" = (U0.\"ownership_epoch\") AND U0.\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\") AND U0.\"status\" = %s) LIMIT 1) AND (\"agent_conversation\".\"id\" IN (SELECT U0.\"conversation_id\" AS \"conversation_id\" FROM \"channels_message\" U0 WHERE (U0.\"is_active\" AND U0.\"direction\" = %s AND U0.\"semantic_type\" = %s AND U0.\"status\" = %s)) OR (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) IS NULL OR NOT EXISTS(SELECT %s AS \"a\" FROM \"channels_message\" V0 WHERE (V0.\"is_active\" AND V0.\"available_at\" > %s AND V0.\"available_at\" <= %s AND V0.\"direction\" = %s AND V0.\"status\" = %s AND V0.\"turn_work_id\" IS NULL AND NOT (V0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) AND NOT (V0.\"semantic_type\" = %s) AND NOT EXISTS(SELECT %s AS \"a\" FROM \"agent_turnwork\" U0 INNER JOIN \"agent_conversation\" U2 ON (U0.\"conversation_id\" = U2.\"id\") WHERE (U0.\"is_active\" AND U2.\"organization_id\" = (U0.\"organization_id\") AND U2.\"ownership_epoch\" = (U0.\"ownership_epoch\") AND U0.\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND U0.\"organization_id\" = (V0.\"organization_id\") AND U0.\"status\" = %s) LIMIT 1) AND ((SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (V0.\"organization_id\")) ORDER BY 1 DESC LIMIT 1) IS NULL OR (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (V0.\"organization_id\")) ORDER BY 1 DESC LIMIT 1) < (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1))) LIMIT 1))) ORDER BY (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) ASC NULLS FIRST, \"agent_conversation\".\"last_activity_at\" ASC, 1 ASC ) \"qualify\" WHERE \"qual0\" = %s ) \"qualify_mask\" ORDER BY \"qual1\" ASC NULLS FIRST, \"qual2\" ASC, 1 ASC LIMIT 3",
+          "params": [
+            "PROCESSING",
+            "PENDING",
+            "PENDING",
+            "in",
+            "pending",
+            "2026-10-03 07:10:18.199236+00:00",
+            1,
+            "PROCESSING",
+            "in",
+            "safety_signal",
+            "pending",
+            1,
+            "2026-10-03 07:10:18.199236+00:00",
+            "2026-10-03 07:10:19.199236+00:00",
+            "in",
+            "pending",
+            "safety_signal",
+            1,
+            "PROCESSING",
+            1
+          ],
+          "many": false,
+          "start_utc": "2026-10-03T07:13:31.505271+00:00",
+          "end_utc": "2026-10-03T07:13:31.632183+00:00",
+          "start_perf_ns": 28537669244900,
+          "end_perf_ns": 28537796125900,
+          "client_execute_ms": 126.881
+        }
+      ]
+    }
+  ],
+  "activity_samples": [
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.362145+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.303928-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.401362+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.303928-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.432744+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.303928-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.478884+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.303928-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.540096+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.505811-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.571166+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.505811-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.602127+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.505811-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.633173+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.633355-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.663643+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.695252+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.726804+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.758115+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.788410+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.819686+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.851443+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.881770+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.913085+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.944550+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:31.976309+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.008042+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.039105+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.069074+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.100056+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.131072+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.162316+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.194211+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.224036+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.255625+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.287007+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.316576+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:31.646662-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.347707+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:32.347348-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.393917+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "idle in transaction",
+          "wait_event_type": "Client",
+          "wait_event": "ClientRead",
+          "query_start": "2026-10-03 01:13:32.393692-06:00"
+        }
+      ],
+      "waiting_locks": []
+    },
+    {
+      "timestamp_utc": "2026-10-03T07:13:32.424940+00:00",
+      "activity": [
+        {
+          "pid": 63432,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "query_start": "2026-10-03 01:13:32.424582-06:00"
+        }
+      ],
+      "waiting_locks": []
+    }
+  ],
+  "explain_event_scope": "Separate executions after three selector calls, on the same stationary logical cohort; never historical event plans.",
+  "after_claim_rollback": {
+    "timestamp_utc": "2026-10-03T07:13:32.721732+00:00",
+    "settings": [
+      {
+        "name": "autovacuum",
+        "setting": "on"
+      },
+      {
+        "name": "autovacuum_analyze_scale_factor",
+        "setting": "0.1"
+      },
+      {
+        "name": "autovacuum_analyze_threshold",
+        "setting": "50"
+      },
+      {
+        "name": "autovacuum_naptime",
+        "setting": "60"
+      },
+      {
+        "name": "effective_cache_size",
+        "setting": "524288"
+      },
+      {
+        "name": "fsync",
+        "setting": "on"
+      },
+      {
+        "name": "random_page_cost",
+        "setting": "4"
+      },
+      {
+        "name": "seq_page_cost",
+        "setting": "1"
+      },
+      {
+        "name": "shared_buffers",
+        "setting": "16384"
+      },
+      {
+        "name": "synchronous_commit",
+        "setting": "on"
+      },
+      {
+        "name": "track_io_timing",
+        "setting": "off"
+      },
+      {
+        "name": "work_mem",
+        "setting": "4096"
+      }
+    ],
+    "relations": [
+      {
+        "relname": "agent_conversation",
+        "relpages": 0,
+        "reltuples": -1.0,
+        "relallvisible": 0,
+        "heap_bytes": 57344,
+        "total_bytes": 327680
+      },
+      {
+        "relname": "agent_turnwork",
+        "relpages": 0,
+        "reltuples": -1.0,
+        "relallvisible": 0,
+        "heap_bytes": 16384,
+        "total_bytes": 204800
+      },
+      {
+        "relname": "channels_message",
+        "relpages": 0,
+        "reltuples": -1.0,
+        "relallvisible": 0,
+        "heap_bytes": 1687552,
+        "total_bytes": 4530176
+      }
+    ],
+    "pg_stats": [],
+    "table_stats": [
+      {
+        "relname": "agent_conversation",
+        "n_live_tup": 354,
+        "n_dead_tup": 1,
+        "n_mod_since_analyze": 354,
+        "last_vacuum": null,
+        "last_autovacuum": null,
+        "last_analyze": null,
+        "last_autoanalyze": null,
+        "analyze_count": 0,
+        "autoanalyze_count": 0
+      },
+      {
+        "relname": "agent_turnwork",
+        "n_live_tup": 53,
+        "n_dead_tup": 2,
+        "n_mod_since_analyze": 53,
+        "last_vacuum": null,
+        "last_autovacuum": null,
+        "last_analyze": null,
+        "last_autoanalyze": null,
+        "analyze_count": 0,
+        "autoanalyze_count": 0
+      },
+      {
+        "relname": "channels_message",
+        "n_live_tup": 10000,
+        "n_dead_tup": 55,
+        "n_mod_since_analyze": 10053,
+        "last_vacuum": null,
+        "last_autovacuum": null,
+        "last_analyze": null,
+        "last_autoanalyze": null,
+        "analyze_count": 0,
+        "autoanalyze_count": 0
+      }
+    ],
+    "message_physical": [
+      {
+        "status": "pending",
+        "rows": 204,
+        "occupied_heap_blocks": 32,
+        "min_block": 0.0,
+        "max_block": 202.0
+      },
+      {
+        "status": "processed",
+        "rows": 9796,
+        "occupied_heap_blocks": 206,
+        "min_block": 0.0,
+        "max_block": 205.0
+      }
+    ],
+    "visibility": {
+      "agent_conversation": {
+        "all_visible": 0,
+        "all_frozen": 0
+      },
+      "channels_message": {
+        "all_visible": 0,
+        "all_frozen": 0
+      },
+      "agent_turnwork": {
+        "all_visible": 0,
+        "all_frozen": 0
+      }
+    },
+    "connections": [
+      {
+        "pid": 62276,
+        "backend_type": "client backend",
+        "state": "active",
+        "wait_event_type": null,
+        "wait_event": null,
+        "xact_start": "2026-10-03 01:13:32.977016-06:00",
+        "query_start": "2026-10-03 01:13:32.977016-06:00"
+      },
+      {
+        "pid": 63432,
+        "backend_type": "client backend",
+        "state": "idle",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "xact_start": null,
+        "query_start": "2026-10-03 01:13:32.435692-06:00"
+      }
+    ],
+    "locks": [
+      {
+        "pid": 62276,
+        "locktype": "relation",
+        "relation": "pg_authid",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 62276,
+        "locktype": "relation",
+        "relation": "pg_authid_oid_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 62276,
+        "locktype": "relation",
+        "relation": "pg_authid_rolname_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 62276,
+        "locktype": "relation",
+        "relation": "pg_database",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 62276,
+        "locktype": "relation",
+        "relation": "pg_database_datname_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 62276,
+        "locktype": "relation",
+        "relation": "pg_database_oid_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 62276,
+        "locktype": "relation",
+        "relation": "pg_locks",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 62276,
+        "locktype": "relation",
+        "relation": "pg_stat_activity",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 62276,
+        "locktype": "virtualxid",
+        "relation": null,
+        "mode": "ExclusiveLock",
+        "granted": true
+      }
+    ]
+  },
+  "cleanup": {
+    "clients": 0,
+    "waiting_locks": 0,
+    "prepared": 0,
+    "dropped_database": "test_e4_final_dhij_6e59",
+    "port_closed": true,
+    "data_directory_preserved": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-e4-final-dhij-6e59-pg-observer",
+    "server_stopped": true
+  }
+}

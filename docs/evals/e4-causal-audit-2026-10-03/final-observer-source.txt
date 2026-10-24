@@ -1,0 +1,265 @@
+"""Final diagnostic receipts, exact frozen runtime, no PROFILE invocation."""
+import inspect
+import json
+import os
+import socket
+import subprocess
+import sys
+import threading
+import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT = Path(r'C:\Users\LAP\.codex\worktrees\e4-causal-audit-6e59\VeterinariaSaaS')
+OUT = ROOT / 'docs/evals/e4-causal-audit-2026-10-03'
+SHA = '6e59f6c05514ad6eca0985796e538de4fd749560'
+TEMP = Path(r'C:\Users\LAP\AppData\Local\Temp')
+PY = TEMP / 'vet-b8b-locked/Scripts/python.exe'
+PG = TEMP / 'vet-b8b-pg16-bin/pgsql/bin'
+DATA = TEMP / 'vet-e4-final-dhij-6e59-pg-observer'
+PORT = 35446
+DB = 'test_e4_final_dhij_6e59'
+URI = f'postgresql://b9e@127.0.0.1:{PORT}/{DB}'
+BASE = f'postgresql://b9e@127.0.0.1:{PORT}/postgres'
+
+def utc():
+    return datetime.now(timezone.utc).isoformat(timespec='microseconds')
+
+def write(name, value):
+    path = OUT / name
+    assert not path.exists(), path
+    path.write_text(json.dumps(value, indent=2, default=str) + '\n', encoding='utf-8')
+
+def command(*args):
+    return subprocess.run(['rtk', 'proxy', *map(str, args)], check=True,
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                          creationflags=subprocess.CREATE_NO_WINDOW)
+
+def closed():
+    with socket.socket() as sock:
+        return sock.connect_ex(('127.0.0.1', PORT)) != 0
+
+def historic():
+    here = ROOT / 'docs/evals/profile-beta-1-e4-2026-10-01'
+    diag = json.loads((here / 'base-diagnostics.json').read_text())
+    selectors = [json.loads(line) for line in (here / 'sql-observations.jsonl').read_text().splitlines()]
+    selectors = [r for r in selectors if r['event'] == 'selector_sql' and r['database'] == 'test_b8b_pb1e4_base']
+    def stamp(s):
+        return datetime.fromisoformat(s.replace(' UTC', '+00:00'))
+    role_info, roles, events = {}, {}, {}
+    for role in ('planner-1', 'planner-2'):
+        entries = []
+        for line in (here / f'base-{role}.log').read_text().splitlines():
+            if line.startswith('B9E_READY '):
+                role_info[role] = json.loads(line.split(' ', 1)[1])
+            if not line.startswith('{'):
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if row.get('event') == 'AGENT_TURN_CLAIMED':
+                roles[row['turn_work_id']] = role
+            if 'ts' in row:
+                # Formatter uses localtime but labels Z. A cross-source six-hour
+                # offset is inferred; retained event precision remains one second.
+                row['utc_second_inferred'] = stamp(row['ts']) + timedelta(hours=6)
+                entries.append(row)
+        events[role] = entries
+    rows = [dict(m, org_index=o['org_index']) for o in diag['organizations'][:2] for m in o['messages']]
+    rows.sort(key=lambda m: (stamp(m['claimed_at'])-stamp(m['created_at'])).total_seconds())
+    assert len(rows) == 60
+    rank_index = __import__('math').ceil(.95 * (len(rows)-1))
+    assert rows[rank_index]['work_id'] == 86
+    witnesses = []
+    for rank in range(rank_index-2, len(rows)):
+        m = rows[rank]
+        created, eligible, claim = map(stamp, (m['created_at'], m['available_at'], m['claimed_at']))
+        role = roles[m['work_id']]
+        backend = role_info[role]['backend_pid']
+        recent = [r for r in selectors if r['pid'] == backend and eligible <= stamp(r['timestamp']) <= claim]
+        last = recent[-1]
+        logtime = stamp(last['timestamp'])
+        estimated_start = logtime - timedelta(milliseconds=last['milliseconds'])
+        neighborhood = {
+            key: [e for e in entries if eligible-timedelta(seconds=4) <= e['utc_second_inferred'] <= claim+timedelta(seconds=4)
+                  and e['event'] in ('AGENT_WORKER_STARTED', 'AGENT_WORKER_STOPPED', 'AGENT_TURN_CLAIMED', 'AGENT_TURN_COMPLETED')]
+            for key, entries in events.items()
+        }
+        all_backend_sql = [r for r in selectors if eligible-timedelta(seconds=4) <= stamp(r['timestamp']) <= claim+timedelta(seconds=2)]
+        witnesses.append(dict(rank_one_based=rank+1, **m, role=role, python_pid=role_info[role]['pid'],
+            backend_pid=backend, persisted_eligible_s=(eligible-created).total_seconds(),
+            eligible_claim_s=(claim-eligible).total_seconds(), persisted_claim_s=(claim-created).total_seconds(),
+            selector_records_same_backend_since_eligible=recent,
+            last_selector_log_utc=logtime, last_selector_start_estimate_utc=estimated_start,
+            pre_last_selector_estimate_s=(estimated_start-eligible).total_seconds(),
+            post_last_selector_log_to_claim_s=(claim-logtime).total_seconds(),
+            nearby_worker_events=neighborhood, nearby_selector_records=all_backend_sql))
+    write('final-history.json', dict(head=SHA, historical=True, total_samples=60, rank_index_zero_based=rank_index,
+        p95_work=86, p95_s=10.015949, workers=role_info, witnesses=witnesses,
+        limitations=[
+            'SQL observer dropped raw SQL and parameters; selector was identified by ROW_NUMBER and agent_conversation.',
+            'Timestamp is PostgreSQL log emission with millisecond precision, not a captured execution-start/end pair.',
+            'Start estimate subtracts logged duration from log timestamp; logging overhead and wall-clock error are not bounded.',
+            'Worker timestamps have one-second resolution and localtime mislabeled Z; six-hour conversion is inferred.',
+            'claimed_at is statement_timestamp at entry to _claim_turn_locked, before membership/CAS/commit.',
+            'No historical event plan, complete per-claim query count, waits, pg_stats, pages or visibility snapshot survived.']))
+    print(json.dumps(dict(historical_witnesses=len(witnesses), p95_work=86, workers=role_info)), flush=True)
+
+class Trace:
+    def __init__(self):
+        self.rows = []
+    def __call__(self, execute, sql, params, many, context):
+        start_utc, start_ns = utc(), time.perf_counter_ns()
+        try:
+            return execute(sql, params, many, context)
+        finally:
+            end_ns, end_utc = time.perf_counter_ns(), utc()
+            self.rows.append(dict(sql=sql, params=params, many=many, start_utc=start_utc,
+                end_utc=end_utc, start_perf_ns=start_ns, end_perf_ns=end_ns,
+                client_execute_ms=(end_ns-start_ns)/1e6))
+
+def probe():
+    import faulthandler
+    faulthandler.dump_traceback_later(45)
+    import psycopg
+    from psycopg import sql
+    assert subprocess.check_output(['rtk', 'proxy', 'git', 'rev-parse', 'HEAD'], cwd=ROOT).decode().strip() == SHA
+    assert PY.exists()
+    if '--observe-existing-owned-server' in sys.argv:
+        assert DATA.exists() and not closed()
+    else:
+        assert not DATA.exists() and closed()
+        print('ISOLATED initdb', flush=True)
+        command(PG/'initdb.exe', '-D', DATA, '-U', 'b9e', '-A', 'trust', '--encoding=UTF8', '--locale=C')
+        command(PG/'pg_ctl.exe', '-D', DATA, '-l', DATA/'server.log', '-o',
+                f'-p {PORT} -h 127.0.0.1 -c fsync=on -c synchronous_commit=on', '-w', 'start')
+    print('ISOLATED server ready', flush=True)
+    receipt = dict(head=SHA, historical=False, not_profile=True, observer_only=True,
+        manual_analyze=False, manual_vacuum=False, runtime_modified=False, port=PORT,
+        scope='Stationary synthetic SQL cohort; no worker workload, no p95 gate, no historical reconstruction.')
+    try:
+        with psycopg.connect(BASE, autocommit=True, connect_timeout=5) as conn:
+            assert conn.execute('SHOW data_directory').fetchone()[0].replace('\\','/') == str(DATA).replace('\\','/')
+            conn.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(DB)))
+        os.environ.update(DATABASE_URL=URI, SECRET_KEY='isolated-diagnostic-only', DEBUG='False',
+            ENVIRONMENT='dev', DISABLE_SENTRY='True', SENTRY_DSN='', REDIS_URL='', DISCORD_WEBHOOK_URL='',
+            HEALTHCHECK_AGENT_WORKER_URL='', HEALTHCHECK_AGENT_SENDER_URL='', DJANGO_SETTINGS_MODULE='config.settings')
+        sys.path.insert(0, str(ROOT/'backend'))
+        print('ISOLATED database created', flush=True)
+        import django
+        django.setup()
+        from django.core.management import call_command
+        from django.db import connection, connections, transaction
+        from apps.agent.tests.test_b9a_e2e import seed_domain
+        from apps.agent.worker import _pending_conversation_candidates
+        from apps.agent.durable import claim_turn
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('old_probe', OUT/'harness.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        print('ISOLATED migrate', flush=True)
+        call_command('migrate', interactive=False, verbosity=0)
+        print('ISOLATED fixture', flush=True)
+        # Reuse only the already documented synthetic builder. Remove its three
+        # manual ANALYZE statements; no benchmark inputs or product files change.
+        builder_source = inspect.getsource(module.install_data)
+        for table in ('agent_conversation','channels_message','agent_turnwork'):
+            builder_source = builder_source.replace(f'        cursor.execute("ANALYZE {table}")\n', '')
+        assert 'ANALYZE' not in builder_source
+        namespace = dict(module.__dict__)
+        exec(builder_source, namespace)
+        fixtures = [seed_domain('FINALCAUSAL'+str(i)) for i in range(3)]
+        clock, conv_id = namespace['install_data']([r[0] for r in fixtures], [r[1] for r in fixtures],
+            [r[4] for r in fixtures], 'J-stationary', 354, 10000, noise=200, due_work=0, active_orgs=3, layout='spread')
+        with connection.cursor() as cursor:
+            cursor.execute('CREATE EXTENSION pg_visibility')
+            cursor.execute('SELECT pg_backend_pid()')
+            backend = cursor.fetchone()[0]
+        receipt.update(python_pid=os.getpid(), backend_pid=backend, synthetic_clock=clock,
+            conversations=354, messages=10000, organizations=3, due_turnworks=0,
+            ineligible_pending_turnworks=50, completed_turnworks=3, fixture_builder=builder_source,
+            instrumentation_extension='pg_visibility; read visibility map; no maintenance')
+        def snapshot():
+            with psycopg.connect(URI, autocommit=True, row_factory=psycopg.rows.dict_row) as c:
+                result = dict(timestamp_utc=utc())
+                result['settings'] = c.execute("SELECT name,setting FROM pg_settings WHERE name IN ('fsync','synchronous_commit','shared_buffers','effective_cache_size','work_mem','random_page_cost','seq_page_cost','autovacuum','autovacuum_analyze_threshold','autovacuum_analyze_scale_factor','autovacuum_naptime','track_io_timing') ORDER BY name").fetchall()
+                result['relations'] = c.execute("SELECT relname,relpages,reltuples,relallvisible,pg_relation_size(oid) AS heap_bytes,pg_total_relation_size(oid) AS total_bytes FROM pg_class WHERE relname IN ('agent_conversation','channels_message','agent_turnwork') ORDER BY relname").fetchall()
+                result['pg_stats'] = c.execute("SELECT tablename,attname,null_frac,n_distinct,correlation,most_common_vals::text,most_common_freqs,histogram_bounds::text FROM pg_stats WHERE tablename IN ('agent_conversation','channels_message','agent_turnwork') AND attname IN ('id','organization_id','conversation_id','status','direction','semantic_type','available_at','turn_work_id','claimed_at','next_attempt_at','lease_expires_at','ownership_epoch','last_activity_at') ORDER BY tablename,attname").fetchall()
+                result['table_stats'] = c.execute("SELECT relname,n_live_tup,n_dead_tup,n_mod_since_analyze,last_vacuum,last_autovacuum,last_analyze,last_autoanalyze,analyze_count,autoanalyze_count FROM pg_stat_user_tables WHERE relname IN ('agent_conversation','channels_message','agent_turnwork') ORDER BY relname").fetchall()
+                result['message_physical'] = c.execute("SELECT status, count(*) AS rows, count(DISTINCT (ctid::text::point)[0]) AS occupied_heap_blocks, min((ctid::text::point)[0]) AS min_block,max((ctid::text::point)[0]) AS max_block FROM channels_message GROUP BY status ORDER BY status").fetchall()
+                result['visibility'] = {table: c.execute('SELECT * FROM pg_visibility_map_summary(%s::regclass)', (table,)).fetchone() for table in ('agent_conversation','channels_message','agent_turnwork')}
+                result['connections'] = c.execute('SELECT pid,backend_type,state,wait_event_type,wait_event,xact_start,query_start FROM pg_stat_activity WHERE datname=current_database() ORDER BY pid').fetchall()
+                result['locks'] = c.execute('SELECT pid,locktype,relation::regclass::text,mode,granted FROM pg_locks WHERE pid IN (SELECT pid FROM pg_stat_activity WHERE datname=current_database()) ORDER BY pid,locktype,relation,mode').fetchall()
+                return result
+        print('ISOLATED snapshot', flush=True)
+        receipt['before_selector'] = snapshot()
+        stop = threading.Event()
+        samples = []
+        def monitor():
+            with psycopg.connect(URI, autocommit=True, row_factory=psycopg.rows.dict_row) as c:
+                while not stop.is_set():
+                    samples.append(dict(timestamp_utc=utc(), activity=c.execute('SELECT pid,state,wait_event_type,wait_event,query_start FROM pg_stat_activity WHERE pid=%s',(backend,)).fetchall(),
+                        waiting_locks=c.execute('SELECT locktype,mode,granted FROM pg_locks WHERE pid=%s AND NOT granted',(backend,)).fetchall()))
+                    stop.wait(.02)
+        observer = threading.Thread(target=monitor)
+        observer.start()
+        selector_runs = []
+        print('ISOLATED selector and claim observation', flush=True)
+        try:
+            for repeat in range(3):
+                trace = Trace()
+                start_utc, start_ns = utc(), time.perf_counter_ns()
+                with connection.execute_wrapper(trace):
+                    selected = list(_pending_conversation_candidates(now=clock))
+                selector_runs.append(dict(repeat=repeat, start_utc=start_utc, end_utc=utc(),
+                    complete_client_wall_ms=(time.perf_counter_ns()-start_ns)/1e6,
+                    ids=selected, query_count=len(trace.rows), queries=trace.rows))
+            first = selector_runs[0]['queries'][0]
+            assert len(first['params']) > 0
+            with connection.cursor() as cursor:
+                cursor.execute('EXPLAIN (FORMAT JSON) '+first['sql'], first['params'])
+                receipt['explain_estimate_later'] = cursor.fetchone()[0]
+                cursor.execute('EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT JSON) '+first['sql'],first['params'])
+                receipt['explain_analyze_later'] = cursor.fetchone()[0]
+            receipt['after_selector'] = snapshot()
+            trace = Trace()
+            with transaction.atomic():
+                with connection.execute_wrapper(trace):
+                    witness = claim_turn(conv_id, eligible_at=clock)
+                assert witness is not None
+                from apps.agent.models import TurnWork
+                work = TurnWork.objects.get(pk=witness.turn_work_id)
+                receipt['isolated_claim'] = dict(turn_work_id=witness.turn_work_id, conversation_id=conv_id,
+                    claimed_at=work.claimed_at, query_count=len(trace.rows), queries=trace.rows,
+                    rollback=True, count_scope='claim_turn SQL including nested savepoint; outer BEGIN/ROLLBACK and observer reads excluded')
+                transaction.set_rollback(True)
+        finally:
+            stop.set()
+            observer.join()
+        receipt.update(selector_runs=selector_runs, activity_samples=samples,
+            explain_event_scope='Separate executions after three selector calls, on the same stationary logical cohort; never historical event plans.')
+        receipt['after_claim_rollback'] = snapshot()
+    finally:
+        from django.db import connections
+        connections.close_all()
+        with psycopg.connect(BASE, autocommit=True) as c:
+            clients = c.execute('SELECT count(*) FROM pg_stat_activity WHERE datname=%s',(DB,)).fetchone()[0]
+            locks = c.execute('SELECT count(*) FROM pg_locks WHERE NOT granted').fetchone()[0]
+            prepared = c.execute('SELECT count(*) FROM pg_prepared_xacts').fetchone()[0]
+            assert clients == locks == prepared == 0
+            c.execute(sql.SQL('DROP DATABASE {}').format(sql.Identifier(DB)))
+        command(PG/'pg_ctl.exe','-D', DATA,'-m','fast','-w','stop')
+        # Preserve the stopped data directory; no deletion or permission changes.
+        assert closed()
+        receipt['cleanup'] = dict(clients=clients, waiting_locks=locks, prepared=prepared,
+            dropped_database=DB, port_closed=True, data_directory_preserved=str(DATA), server_stopped=True)
+        write('final-isolated-postgresql.json', receipt)
+    print(json.dumps(dict(isolated_probe='complete', selectors=len(selector_runs),
+        selector_query_counts=[r['query_count'] for r in selector_runs], claim_query_count=receipt['isolated_claim']['query_count'],
+        explain_ms=receipt['explain_analyze_later'][0]['Execution Time'])),flush=True)
+
+if __name__ == '__main__':
+    if not (OUT/'final-history.json').exists():
+        historic()
+    probe()

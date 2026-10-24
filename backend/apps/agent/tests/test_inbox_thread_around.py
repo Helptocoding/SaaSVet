@@ -255,11 +255,10 @@ class ThreadAroundTests(ThreadsTestCase):
         self.assertEqual(len(data['messages']), 50)
         loaded_ids = [call.args[2][call.args[1].index('id')]
                       for call in loaded.call_args_list]
-        # The current-session serializer separately reads its last message twice.
-        # Keep those existing metadata reads distinct from the 52 window rows.
-        window_ids = [pk for pk in loaded_ids if pk != self.messages[-1].pk]
-        self.assertCountEqual(window_ids, [message.pk for message in self.messages[74:126]])
-        self.assertEqual(len(loaded_ids) - len(window_ids), 2)
+        self.assertCountEqual(loaded_ids, [message.pk for message in self.messages[74:126]])
+        self.assertEqual(len(loaded_ids), 52)
+        self.assertEqual(data['conversation']['last_message_preview'], self.messages[-1].body[:120])
+        self.assertIs(data['conversation']['has_unanswered'], True)
         sql = [query['sql'] for query in captured if 'FROM "channels_message"' in query['sql']]
         self.assertTrue(any(query.endswith('LIMIT 26') for query in sql))
         self.assertTrue(any(query.endswith('LIMIT 25') for query in sql))

@@ -52,6 +52,8 @@ jobs:
       ENVIRONMENT: dev
       DEBUG: "False"
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
+      DJANGO_SETTINGS_MODULE: config.ci
+      CI_TEST_RUN_ID: ${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -1,0 +1,42 @@
+{
+  "schema": "e4-final-diagnostic-closure-v1",
+  "recorded_utc": "2026-10-03T07:20:44.055292+00:00",
+  "head": "6e59f6c05514ad6eca0985796e538de4fd749560",
+  "result": "B_CAUSA_NO_CONFIRMADA",
+  "decision": "ROOT_CAUSE_NOT_CONFIRMED_STOP",
+  "runtime_tracked_diff": false,
+  "formal_profile_executed": false,
+  "runtime_commits": 0,
+  "historical_profile_fail_preserved": true,
+  "historical_n": 60,
+  "historical_p95_s": 10.015949,
+  "threshold_s": 10,
+  "threshold_changed": false,
+  "assertions_changed": false,
+  "corpus_changed": false,
+  "ids_removed": 0,
+  "production_accessed": false,
+  "clinics_activated": 0,
+  "deploy": false,
+  "production_source_contract": {
+    "B0": "closed",
+    "AGENT_B7B_CONSENT_ENABLED_default": false,
+    "AGENT_OPERATION_EXECUTION_ENABLED": {},
+    "release_grants": [],
+    "status": "PENDING_ACTIVATION_REQUIREMENTS"
+  },
+  "postgres_version": "16.15",
+  "git_index_lock_found": false,
+  "permission_changes": false,
+  "preparation_incident": "Python waited in subprocess.run for rtk proxy pg_ctl start despite owned server ready; observed that owned instance from a separate process. No measurement from preparation; no ACL error or destructive permission workaround.",
+  "cleanup": {
+    "clients": 0,
+    "waiting_locks": 0,
+    "prepared": 0,
+    "dropped_database": "test_e4_final_dhij_6e59",
+    "port_closed": true,
+    "data_directory_preserved": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-e4-final-dhij-6e59-pg-observer",
+    "server_stopped": true
+  },
+  "remaining_investigation_rounds": 0
+}

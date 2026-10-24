@@ -35,6 +35,24 @@ ALLOWED_INT_PATTERNS = (
 )
 
 
+# Message has no PublicIdMixin: its integer ID is an internal child beneath
+# an organization-scoped public Conversation. This exact handler validates
+# organization, conversation, account/contact scope and retry authorization.
+INTERNAL_MESSAGE_RETRY_ROUTE = re.compile(
+    r"\s*path\('conversations/<str:pk>/messages/<int:message_id>/retry/', "
+    r"views\.retry_message,\s*"
+)
+
+
+def is_allowed_int_route(url_file, line):
+    if any(pattern.search(line) for pattern in ALLOWED_INT_PATTERNS):
+        return True
+    return (
+        url_file == REPO_ROOT / 'backend' / 'apps' / 'agent' / 'urls.py'
+        and INTERNAL_MESSAGE_RETRY_ROUTE.fullmatch(line) is not None
+    )
+
+
 class IntPkInPublicUrlsTest(SimpleTestCase):
     """
     Test introspectivo: scan apps/*/urls.py + config/urls.py por <int:pk>
@@ -53,7 +71,7 @@ class IntPkInPublicUrlsTest(SimpleTestCase):
             for lineno, line in enumerate(content.splitlines(), 1):
                 if '<int:' not in line:
                     continue
-                if any(pat.search(line) for pat in ALLOWED_INT_PATTERNS):
+                if is_allowed_int_route(url_file, line):
                     continue
                 if line.strip().startswith('#'):
                     continue
@@ -66,6 +84,28 @@ class IntPkInPublicUrlsTest(SimpleTestCase):
                 + "\n".join(violations)
             )
             self.fail(msg)
+
+    def test_internal_message_retry_exception_requires_exact_context(self):
+        from apps.channels.models import Message
+
+        self.assertNotIn('public_id', {field.name for field in Message._meta.get_fields()})
+        path = REPO_ROOT / 'backend' / 'apps' / 'agent' / 'urls.py'
+        line = (
+            "    path('conversations/<str:pk>/messages/<int:message_id>/retry/', "
+            "views.retry_message,"
+        )
+        self.assertTrue(is_allowed_int_route(path, line))
+        cases = (
+            (REPO_ROOT / 'backend' / 'apps' / 'billing' / 'urls.py', line),
+            (path, line.replace('views.retry_message', 'views.other_handler')),
+            (path, line.replace('messages/', 'appointments/')),
+            (path, line.replace('conversations/', 'billing/conversations/')),
+            (path, line.replace('<str:pk>', '<int:pk>')),
+            (path, "path('appointments/<int:pk>/', views.retry_message,"),
+        )
+        for url_file, candidate in cases:
+            with self.subTest(file=str(url_file), line=candidate):
+                self.assertFalse(is_allowed_int_route(url_file, candidate))
 
 
 class QueryParamPublicModelFilterTest(SimpleTestCase):

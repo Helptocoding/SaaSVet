@@ -1,0 +1,1548 @@
+{
+  "head": "6e59f6c05514ad6eca0985796e538de4fd749560",
+  "historical": true,
+  "total_samples": 60,
+  "rank_index_zero_based": 57,
+  "p95_work": 86,
+  "p95_s": 10.015949,
+  "workers": {
+    "planner-1": {
+      "pid": 27968,
+      "backend_pid": 34424,
+      "role": "planner-1",
+      "scenario": "base"
+    },
+    "planner-2": {
+      "pid": 12792,
+      "backend_pid": 34276,
+      "role": "planner-2",
+      "scenario": "base"
+    }
+  },
+  "witnesses": [
+    {
+      "rank_one_based": 56,
+      "id": 503,
+      "org_index": 1,
+      "conversation_id": 14,
+      "work_id": 153,
+      "created_at": "2026-10-01 07:29:25.230873+00:00",
+      "available_at": "2026-10-01 07:29:33.177600+00:00",
+      "claimed_at": "2026-10-01 07:29:34.688143+00:00",
+      "semantic_type": "",
+      "role": "planner-1",
+      "python_pid": 27968,
+      "backend_pid": 34424,
+      "persisted_eligible_s": 7.946727,
+      "eligible_claim_s": 1.510543,
+      "persisted_claim_s": 9.45727,
+      "selector_records_same_backend_since_eligible": [
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:33.420 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 408.239
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:34.652 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 188.663
+        }
+      ],
+      "last_selector_log_utc": "2026-10-01 07:29:34.652000+00:00",
+      "last_selector_start_estimate_utc": "2026-10-01 07:29:34.463337+00:00",
+      "pre_last_selector_estimate_s": 1.285737,
+      "post_last_selector_log_to_claim_s": 0.036143,
+      "nearby_worker_events": {
+        "planner-1": [
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:30Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:30+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:30Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:30+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:31Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:31+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:31Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:31+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:32Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:32+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:33Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:33+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:34Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:34+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:34Z",
+            "turn_work_id": 153,
+            "conversation_id": 14,
+            "organization_id": 2,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:34+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:36Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:36+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:37Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:37+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:37Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:37+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:38Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:38+00:00"
+          }
+        ],
+        "planner-2": [
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:30Z",
+            "turn_work_id": 151,
+            "conversation_id": 98,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:30+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:32Z",
+            "turn_work_id": 151,
+            "conversation_id": 98,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:32+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:32Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:32+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:33Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:33+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:33Z",
+            "turn_work_id": 152,
+            "conversation_id": 13,
+            "organization_id": 1,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:33+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:35Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:35+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:36Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:36+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:37Z",
+            "turn_work_id": 154,
+            "conversation_id": 101,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:37+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:38Z",
+            "turn_work_id": 154,
+            "conversation_id": 101,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:38+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:38Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:38+00:00"
+          }
+        ]
+      },
+      "nearby_selector_records": [
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:30.223 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 322.87
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:30.514 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 324.016
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:31.935 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 318.336
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:33.420 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 408.239
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:33.748 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 270.082
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:34.652 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 188.663
+        }
+      ]
+    },
+    {
+      "rank_one_based": 57,
+      "id": 469,
+      "org_index": 1,
+      "conversation_id": 14,
+      "work_id": 143,
+      "created_at": "2026-10-01 07:29:05.294223+00:00",
+      "available_at": "2026-10-01 07:29:13.233312+00:00",
+      "claimed_at": "2026-10-01 07:29:15.023688+00:00",
+      "semantic_type": "",
+      "role": "planner-2",
+      "python_pid": 12792,
+      "backend_pid": 34276,
+      "persisted_eligible_s": 7.939089,
+      "eligible_claim_s": 1.790376,
+      "persisted_claim_s": 9.729465,
+      "selector_records_same_backend_since_eligible": [
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:14.997 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 184.245
+        }
+      ],
+      "last_selector_log_utc": "2026-10-01 07:29:14.997000+00:00",
+      "last_selector_start_estimate_utc": "2026-10-01 07:29:14.812755+00:00",
+      "pre_last_selector_estimate_s": 1.579443,
+      "post_last_selector_log_to_claim_s": 0.026688,
+      "nearby_worker_events": {
+        "planner-1": [
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:10Z",
+            "turn_work_id": 140,
+            "conversation_id": 91,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:10+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:10Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:10+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:11Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:11+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:12Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:12+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:13Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:13+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:13Z",
+            "turn_work_id": 142,
+            "conversation_id": 13,
+            "organization_id": 1,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:13+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:15Z",
+            "turn_work_id": 142,
+            "conversation_id": 13,
+            "organization_id": 1,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:15+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:15Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:15+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:16Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:16+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:16Z",
+            "turn_work_id": 146,
+            "conversation_id": 93,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:16+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:18Z",
+            "turn_work_id": 146,
+            "conversation_id": 93,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:18+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:18Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:18+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:19Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:19+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:19Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:19+00:00"
+          }
+        ],
+        "planner-2": [
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:10Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:10+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:10Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:10+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:11Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:11+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:11Z",
+            "turn_work_id": 141,
+            "conversation_id": 92,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:11+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:13Z",
+            "turn_work_id": 141,
+            "conversation_id": 92,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:13+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:13Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:13+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:14Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:14+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:15Z",
+            "turn_work_id": 143,
+            "conversation_id": 14,
+            "organization_id": 2,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:15+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:16Z",
+            "turn_work_id": 143,
+            "conversation_id": 14,
+            "organization_id": 2,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:16+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:16Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:16+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:17Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:17+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:18Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:18+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:19Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:19+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:29:19Z",
+            "turn_work_id": 147,
+            "conversation_id": 94,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:29:19+00:00"
+          }
+        ]
+      },
+      "nearby_selector_records": [
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:09.504 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 216.247
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:10.675 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 125.125
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:11.861 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 150.57
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:12.099 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 150.926
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:13.499 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 337.74
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:14.997 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 184.245
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:29:16.630 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 164.871
+        }
+      ]
+    },
+    {
+      "rank_one_based": 58,
+      "id": 275,
+      "org_index": 1,
+      "conversation_id": 14,
+      "work_id": 86,
+      "created_at": "2026-10-01 07:27:05.415631+00:00",
+      "available_at": "2026-10-01 07:27:13.342459+00:00",
+      "claimed_at": "2026-10-01 07:27:15.431580+00:00",
+      "semantic_type": "",
+      "role": "planner-1",
+      "python_pid": 27968,
+      "backend_pid": 34424,
+      "persisted_eligible_s": 7.926828,
+      "eligible_claim_s": 2.089121,
+      "persisted_claim_s": 10.015949,
+      "selector_records_same_backend_since_eligible": [
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:27:15.398 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 80.767
+        }
+      ],
+      "last_selector_log_utc": "2026-10-01 07:27:15.398000+00:00",
+      "last_selector_start_estimate_utc": "2026-10-01 07:27:15.317233+00:00",
+      "pre_last_selector_estimate_s": 1.974774,
+      "post_last_selector_log_to_claim_s": 0.03358,
+      "nearby_worker_events": {
+        "planner-1": [
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:10Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:10+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:10Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:10+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:11Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:11+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:12Z",
+            "turn_work_id": 83,
+            "conversation_id": 56,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:12+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:14Z",
+            "turn_work_id": 83,
+            "conversation_id": 56,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:14+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:14Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:14+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:15Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:15+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:15Z",
+            "turn_work_id": 86,
+            "conversation_id": 14,
+            "organization_id": 2,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:15+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:17Z",
+            "turn_work_id": 86,
+            "conversation_id": 14,
+            "organization_id": 2,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:17+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:17Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:17+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:18Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:18+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:18Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:18+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:19Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:19+00:00"
+          }
+        ],
+        "planner-2": [
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:11Z",
+            "turn_work_id": 82,
+            "conversation_id": 55,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:11+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:11Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:11+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:12Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:12+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:12Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:12+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:13Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:13+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:14Z",
+            "turn_work_id": 84,
+            "conversation_id": 13,
+            "organization_id": 1,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:14+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:16Z",
+            "turn_work_id": 84,
+            "conversation_id": 13,
+            "organization_id": 1,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:16+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:16Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:16+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:17Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:17+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:17Z",
+            "turn_work_id": 88,
+            "conversation_id": 57,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:17+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:19Z",
+            "turn_work_id": 88,
+            "conversation_id": 57,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:19+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:27:19Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:27:19+00:00"
+          }
+        ]
+      },
+      "nearby_selector_records": [
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:27:09.558 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 117.399
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:27:09.822 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 97.688
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:27:10.970 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 88.207
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:27:12.161 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 116.656
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:27:12.695 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 162.673
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:27:13.868 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 141.698
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:27:15.398 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 80.767
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:27:17.189 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 85.91
+        }
+      ]
+    },
+    {
+      "rank_one_based": 59,
+      "id": 372,
+      "org_index": 1,
+      "conversation_id": 14,
+      "work_id": 115,
+      "created_at": "2026-10-01 07:28:05.289206+00:00",
+      "available_at": "2026-10-01 07:28:13.220869+00:00",
+      "claimed_at": "2026-10-01 07:28:15.533917+00:00",
+      "semantic_type": "",
+      "role": "planner-2",
+      "python_pid": 12792,
+      "backend_pid": 34276,
+      "persisted_eligible_s": 7.931663,
+      "eligible_claim_s": 2.313048,
+      "persisted_claim_s": 10.244711,
+      "selector_records_same_backend_since_eligible": [
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:28:15.499 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 113.688
+        }
+      ],
+      "last_selector_log_utc": "2026-10-01 07:28:15.499000+00:00",
+      "last_selector_start_estimate_utc": "2026-10-01 07:28:15.385312+00:00",
+      "pre_last_selector_estimate_s": 2.164443,
+      "post_last_selector_log_to_claim_s": 0.034917,
+      "nearby_worker_events": {
+        "planner-1": [
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:10Z",
+            "turn_work_id": 111,
+            "conversation_id": 74,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:10+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:10Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:10+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:11Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:11+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:12Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:12+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:13Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:13+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:13Z",
+            "turn_work_id": 113,
+            "conversation_id": 13,
+            "organization_id": 1,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:13+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:15Z",
+            "turn_work_id": 113,
+            "conversation_id": 13,
+            "organization_id": 1,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:15+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:15Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:15+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:16Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:16+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:16Z",
+            "turn_work_id": 117,
+            "conversation_id": 76,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:16+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:18Z",
+            "turn_work_id": 117,
+            "conversation_id": 76,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:18+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:18Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:18+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:19Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:19+00:00"
+          }
+        ],
+        "planner-2": [
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:10Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:10+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:10Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:10+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:11Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:11+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:12Z",
+            "turn_work_id": 112,
+            "conversation_id": 75,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:12+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:14Z",
+            "turn_work_id": 112,
+            "conversation_id": 75,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:14+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:14Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:14+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:15Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:15+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:15Z",
+            "turn_work_id": 115,
+            "conversation_id": 14,
+            "organization_id": 2,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:15+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:17Z",
+            "turn_work_id": 115,
+            "conversation_id": 14,
+            "organization_id": 2,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:17+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:17Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:17+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:18Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:18+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:18Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:18+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:19Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:19+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:28:19Z",
+            "turn_work_id": 118,
+            "conversation_id": 77,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:28:19+00:00"
+          }
+        ]
+      },
+      "nearby_selector_records": [
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:28:09.595 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 129.797
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:28:10.809 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 130.158
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:28:12.055 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 187.667
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:28:12.083 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 246.38
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:28:13.578 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 375.636
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:28:15.499 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 113.688
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:28:16.749 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 121.545
+        }
+      ]
+    },
+    {
+      "rank_one_based": 60,
+      "id": 212,
+      "org_index": 1,
+      "conversation_id": 14,
+      "work_id": 66,
+      "created_at": "2026-10-01 07:26:25.547008+00:00",
+      "available_at": "2026-10-01 07:26:33.436725+00:00",
+      "claimed_at": "2026-10-01 07:26:35.932694+00:00",
+      "semantic_type": "",
+      "role": "planner-2",
+      "python_pid": 12792,
+      "backend_pid": 34276,
+      "persisted_eligible_s": 7.889717,
+      "eligible_claim_s": 2.495969,
+      "persisted_claim_s": 10.385686,
+      "selector_records_same_backend_since_eligible": [
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:26:35.760 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 439.52
+        }
+      ],
+      "last_selector_log_utc": "2026-10-01 07:26:35.760000+00:00",
+      "last_selector_start_estimate_utc": "2026-10-01 07:26:35.320480+00:00",
+      "pre_last_selector_estimate_s": 1.883755,
+      "post_last_selector_log_to_claim_s": 0.172694,
+      "nearby_worker_events": {
+        "planner-1": [
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:30Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:30+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:30Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:30+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:31Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:31+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:31Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:31+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:32Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:32+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:33Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:33+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:34Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:34+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:34Z",
+            "turn_work_id": 65,
+            "conversation_id": 13,
+            "organization_id": 1,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:34+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:36Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:36+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:37Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:37+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:38Z",
+            "turn_work_id": 67,
+            "conversation_id": 46,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:38+00:00"
+          }
+        ],
+        "planner-2": [
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:30Z",
+            "turn_work_id": 63,
+            "conversation_id": 44,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:30+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:30Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:30+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:31Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:31+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:31Z",
+            "turn_work_id": 64,
+            "conversation_id": 45,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:31+00:00"
+          },
+          {
+            "event": "AGENT_TURN_COMPLETED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:34Z",
+            "turn_work_id": 64,
+            "conversation_id": 45,
+            "organization_id": 3,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:34+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:34Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:34+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:35Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:35+00:00"
+          },
+          {
+            "event": "AGENT_TURN_CLAIMED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:36Z",
+            "turn_work_id": 66,
+            "conversation_id": 14,
+            "organization_id": 2,
+            "attempts": 1,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:36+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:38Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:38+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STARTED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:39Z",
+            "once": true,
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:39+00:00"
+          },
+          {
+            "event": "AGENT_WORKER_STOPPED",
+            "level": "INFO",
+            "ts": "2026-10-01T01:26:39Z",
+            "request_id": "-",
+            "utc_second_inferred": "2026-10-01 07:26:39+00:00"
+          }
+        ]
+      },
+      "nearby_selector_records": [
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:26:30.451 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 85.873
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:26:31.696 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 153.193
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:26:31.706 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 96.762
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:26:33.095 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 225.95
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:26:34.256 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 81.408
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:26:35.760 UTC",
+          "pid": 34276,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 439.52
+        },
+        {
+          "event": "selector_sql",
+          "timestamp": "2026-10-01 07:26:37.915 UTC",
+          "pid": 34424,
+          "database": "test_b8b_pb1e4_base",
+          "milliseconds": 97.497
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "SQL observer dropped raw SQL and parameters; selector was identified by ROW_NUMBER and agent_conversation.",
+    "Timestamp is PostgreSQL log emission with millisecond precision, not a captured execution-start/end pair.",
+    "Start estimate subtracts logged duration from log timestamp; logging overhead and wall-clock error are not bounded.",
+    "Worker timestamps have one-second resolution and localtime mislabeled Z; six-hour conversion is inferred.",
+    "claimed_at is statement_timestamp at entry to _claim_turn_locked, before membership/CAS/commit.",
+    "No historical event plan, complete per-claim query count, waits, pg_stats, pages or visibility snapshot survived."
+  ]
+}

@@ -1,0 +1,537 @@
+{
+  "baseline": "8886604ff77bd86649c12dee695a4742a3fe44f5",
+  "sources": [
+    {
+      "source": "wa01",
+      "head": "198b8120b4b373d2a25deeb7e0ae1c23249d6c44",
+      "pending_files": 8
+    },
+    {
+      "source": "wa02",
+      "head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "pending_files": 13
+    },
+    {
+      "source": "planwa02",
+      "head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "pending_files": 16
+    },
+    {
+      "source": "causal",
+      "head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "pending_files": 12
+    },
+    {
+      "source": "architecture",
+      "head": "5d3892ad7776b653d278d87354ae341440a3f2d8",
+      "pending_files": 1
+    },
+    {
+      "source": "extender",
+      "head": "5d3892ad7776b653d278d87354ae341440a3f2d8",
+      "pending_files": 0
+    }
+  ],
+  "files": [
+    {
+      "source": "wa01",
+      "source_head": "198b8120b4b373d2a25deeb7e0ae1c23249d6c44",
+      "status": "??",
+      "path": ".codex/config.toml",
+      "bytes": 122,
+      "sha256": "12fa85a35d371cba327ebf7ee0407d1bb2e370b90a4a3261ead3d42221fccce8",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/12fa85a35d371cba327ebf7ee0407d1bb2e370b90a4a3261ead3d42221fccce8--config.toml.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa01",
+      "source_head": "198b8120b4b373d2a25deeb7e0ae1c23249d6c44",
+      "status": "??",
+      "path": ".codex/skills/agtx-execute/SKILL.md",
+      "bytes": 1342,
+      "sha256": "ddf9004855fdff6143d97cf67b3413eba2ac00778e29e4fc7e561aa61da89687",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/ddf9004855fdff6143d97cf67b3413eba2ac00778e29e4fc7e561aa61da89687--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa01",
+      "source_head": "198b8120b4b373d2a25deeb7e0ae1c23249d6c44",
+      "status": "??",
+      "path": ".codex/skills/agtx-merge-conflicts/SKILL.md",
+      "bytes": 2416,
+      "sha256": "1dc032f26067d52866fa3f40ccea91cec2388c0568fe08ed5e4807646a56156c",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/1dc032f26067d52866fa3f40ccea91cec2388c0568fe08ed5e4807646a56156c--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa01",
+      "source_head": "198b8120b4b373d2a25deeb7e0ae1c23249d6c44",
+      "status": "??",
+      "path": ".codex/skills/agtx-orchestrate/SKILL.md",
+      "bytes": 7883,
+      "sha256": "e1913375cd9ddfbf27572d4fd51e3749703d0038fb52d29f8ab8719140a6c80b",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/e1913375cd9ddfbf27572d4fd51e3749703d0038fb52d29f8ab8719140a6c80b--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa01",
+      "source_head": "198b8120b4b373d2a25deeb7e0ae1c23249d6c44",
+      "status": "??",
+      "path": ".codex/skills/agtx-plan/SKILL.md",
+      "bytes": 1622,
+      "sha256": "26fa879a4f7d78c89f04a8c25129e1541f605dc5c46481a58c0edf1c0f29d5f3",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/26fa879a4f7d78c89f04a8c25129e1541f605dc5c46481a58c0edf1c0f29d5f3--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa01",
+      "source_head": "198b8120b4b373d2a25deeb7e0ae1c23249d6c44",
+      "status": "??",
+      "path": ".codex/skills/agtx-research/SKILL.md",
+      "bytes": 1463,
+      "sha256": "e8bf847251fe4bd9fdca1ff2432e5ab92eb286ed53a0fab92809b4ac87c2d9d4",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/e8bf847251fe4bd9fdca1ff2432e5ab92eb286ed53a0fab92809b4ac87c2d9d4--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa01",
+      "source_head": "198b8120b4b373d2a25deeb7e0ae1c23249d6c44",
+      "status": "??",
+      "path": ".codex/skills/agtx-review/SKILL.md",
+      "bytes": 1208,
+      "sha256": "208705c76c7c0dafb1feccfec0bb168f542fd46df5503ee6ec1ccf6e7175bb98",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/208705c76c7c0dafb1feccfec0bb168f542fd46df5503ee6ec1ccf6e7175bb98--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa01",
+      "source_head": "198b8120b4b373d2a25deeb7e0ae1c23249d6c44",
+      "status": "??",
+      "path": ".mcp.json",
+      "bytes": 187,
+      "sha256": "bc5f75a998ff741f470ec91a8cf629230945c088c60752bac42f00358bb0a658",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/bc5f75a998ff741f470ec91a8cf629230945c088c60752bac42f00358bb0a658--.mcp.json.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": " M",
+      "path": ".ocr/cli-config.json",
+      "bytes": 127,
+      "sha256": "68157c037deb1b0af567f28bc3ccb7b23c596771b3106713645a3222909bd97b",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/68157c037deb1b0af567f28bc3ccb7b23c596771b3106713645a3222909bd97b--cli-config.json.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": " M",
+      "path": ".ocr/commands/doctor.md",
+      "bytes": 833,
+      "sha256": "efa66e3269d2d45a134b7bc43d6190217caadd9d3bb46445f4b687c716f0dc2b",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/efa66e3269d2d45a134b7bc43d6190217caadd9d3bb46445f4b687c716f0dc2b--doctor.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": " M",
+      "path": ".ocr/reviewers-meta.json",
+      "bytes": 20797,
+      "sha256": "a414342483cda97def77754b9c1cf7149afa323df5eb69b62d7cd863b6ec44f9",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/a414342483cda97def77754b9c1cf7149afa323df5eb69b62d7cd863b6ec44f9--reviewers-meta.json.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": " M",
+      "path": ".ocr/skills/SKILL.md",
+      "bytes": 10662,
+      "sha256": "c2fcb2c62f46337cbff47f3499efe9a9d3ba3444b0e9658ef48ca3b57bd554b5",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/c2fcb2c62f46337cbff47f3499efe9a9d3ba3444b0e9658ef48ca3b57bd554b5--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": " M",
+      "path": "AGENTS.md",
+      "bytes": 1086,
+      "sha256": "893dac742347462b0f21d966fc4cc37258417d93a411ddf01a1e5f3ef23c6998",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/893dac742347462b0f21d966fc4cc37258417d93a411ddf01a1e5f3ef23c6998--AGENTS.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": "??",
+      "path": ".codex/config.toml",
+      "bytes": 122,
+      "sha256": "12fa85a35d371cba327ebf7ee0407d1bb2e370b90a4a3261ead3d42221fccce8",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/12fa85a35d371cba327ebf7ee0407d1bb2e370b90a4a3261ead3d42221fccce8--config.toml.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": "??",
+      "path": ".codex/skills/agtx-execute/SKILL.md",
+      "bytes": 1342,
+      "sha256": "ddf9004855fdff6143d97cf67b3413eba2ac00778e29e4fc7e561aa61da89687",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/ddf9004855fdff6143d97cf67b3413eba2ac00778e29e4fc7e561aa61da89687--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": "??",
+      "path": ".codex/skills/agtx-merge-conflicts/SKILL.md",
+      "bytes": 2416,
+      "sha256": "1dc032f26067d52866fa3f40ccea91cec2388c0568fe08ed5e4807646a56156c",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/1dc032f26067d52866fa3f40ccea91cec2388c0568fe08ed5e4807646a56156c--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": "??",
+      "path": ".codex/skills/agtx-orchestrate/SKILL.md",
+      "bytes": 7883,
+      "sha256": "e1913375cd9ddfbf27572d4fd51e3749703d0038fb52d29f8ab8719140a6c80b",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/e1913375cd9ddfbf27572d4fd51e3749703d0038fb52d29f8ab8719140a6c80b--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": "??",
+      "path": ".codex/skills/agtx-plan/SKILL.md",
+      "bytes": 1622,
+      "sha256": "26fa879a4f7d78c89f04a8c25129e1541f605dc5c46481a58c0edf1c0f29d5f3",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/26fa879a4f7d78c89f04a8c25129e1541f605dc5c46481a58c0edf1c0f29d5f3--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": "??",
+      "path": ".codex/skills/agtx-research/SKILL.md",
+      "bytes": 1463,
+      "sha256": "e8bf847251fe4bd9fdca1ff2432e5ab92eb286ed53a0fab92809b4ac87c2d9d4",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/e8bf847251fe4bd9fdca1ff2432e5ab92eb286ed53a0fab92809b4ac87c2d9d4--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": "??",
+      "path": ".codex/skills/agtx-review/SKILL.md",
+      "bytes": 1208,
+      "sha256": "208705c76c7c0dafb1feccfec0bb168f542fd46df5503ee6ec1ccf6e7175bb98",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/208705c76c7c0dafb1feccfec0bb168f542fd46df5503ee6ec1ccf6e7175bb98--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "wa02",
+      "source_head": "079636dc7488f4d157ef305d180bf593f1a9363e",
+      "status": "??",
+      "path": ".mcp.json",
+      "bytes": 187,
+      "sha256": "bc5f75a998ff741f470ec91a8cf629230945c088c60752bac42f00358bb0a658",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/bc5f75a998ff741f470ec91a8cf629230945c088c60752bac42f00358bb0a658--.mcp.json.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": " M",
+      "path": ".ocr/cli-config.json",
+      "bytes": 127,
+      "sha256": "b993c13b898af427b36e200867b8880ad9385ae485f4ffb3b0006be32dbaadc2",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/b993c13b898af427b36e200867b8880ad9385ae485f4ffb3b0006be32dbaadc2--cli-config.json.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": " M",
+      "path": ".ocr/commands/doctor.md",
+      "bytes": 833,
+      "sha256": "efa66e3269d2d45a134b7bc43d6190217caadd9d3bb46445f4b687c716f0dc2b",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/efa66e3269d2d45a134b7bc43d6190217caadd9d3bb46445f4b687c716f0dc2b--doctor.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": " M",
+      "path": ".ocr/reviewers-meta.json",
+      "bytes": 20797,
+      "sha256": "ad84b2024b5f8ce7e423514005f0b04f6b20b0cb58ba2780282f07d9f506ad93",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/ad84b2024b5f8ce7e423514005f0b04f6b20b0cb58ba2780282f07d9f506ad93--reviewers-meta.json.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": " M",
+      "path": ".ocr/skills/SKILL.md",
+      "bytes": 10662,
+      "sha256": "c2fcb2c62f46337cbff47f3499efe9a9d3ba3444b0e9658ef48ca3b57bd554b5",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/c2fcb2c62f46337cbff47f3499efe9a9d3ba3444b0e9658ef48ca3b57bd554b5--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": " M",
+      "path": "AGENTS.md",
+      "bytes": 1086,
+      "sha256": "893dac742347462b0f21d966fc4cc37258417d93a411ddf01a1e5f3ef23c6998",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/893dac742347462b0f21d966fc4cc37258417d93a411ddf01a1e5f3ef23c6998--AGENTS.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": " M",
+      "path": "backend/apps/appointments/services.py",
+      "bytes": 24177,
+      "sha256": "6ae11e7afbd37b842d6150cd8402a902ea9c48e0561b7b35478c1e0ef6ba8806",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/6ae11e7afbd37b842d6150cd8402a902ea9c48e0561b7b35478c1e0ef6ba8806--services.py.txt",
+      "disposition": "superseded_appointment_implementation"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": " M",
+      "path": "backend/apps/appointments/tests/test_no_overlap.py",
+      "bytes": 47241,
+      "sha256": "dbfa3700aeb54c98f36f24f31f93c1e93f908c41ba7cafd52f0b5ada7feb4964",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/dbfa3700aeb54c98f36f24f31f93c1e93f908c41ba7cafd52f0b5ada7feb4964--test_no_overlap.py.txt",
+      "disposition": "superseded_appointment_implementation"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": " M",
+      "path": "backend/apps/appointments/views.py",
+      "bytes": 36023,
+      "sha256": "30415656106427d076dbacace725cd104c9dc3ada7260136226dc682b067f34b",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/30415656106427d076dbacace725cd104c9dc3ada7260136226dc682b067f34b--views.py.txt",
+      "disposition": "superseded_appointment_implementation"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": "??",
+      "path": ".codex/config.toml",
+      "bytes": 122,
+      "sha256": "12fa85a35d371cba327ebf7ee0407d1bb2e370b90a4a3261ead3d42221fccce8",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/12fa85a35d371cba327ebf7ee0407d1bb2e370b90a4a3261ead3d42221fccce8--config.toml.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": "??",
+      "path": ".codex/skills/agtx-execute/SKILL.md",
+      "bytes": 1342,
+      "sha256": "ddf9004855fdff6143d97cf67b3413eba2ac00778e29e4fc7e561aa61da89687",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/ddf9004855fdff6143d97cf67b3413eba2ac00778e29e4fc7e561aa61da89687--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": "??",
+      "path": ".codex/skills/agtx-merge-conflicts/SKILL.md",
+      "bytes": 2416,
+      "sha256": "1dc032f26067d52866fa3f40ccea91cec2388c0568fe08ed5e4807646a56156c",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/1dc032f26067d52866fa3f40ccea91cec2388c0568fe08ed5e4807646a56156c--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": "??",
+      "path": ".codex/skills/agtx-orchestrate/SKILL.md",
+      "bytes": 7883,
+      "sha256": "e1913375cd9ddfbf27572d4fd51e3749703d0038fb52d29f8ab8719140a6c80b",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/e1913375cd9ddfbf27572d4fd51e3749703d0038fb52d29f8ab8719140a6c80b--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": "??",
+      "path": ".codex/skills/agtx-plan/SKILL.md",
+      "bytes": 1622,
+      "sha256": "26fa879a4f7d78c89f04a8c25129e1541f605dc5c46481a58c0edf1c0f29d5f3",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/26fa879a4f7d78c89f04a8c25129e1541f605dc5c46481a58c0edf1c0f29d5f3--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": "??",
+      "path": ".codex/skills/agtx-research/SKILL.md",
+      "bytes": 1463,
+      "sha256": "e8bf847251fe4bd9fdca1ff2432e5ab92eb286ed53a0fab92809b4ac87c2d9d4",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/e8bf847251fe4bd9fdca1ff2432e5ab92eb286ed53a0fab92809b4ac87c2d9d4--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": "??",
+      "path": ".codex/skills/agtx-review/SKILL.md",
+      "bytes": 1208,
+      "sha256": "208705c76c7c0dafb1feccfec0bb168f542fd46df5503ee6ec1ccf6e7175bb98",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/208705c76c7c0dafb1feccfec0bb168f542fd46df5503ee6ec1ccf6e7175bb98--SKILL.md.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "planwa02",
+      "source_head": "32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "status": "??",
+      "path": ".mcp.json",
+      "bytes": 187,
+      "sha256": "bc5f75a998ff741f470ec91a8cf629230945c088c60752bac42f00358bb0a658",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/bc5f75a998ff741f470ec91a8cf629230945c088c60752bac42f00358bb0a658--.mcp.json.txt",
+      "disposition": "historical_machine_or_tooling_variant_not_activated"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/INFORME_DIAGNOSTICO_FINAL.md",
+      "bytes": 20985,
+      "sha256": "c3ccad4e2643ef0c1fa6d57e932286d2dcb3989a7e94626398662c20ed8048f7",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/INFORME_DIAGNOSTICO_FINAL.md",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/MATRIZ_PENDIENTE.md",
+      "bytes": 5166,
+      "sha256": "6a0a17994149350a851ee1b5153f5a2799767749c7a9c9942a43e565f3dae520",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/MATRIZ_PENDIENTE.md",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/final-closure.json",
+      "bytes": 1588,
+      "sha256": "01ced3febfde13fe3425fc21be666ba482e78f48c8ac9aacbae80f175e041b96",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/final-closure.json",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/final-history.json",
+      "bytes": 51807,
+      "sha256": "aec9582903e5fbf6cc0be13f20ff74c2d66aa0a744a9cad7f0050840ce75b603",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/final-history.json",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/final-isolated-postgresql.json",
+      "bytes": 186942,
+      "sha256": "3d42cb210276ecc6ca23c5b591bac48fca5b2a627790a3fbabf2cfcb83ec9c16",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/final-isolated-postgresql.json",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/final-manifest.sha256.json",
+      "bytes": 499,
+      "sha256": "bc40a43e26e89fcf591ebe5601b629f6d7f79dc5f6d00bf055661e4ee80bf3e2",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/final-manifest.sha256.json",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/final-observer-source.txt",
+      "bytes": 17488,
+      "sha256": "793fa4b4d7f6aedb0042077060784b74279586bda8de34d66f89916f0c2ad754",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/final-observer-source.txt",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/harness.py",
+      "bytes": 14465,
+      "sha256": "738556dd1b4858dda572fdb0de4c01193fc6a13b810d73d7dc1a5fa141ffffbd",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/harness.py",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/history.json",
+      "bytes": 32381,
+      "sha256": "d86490a0a678abb5e398ecc08605e99751c875090ba97ecdd68952e772a6489c",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/history.json",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/history_join.py",
+      "bytes": 3128,
+      "sha256": "838cdbebc0f3a2149b0671d20ac33eb6601f735cc7451b7d16716d5113323b14",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/history_join.py",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/layout.json",
+      "bytes": 147718,
+      "sha256": "b5471e78e99a218de624eb3d030351e681a11cb83aadb15c36f7e05a0b7ff5c6",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/layout.json",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "causal",
+      "source_head": "68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "status": "??",
+      "path": "docs/evals/e4-causal-audit-2026-10-03/matrix.json",
+      "bytes": 664682,
+      "sha256": "1ea6978ee70e612322688bb39df6aee43d84fb30a391ef1148cb197cfa32b5c1",
+      "archive": "docs/evals/e4-causal-audit-2026-10-03/matrix.json",
+      "disposition": "preserved_historical_evidence_original_path"
+    },
+    {
+      "source": "architecture",
+      "source_head": "5d3892ad7776b653d278d87354ae341440a3f2d8",
+      "status": "??",
+      "path": "docs/auditoria-rag-agentes-iamd.md",
+      "bytes": 36136,
+      "sha256": "b9c36c196ee7ce45b783d7c6b4cd31395d4d77dff9f41c1b767fe65ea1629cbe",
+      "archive": "docs/history/2026-10-23-worktree-consolidation/artifacts/b9c36c196ee7ce45b783d7c6b4cd31395d4d77dff9f41c1b767fe65ea1629cbe--auditoria-rag-agentes-iamd.md.txt",
+      "disposition": "superseded_architecture_variant"
+    }
+  ]
+}

@@ -318,12 +318,14 @@ class B9BBudgetTests(TransactionTestCase):
         before = [('agent', '0027_attendance_consent_policy')]
         after = [('agent', '0028_b9_operational_budget')]
         executor = MigrationExecutor(connection)
+        latest = executor.loader.graph.leaf_nodes()
+        self.addCleanup(lambda: MigrationExecutor(connection).migrate(latest))
         try:
             executor.migrate(before)
             executor = MigrationExecutor(connection)
             executor.migrate(after)
         finally:
-            MigrationExecutor(connection).migrate(after)
+            MigrationExecutor(connection).migrate(latest)
         work = TurnWork.objects.get(pk=w.turn_work_id)
         self.assertIsNone(work.llm_calls_admitted)
         self.assertIsNone(work.llm_output_tokens_reserved)

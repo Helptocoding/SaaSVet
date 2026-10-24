@@ -30,6 +30,7 @@ class InboxMediaTests(MediaFixtures, APITestCase):
         cls.build()
 
     def setUp(self):
+        super().setUp()
         cache.clear()
         self.client.force_authenticate(self.actor)
 

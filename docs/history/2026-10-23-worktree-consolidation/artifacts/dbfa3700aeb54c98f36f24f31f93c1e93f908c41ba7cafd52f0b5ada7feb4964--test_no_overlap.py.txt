@@ -1,0 +1,1048 @@
+"""
+test_no_overlap.py — INV-D: un veterinario no tiene dos citas activas
+solapadas (ADR p57, F0·b).
+
+Cubre P0-18 (concurrencia) y P0-20 (atención sin cita + reactivación) de §8.
+
+**Estas pruebas SOLO valen en PostgreSQL.** La garantía es una restricción de
+exclusión de la base, no el pre-chequeo del serializer: en SQLite la
+restricción no existe y toda esta suite pasaría sin probar nada. El proyecto
+corre sobre PostgreSQL en todos los entornos, incluido CI.
+
+Lo que estas pruebas anclan, además del invariante: que **no existe ninguna
+bandera de forzado**. Un invariante con puerta trasera es un aviso, no una
+garantía (§9.14, §9.15).
+"""
+import threading
+import traceback
+from collections import Counter
+from datetime import timedelta
+
+from unittest import mock
+
+from django.db import OperationalError, connections
+from django.test import TransactionTestCase
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
+from rest_framework.views import APIView
+
+from apps.appointments.models import Appointment, AppointmentStatusChange
+from apps.appointments.services import NO_OVERLAP_EXCEPTIONS, is_no_overlap_violation
+from apps.core.models import Permission, Role, UserRole
+from apps.organizations.models import Organization
+from apps.patients.models import Owner, Pet
+from apps.users.models import User
+
+
+ACTIVE_STATUSES_TEST = ("scheduled", "confirmed", "in_progress")
+
+
+def _slot(days=3, hour=10):
+    day = (timezone.now() + timedelta(days=days)).date()
+    return day.isoformat(), f"{hour:02d}:00", f"{hour:02d}:30"
+
+
+def _seed(name, suffix):
+    """Org con ADMIN (wildcard), un VET con wildcard y dos mascotas."""
+    org = Organization.objects.create(name=name, timezone="UTC")
+    wildcard, _ = Permission.objects.get_or_create(code="*.*")
+    role, _ = Role.objects.get_or_create(
+        name="ADMIN", organization=org, defaults={"is_system_role": True})
+    role.permissions.set([wildcard])
+
+    admin = User.objects.create_user(
+        username=f"ovl_admin_{suffix}", password="p", organization=org, role="ADMIN")
+    UserRole.objects.get_or_create(user=admin, role=role)
+    # El vet necesita `appointment.create_walkin` para ser asignable a un
+    # walk-in (RBAC estricto en la view); el wildcard se lo da.
+    vet = User.objects.create_user(
+        username=f"ovl_vet_{suffix}", password="p", organization=org, role="VET")
+    UserRole.objects.get_or_create(user=vet, role=role)
+
+    owner = Owner.objects.create(organization=org, name="Ana", phone="5511110002")
+    pet_a = Pet.objects.create(
+        organization=org, owner=owner, name="Luna",
+        species="perro", birth_date="2021-01-01")
+    pet_b = Pet.objects.create(
+        organization=org, owner=owner, name="Rocky",
+        species="perro", birth_date="2021-01-01")
+    return org, admin, vet, pet_a, pet_b
+
+
+class NoOverlapBase(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.org, cls.admin, cls.vet, cls.pet_a, cls.pet_b = _seed("INV-D Org", "b")
+
+    def setUp(self):
+        self.client.force_authenticate(self.admin)
+
+    def _post_appt(self, pet, days=3, hour=10, client=None):
+        date, start, end = _slot(days, hour)
+        return (client or self.client).post("/api/appointments/", {
+            "pet": pet.id, "veterinarian": self.vet.id,
+            "date": date, "start_time": start, "end_time": end, "reason": "consulta",
+        })
+
+
+class OverlapIsRejectedTests(NoOverlapBase):
+    """La restricción cubre creación y reprogramación."""
+
+    def test_second_appointment_on_the_same_slot_is_slot_taken(self):
+        first = self._post_appt(self.pet_a, hour=10)
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.content)
+
+        second = self._post_appt(self.pet_b, hour=10)
+
+        self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST, second.content)
+        self.assertEqual(second.json()["code"], "slot_taken")
+        self.assertEqual(Appointment.objects.filter(organization=self.org).count(), 1)
+
+    def test_adjacent_slots_do_not_overlap(self):
+        """10:00–10:30 y 10:30–11:00 son contiguas, no solapadas."""
+        first = self._post_appt(self.pet_a, hour=10)
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.content)
+
+        date = (timezone.now() + timedelta(days=3)).date().isoformat()
+        second = self.client.post("/api/appointments/", {
+            "pet": self.pet_b.id, "veterinarian": self.vet.id,
+            "date": date, "start_time": "10:30", "end_time": "11:00", "reason": "x",
+        })
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED, second.content)
+
+    def test_canceled_appointment_frees_the_slot(self):
+        first = self._post_appt(self.pet_a, hour=10)
+        appt = Appointment.objects.get(public_id=first.json()["public_id"])
+        self.client.patch(f"/api/appointments/{appt.public_id}/status/",
+                          {"status": "canceled"})
+
+        second = self._post_appt(self.pet_b, hour=10)
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED, second.content)
+
+    def test_appointment_without_veterinarian_never_blocks(self):
+        """Sin veterinario no hay recurso que reservar (fuera del predicado)."""
+        date, start, end = _slot(days=3, hour=10)
+        Appointment.objects.create(
+            organization=self.org, pet=self.pet_a, veterinarian=None,
+            date=date, start_time=start, end_time=end,
+            start_datetime=timezone.now() + timedelta(days=3),
+            end_datetime=timezone.now() + timedelta(days=3, minutes=30),
+            reason="sin vet", status="scheduled",
+        )
+        response = self._post_appt(self.pet_b, hour=10)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+
+
+class WalkInRespectsNoOverlapTests(NoOverlapBase):
+    """P0-20 (a) — atención sin cita, SIN excepción (§9.14, aprobado)."""
+
+    def _occupy_now(self, pet):
+        """Cita activa del vet que cubre el instante actual."""
+        now = timezone.now()
+        return Appointment.objects.create(
+            organization=self.org, pet=pet, veterinarian=self.vet,
+            date=now.date(), start_time=now.time().replace(second=0, microsecond=0),
+            end_time=(now + timedelta(hours=1)).time().replace(second=0, microsecond=0),
+            start_datetime=now - timedelta(minutes=5),
+            end_datetime=now + timedelta(hours=1),
+            reason="consulta en curso", status="in_progress",
+        )
+
+    def test_walk_in_on_a_busy_vet_is_slot_taken_and_writes_nothing(self):
+        occupied = self._occupy_now(self.pet_a)
+        before_appts = Appointment.objects.filter(organization=self.org).count()
+        before_audit = AppointmentStatusChange.objects.filter(
+            organization=self.org).count()
+
+        response = self.client.post("/api/appointments/walk-in/", {
+            "pet": self.pet_b.id, "veterinarian": self.vet.id, "reason": "urgencia",
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.content)
+        self.assertEqual(response.json()["code"], "slot_taken")
+        # Cero citas creadas, cero auditoría, la cita existente intacta.
+        self.assertEqual(
+            Appointment.objects.filter(organization=self.org).count(), before_appts)
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(organization=self.org).count(),
+            before_audit)
+        occupied.refresh_from_db()
+        self.assertEqual(occupied.status, "in_progress")
+
+    def test_walk_in_on_a_free_vet_still_works(self):
+        response = self.client.post("/api/appointments/walk-in/", {
+            "pet": self.pet_b.id, "veterinarian": self.vet.id, "reason": "urgencia",
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        self.assertTrue(
+            Appointment.objects.filter(
+                organization=self.org, walk_in=True, status="in_progress").exists())
+
+    def test_no_force_flag_can_bypass_the_slot(self):
+        """§9.14/§9.15: no existe `force`, `allow_overlap` ni permiso que lo salte."""
+        self._occupy_now(self.pet_a)
+        for payload_extra in (
+            {"force": True},
+            {"allow_overlap": True},
+            {"force": True, "allow_overlap": True},
+        ):
+            with self.subTest(extra=payload_extra):
+                response = self.client.post("/api/appointments/walk-in/", {
+                    "pet": self.pet_b.id, "veterinarian": self.vet.id,
+                    "reason": "urgencia", **payload_extra,
+                })
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(response.json()["code"], "slot_taken")
+
+
+class ReactivationRespectsNoOverlapTests(NoOverlapBase):
+    """P0-20 (b) — reactivación sin desplazamiento (§9.15, aprobado)."""
+
+    def _canceled_appt_at(self, hour):
+        response = self._post_appt(self.pet_a, hour=hour)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        appt = Appointment.objects.get(public_id=response.json()["public_id"])
+        self.client.patch(f"/api/appointments/{appt.public_id}/status/",
+                          {"status": "canceled"})
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "canceled")
+        self._assert_serialized_on_real_vet(state, self.vet_b.id)
+        return appt
+
+    def test_reactivation_over_a_reassigned_slot_is_slot_taken(self):
+        canceled = self._canceled_appt_at(hour=10)
+        # El hueco se le dio a otro paciente mientras estaba cancelada.
+        taken = self._post_appt(self.pet_b, hour=10)
+        self.assertEqual(taken.status_code, status.HTTP_201_CREATED, taken.content)
+        audit_before = AppointmentStatusChange.objects.filter(
+            appointment=canceled).count()
+
+        response = self.client.patch(
+            f"/api/appointments/{canceled.public_id}/status/", {"status": "scheduled"})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.content)
+        self.assertEqual(response.json()["code"], "slot_taken")
+        # Nada se desplaza ni se reubica: la cita sigue cancelada, la otra intacta.
+        canceled.refresh_from_db()
+        self.assertEqual(canceled.status, "canceled")
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=canceled).count(),
+            audit_before)
+        self.assertEqual(
+            Appointment.objects.get(public_id=taken.json()["public_id"]).status,
+            "scheduled")
+
+    def test_reactivation_over_a_free_slot_still_works(self):
+        canceled = self._canceled_appt_at(hour=12)
+        response = self.client.patch(
+            f"/api/appointments/{canceled.public_id}/status/", {"status": "scheduled"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        canceled.refresh_from_db()
+        self.assertEqual(canceled.status, "scheduled")
+
+    def test_no_force_flag_on_reactivation(self):
+        canceled = self._canceled_appt_at(hour=13)
+        self._post_appt(self.pet_b, hour=13)
+        response = self.client.patch(
+            f"/api/appointments/{canceled.public_id}/status/",
+            {"status": "scheduled", "force": True, "allow_overlap": True},
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json()["code"], "slot_taken")
+        canceled.refresh_from_db()
+        self.assertEqual(canceled.status, "canceled")
+
+
+class DeadlockIsNeverASlotTakenTests(NoOverlapBase):
+    """Un deadlock NO es prueba de que el hueco esté ocupado (rev. F0).
+
+    Hubo un intento de traducir el SQLSTATE 40P01 a `slot_taken` re-consultando
+    el hueco después del rollback. Era falso por diseño: el re-chequeo puede
+    correr **antes** de que el competidor confirme (y ver el hueco libre) o
+    después de que lo cancele. Bajo `--parallel` fallaba ~1 de cada 10 corridas
+    devolviendo un 500.
+
+    El deadlock ahora se **previene** serializando por veterinario. Si aun así
+    apareciera, tiene que salir como error visible: es la señal de que la
+    prevención tiene un agujero, y disfrazarla de resultado de negocio la
+    volvería indiagnosticable.
+    """
+
+    def _deadlock_error(self):
+        from psycopg import errors as pg_errors
+        exc = OperationalError("deadlock detected")
+        exc.__cause__ = pg_errors.DeadlockDetected("deadlock detected")
+        return exc
+
+    def test_a_deadlock_is_not_classified_as_no_overlap(self):
+        self.assertFalse(is_no_overlap_violation(self._deadlock_error()))
+
+    def test_deadlock_is_not_caught_by_the_business_translation(self):
+        """No basta con no clasificarlo: tampoco debe capturarse.
+
+        Si `OperationalError` volviera a la tupla que capturan las vistas, un
+        deadlock quedaría a un `if` de distancia de convertirse en `slot_taken`.
+        """
+        self.assertNotIsInstance(self._deadlock_error(), NO_OVERLAP_EXCEPTIONS)
+
+    def test_the_constraint_violation_is_still_a_business_400(self):
+        """La traducción legítima —por nombre de restricción— sigue viva."""
+        from django.db import IntegrityError as DjangoIntegrityError
+
+        class _Diag:
+            constraint_name = 'appointment_no_overlap_per_vet'
+
+        class _Cause(Exception):
+            diag = _Diag()
+
+        exc = DjangoIntegrityError("conflicting key value violates exclusion constraint")
+        exc.__cause__ = _Cause()
+        self.assertTrue(is_no_overlap_violation(exc))
+
+
+class AssignPatientStaysOutOfInvDTests(NoOverlapBase):
+    """`assign-patient` queda fuera de la serialización, y aquí está la prueba.
+
+    La exclusión se define sobre (organización, veterinario, intervalo) con
+    predicado de estado. `assign-patient` solo cambia `pet`: si no toca ninguno
+    de esos campos, no puede entrar ni salir del predicado, y por tanto no
+    necesita el lock del veterinario. Esto lo comprueba en vez de afirmarlo.
+    """
+
+    def test_assign_patient_touches_no_agenda_field(self):
+        from apps.patients.utils import get_or_create_generic_patient
+
+        _, generic_pet = get_or_create_generic_patient(self.org)
+        created = self._post_appt(self.pet_a, hour=9)
+        self.assertEqual(created.status_code, status.HTTP_201_CREATED, created.content)
+        appt = Appointment.objects.get(public_id=created.json()["public_id"])
+        Appointment.objects.filter(pk=appt.pk).update(pet=generic_pet)
+        appt.refresh_from_db()
+
+        before = (appt.veterinarian_id, appt.date, appt.start_time,
+                  appt.end_time, appt.status, appt.start_datetime, appt.end_datetime)
+
+        response = self.client.patch(
+            f"/api/appointments/{appt.public_id}/assign-patient/",
+            {"pet": self.pet_b.id}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+
+        appt.refresh_from_db()
+        after = (appt.veterinarian_id, appt.date, appt.start_time,
+                 appt.end_time, appt.status, appt.start_datetime, appt.end_datetime)
+        # Recurso, horario y estado de agenda: intactos. Solo cambió el paciente.
+        self.assertEqual(before, after)
+        self.assertEqual(appt.pet_id, self.pet_b.id)
+
+
+class ConcurrentSlotTests(TransactionTestCase):
+    """P0-18 — el cupo es una GARANTÍA, no un mensaje. PostgreSQL.
+
+    Dos escrituras que apuntan al mismo hueco al mismo tiempo: el pre-chequeo
+    `exists()` puede pasar en ambas (ninguna ve a la otra todavía). Sin la
+    restricción de exclusión, las dos persisten. Con ella, exactamente una.
+    """
+    reset_sequences = True
+
+    # Timeouts de DIAGNÓSTICO, no de rendimiento. Medido: la barrera se cruza
+    # en ~1 ms (máx. 25 ms) y el request tarda ~80 ms (máx. 1.4 s) incluso con
+    # el runner en `--parallel`. Estos márgenes existen para que la prueba no
+    # se cuelgue para siempre si algo se rompe, no para vigilar la velocidad:
+    # apretarlos convertiría la lentitud de una máquina cargada en un fallo
+    # falso, que es justo lo que esta prueba dejó de hacer.
+    BARRIER_TIMEOUT = 30
+    JOIN_TIMEOUT = 60
+
+    def setUp(self):
+        self.org, self.admin, self.vet, self.pet_a, self.pet_b = _seed(
+            "INV-D Concurrencia", "cc")
+
+    def tearDown(self):
+        connections.close_all()
+
+    def _run_parallel(self, fn_a, fn_b):
+        """Ejecuta dos llamadas en paralelo y devuelve `{'a': ..., 'b': ...}`.
+
+        El harness anterior perdía información en silencio: una excepción en un
+        hilo solo se notaba como una clave que faltaba en el diccionario, y la
+        aserción de la prueba fallaba con un `[201] != [201, 400]` que no decía
+        NADA de la causa. Fue lo que convirtió un bug real de producción
+        (deadlock en la restricción de exclusión) en «un test flaky».
+
+        Reglas de este harness:
+
+        - **Todo hilo reporta**: o su resultado, o el traceback que lo mató.
+          Nada se traga.
+        - **Un hilo que muere rompe la barrera** (`abort()`), así que el otro no
+          se queda esperando el timeout completo por un compañero que ya no va
+          a llegar. Sin esto, la muerte de un hilo costaba el timeout entero y
+          producía dos fallos en vez de uno con causa.
+        - **Los timeouts son de diagnóstico, no de carrera**: son holgados a
+          propósito (la barrera real tarda milisegundos) y, si se agotan, la
+          prueba falla diciendo QUÉ se colgó, en vez de seguir con resultados
+          parciales.
+        - **Sin reintentos.** Si el dominio se comporta mal, la prueba se pone
+          roja; no se le dan segundas oportunidades hasta que salga verde.
+        """
+        barrier = threading.Barrier(2)
+        outcomes = {}
+
+        def runner(name, fn):
+            try:
+                # El cliente se construye DENTRO del try: si fallara aquí, el
+                # hilo moriría antes de la barrera y dejaría al otro colgado.
+                client = APIClient()
+                client.force_authenticate(self.admin)
+                barrier.wait(timeout=self.BARRIER_TIMEOUT)
+                outcomes[name] = ('ok', fn(client))
+            except BaseException:  # noqa: BLE001 — capturar y reportar, no tragar
+                barrier.abort()
+                outcomes[name] = ('error', traceback.format_exc())
+            finally:
+                connections.close_all()
+
+        threads = {
+            name: threading.Thread(target=runner, args=(name, fn), name=f"slot-{name}")
+            for name, fn in (("a", fn_a), ("b", fn_b))
+        }
+        for t in threads.values():
+            t.start()
+
+        stuck = []
+        for name, t in threads.items():
+            t.join(timeout=self.JOIN_TIMEOUT)
+            if t.is_alive():
+                stuck.append(name)
+        if stuck:
+            self.fail(
+                f"Hilos sin terminar tras {self.JOIN_TIMEOUT}s: {sorted(stuck)}. "
+                f"Reportado hasta ahora: {sorted(outcomes)}. "
+                "No se evalúa el invariante con resultados parciales."
+            )
+
+        errors = {n: tb for n, (kind, tb) in outcomes.items() if kind == 'error'}
+        if errors:
+            detail = "\n\n".join(f"--- hilo {n} ---\n{tb}" for n, tb in sorted(errors.items()))
+            self.fail(f"Un hilo falló en vez de devolver una respuesta HTTP:\n\n{detail}")
+
+        missing = set(threads) - set(outcomes)
+        if missing:
+            self.fail(f"Hilos que terminaron sin reportar nada: {sorted(missing)}.")
+
+        return {n: value for n, (_, value) in outcomes.items()}
+
+    def test_two_concurrent_creations_leave_one_active_appointment(self):
+        date, start, end = _slot(days=3, hour=10)
+
+        def create(pet):
+            def _call(client):
+                response = client.post("/api/appointments/", {
+                    "pet": pet.id, "veterinarian": self.vet.id,
+                    "date": date, "start_time": start, "end_time": end,
+                    "reason": "consulta",
+                })
+                return response.status_code, response.json()
+            return _call
+
+        results = self._run_parallel(create(self.pet_a), create(self.pet_b))
+
+        codes = sorted(code for code, _ in results.values())
+        # Un 500 aquí NO es ruido de concurrencia: es el deadlock de la
+        # restricción de exclusión escapándose sin traducir (ver
+        # `is_no_overlap_violation`). El perdedor de una carrera por el mismo
+        # hueco recibe `slot_taken`, nunca una avería.
+        self.assertNotIn(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, codes,
+            f"El perdedor recibió un 500 en vez de slot_taken: {results}",
+        )
+        self.assertEqual(
+            codes, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST], results)
+        loser = next(body for code, body in results.values() if code == 400)
+        self.assertEqual(loser["code"], "slot_taken", results)
+        self.assertEqual(
+            Appointment.objects.filter(
+                organization=self.org, veterinarian=self.vet,
+                status__in=("scheduled", "confirmed", "in_progress"),
+            ).count(),
+            1,
+        )
+
+    def test_two_concurrent_reschedules_into_the_same_slot(self):
+        """Dos citas distintas se mueven a la vez al mismo hueco libre."""
+        far_a, far_b = 15, 17
+        appts = []
+        client = APIClient()
+        client.force_authenticate(self.admin)
+        for pet, hour in ((self.pet_a, far_a), (self.pet_b, far_b)):
+            date, start, end = _slot(days=3, hour=hour)
+            response = client.post("/api/appointments/", {
+                "pet": pet.id, "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "x",
+            })
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+            appts.append(response.json()["public_id"])
+
+        target_date, target_start, target_end = _slot(days=4, hour=9)
+
+        def reschedule(public_id):
+            def _call(client):
+                response = client.patch(f"/api/appointments/{public_id}/", {
+                    "date": target_date, "start_time": target_start,
+                    "end_time": target_end,
+                })
+                return response.status_code, response.json()
+            return _call
+
+        results = self._run_parallel(reschedule(appts[0]), reschedule(appts[1]))
+
+        codes = sorted(code for code, _ in results.values())
+        self.assertEqual(
+            codes, [status.HTTP_200_OK, status.HTTP_400_BAD_REQUEST], results)
+        self.assertEqual(
+            Appointment.objects.filter(
+                organization=self.org, veterinarian=self.vet,
+                start_time=target_start,
+                status__in=("scheduled", "confirmed", "in_progress"),
+            ).count(),
+            1,
+        )
+
+    def test_concurrent_reactivation_and_creation_leave_one_active(self):
+        """Reactivar `canceled → scheduled` mientras otro ocupa el mismo hueco."""
+        client = APIClient()
+        client.force_authenticate(self.admin)
+        date, start, end = _slot(days=3, hour=11)
+        response = client.post("/api/appointments/", {
+            "pet": self.pet_a.id, "veterinarian": self.vet.id,
+            "date": date, "start_time": start, "end_time": end, "reason": "x",
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        canceled_id = response.json()["public_id"]
+        client.patch(f"/api/appointments/{canceled_id}/status/", {"status": "canceled"})
+
+        def reactivate(client):
+            r = client.patch(f"/api/appointments/{canceled_id}/status/",
+                             {"status": "scheduled"})
+            return r.status_code, r.json()
+
+        def create(client):
+            r = client.post("/api/appointments/", {
+                "pet": self.pet_b.id, "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "y",
+            })
+            return r.status_code, r.json()
+
+        results = self._run_parallel(reactivate, create)
+
+        codes = [code for code, _ in results.values()]
+        self.assertNotIn(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, codes,
+            f"Reactivación contra creación terminó en 500: {results}",
+        )
+        active = Appointment.objects.filter(
+            organization=self.org, veterinarian=self.vet, start_time=start,
+            status__in=("scheduled", "confirmed", "in_progress"),
+        )
+        self.assertEqual(active.count(), 1, results)
+        # Quien perdió recibió el desenlace de negocio, no un 500.
+        losers = [body for code, body in results.values() if code >= 400]
+        for body in losers:
+            self.assertEqual(body.get("code"), "slot_taken", body)
+
+    def test_concurrent_vet_swap_does_not_deadlock(self):
+        """Dos PATCH cruzados que intercambian veterinarios (orden de locks).
+
+        A pasa de V1 a V2 mientras B pasa de V2 a V1, a la vez. Si cada
+        petición bloqueara «su» veterinario primero y el otro después, los
+        órdenes serían opuestos y PostgreSQL abortaría una por deadlock. Con el
+        lock tomado en orden de PK, ambas piden V1 antes que V2 y la segunda
+        solo espera.
+
+        La aserción es exigente a propósito: ninguna de las dos puede terminar
+        en 500. El desenlace legítimo es que ambas se reasignen, o que una
+        choque con el cupo y reciba `slot_taken`.
+        """
+        vet2 = User.objects.create_user(
+            username="ovl_vet_swap", password="p", organization=self.org, role="VET")
+        wildcard, _ = Permission.objects.get_or_create(code="*.*")
+        role = Role.objects.get(name="ADMIN", organization=self.org)
+        UserRole.objects.get_or_create(user=vet2, role=role)
+
+        client = APIClient()
+        client.force_authenticate(self.admin)
+        appts = {}
+        for label, pet, vet, hour in (("a", self.pet_a, self.vet, 8),
+                                      ("b", self.pet_b, vet2, 20)):
+            date, start, end = _slot(days=3, hour=hour)
+            r = client.post("/api/appointments/", {
+                "pet": pet.id, "veterinarian": vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "x",
+            })
+            self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.content)
+            appts[label] = r.json()["public_id"]
+
+        def swap(public_id, new_vet_id):
+            def _call(cli):
+                r = cli.patch(f"/api/appointments/{public_id}/",
+                              {"veterinarian": new_vet_id}, format="json")
+                return r.status_code, r.json()
+            return _call
+
+        results = self._run_parallel(
+            swap(appts["a"], vet2.id),
+            swap(appts["b"], self.vet.id),
+        )
+
+        codes = [code for code, _ in results.values()]
+        self.assertNotIn(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, codes,
+            f"Un intercambio cruzado de veterinarios terminó en 500 "
+            f"(deadlock por orden de locks): {results}",
+        )
+        for code, body in results.values():
+            if code >= 400:
+                self.assertEqual(body.get("code"), "slot_taken", body)
+
+
+class RepeatedConcurrentCreationTests(TransactionTestCase):
+    """500 carreras seguidas al mismo hueco: SIEMPRE `[201, slot_taken]`.
+
+    Una sola carrera no prueba nada — el deadlock que motivó todo esto aparecía
+    ~1 de cada 250. Esta prueba repite la carrera lo suficiente como para que
+    su ausencia signifique algo, y falla al PRIMER 500 con el cuerpo completo
+    de ambas respuestas.
+
+    Cada iteración usa un hueco distinto, así que no hace falta limpiar entre
+    vueltas y la carrera sigue siendo por el mismo hueco entre los dos hilos.
+    """
+    reset_sequences = True
+
+    ITERATIONS = 500
+    BARRIER_TIMEOUT = 30
+    JOIN_TIMEOUT = 60
+
+    def setUp(self):
+        self.org, self.admin, self.vet, self.pet_a, self.pet_b = _seed(
+            "INV-D 500 carreras", "rep")
+        # 1000 peticiones seguidas superan el `user: 500/hour` y el throttle
+        # devolvería 429, tapando justo lo que se quiere medir. El límite de
+        # tasa protege de clientes abusivos; no forma parte de INV-D.
+        #
+        # Se parchea `throttle_classes` y NO se usa `override_settings`: DRF
+        # resuelve `APIView.throttle_classes` desde `api_settings` en tiempo de
+        # importación, así que cambiar `REST_FRAMEWORK` en caliente no afecta a
+        # las vistas ya definidas (probado: seguía devolviendo 429).
+        patcher = mock.patch.object(APIView, 'throttle_classes', [])
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        connections.close_all()
+
+    def test_five_hundred_races_never_produce_a_500(self):
+        seen = Counter()
+
+        for i in range(self.ITERATIONS):
+            day = (timezone.now() + timedelta(days=5 + i // 12)).date().isoformat()
+            hour = 8 + (i % 12)
+            start, end = f"{hour:02d}:00", f"{hour:02d}:30"
+
+            barrier = threading.Barrier(2)
+            outcomes = {}
+
+            def runner(name, pet):
+                try:
+                    client = APIClient()
+                    client.force_authenticate(self.admin)
+                    barrier.wait(timeout=self.BARRIER_TIMEOUT)
+                    r = client.post("/api/appointments/", {
+                        "pet": pet.id, "veterinarian": self.vet.id,
+                        "date": day, "start_time": start, "end_time": end,
+                        "reason": "consulta",
+                    })
+                    outcomes[name] = ('ok', r.status_code, r.json())
+                except BaseException:  # noqa: BLE001
+                    barrier.abort()
+                    outcomes[name] = ('error', None, traceback.format_exc())
+                finally:
+                    connections.close_all()
+
+            threads = [
+                threading.Thread(target=runner, args=("a", self.pet_a)),
+                threading.Thread(target=runner, args=("b", self.pet_b)),
+            ]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join(timeout=self.JOIN_TIMEOUT)
+                if t.is_alive():
+                    self.fail(f"iteración {i}: un hilo no terminó en "
+                              f"{self.JOIN_TIMEOUT}s. Reportado: {sorted(outcomes)}")
+
+            crashed = {n: tb for n, (kind, _, tb) in outcomes.items() if kind == 'error'}
+            if crashed:
+                detail = "\n\n".join(f"--- hilo {n} ---\n{tb}" for n, tb in crashed.items())
+                self.fail(f"iteración {i}: un hilo murió:\n\n{detail}")
+
+            codes = sorted(code for _, code, _ in outcomes.values())
+            if status.HTTP_500_INTERNAL_SERVER_ERROR in codes:
+                self.fail(
+                    f"iteración {i}: alguien recibió un 500 en una carrera por "
+                    f"el cupo. Respuestas: { {n: (c, b) for n, (_, c, b) in outcomes.items()} }"
+                )
+            self.assertEqual(
+                codes, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST],
+                f"iteración {i}: { {n: (c, b) for n, (_, c, b) in outcomes.items()} }",
+            )
+            loser = next(b for _, c, b in outcomes.values() if c == 400)
+            self.assertEqual(loser.get("code"), "slot_taken", loser)
+            seen[tuple(codes)] += 1
+
+        self.assertEqual(sum(seen.values()), self.ITERATIONS)
+
+
+class StableVetRereadTests(TransactionTestCase):
+    """El veterinario por el que se serializa se relee bajo lock (OCR r2).
+
+    El orden global exige bloquear al veterinario ANTES que la cita, así que hay
+    que elegirlo desde una lectura previa a la transacción. Si entre esa lectura
+    y el lock otra petición reasigna la cita, estaríamos mutando la agenda del
+    veterinario equivocado: serializando una que no es y dejando la real
+    desprotegida.
+
+    El protocolo relee el veterinario ya con la cita bloqueada y, si no coincide
+    con el snapshot, **revierte la transacción entera** y repite una sola vez
+    con el snapshot nuevo — soltando los locks viejos antes de pedir el nuevo,
+    que es lo que impide el ABBA. A la segunda discrepancia responde `409`
+    sin escribir.
+
+    Estas pruebas fuerzan la reasignación **desde otra conexión** en el momento
+    exacto: entre el snapshot y el lock. `TransactionTestCase` porque el
+    competidor tiene que hacer commit de verdad.
+    """
+    reset_sequences = True
+
+    def setUp(self):
+        self.org, self.admin, self.vet_a, self.pet_a, self.pet_b = _seed(
+            "INV-D relectura", "sr")
+        self.vet_b = User.objects.create_user(
+            username="sr_vet_b", password="p", organization=self.org, role="VET")
+        role = Role.objects.get(name="ADMIN", organization=self.org)
+        UserRole.objects.get_or_create(user=self.vet_b, role=role)
+        self.client_api = APIClient()
+        self.client_api.force_authenticate(self.admin)
+
+    def tearDown(self):
+        connections.close_all()
+
+    def _appointment(self, hour=10, vet=None):
+        date, start, end = _slot(days=3, hour=hour)
+        r = self.client_api.post("/api/appointments/", {
+            "pet": self.pet_a.id, "veterinarian": (vet or self.vet_a).id,
+            "date": date, "start_time": start, "end_time": end, "reason": "x",
+        })
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.content)
+        return Appointment.objects.get(public_id=r.json()["public_id"])
+
+    def _reassign_from_another_connection(self, appt_pk, new_vet_id):
+        """Reasigna en OTRA conexión, con commit propio."""
+        errors = {}
+
+        def worker():
+            try:
+                Appointment.objects.filter(pk=appt_pk).update(veterinarian_id=new_vet_id)
+            except BaseException:  # noqa: BLE001
+                errors['tb'] = traceback.format_exc()
+            finally:
+                connections.close_all()
+
+        t = threading.Thread(target=worker, name="reassign")
+        t.start()
+        t.join(timeout=30)
+        self.assertFalse(t.is_alive(), "el reasignador no terminó")
+        self.assertNotIn('tb', errors, errors.get('tb'))
+
+    def _patch_lock_to_reassign_once(self, appt_pk, new_vet_id):
+        """Reasigna entre el snapshot y el lock de la cita, y espía los locks.
+
+        Se envuelve `lock_appointment`: la primera vez reasigna (otra conexión,
+        commit) y sólo después bloquea, de modo que la relectura vea un
+        veterinario distinto al del snapshot. Es el interleaving exacto que el
+        protocolo debe absorber.
+
+        Además se espía `lock_veterinarians` para poder afirmar QUÉ veterinario
+        acabó serializado. Sin ese espía la prueba sería complaciente: con el
+        protocolo ingenuo (bloquear el snapshot y no releer) la petición también
+        devuelve 200 — la diferencia no está en el código de respuesta, está en
+        si se bloqueó la agenda correcta.
+        """
+        from apps.appointments import services as svc
+
+        real_lock_appt = svc.lock_appointment
+        real_lock_vets = svc.lock_veterinarians
+        state = {'fired': False, 'vet_locks': []}
+
+        def appt_wrapper(appointment):
+            if not state['fired']:
+                state['fired'] = True
+                self._reassign_from_another_connection(appt_pk, new_vet_id)
+            return real_lock_appt(appointment)
+
+        def vets_wrapper(organization_id, *vet_ids):
+            state['vet_locks'].append(sorted({v for v in vet_ids if v}))
+            return real_lock_vets(organization_id, *vet_ids)
+
+        for target, wrapper in (('lock_appointment', appt_wrapper),
+                                ('lock_veterinarians', vets_wrapper)):
+            patcher = mock.patch.object(svc, target, wrapper)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        return state
+
+    def _assert_serialized_on_real_vet(self, state, real_vet_id):
+        """El último intento bloqueó al veterinario REAL de la cita."""
+        self.assertTrue(state['vet_locks'], "no se bloqueó ningún veterinario")
+        self.assertIn(
+            real_vet_id, state['vet_locks'][-1],
+            f"el último intento serializó por {state['vet_locks'][-1]}, no por el "
+            f"veterinario real {real_vet_id}: la agenda que se mutó quedó sin proteger",
+        )
+        self.assertGreaterEqual(
+            len(state['vet_locks']), 2,
+            "no hubo reintento: el snapshot vencido se usó para mutar",
+        )
+
+    def test_status_change_absorbs_a_concurrent_reassignment(self):
+        appt = self._appointment(hour=10)
+        state = self._patch_lock_to_reassign_once(appt.pk, self.vet_b.id)
+
+        response = self.client_api.patch(
+            f"/api/appointments/{appt.public_id}/status/", {"status": "confirmed"})
+
+        self.assertTrue(state['fired'])
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        appt.refresh_from_db()
+        # La transición se aplicó, y sobre el veterinario REAL.
+        self.assertEqual(appt.status, "confirmed")
+        self.assertEqual(appt.veterinarian_id, self.vet_b.id)
+        self._assert_serialized_on_real_vet(state, self.vet_b.id)
+
+    def test_patch_absorbs_a_concurrent_reassignment(self):
+        appt = self._appointment(hour=11)
+        state = self._patch_lock_to_reassign_once(appt.pk, self.vet_b.id)
+
+        response = self.client_api.patch(
+            f"/api/appointments/{appt.public_id}/", {"reason": "motivo nuevo"},
+            format="json")
+
+        self.assertTrue(state['fired'])
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        appt.refresh_from_db()
+        self.assertEqual(appt.reason, "motivo nuevo")
+        self.assertEqual(appt.veterinarian_id, self.vet_b.id)
+        self._assert_serialized_on_real_vet(state, self.vet_b.id)
+
+    def test_delete_absorbs_a_concurrent_reassignment(self):
+        appt = self._appointment(hour=12)
+        state = self._patch_lock_to_reassign_once(appt.pk, self.vet_b.id)
+
+        response = self.client_api.delete(f"/api/appointments/{appt.public_id}/")
+
+        self.assertTrue(state['fired'])
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "canceled")
+        self._assert_serialized_on_real_vet(state, self.vet_b.id)
+
+    def test_a_second_reassignment_is_an_explicit_conflict_without_writing(self):
+        """Dos reasignaciones seguidas: `409` y CERO escrituras.
+
+        El reintento es exactamente uno. Si el mundo se mueve otra vez, el
+        dominio no insiste: responde conflicto y no toca nada.
+        """
+        from apps.appointments import services as svc
+
+        appt = self._appointment(hour=13)
+        vet_c = User.objects.create_user(
+            username="sr_vet_c", password="p", organization=self.org, role="VET")
+        real = svc.lock_appointment
+        calls = {'n': 0}
+
+        def wrapper(appointment):
+            calls['n'] += 1
+            # Reasigna ANTES de cada uno de los dos intentos: el snapshot
+            # siempre llega vencido.
+            if calls['n'] == 1:
+                self._reassign_from_another_connection(appt.pk, self.vet_b.id)
+            elif calls['n'] == 2:
+                self._reassign_from_another_connection(appt.pk, vet_c.id)
+            return real(appointment)
+
+        patcher = mock.patch.object(svc, 'lock_appointment', wrapper)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        before_audit = AppointmentStatusChange.objects.filter(appointment=appt).count()
+        response = self.client_api.patch(
+            f"/api/appointments/{appt.public_id}/status/", {"status": "confirmed"})
+
+        self.assertEqual(calls['n'], 2, "el reintento debe ser exactamente uno")
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT, response.content)
+        self.assertEqual(response.json()["code"], "appointment_changed")
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "scheduled")
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=appt).count(),
+            before_audit)
+
+
+class CrossPathCreationRacesTests(TransactionTestCase):
+    """Carreras entre vías de creación DISTINTAS por el mismo hueco.
+
+    Las 500 carreras de `RepeatedConcurrentCreationTests` enfrentan dos `POST`
+    normales. Estas enfrentan vías distintas, que es donde un lock olvidado en
+    una sola de ellas dejaría de serializar: `POST` contra
+    `create-with-patient` y `POST` contra atención sin cita.
+
+    Exigencia en las tres: cero 500, cero escrituras parciales y un desenlace
+    de negocio definido.
+    """
+    reset_sequences = True
+
+    BARRIER_TIMEOUT = 30
+    JOIN_TIMEOUT = 60
+
+    def setUp(self):
+        self.org, self.admin, self.vet, self.pet_a, self.pet_b = _seed(
+            "INV-D vías cruzadas", "cross")
+
+    def tearDown(self):
+        connections.close_all()
+
+    def _race(self, fn_a, fn_b):
+        barrier = threading.Barrier(2)
+        outcomes = {}
+
+        def runner(name, fn):
+            try:
+                client = APIClient()
+                client.force_authenticate(self.admin)
+                barrier.wait(timeout=self.BARRIER_TIMEOUT)
+                outcomes[name] = ('ok', fn(client))
+            except BaseException:  # noqa: BLE001
+                barrier.abort()
+                outcomes[name] = ('error', traceback.format_exc())
+            finally:
+                connections.close_all()
+
+        threads = {n: threading.Thread(target=runner, args=(n, f), name=f"cross-{n}")
+                   for n, f in (("a", fn_a), ("b", fn_b))}
+        for t in threads.values():
+            t.start()
+        for name, t in threads.items():
+            t.join(timeout=self.JOIN_TIMEOUT)
+            self.assertFalse(t.is_alive(), f"hilo {name} colgado")
+
+        crashed = {n: tb for n, (kind, tb) in outcomes.items() if kind == 'error'}
+        if crashed:
+            detail = "\n\n".join(f"--- hilo {n} ---\n{tb}" for n, tb in crashed.items())
+            self.fail(f"Un hilo murió en vez de responder:\n\n{detail}")
+        return {n: v for n, (_, v) in outcomes.items()}
+
+    def _assert_business_outcome(self, results, expected_active):
+        codes = [c for c, _ in results.values()]
+        self.assertNotIn(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, codes,
+            f"una vía terminó en 500: {results}")
+        for code, body in results.values():
+            if code >= 400:
+                self.assertEqual(body.get("code"), "slot_taken", body)
+        active = Appointment.objects.filter(
+            organization=self.org, veterinarian=self.vet,
+            status__in=ACTIVE_STATUSES_TEST,
+        ).count()
+        self.assertEqual(active, expected_active, results)
+
+    def test_post_versus_create_with_patient(self):
+        date, start, end = _slot(days=3, hour=10)
+        owners_before = Owner.objects.filter(organization=self.org).count()
+        pets_before = Pet.objects.filter(organization=self.org).count()
+
+        def plain(client):
+            r = client.post("/api/appointments/", {
+                "pet": self.pet_a.id, "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "x",
+            })
+            return r.status_code, r.json()
+
+        def with_patient(client):
+            r = client.post("/api/appointments/create-with-patient/", {
+                "owner_name": "Cliente Carrera", "owner_phone": "5511119999",
+                "pet_name": "Nube", "pet_species": "felino",
+                "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "y",
+            })
+            return r.status_code, r.json()
+
+        results = self._race(plain, with_patient)
+        self._assert_business_outcome(results, expected_active=1)
+
+        # Cero escrituras parciales: si `create-with-patient` perdió el cupo,
+        # su Owner y su Pet se deshicieron con la transacción.
+        cwp_code = results['b'][0]
+        if cwp_code >= 400:
+            self.assertEqual(
+                Owner.objects.filter(organization=self.org).count(), owners_before)
+            self.assertEqual(
+                Pet.objects.filter(organization=self.org).count(), pets_before)
+
+    def test_post_versus_walk_in(self):
+        """El `POST` apunta a un hueco que solapa la atención sin cita.
+
+        La atención sin cita ocupa `[ahora, ahora+30min)`. El `POST` va a
+        `[ahora+10, ahora+25)`: solapa, pero es futuro — a la hora exacta de
+        «ahora» chocaría antes con el guard de fecha pasada y la carrera no
+        llegaría a disputarse el cupo.
+        """
+        now_local = timezone.now()
+        post_start = now_local + timedelta(minutes=10)
+        post_end = now_local + timedelta(minutes=25)
+        if post_end.date() != now_local.date():  # cruce de medianoche
+            self.skipTest("ventana de medianoche")
+        date = now_local.date().isoformat()
+        start = post_start.time().replace(second=0, microsecond=0).strftime("%H:%M")
+        end = post_end.time().replace(second=0, microsecond=0).strftime("%H:%M")
+
+        def plain(client):
+            r = client.post("/api/appointments/", {
+                "pet": self.pet_a.id, "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "x",
+            })
+            return r.status_code, r.json()
+
+        def walk_in(client):
+            r = client.post("/api/appointments/walk-in/", {
+                "pet": self.pet_b.id, "veterinarian": self.vet.id,
+                "reason": "urgencia",
+            })
+            return r.status_code, r.json()
+
+        results = self._race(plain, walk_in)
+        codes = [c for c, _ in results.values()]
+        self.assertNotIn(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, codes,
+            f"una vía terminó en 500: {results}")
+        for code, body in results.values():
+            if code >= 400:
+                self.assertEqual(body.get("code"), "slot_taken", body)
+        # El `POST` puede caer en el pasado por milisegundos; lo que se exige es
+        # que jamás queden dos citas activas solapadas del mismo veterinario.
+        active = list(Appointment.objects.filter(
+            organization=self.org, veterinarian=self.vet,
+            status__in=ACTIVE_STATUSES_TEST,
+        ).order_by('start_datetime'))
+        for first, second in zip(active, active[1:]):
+            self.assertLessEqual(
+                first.end_datetime, second.start_datetime,
+                f"quedaron dos citas activas solapadas: {active}")

@@ -59,6 +59,7 @@ class PurgeVerificationTests(SimpleTestCase):
 @override_settings(INBOX_MEDIA_ENABLED=True, MEDIA_BACKEND='local', INBOX_MEDIA_ALLOW_LOCAL=True)
 class RetentionPolicyTests(MediaFixtures, TransactionTestCase):
     def setUp(self):
+        super().setUp()
         self.build()
         self.temp = TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

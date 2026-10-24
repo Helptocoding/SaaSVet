@@ -45,7 +45,7 @@ class ClaimDiagnosticProcessTests(TransactionTestCase):
             str(message.channel_account_id), str(path), 'process-test', 'on' if enabled else 'off'],
             cwd=Path(__file__).resolve().parents[3], env=env,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            text=True, encoding='utf-8', creationflags=subprocess.CREATE_NO_WINDOW)
+            text=True, encoding='utf-8', creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         proc.events = queue.Queue()
         proc.trace_path = path
         proc.enabled = enabled

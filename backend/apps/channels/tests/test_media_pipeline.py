@@ -33,6 +33,22 @@ SHA = hashlib.sha256(DATA).hexdigest()
 
 
 class MediaFixtures(ReplyApiFixtures):
+    def setUp(self):
+        super().setUp()
+        media_directory = TemporaryDirectory(prefix='inbox-media-test-')
+        self.addCleanup(media_directory.cleanup)
+        config = override_settings(
+            MEDIA_BACKEND='local',
+            INBOX_MEDIA_ALLOW_LOCAL=True,
+            INBOX_MEDIA_ROOT=media_directory.name,
+            INBOX_MEDIA_REVOCATION_ROOT='',
+            INBOX_MEDIA_ACCESS_HOLD=False,
+        )
+        config.enable()
+        # File cleanup added by ready()/tests runs first (LIFO), while the
+        # temporary local root remains enabled. No production settings change.
+        self.addCleanup(config.disable)
+
     def media(self, **values):
         message = values.pop('message', None) or self.message(payload_type='image', body='Caption preservada')
         fields = dict(organization=self.org, channel_account=self.account, message=message,
@@ -299,6 +315,7 @@ class MediaStorageTests(SimpleTestCase):
 @override_settings(INBOX_MEDIA_ENABLED=True)
 class MediaWorkerTests(MediaFixtures, TransactionTestCase):
     def setUp(self):
+        super().setUp()
         self.build()
 
     @contextmanager

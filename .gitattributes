@@ -229,3 +229,11 @@ docs/evals/b9-correction-20261020-native-r10/** -text
 docs/evals/b9-correction-20261020-native-r11/** -text
 docs/evals/inbox-*/** -text
 docs/compliance/inbox-privacy-review-*/** -text
+
+# Historical worktree snapshots: preserve original bytes and manifest hashes.
+docs/history/2026-10-23-worktree-consolidation/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/evals/e4-causal-audit-2026-10-03/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Three inert original snapshots contain historical trailing spaces; do not rewrite their sealed bytes.
+docs/history/2026-10-23-worktree-consolidation/artifacts/b9c36c196ee7ce45b783d7c6b4cd31395d4d77dff9f41c1b767fe65ea1629cbe--auditoria-rag-agentes-iamd.md.txt whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/history/2026-10-23-worktree-consolidation/artifacts/c2fcb2c62f46337cbff47f3499efe9a9d3ba3444b0e9658ef48ca3b57bd554b5--SKILL.md.txt whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/history/2026-10-23-worktree-consolidation/artifacts/efa66e3269d2d45a134b7bc43d6190217caadd9d3bb46445f4b687c716f0dc2b--doctor.md.txt whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

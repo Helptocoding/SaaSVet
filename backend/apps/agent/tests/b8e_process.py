@@ -14,14 +14,13 @@ def barrier(name):
 
 
 def main():
+    from .process_database import configure_test_database_environment
+    config = configure_test_database_environment(allowed_prefixes=('test_b8e_', 'test_ci_'))
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     import django
     django.setup()
     from django.conf import settings
     from django.db import connections, transaction
-    config = json.loads(os.environ['B3_TEST_DATABASE'])
-    if not config['NAME'].startswith('test_b8e_'):
-        raise RuntimeError('Isolated B8E PostgreSQL required')
     connections.close_all()
     connections.databases['default'].update(config)
     settings.AGENT_B7B_CONSENT_ENABLED = True

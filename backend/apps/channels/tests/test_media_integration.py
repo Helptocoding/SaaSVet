@@ -64,6 +64,7 @@ class MediaEntrypointTests(SimpleTestCase):
 
 class MediaProviderRaceTests(MediaFixtures, TransactionTestCase):
     def setUp(self):
+        super().setUp()
         self.build()
 
     def test_two_messages_with_same_provider_reference_create_one_media(self):

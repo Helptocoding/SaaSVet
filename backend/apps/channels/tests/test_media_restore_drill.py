@@ -15,6 +15,7 @@ from django.db import connection
 from django.test import TransactionTestCase, override_settings
 from rest_framework.test import APIClient
 
+from apps.agent.tests.process_database import validate_test_database
 from apps.channels.media_clock import media_now
 from apps.channels.media_revocations import provision_ledger, revoke_media
 from apps.channels.media_worker import claim_media, expire_media
@@ -29,10 +30,13 @@ PG_RESTORE = str(Path(PG_DUMP).with_name('pg_restore.exe')) if os.name == 'nt' e
 @override_settings(INBOX_MEDIA_ENABLED=True, MEDIA_BACKEND='local', INBOX_MEDIA_ALLOW_LOCAL=True)
 class MediaDatabaseRestoreDrill(MediaFixtures, TransactionTestCase):
     def test_old_dump_cannot_reactivate_revoked_expired_or_recovered_jobs(self):
-        self.build()
         database = connection.settings_dict
-        self.assertTrue(database['NAME'].startswith('test_inbox_policy_'), 'Never restore the ordinary database')
-        self.assertIn(database['HOST'], ('localhost', '127.0.0.1'))
+        validate_test_database(database, allowed_prefixes=('test_inbox_policy_', 'test_ci_'),
+                               source_url=os.environ.get('DATABASE_URL', ''))
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT current_database()')
+            self.assertEqual(cursor.fetchone()[0], database['NAME'])
+        self.build()
         with TemporaryDirectory(prefix='inbox-restore-drill-') as folder:
             root = Path(folder)
             with override_settings(INBOX_MEDIA_REVOCATION_ROOT=str(root/'inbox-media-revocations'),
@@ -48,14 +52,14 @@ class MediaDatabaseRestoreDrill(MediaFixtures, TransactionTestCase):
                 backup = root/'old-test-db.dump'
                 env = {**os.environ, 'PGHOST': str(database['HOST']), 'PGPORT': str(database['PORT'] or 5432),
                     'PGDATABASE': str(database['NAME']), 'PGUSER': str(database['USER']), 'PGPASSWORD': str(database['PASSWORD'])}
-                dumped = subprocess.run(['rtk', 'proxy', PG_DUMP, '--no-password', '--format=custom', '--no-owner',
+                dumped = subprocess.run([PG_DUMP, '--no-password', '--format=custom', '--no-owner',
                     '--no-acl', '--file', str(backup)], env=env, capture_output=True, timeout=180)
                 self.assertEqual(dumped.returncode, 0, 'Local synthetic pg_dump failed; no raw stderr emitted')
                 sha = hashlib.sha256(backup.read_bytes()).hexdigest()
                 revoke_media(organization_id=self.org.pk, public_id=revoked.public_id)
                 self.assertEqual(MessageMedia.objects.get(pk=revoked.pk).status, 'expired')
                 connection.close()
-                restored = subprocess.run(['rtk', 'proxy', PG_RESTORE, '--no-password', '--clean', '--if-exists',
+                restored = subprocess.run([PG_RESTORE, '--no-password', '--clean', '--if-exists',
                     '--no-owner', '--no-acl', '--exit-on-error', '--dbname', str(database['NAME']), str(backup)],
                     env=env, capture_output=True, timeout=180)
                 self.assertEqual(restored.returncode, 0, 'Local synthetic pg_restore failed; no raw stderr emitted')
