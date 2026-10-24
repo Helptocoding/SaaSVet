@@ -1,0 +1,315 @@
+--- native-r8/composite_evidence.py
++++ native/composite_evidence.py
+@@ -1,4 +1,4 @@
+-"""Retain strict block references and expose the authorized r7 case aggregate.
++"""Retain strict block references and expose the authorized r9 case aggregate.
+ 
+ Historical receipts retain their campaign identity.  Nothing is installed under
+ the current blocks directory, and this module never starts application code.
+@@ -16,9 +16,10 @@
+ HERE = Path(__file__).resolve().parent
+ SOURCE_TREE_SHA = '196aceb4f5f234c086b96d8e8af93787613f3c25'
+ CLOCK_TREE_SHA = '68dffd746793700071f577a58528b0f9636930db'
++SNAPSHOT_TREE_SHA = '5e11236daabf4ef70ea9d0f08fee52aed5c30ff2'
+ TREE_SHA = json.loads((HERE / 'candidate.json').read_text(encoding='utf-8'))['candidate_tree']
+-if re.fullmatch('[0-9a-f]{40}', TREE_SHA) is None or TREE_SHA in (SOURCE_TREE_SHA, CLOCK_TREE_SHA):
+-    raise RuntimeError('Composite evidence: invalid corrected snapshot candidate')
++if re.fullmatch('[0-9a-f]{40}', TREE_SHA) is None or TREE_SHA in (SOURCE_TREE_SHA, CLOCK_TREE_SHA, SNAPSHOT_TREE_SHA):
++    raise RuntimeError('Composite evidence: invalid corrected baseline candidate')
+ SNAPSHOT_PATH = 'backend/apps/agent/tests/test_contracts.py'
+ OLD_SNAPSHOT_SHA = 'a9c66b5fc0370726b2c6a21aa189190a006635f03ad10e3dc0857614bb0c7ed4'
+ NEW_SNAPSHOT_SHA = 'fc2d8f4152c25e41700235330a8411ccc9066c64bc3089eb07c7c352cc366aff'
+@@ -27,6 +28,11 @@
+     'apps.agent.tests.test_contracts.CommitmentContractTests.test_fields_match_snapshot',
+     'apps.agent.tests.test_contracts.ToolOutcomeContractTests.test_fields_match_snapshot',
+ }
++BASELINE_PATH = 'backend/apps/core/tests/test_tenant_scoping_audit.py'
++BASELINE_TEST = 'apps.core.tests.test_tenant_scoping_audit.TenantScopingAuditTests.test_no_unbaselined_objects_access_without_for_organization'
++OLD_BASELINE_SHA = '8edb35030e171bfdee6b7cd7c90ca01bcc319bef402e30f150145cff3e8288ec'
++NEW_BASELINE_SHA = '49c17280e8bd20be2d0f13ee9cfe51b665bd5cbb1b45bdd3f957cb3b502e631a'
++BASELINE_PATCH_SHA = '483810b0b9474e9683316d33622480319d1e08f12a2cd66337a22482505e4aa3'
+ FIXTURE_PATH = 'backend/apps/notifications/tests/test_notifications.py'
+ FIXTURE_TEST = 'apps.notifications.tests.test_notifications.DerivedFeedTests.test_upcoming_window'
+ OLD_FIXTURE_SHA = '1c1bbded0782ac4cbfc671cefdfee27365571c05c6172a67b5804002b681838f'
+@@ -48,7 +54,7 @@
+     R5: '0b5df35ddbf9c963d67b1811e7eccd609131c5d6dc644031294fe21d41976963',
+ }
+ GIB = 1024 ** 3
+-SCHEMA = 'b9-composite-referenced-pass-v3-clock-and-snapshots'
++SCHEMA = 'b9-composite-referenced-pass-v4-clock-snapshots-baseline'
+ _MANIFEST_CACHE = None
+ 
+ 
+@@ -344,6 +350,10 @@
+     _require(manifest.get('snapshot_equivalence') == snapshot and
+              _read(HERE, 'reuse-validation.json')['inputs'].get('snapshot_equivalence') == snapshot,
+              'authorized snapshot equivalence changed')
++    baseline = _baseline_declaration()
++    _require(manifest.get('baseline_equivalence') == baseline and
++             _read(HERE, 'reuse-validation.json')['inputs'].get('baseline_equivalence') == baseline,
++             'authorized baseline equivalence changed')
+     _require(_sha(_safe(HERE, 'fixture-clock-authorization.json')) == proof['authorization_sha256'] and
+              _sha(_safe(HERE, 'candidate-input.json')) == proof['candidate_input_sha256'],
+              'fixture authorization or candidate declaration drift')
+@@ -438,6 +448,8 @@
+             'fixture_clock_equivalence': ('reuse-validation.json#inputs.fixture_clock_equivalence'
+                                           if reused else None),
+             'snapshot_equivalence': ('reuse-validation.json#inputs.snapshot_equivalence'
++                                     if reused else None),
++            'baseline_equivalence': ('reuse-validation.json#inputs.baseline_equivalence'
+                                      if reused else None)}
+ 
+ 
+@@ -454,10 +466,16 @@
+                  'cross-candidate equivalence unavailable')
+         snapshot = _resolved_manifest().get('snapshot_equivalence', {})
+         _require(snapshot.get('previous_candidate_tree') == CLOCK_TREE_SHA and
+-                 snapshot.get('candidate_tree') == TREE_SHA and
++                 snapshot.get('candidate_tree') == SNAPSHOT_TREE_SHA and
+                  snapshot.get('allowed_path') == SNAPSHOT_PATH and
+                  snapshot.get('only_two_expected_literal_lists_change_ast') is True,
+                  'cross-candidate snapshot equivalence unavailable')
++        baseline = _resolved_manifest().get('baseline_equivalence', {})
++        _require(baseline.get('previous_candidate_tree') == SNAPSHOT_TREE_SHA and
++                 baseline.get('candidate_tree') == TREE_SHA and
++                 baseline.get('allowed_path') == BASELINE_PATH and
++                 baseline.get('only_one_reviewed_baseline_tuple_added_AST') is True,
++                 'cross-candidate baseline equivalence unavailable')
+         expected = SOURCE_TREE_SHA
+     _require(receipt_sha == expected, 'receipt candidate incompatible with block provenance: ' + label)
+     return True
+@@ -479,7 +497,118 @@
+              candidate['previous_candidate_tree'] == SOURCE_TREE_SHA and
+              candidate['only_new_change'] == FIXTURE_PATH, 'candidate authorization scope changed')
+     _snapshot_authorization()
++    _baseline_authorization()
+     return authorization
++
++
++def _baseline_authorization():
++    authorization = _read(HERE, 'baseline-resumption-authorization.json')
++    expected = {
++        'state': 'USER_AUTHORIZED_BEFORE_FORMAL_SEAL',
++        'user_answer': 'Sí, corregir ese baseline y continuar sin repetir PASS',
++        'previous_candidate_tree': SNAPSHOT_TREE_SHA, 'candidate_tree': TREE_SHA,
++        'allowed_path': BASELINE_PATH, 'patch_sha256': BASELINE_PATCH_SHA,
++        'retained_general_PASS': 3200, 'retained_expected_SKIPs': 12,
++        'new_missing_ids': 0, 'corrected_FAILED_ids': 1, 'historical_FAILED_attempts': 3,
++        'all_old_FAILs_preserved': True, 'accepted_historical_evidence_limitation': True,
++        'product_runtime_locks_changed': False, 'no_PASS_reruns': True,
++        'all_new_guards_and_remaining_original_stages_required': True,
++        'runtime_reuse_authorized_to_avoid_reinstallation': True,
++        'commits_push_deploy_activation_authorized': False,
++    }
++    _require(all(authorization.get(key) == value for key, value in expected.items()),
++             'baseline correction authorization changed or incomplete')
++    candidate = _read(HERE, 'candidate.json')
++    _require(candidate['candidate_tree'] == TREE_SHA and
++             candidate['previous_candidate_tree'] == SNAPSHOT_TREE_SHA and
++             candidate['only_new_change'] == BASELINE_PATH and
++             candidate['authorization'] == 'baseline-resumption-authorization.json',
++             'baseline candidate authorization scope changed')
++    _require(_sha(_safe(HERE, 'baseline-correction.diff')) == BASELINE_PATCH_SHA,
++             'authorized baseline patch changed')
++    return authorization
++
++
++def _baseline_declaration():
++    _baseline_authorization()
++    proof = _read(HERE, 'baseline-equivalence.json')
++    expected = {
++        'state': 'PASS', 'previous_candidate_tree': SNAPSHOT_TREE_SHA,
++        'candidate_tree': TREE_SHA, 'allowed_path': BASELINE_PATH,
++        'original_sha256': OLD_BASELINE_SHA, 'corrected_sha256': NEW_BASELINE_SHA,
++        'patch_sha256': BASELINE_PATCH_SHA,
++        'only_one_reviewed_baseline_tuple_added_AST': True, 'all_other_AST_unchanged': True,
++        'scanner_assertions_exclusions_test_ids_imports_hooks_unchanged': True,
++        'all_other_3331_blobs_identical': True, 'all_old_FAILs_preserved': True,
++        'product_runtime_locks_changed': False,
++    }
++    _require(all(proof.get(key) == value for key, value in expected.items()),
++             'baseline equivalence declaration changed or incomplete')
++    _require(all(isinstance(proof.get(key), str) and re.fullmatch('[0-9a-f]{40}', proof[key])
++                 for key in ('original_git_blob', 'corrected_git_blob')) and
++             all(isinstance(proof.get(key), int) and not isinstance(proof[key], bool) and proof[key] > 0
++                 for key in ('original_bytes', 'corrected_bytes')),
++             'baseline equivalence blob metadata is invalid')
++    return {**proof,
++            'authorization_sha256': _sha(_safe(HERE, 'baseline-resumption-authorization.json')),
++            'equivalence_sha256': _sha(_safe(HERE, 'baseline-equivalence.json')),
++            'authorization': 'baseline-resumption-authorization.json',
++            'corrected_test_ids': [BASELINE_TEST]}
++
++
++def _baseline_transform(corrected):
++    """Invert the reviewed tuple/comment and prove the complete original module."""
++    _require(hashlib.sha256(corrected).hexdigest() == NEW_BASELINE_SHA,
++             'corrected baseline bytes are not the authorized proposal')
++    addition = (
++        '    # Revisado en B9: B3 introdujo los dos checks de TurnWork en\n'
++        '    # services._capture_witness y services._apply_release. Ambos filtran por\n'
++        '    # conversation=convo bajo lock; la vista resuelve ese padre con\n'
++        '    # Conversation.objects.for_organization(request.user.organization).\n'
++        '    # Es scoping por FK padre tenant-validado, no una lectura cross-org.\n'
++        "    ('agent', 'services.py', 'TurnWork', 'filter'),\n"
++    )
++    text = corrected.decode('utf-8')
++    _require(text.count('BASELINE = {\n' + addition) == 1,
++             'baseline contains an unapproved tuple/comment change')
++    original = text.replace('BASELINE = {\n' + addition, 'BASELINE = {\n', 1)
++    raw = original.encode('utf-8')
++    _require(hashlib.sha256(raw).hexdigest() == OLD_BASELINE_SHA,
++             'baseline inverse differs from the entire original source')
++    old_ast, new_ast = ast.parse(original), ast.parse(text)
++
++    def baseline(module):
++        nodes = [node for node in module.body if isinstance(node, ast.Assign) and
++                 any(isinstance(target, ast.Name) and target.id == 'BASELINE' for target in node.targets)]
++        _require(len(nodes) == 1 and isinstance(nodes[0].value, ast.Set),
++                 'baseline assignment changed')
++        return nodes[0].value
++
++    old_set, new_set = baseline(old_ast), baseline(new_ast)
++    old_values = [ast.literal_eval(node) for node in old_set.elts]
++    new_values = [ast.literal_eval(node) for node in new_set.elts]
++    entry = ('agent', 'services.py', 'TurnWork', 'filter')
++    _require(len(old_values) == 23 and len(new_values) == 24 and entry not in old_values and
++             new_values.count(entry) == 1 and set(new_values) - set(old_values) == {entry} and
++             not set(old_values) - set(new_values), 'baseline tuple scope changed')
++    new_set.elts = [node for node in new_set.elts if ast.literal_eval(node) != entry]
++    _require(ast.dump(old_ast, include_attributes=False) == ast.dump(new_ast, include_attributes=False),
++             'baseline scanner, assertions, exclusions, imports, hooks or test IDs changed')
++    git_blob = lambda data: hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
++    return {'original_sha256': OLD_BASELINE_SHA, 'corrected_sha256': NEW_BASELINE_SHA,
++            'original_git_blob': git_blob(raw), 'corrected_git_blob': git_blob(corrected),
++            'original_bytes': len(raw), 'corrected_bytes': len(corrected)}
++
++
++def _baseline_equivalence(tree):
++    proof = _baseline_declaration()
++    transformed = _baseline_transform(_safe(tree, BASELINE_PATH).read_bytes())
++    _require(all(proof.get(key) == value for key, value in transformed.items()),
++             'live baseline metadata differs from the authorized equivalence')
++    for label in COUNTS:
++        _require(BASELINE_TEST not in _read(HERE, label + '-selected.json'),
++                 'referenced selection executes the changed tenant baseline: ' + label)
++    return proof
+ 
+ 
+ def _snapshot_authorization():
+@@ -497,13 +626,12 @@
+     }
+     _require(all(authorization.get(key) == value for key, value in expected.items()),
+              'snapshot correction authorization changed or incomplete')
+-    candidate = _read(HERE, 'candidate.json')
+-    _require(candidate['candidate_tree'] == TREE_SHA and
++    candidate = _read(HERE, 'snapshot-equivalence.json')
++    _require(candidate['candidate_tree'] == SNAPSHOT_TREE_SHA and
+              candidate['previous_candidate_tree'] == CLOCK_TREE_SHA and
+-             candidate['only_new_change'] == SNAPSHOT_PATH and
+-             candidate['authorization'] == 'snapshot-resumption-authorization.json',
+-             'snapshot candidate authorization scope changed')
+-    _require(authorization.get('candidate_tree', TREE_SHA) == TREE_SHA,
++             candidate['allowed_path'] == SNAPSHOT_PATH,
++             'historical snapshot candidate authorization scope changed')
++    _require(authorization.get('candidate_tree', SNAPSHOT_TREE_SHA) == SNAPSHOT_TREE_SHA,
+              'snapshot authorization names a different corrected candidate')
+     _require(_sha(_safe(HERE, 'snapshot-correction.diff')) == SNAPSHOT_PATCH_SHA,
+              'authorized snapshot patch changed')
+@@ -515,7 +643,7 @@
+     proof = _read(HERE, 'snapshot-equivalence.json')
+     expected = {
+         'state': 'PASS', 'previous_candidate_tree': CLOCK_TREE_SHA,
+-        'candidate_tree': TREE_SHA, 'allowed_path': SNAPSHOT_PATH,
++        'candidate_tree': SNAPSHOT_TREE_SHA, 'allowed_path': SNAPSHOT_PATH,
+         'original_sha256': OLD_SNAPSHOT_SHA, 'corrected_sha256': NEW_SNAPSHOT_SHA,
+         'patch_sha256': SNAPSHOT_PATCH_SHA,
+         'only_two_expected_literal_lists_change_ast': True,
+@@ -647,6 +775,8 @@
+         normalized[FIXTURE_PATH] = OLD_FIXTURE_SHA
+         _require(files.get(SNAPSHOT_PATH) == NEW_SNAPSHOT_SHA, 'current snapshot SHA differs')
+         normalized[SNAPSHOT_PATH] = OLD_SNAPSHOT_SHA
++        _require(files.get(BASELINE_PATH) == NEW_BASELINE_SHA, 'current baseline SHA differs')
++        normalized[BASELINE_PATH] = OLD_BASELINE_SHA
+     _require(record['candidate_sha'] == (TREE_SHA if current else SOURCE_TREE_SHA) and not record['mismatches'] and
+              len(rows) == len(files) == 3332 and
+              _digest(normalized) == '8aac2863cc2c12aa7da30dab33fcb429c5e3ed8c667c6b8f9c1001b5e75c4ba7',
+@@ -658,8 +788,8 @@
+     old = {row['path']: row for row in _read(source, 'candidate-sources.json')['files']}
+     new = {row['path']: row for row in _read(HERE, 'candidate-sources.json')['files']}
+     _require(set(old) == set(new) and len(old) == 3332, 'candidate blob inventory changed')
+-    _require(all(old[path] == new[path] for path in old if path not in (FIXTURE_PATH, SNAPSHOT_PATH)),
+-             'one of the other 3330 Git blobs/modes/bytes changed')
++    _require(all(old[path] == new[path] for path in old if path not in (FIXTURE_PATH, SNAPSHOT_PATH, BASELINE_PATH)),
++             'one of the other 3329 Git blobs/modes/bytes changed')
+     before, after = old[FIXTURE_PATH], new[FIXTURE_PATH]
+     _require(set(before) == set(after) and before['mode'] == after['mode'] and
+              before['sha256'] == OLD_FIXTURE_SHA and after['sha256'] == NEW_FIXTURE_SHA and
+@@ -667,6 +797,18 @@
+              after['git_blob'] == proof['accepted_git_blob'] and
+              before['bytes'] == proof['source_bytes'] and after['bytes'] == proof['accepted_bytes'],
+              'authorized fixture blob metadata differs')
++    for path, declaration, old_sha, new_sha in (
++        (SNAPSHOT_PATH, _snapshot_declaration(), OLD_SNAPSHOT_SHA, NEW_SNAPSHOT_SHA),
++        (BASELINE_PATH, _baseline_declaration(), OLD_BASELINE_SHA, NEW_BASELINE_SHA),
++    ):
++        before, after = old[path], new[path]
++        _require(set(before) == set(after) and before['mode'] == after['mode'] and
++                 before['sha256'] == old_sha and after['sha256'] == new_sha and
++                 before['git_blob'] == declaration['original_git_blob'] and
++                 after['git_blob'] == declaration['corrected_git_blob'] and
++                 before['bytes'] == declaration['original_bytes'] and
++                 after['bytes'] == declaration['corrected_bytes'],
++                 'authorized snapshot/baseline blob metadata differs: ' + path)
+ 
+ 
+ def _partition(root, name, *, current=False):
+@@ -691,7 +833,7 @@
+             ids = _read(HERE, label + '-selected.json')
+             _require(len(ids) == COUNTS[label] and
+                      not any(value.startswith('apps.notifications.tests.test_notifications.') for value in ids) and
+-                     not SNAPSHOT_TESTS.intersection(ids),
++                     not SNAPSHOT_TESTS.intersection(ids) and BASELINE_TEST not in ids,
+                      'referenced selection can execute the changed fixture: ' + label)
+             selected_counts[label] = len(ids)
+     proof.update(state='PASS', source_candidate_tree=SOURCE_TREE_SHA, accepted_candidate_tree=CLOCK_TREE_SHA,
+@@ -774,6 +916,7 @@
+              'live candidate source drift')
+     fixture = _fixture_equivalence(tree, sources[R5])
+     snapshot = _snapshot_equivalence(tree)
++    baseline = _baseline_equivalence(tree)
+     pyfiles = _python_files(HERE)
+     _require(all(_sha(_safe(python, path)) == digest for path, digest in pyfiles.items()),
+              'live private Python dependency drift')
+@@ -813,10 +956,11 @@
+         oldenv = _read(source, 'python-environment.json')
+         historical = _candidate(source)
+         _candidate_blobs(source, fixture)
+-        _require({path: digest for path, digest in candidate.items() if path not in (FIXTURE_PATH, SNAPSHOT_PATH)} ==
+-                 {path: digest for path, digest in historical.items() if path not in (FIXTURE_PATH, SNAPSHOT_PATH)} and
++        _require({path: digest for path, digest in candidate.items() if path not in (FIXTURE_PATH, SNAPSHOT_PATH, BASELINE_PATH)} ==
++                 {path: digest for path, digest in historical.items() if path not in (FIXTURE_PATH, SNAPSHOT_PATH, BASELINE_PATH)} and
+                  historical[FIXTURE_PATH] == OLD_FIXTURE_SHA and
+-                  historical[SNAPSHOT_PATH] == OLD_SNAPSHOT_SHA and pyfiles == _python_files(source) and
++                  historical[SNAPSHOT_PATH] == OLD_SNAPSHOT_SHA and
++                  historical[BASELINE_PATH] == OLD_BASELINE_SHA and pyfiles == _python_files(source) and
+                  config == _configuration(source) and pins == oldenv['required_lock_versions'] and
+                  pg_config == _pg_configuration(source) and
+                  environment['python_version'] == oldenv['python_version'] and
+@@ -841,7 +985,7 @@
+                               if path.replace('\\', '/').endswith('/node_modules/.modules.yaml')}
+     return {'state': 'PASS', 'candidate_tree': TREE_SHA, 'candidate_files': 3332,
+             'source_candidate_tree': SOURCE_TREE_SHA, 'fixture_clock_equivalence': fixture,
+-            'snapshot_equivalence': snapshot,
++            'snapshot_equivalence': snapshot, 'baseline_equivalence': baseline,
+             'candidate_files_sha256': _digest(candidate), 'python_files': len(pyfiles),
+             'python_files_sha256': _digest(pyfiles), 'required_pins': 34,
+             'requirements_sha256': lock_hash, 'configuration_port_normalized_sha256': _digest(config),
+@@ -895,6 +1039,7 @@
+                 'source_candidate_tree': SOURCE_TREE_SHA,
+                 'fixture_clock_equivalence': inputs['fixture_clock_equivalence'],
+                 'snapshot_equivalence': inputs['snapshot_equivalence'],
++                'baseline_equivalence': inputs['baseline_equivalence'],
+                 'backend_only': True, 'continuous_campaign': False,
+                 'frontend_dependencies_reused': False,
+                 'frontend_dependencies_reused_scope': 'Legacy field refers only to historical frontend results',

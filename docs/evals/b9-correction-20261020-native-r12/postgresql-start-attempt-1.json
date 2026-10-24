@@ -1,0 +1,20 @@
+{
+  "mode": "Owned same-cluster handoff after verified r11 retirement under RTK",
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-b8b-pg16-bin\\pgsql\\bin\\postgres.exe",
+    "-D",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pgdata"
+  ],
+  "wrapper_pid": 25204,
+  "port": 35490,
+  "data_directory": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pgdata",
+  "previous_invocation_resumed": false,
+  "same_disposable_cluster": true,
+  "previous_cluster_retirement": "previous-cluster-retirement.json",
+  "previous_cluster_retirement_sha256": "041103085cdb29ae73d1c832ba718d3df51e83d42946e2f0e3c3878adfe63341",
+  "state": "STARTED_PENDING_READINESS",
+  "attempt": 1,
+  "maximum_start_attempts": 1
+}

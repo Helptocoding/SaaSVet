@@ -1,0 +1,65 @@
+{
+  "state": "PREPARED_BEFORE_FORMAL_SEAL",
+  "user": "colntinua donde te quedaste",
+  "date_local": "2026-10-17",
+  "workspace_identity_created_local": "2026-10-16",
+  "action": "Continue preparation only; no formal or application test retry",
+  "original_failure": "MemoryError in isolated audit tool pip install",
+  "original_failure_receipt": "preparation-incident-stage.json",
+  "original_capture_final_exit_available": false,
+  "original_capture_run_state_preserved": true,
+  "current_windows_boot_utc": "2026-10-17T06:29:53.500000+00:00",
+  "boot_observation_source": "Read-only Win32_OperatingSystem.LastBootUpTime",
+  "application_tests_executed": false,
+  "formal_controller_invocations": 0,
+  "prior_receipts_sha256": {
+    "invocation-stage.json": "c689124cac5c9734cb9269f1ed1dc1dd4cd792086f587610412e48305b86da78",
+    "invocation-stage.log": "e59c61fafa64ef0995275015689f236f85f3f2b0b9f0b436d0fd35c060db5b36",
+    "audit-tool-install.command.json": "be4e66cc030eeacdf3024739d9dea01801299139b2f7de0d0df8c73d212e1514",
+    "audit-tool-install.log": "5715adb640c48e5fa00c3eda3565cea5fd51cb3d8ebbc6b82449e3e909d79778",
+    "preparation-incident-stage.json": "57b8266762544c9810d9b46a4e77e6e9a73f5fcb6badd6b0fdeaa37387f5a366",
+    "clock-preflight.json": "79bcb8cd6dafb735fa0a3433b46957b942b1d36fdf63b2c3b215769e3f6bf313",
+    "clock-observation.json": "72a8eb9342e19b49108514c8f444f6ec432aaee0c968cd6caa696006305dd4e2",
+    "invocation-clock.json": "b6b2b2c5e91755cc9455a4a1c82583b68241b08d88f404c071bafa5d947f9b11",
+    "postgresql-start.json": "5b5b5dc34271e95405a87a10de5257acd42676e122e5fb4f28a8c7fa0d315552",
+    "postgresql-preflight.json": "f87caaf64302e156326b3d82e66c4bfb6d607968806ce3e858ff1c099d72730a"
+  },
+  "source_changes": {
+    "clock_probe.py": {
+      "before_sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+      "after_sha256": "4912d40487538e1afdaafa6cf3ec5828866bcdf7fb3161fa79c27ad71289907c",
+      "preserved_before_source": "diagnostics/preparation-recovery-sources-before/clock_probe.py"
+    },
+    "run_campaign.py": {
+      "before_sha256": "9c54633c224dff28571ffa77848afa34cc1341dd6e7542260b370de7d0af68f0",
+      "after_sha256": "6970912d433150922d15bc9869819abf976bc112f7efad01f3018ec92ab82882",
+      "preserved_before_source": "diagnostics/preparation-recovery-sources-before/run_campaign.py"
+    },
+    "capture_native.py": {
+      "before_sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+      "after_sha256": "821bd07a69fd1ca7980d6ad36cf6d9100100881af1513e0d22380dcdf2eb5feb",
+      "preserved_before_source": "diagnostics/preparation-recovery-sources-before/capture_native.py"
+    },
+    "cleanup_native.py": {
+      "before_sha256": "5de1f60690cac49dcd36a7e79b72e8105e52dc9a499190f3b319d48eef39dc8c",
+      "after_sha256": "a180fe9b68954d25e70c7a4a9b097f74059ed1d3c92acb9e0332c14de427a3e8",
+      "preserved_before_source": "diagnostics/preparation-recovery-sources-before/cleanup_native.py"
+    },
+    "recover_preparation.py": {
+      "before_sha256": null,
+      "after_sha256": "09089828e52b3b572c55a31726078b7929eb72105fa89f57dc8e4afc88f07153"
+    }
+  },
+  "plan_prior_prefix_sha256": "d86669ded42965d6c3f4b6a04ab2f62ebea68d4543beb09c991ce7c3a508db53",
+  "plan_append_sha256": "1269b99eab3b1d28adfa9eaef427ee807133571ed1421a2a4ffed221bf0cb276",
+  "product_or_test_sources_changed": false,
+  "application_locks_changed": false,
+  "formal_guards_or_gates_changed": false,
+  "clock_configuration_changed": false,
+  "foreign_processes_terminated": false,
+  "memory_disk_clock_reserves": [
+    2147483648,
+    1073741824,
+    1
+  ]
+}

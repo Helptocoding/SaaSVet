@@ -1,0 +1,9 @@
+{
+  "state": "PENDING_CLASSIFICATION",
+  "phase": "full-general-remainder",
+  "cause": "Suite reports failures/errors; classify validity from retained traces",
+  "no_rerun": true,
+  "failed_ids": [
+    "apps.core.tests.test_tenant_scoping_audit.TenantScopingAuditTests.test_no_unbaselined_objects_access_without_for_organization"
+  ]
+}

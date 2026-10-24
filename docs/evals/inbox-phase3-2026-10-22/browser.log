@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\inbox-phase3-2026-10-22\check_browser.py", line 131, in <module>
+    expect(bubble(1).get_by_text('Imagen sintética de Luna', exact=True)).to_have_count(1)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\sync_api\_generated.py", line 20247, in to_have_count
+    self._sync(self._impl_obj.to_have_count(count=count, timeout=timeout))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_sync_base.py", line 115, in _sync
+    return task.result()
+           ~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_assertions.py", line 382, in to_have_count
+    await self._expect_impl(
+    ...<5 lines>...
+    )
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_assertions.py", line 85, in _expect_impl
+    raise AssertionError(
+        f"{out_message}\nActual value: {actual}{error_message} {format_call_log(result.get('log'))}"
+    )
+AssertionError: Locator expected to have count '1'
+Actual value: 0 
+Call log:
+  - Expect "to_have_count" with timeout 5000ms
+  - waiting for locator("[data-server-message-id=\"1\"]").get_by_text("Imagen sintética de Luna", exact=True)
+    9 × locator resolved to 0 elements
+      - unexpected value "0"
+

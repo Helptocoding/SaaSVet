@@ -1,0 +1,7 @@
+{
+  "status": "HARNESS_STALLED",
+  "tests_executed": 0,
+  "cause": "pnpm exec on Windows left cmd.exe waiting with overescaped testNamePattern arguments; no Vitest node process started and no report was produced.",
+  "cleanup": "Verified own rtk PID 6112 and command line before terminating its tree (6112, 27808, 25828, 11660).",
+  "correction": "Run the installed Vitest entry point directly with node and subprocess argv. Keep the same test filter and assertions."
+}

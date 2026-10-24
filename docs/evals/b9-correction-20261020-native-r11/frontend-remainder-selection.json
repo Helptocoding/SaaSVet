@@ -1,0 +1,27 @@
+{
+  "state": "EXACT_ONE_CASE_SELECTED",
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\node-v20.20.2-win-x64\\node.exe",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pnpm\\package\\bin\\pnpm.cjs",
+    "run",
+    "test",
+    "src/pages/inbox/index.test.jsx",
+    "--testNamePattern",
+    "^Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto$",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\blocks\\frontend-test-remainder.json"
+  ],
+  "cwd": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend",
+  "identity": {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto"
+  },
+  "test_timeout_override": false,
+  "retries_added": false,
+  "pool_or_concurrency_changed": false,
+  "default_timeout_preserved_ms": 5000,
+  "previous_PASS_cases_selected": 0
+}

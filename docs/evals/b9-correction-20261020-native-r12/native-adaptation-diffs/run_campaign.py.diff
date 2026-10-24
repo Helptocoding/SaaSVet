@@ -1,0 +1,72 @@
+--- native-r11/run_campaign.py
++++ native/run_campaign.py
+@@ -61,6 +61,8 @@
+         ('interpreter-preflight.json','PASS'),('native-preflight.json','PASS'),
+         ('launcher-validation.json','PASS'),('backend-reference-validation.json','PASS'),
+         ('frontend-resumption-validation.json','PASS'),
++        ('completed-prefix-validation.json','PASS'),
++        ('security-history-resumption-decision.json','HARNESS_ONLY_HISTORY_REFRESH'),
+         ('diagnostics/selector-discovery-check.json','PASS'),
+         ('selector-repair-decision.json','HARNESS_ONLY_REPAIR_APPROVED'),
+         ('selector-runtime-integrity.json','PASS'),
+@@ -79,13 +81,15 @@
+     adapter_diff=''.join(difflib.unified_diff(
+         (EVIDENCE.with_name('b9-correction-20261020-native-r9')/'recorded_suite.py').read_text(encoding='utf-8').splitlines(True),
+         (EVIDENCE/'recorded_suite.py').read_text(encoding='utf-8').splitlines(True),
+-        fromfile='native-r9/recorded_suite.py',tofile='native-r11/recorded_suite.py'))
++        fromfile='native-r9/recorded_suite.py',tofile='native-r12/recorded_suite.py'))
+     (EVIDENCE/'receipt-adapter.diff').write_text(adapter_diff,encoding='utf-8',newline='\n')
+     save('adapter-validation.json',{'syntax':'PASS','django_runner_resolution':'PASS',
+         'backend_application_tests_executed':False,'backend_results_origin':'REFERENCED_COMPLETED_R9',
+-        'change':'Only one exactly filtered frontend case; eight original execution/partition functions preserved',
++        'change':'Only security, advisory audits and original five profiles; all backend/frontend/smoke results referenced and eight execution/partition functions preserved',
+         'all_original_guards_preserved':True})
+     required_names=[
++        'completed-prefix-manifest.json','completed-prefix-validation.json','completed-prefix-live-reference.json',
++        'security-history-resumption-decision.json','security-history-prior.json','resumption-current.json',
+         'selector-repair-decision.json','selector-runtime-integrity.json','selector-history-manifest.json',
+         'diagnostics/verify_selector.py','diagnostics/verify_selector.cjs',
+         'diagnostics/selector-discovery-check.json','diagnostics/selection-discovery.json',
+@@ -124,7 +128,7 @@
+     observation=budget()
+     save('preflight.json',{'state':'PASS' if observation['ready'] else 'PENDING',
+         'candidate_sha':SHA,'exact_git_files':3332,'retained_backend_ids':3331,
+-        'retained_frontend_PASS':354,'new_frontend_cases':1,
++        'retained_frontend_PASS':355,'new_frontend_cases':0,
+         'resource_budget':{'admission_floor':2*GIB,'memory_reserve':2*GIB,
+             'prior_5_gib_admission_waived_by_user':True,'backing_disk_reserve':GIB},
+         'resources':observation,'formal_runs_per_new_block_max':1,'profile_runs_per_scenario_max':1,
+@@ -258,28 +262,16 @@
+ def run_all():
+     seal()
+     for label in REQUIRED:
+-        if label in ('frontend-test','frontend-smoke-urls','security'):
++        if label=='security':
+             continue
+         assert read_block(label)['state']=='PASS',label
+         save('referenced-block-'+label+'.json',{'state':'REFERENCED_PASS','label':label,
+             'provenance':provenance(label),'application_tests_executed_here':False})
+         print('BLOCK_REFERENCED '+label,flush=True)
+-    code=execute('frontend-test-remainder',[PYTHON,'-B',EVIDENCE/'frontend_resumption.py','run'],cwd=TREE/'frontend')
+-    if code:stop('PENDING_CLASSIFICATION','frontend-test-remainder','Selected frontend case nonzero; preserve traces',exit_code=code)
+-    code=execute('frontend-test-assemble',[PYTHON,'-B',EVIDENCE/'frontend_resumption.py','assemble'],cwd=REPO)
+-    if code:stop('PENDING','frontend-test-assemble','Frontend case evidence assembly invalid',exit_code=code)
+-    logical=json.loads((BLOCKS/'frontend-tests.json').read_text(encoding='utf-8'))
+-    assert logical['logical_aggregate'] is True
+-    gate('frontend-test',tests=355,retained_PASS=354,new_PASS=1,
+-        command_reference='frontend-test-assemble.command.json',
+-        historical_command_exit_1_preserved=True)
+-    for task in ('lint','smoke:urls'):
+-        label='frontend-'+task.replace(':','-')
+-        args=[NODE,PNPM,'run',task]
+-        if task=='test':args+=['--reporter=default','--reporter=json','--outputFile='+str(BLOCKS/'frontend-tests.json')]
+-        code=execute(label,args,cwd=TREE/'frontend',advisory=task=='lint')
+-        if code and task!='lint':stop('PENDING_CLASSIFICATION',label,'Frontend blocking command nonzero',exit_code=code)
+-        gate(label,'ADVISORY_NONZERO' if code else 'PASS',exit_code=code)
++    lint=read_block('frontend-lint')
++    assert lint['state']=='ADVISORY_NONZERO'
++    save('referenced-block-frontend-lint.json',{'state':'REFERENCED_ADVISORY','label':'frontend-lint',
++        'provenance':provenance('frontend-lint'),'application_tests_executed_here':False})
+     code=execute('security',[PYTHON,'-B',EVIDENCE/'scan_security.py'],cwd=REPO)
+     if code:stop('PENDING_CLASSIFICATION','security','Gitleaks nonzero; distinguish findings from scanner error',exit_code=code)
+     gate('security')

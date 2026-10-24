@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/ContactVerificationBadge.test.jsx",
+    "src/pages/inbox/index.test.jsx",
+    "--testNamePattern=WA-VER-01|allows the current human owner|descarta el texto de Ana",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-ver-01-2026-10-21\\vitest.json"
+  ],
+  "scope": "New VER-01 cases and directly affected selection/handoff actions only"
+}

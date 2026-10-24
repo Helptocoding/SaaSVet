@@ -1,0 +1,34 @@
+{
+  "state": "PLANNED_SELECTOR_VERIFIED_BY_STATIC_AST",
+  "actual_tests_executed": 0,
+  "formal_run_invoked": false,
+  "source_helper": "frontend_resumption.py",
+  "source_helper_sha256": "dd8016f84586202c9e1e047ddc4d8857b4d78b788f70c5bbbf2c1ac0c7814a8b",
+  "selected_inventory": "frontend-remainder-selected.json",
+  "selected_inventory_sha256": "ae05fc6762796c5bd547497b7c7028ea598ba5bc541347c42ff43bcd84c01f76",
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\node-v20.20.2-win-x64\\node.exe",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pnpm\\package\\bin\\pnpm.cjs",
+    "run",
+    "test",
+    "src/pages/inbox/index.test.jsx",
+    "--testNamePattern",
+    "^Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto$",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\blocks\\frontend-test-remainder.json"
+  ],
+  "cwd": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend",
+  "identity": {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto"
+  },
+  "runtime_pattern_and_argv_AST_match": true,
+  "test_timeout_override": false,
+  "retries_added": false,
+  "pool_or_concurrency_changed": false,
+  "default_timeout_preserved_ms": 5000,
+  "previous_PASS_cases_selected": 0
+}

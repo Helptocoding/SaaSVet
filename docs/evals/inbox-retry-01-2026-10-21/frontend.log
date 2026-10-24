@@ -1,0 +1,19 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/api/inbox.test.js (9 tests | 7 skipped) 14ms
+ ✓ src/pages/inbox/index.retry.test.jsx (25 tests) 4502ms
+     ✓ reintenta la fila original de otra autora sin duplicados ni pérdida del borrador  1011ms
+     ✓ bloquea doble clic hasta recibir respuesta  545ms
+ ✓ src/pages/inbox/index.test.jsx (93 tests | 89 skipped) 6776ms
+     ✓ agrupa por autor sin ocultar mensajes, horas ni estados de entrega  921ms
+     ✓ corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto  499ms
+     ✓ aplica el cap global de 20 intentos entre sesiones  3956ms
+     ✓ el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor  1392ms
+
+ Test Files  3 passed (3)
+      Tests  31 passed | 96 skipped (127)
+   Start at  15:11:39
+   Duration  22.73s (transform 2.69s, setup 2.60s, import 6.49s, tests 11.29s, environment 21.25s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-retry-01-2026-10-21/vitest.json

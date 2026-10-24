@@ -1,0 +1,10 @@
+--- native-r5/deliver_native.py
++++ native/deliver_native.py
+@@ -72,6 +72,7 @@
+         f'docs/evals/{HERE.name}/evidence-packages/* -diff\n'
+         f'docs/evals/{HERE.name}/receipt-adapter.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol\n'
+         f'docs/evals/{HERE.name}/native-adaptation-diffs/*.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol\n'
++        f'docs/evals/{HERE.name}/referenced-evidence/**/*.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol\n'
+         f'docs/evals/{HERE.name}/correction.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol\n')
+     ignore = (f'\n# Original logs are included in the independently verified evidence package.\n'
+         f'docs/evals/{HERE.name}/**/*.log\n'

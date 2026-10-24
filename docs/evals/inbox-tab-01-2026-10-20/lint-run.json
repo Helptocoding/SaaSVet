@@ -1,0 +1,17 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "src/pages/inbox/index.jsx",
+    "src/pages/inbox/index.test.jsx",
+    "src/pages/inbox/useInboxTitle.js",
+    "src/pages/inbox/useInboxTitle.test.jsx",
+    "src/pages/inbox/useInboxTitle.js",
+    "--format=json",
+    "--output-file=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-tab-01-2026-10-20\\lint.json"
+  ],
+  "exit_code": 1,
+  "sentry_upload_disabled": true
+}

@@ -1,0 +1,45 @@
+--- initial/inbox_read.py
++++ final/inbox_read.py
+@@ -3,12 +3,18 @@
+ from django.db import transaction
+ from django.db.models import BigIntegerField, Count, F, OuterRef, Subquery, Value
+ from django.db.models.functions import Coalesce
+-from rest_framework.exceptions import NotFound, ValidationError as APIValidationError
++from rest_framework.exceptions import APIException, NotFound
+ 
+ from apps.channels.models import Message
+ from apps.channels.selectors import operational_messages
+ 
+ from .models import Conversation, InboxReadState
++
++
++class InvalidReadMessage(APIException):
++    status_code = 400
++    default_code = 'invalid_read_message'
++    default_detail = 'Solo se puede marcar un mensaje entrante visible del hilo.'
+ 
+ 
+ def unread_counts(user, conversations):
+@@ -37,19 +43,16 @@
+     """Upsert serializado: solo entrantes visibles del hilo y avance monótono por id."""
+     org_id = user.organization_id
+     if contact.organization_id != org_id or account.organization_id != org_id:
+-        raise NotFound({'code': 'not_found', 'message': 'Hilo no encontrado.'})
++        raise NotFound('Hilo no encontrado.')
+     scoped_messages = Message.objects.for_organization(org_id).filter(
+         contact=contact, channel_account=account,
+     )
+     target = scoped_messages.filter(pk=message_id).first()
+     if target is None:
+-        raise NotFound({'code': 'not_found', 'message': 'Mensaje no encontrado.'})
++        raise NotFound('Mensaje no encontrado.')
+     if (target.direction != Message.DIRECTION_IN
+             or not operational_messages(scoped_messages).filter(pk=target.pk).exists()):
+-        raise APIValidationError({
+-            'code': 'invalid_read_message',
+-            'message': 'Solo se puede marcar un mensaje entrante visible del hilo.',
+-        })
++        raise InvalidReadMessage()
+ 
+     states = InboxReadState.objects.for_organization(org_id).filter(
+         user=user, contact=contact, channel_account=account,

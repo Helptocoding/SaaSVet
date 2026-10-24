@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-12T02:41:26Z",
+  "state": "PRESEAL_PATH_ADAPTATION",
+  "old_python": "C:/Users/LAP/AppData/Local/Temp/vet-b8b-locked/Scripts/python.exe",
+  "new_python": "C:/Users/LAP/AppData/Local/Programs/Python/Python313/python.exe",
+  "new_version": "3.13.2",
+  "observation": "Two sequential probes using the current Windows interpreter returned 5329354752 bytes via WSL and 5351489536 directly, one second apart; the old virtualenv probe previously reported 2848301056. Samples occurred at different times and do not by themselves prove the cause of changing memory.",
+  "resource_measurement": "Same host_resources.py, Windows GlobalMemoryStatusEx, same user and unchanged 5 GiB gate; only the Windows executable path is adapted",
+  "tests_executed": false
+}

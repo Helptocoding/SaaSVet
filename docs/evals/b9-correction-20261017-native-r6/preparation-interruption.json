@@ -1,0 +1,80 @@
+{
+  "state": "PREPARATION_INTERRUPTED_BY_CONFIRMED_WINDOWS_REBOOT",
+  "observed_utc": "2026-10-18T17:49:48.414304Z",
+  "known_boot_utc": "2026-10-18T11:52:49.5000000Z",
+  "host": {
+    "boot_utc": "2026-10-18T11:52:49.5000000Z",
+    "recovery_ancestry": [
+      16252,
+      20568,
+      9240,
+      5648,
+      17544,
+      2600,
+      23512,
+      11172,
+      11148
+    ],
+    "owned_remaining": [],
+    "old_postmaster": []
+  },
+  "last_auxiliary_heartbeat_utc": "2026-10-18T11:52:29Z",
+  "original_stage_exit": "UNKNOWN",
+  "original_stage_completion_time": null,
+  "audit_tool_install": "COMPLETED_EXIT_0_BEFORE_REBOOT",
+  "preserved_files": {
+    "invocation-stage.json": {
+      "original": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\invocation-stage.json",
+      "archive": "diagnostics/preparation-interruption/invocation-stage.json",
+      "sha256": "2aa557251323fd10ef5edf2879aa3fa6fe2e4b88f293410abe6a7a5c404af499",
+      "bytes": 406
+    },
+    "postgresql-start.json": {
+      "original": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\postgresql-start.json",
+      "archive": "diagnostics/preparation-interruption/postgresql-start.json",
+      "sha256": "39afc959f99ac14076b94b5030070312ddd08cb6f500d144725d27e117dbeb96",
+      "bytes": 445
+    },
+    "postgresql-preflight.json": {
+      "original": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\postgresql-preflight.json",
+      "archive": "diagnostics/preparation-interruption/postgresql-preflight.json",
+      "sha256": "bc1f9bc43b07dd6c3e310d2e639bf03ec1231637fa459946f5fbbe1e46d1cc29",
+      "bytes": 275
+    },
+    "postgresql.log": {
+      "original": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\postgresql.log",
+      "archive": "diagnostics/preparation-interruption/postgresql-before-reboot.log",
+      "sha256": "5807b270358fa381155545e09a4803981e3fff308c00313fc8459e7d2a680cfa",
+      "bytes": 33010
+    },
+    "postmaster.pid": {
+      "original": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pgdata\\postmaster.pid",
+      "archive": "diagnostics/preparation-interruption/postmaster-before-recovery.pid",
+      "sha256": "012df9bb1b41d66f6197241b0c1845a2ac647d7aafb2fbed099d8779ecae3ea5",
+      "bytes": 104
+    }
+  },
+  "candidate_sha": "68dffd746793700071f577a58528b0f9636930db",
+  "application_tests_executed": false,
+  "formal_invocation_exists": false,
+  "prior_recovery_guard_attempt": {
+    "exit_code": 1,
+    "postgresql_started": false,
+    "receipts_written": false,
+    "cause": "CIM collector and its RTK wrapper matched their own command lines",
+    "correction": "Exclude ancestry union of the PowerShell collector and recovery Python",
+    "source_sha256_before": "0cf18f6e2ddba3e0a2ee485c495113f3e3d02b35e016565d7d4000b40ee9401d",
+    "source_sha256_current": "1650760462ff63f85e36b58dfac8b10f3db0dd9c2cd80062cca8f8e0a0ba4b60",
+    "retained_output": "diagnostics/preparation-interruption/recovery-first-guard.log"
+  },
+  "reinitialization_or_dependency_installation_permitted": false,
+  "resources": {
+    "utc": "2026-10-18T17:49:40Z",
+    "utc_epoch_seconds": 1792345780.3151414,
+    "physical_total": 17031217152,
+    "physical_available": 4571693056,
+    "page_available": 10736414720,
+    "disk_available": 9862651904,
+    "platform": "Windows native"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "prepared_after_stop": true,
+  "used_in_r7_formal_execution": false,
+  "helper": "diagnostics/awake_guard.py",
+  "API": "SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)",
+  "API_request_and_restoration": "PASS",
+  "probe_duration_seconds": 2.000214899999264,
+  "full_duration_sleep_prevention_validated": false,
+  "maximum_lifetime_seconds": 21600,
+  "global_power_policy_changed": false,
+  "W32Time_changed": false,
+  "limits": "Does not guarantee preventing manual sleep, lid/power button actions or policy overrides",
+  "future_campaign_decision_required": true,
+  "documentation": "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setthreadexecutionstate"
+}

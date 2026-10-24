@@ -1,7 +1,7 @@
 # Proceso ARCO manual (LFPDPPP)
 
 **Fecha**: 2026-06-24
-**Última actualización**: 2026-08-22 (WhatsApp Inbox/media, ADR p60)
+**Última actualización**: 2026-10-22 (media implementada localmente, activación pendiente)
 **Estado**: vigente / interim (proceso manual; endpoints automatizados son P1)
 
 Este documento describe cómo atender **manualmente** las solicitudes de derechos
@@ -13,7 +13,13 @@ mediante el procedimiento manual descrito aquí.
 
 - **Contacto del Responsable**: privacidad@saaslyvet.com
 - **Plazo de respuesta (SLA)**: ≤ 20 días hábiles a partir de la recepción de la
-  solicitud (LFPDPPP art. 31).
+  solicitud (LFPDPPP arts. 2.VIII y 31). Si procede, ejecutar dentro de los
+  15 días hábiles siguientes a comunicar la respuesta. Una ampliación por periodo
+  igual requiere justificación y comunicación. Registrar siempre la recepción
+  original; la verificación de identidad no reinicia por sí sola el plazo.
+
+Fuente contrastada el 22-10-2026: [texto vigente de la LFPDPPP](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf),
+reforma indicada 14-11-2025.
 
 ---
 
@@ -51,7 +57,7 @@ clínica solicite), pero **no responde directamente al titular** en estos casos.
 | Caja | `CashSession` / `CashMovement` · cash | Encargado | `organization` |
 | Migración (PII cruda staged) | `ImportJob.rows` (JSON) · imports | Encargado | `organization` |
 | WhatsApp: identidad de contacto, conversaciones y texto/captions | `ContactIdentity` / `Conversation` · agent; `Message` · channels | Encargado | `organization` |
-| WhatsApp media (futuro, ADR p60; aún no activo) | `MessageMedia` · channels + objeto privado B2 | Encargado | `organization` + key/prefix B2 |
+| WhatsApp media (implementada localmente, aún no activa) | `MessageMedia` · channels + objeto privado B2 | Encargado | `organization` + key/prefix B2 |
 
 Notas sobre el mapa:
 - En cobros **nunca** se almacenan datos de tarjeta. Solo se registra el método de
@@ -124,7 +130,7 @@ fiscales** sobre expedientes y comprobantes. La Cancelación no puede vulnerar
 estas obligaciones de retención; por eso, ante dependencias clínicas/fiscales, la
 respuesta es anonimizar/conservar lo legalmente exigible, no borrar.
 
-**WhatsApp/media futura (ADR p60)**: cuando proceda una cancelación antes de los
+**WhatsApp/media (ADR p60; aún sin activación real)**: cuando proceda una cancelación antes de los
 180 días, eliminar el objeto B2 operativo y dejar la fila `MessageMedia` como
 tombstone/`expired` sin referencia descargable; anonimizar o conservar el texto
 solo conforme al alcance y obligaciones aplicables. Los backups Postgres p40
@@ -133,6 +139,52 @@ Su ciclo permanece intacto (local 14 días, `daily/` 30 días, `monthly/` 12
 meses) y no se reescribe retroactivamente; una restauración debe reaplicar las
 purgas/anonimizaciones procedentes y ejecutar el reconciliador de expiraciones
 antes de abrir el servicio al tráfico.
+
+### 6.1 Procedimiento manual de cancelación de media
+
+Este procedimiento queda preparado; no se ejecutó contra datos reales. No hay
+endpoint ARCO ni comando de borrado por titular. La bandera general de media
+apagada vuelve inerte `maintain_inbox_media`: no activarla globalmente solo para
+tramitar una solicitud. El operador debe ejecutar una intervención autorizada y
+acotada con las primitivas existentes o mediante la herramienta operativa aprobada.
+
+1. Registrar folio, identidad verificada y, para clientes finales, la instrucción
+   de su clínica responsable. Delimitar UUID y organización explícitos. Resolver
+   y documentar conservación aplicable; la retención de una factura no justifica
+   conservar automáticamente todo adjunto del chat.
+2. Resolver cada `MessageMedia` por `organization` y `public_id`; comprobar también
+   clínica/cuenta del mensaje. Rechazar cruces de tenant y listas por teléfono sin
+   verificar. No registrar el contenido ni object keys en recibos públicos.
+3. Bajo `transaction.atomic()` y `select_for_update()`, bloquear la entrega:
+   `status='expired'`, `expires_at` y `expired_at` al momento de la intervención;
+   revocar `worker_token`/`lease_until` y limpiar `next_attempt_at`. Conservar el
+   valor de `file` hasta confirmar purga. Guardar usando la vía de transición
+   server-owned existente (`save(validate=False, update_fields=...)`). Esto impide
+   que un worker con token anterior publique un resultado tardío. No dejar una
+   fila `pending`/`failed` reencolable ni borrar la fila que conserva el tombstone.
+4. Fuera de la transacción, borrar el key exacto mediante `row.file.storage.delete`.
+   El adaptador B2 elimina todas sus versiones y markers. Comprobar el resultado
+   real con el operador del proveedor; si falla, conservar el key, mantener el
+   bloqueo y registrar reintento. No declarar cancelación física completada por
+   haber recibido únicamente una respuesta 410.
+5. Bajo un nuevo lock scoped, volver a comprobar identidad/estado y el key exacto
+   antes de limpiar `file`. Verificar que el proxy devuelve 410 a un usuario
+   autorizado y 404 a otra clínica. Revisar que no hay un upload en vuelo o spool
+   residual del adjunto; el fencing obliga a descartar resultados tardíos, pero
+   un proceso interrumpido requiere comprobar también las versiones del key.
+6. Resolver captions/texto, payload crudo, referencias de contacto y demás datos
+   dentro del alcance autorizado. Expirar el binario no anonimiza el mensaje ni
+   equivale a borrar íntegramente al titular. Conservar únicamente lo que tenga
+   fundamento documentado y entregar respuesta por el canal seguro acordado.
+7. Registrar UUID internos, fechas, ejecutor, resultado físico, errores genéricos
+   y evidencia privada. Mantener el registro de purgas/anonimizaciones separado
+   del backup restaurable. Tras un restore, con tráfico cerrado, reaplicar ese
+   registro antes de reconciliar, probar entrega/denegación y reabrir. Un backup
+   antiguo no debe rehabilitar el adjunto ni reencolar su descarga desde Meta.
+
+El [expediente de revisión](inbox-privacy-review-2026-10-22/README.md) y la
+[preparación B2](inbox-privacy-review-2026-10-22/b2-preparacion.md) distinguen
+documentación preparada de DPA, provisión y validaciones reales pendientes.
 
 ---
 
@@ -151,3 +203,19 @@ Este es un **proceso manual interino**. Los endpoints automatizados de ARCO
 (exportación de auto-servicio, rectificación de perfil propio del staff,
 cancelación/anonimización guiada) son **P1** (posterior a la fase de testers,
 previo a la integración de Stripe).
+
+
+### Actualización 23-10-2026: política y herramientas de medios
+
+La [política definida por el usuario](../decisions/2026-10-22-inbox-media-retention-policy.md)
+fija 180 días y purga operativa verificada en hasta siete días tras expirar.
+Usar el [procedimiento vigente de medios](../runbooks/inbox-media.md), con ledger
+independiente del dump, `INBOX_MEDIA_ACCESS_HOLD=True`, workers/webhooks detenidos,
+`inbox_media_ops restore-check --workers-stopped`, mantenimiento y comprobación
+de inventario del proveedor antes de autorizar tráfico. El comando no reabre
+tráfico. ARCO anticipado usa `inbox_media_ops revoke`: ledger duradero primero,
+fencing/estado DB después; no borrar la key antes de verificar la purga.
+
+Responsable y canal de alertas quedan pendientes operativos no bloqueantes por
+decisión expresa del usuario; no registrar entrega/atención como comprobadas.
+Los incidentes de purga que superan siete días sí mantienen el cierre pendiente.

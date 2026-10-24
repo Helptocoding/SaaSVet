@@ -1,0 +1,40 @@
+{
+  "state": "COMPLETED",
+  "formal_run_number": 1,
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.EXE",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+    "-m",
+    "pip_audit",
+    "-r",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\runtime\\b9\\src\\backend\\requirements.lock",
+    "--format=json",
+    "--output",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\blocks\\pip-audit.json"
+  ],
+  "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\runtime\\b9\\src",
+  "advisory": true,
+  "resources_before": {
+    "utc": "2026-10-23T03:26:31Z",
+    "utc_epoch_seconds": 1792725991.944612,
+    "physical_total": 17031217152,
+    "physical_available": 3189116928,
+    "page_available": 3935383552,
+    "disk_available": 17923530752,
+    "platform": "Windows native"
+  },
+  "owned_wrapper_pid": 45020,
+  "exit_code": 1,
+  "seconds": 162.08653550001327,
+  "invalidating_incident": null,
+  "resources_after": {
+    "utc": "2026-10-23T03:29:14Z",
+    "utc_epoch_seconds": 1792726154.0641642,
+    "physical_total": 17031217152,
+    "physical_available": 3138146304,
+    "page_available": 3872616448,
+    "disk_available": 17925406720,
+    "platform": "Windows native"
+  }
+}

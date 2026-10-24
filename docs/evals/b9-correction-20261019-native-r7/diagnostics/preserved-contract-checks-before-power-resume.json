@@ -1,0 +1,122 @@
+{
+  "state": "PASS",
+  "utc": "2026-10-20T00:32:24Z",
+  "original_function_AST_identical": {
+    "run_campaign.py:execute": true,
+    "run_campaign.py:check_suite": true,
+    "run_campaign.py:budget": true,
+    "run_campaign.py:gate": true,
+    "run_campaign.py:create_db": true,
+    "full_partition.py:build_partition": true,
+    "full_partition.py:projected_groups": true,
+    "full_partition.py:validate_partition": true
+  },
+  "source_syntax_and_whitespace": "PASS",
+  "application_tests_executed": false,
+  "candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+  "scope": "Static preservation of eight r5 functions; authorized fixture equivalence and aggregate provenance are documented separately; no application code is imported or executed",
+  "helpers_sha256": {
+    "awake_guard.py": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+    "awake_status.py": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+    "bootstrap_resumption.py": "19a70f2038593cf40deff6992a4bed3b0c1b4d3ffb0cb774e9a6e60a99c5c032",
+    "capture_native.py": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+    "case_resumption.py": "1a82c78cf9fdc0603e91395abdcdfab3c251cfc3d070db132a5c9eb589dfaf98",
+    "cleanup_native.py": "ea0c2e948005882299b688c837eb9953b714acd529c198f8322dfa979931b318",
+    "clock_probe.py": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+    "complete_handoff.py": "f4c8e06c2f467e617b4c86faf5d0925a388972137a22ada648d98f70200419b6",
+    "composite_evidence.py": "1b3d3d246efe3a57b24aa2927846023cc345e334e93a8d5cd9cc518477a3762f",
+    "deliver_native.py": "a2620972ee79c871a1418098919a95c328407dc8eea76400dbba345e4c4ac70c",
+    "diagnostics/close_acceptance.py": "5704311389276f17dcac0b60aa9ba8f5bd5e53f09f00304573ce7d7539d3bfa9",
+    "diagnostics/verify_preserved_contract.py": "4479a683cee97be7fec3332f100c4798994ee575c2dce03331fb48c67a468917",
+    "discover_candidate.py": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b",
+    "finalize_preflight.py": "4fe5533c56ea882776a9ce08cb4204950006ea03b73ffe1dad8e62f6b8d5a9ed",
+    "full_partition.py": "b1c7f6b6f238bdc017244250ce31aae2576747d5a13a6f7f125153bd8dbec747",
+    "handoff_runtime.py": "2d3e24571fde184f9132e3578c71e279c3c275ce4952488d417b28785484c281",
+    "host_observer.py": "aeba1a4994af3bdd8c0a3fa6fead4bfe8a178f8be8634eb909c43fa941deb388",
+    "host_resources.py": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+    "interpreter_preflight.py": "448428a04cd279d7f12dcaaa2361d61ce6b6307039f322c0f1f6ca8b44b2f800",
+    "launch_native.py": "3308360a29816d10841f3f9994d3c963736f58daaaa018aecf84731955cd36e2",
+    "native_support.py": "0029999bf89659bf9a0e3a7f3288df8da5b3bf632c7511e5e8a2dc134cf9977b",
+    "prepare_native.py": "269d9c3be7981e9675751339fcd716b0d92d16a8197aaa705d2fa9d48a4d32c5",
+    "recorded_suite.py": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+    "restore_native.py": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+    "retire_install_cache.py": "610555b68810d40d39f3e01f8761b192a9ebf564b8cab59ebdd6c6190b3150ae",
+    "run_campaign.py": "be9c387492112f6e2b40537e766e8023f18f5bc36d409c187e73465e88474082",
+    "run_remainder.py": "330c53e16ee6979b6f494a1d624827884e6f1e92ddc3a3a34ccfc78c96e6a844",
+    "scan_security.py": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2"
+  },
+  "baseline_campaign": "b9-correction-20261017-native-r5",
+  "function_AST_sha256": {
+    "run_campaign.py:execute": {
+      "current": "bde31a1ac1b9c4f17b7d8d50d4d5088391561f1dfda7cb7ed58b1527e56dcf3a",
+      "prior_r5": "bde31a1ac1b9c4f17b7d8d50d4d5088391561f1dfda7cb7ed58b1527e56dcf3a"
+    },
+    "run_campaign.py:check_suite": {
+      "current": "44bf4fb06af59579039769a7dfed38702704443d938773afc92698a84c0443ec",
+      "prior_r5": "44bf4fb06af59579039769a7dfed38702704443d938773afc92698a84c0443ec"
+    },
+    "run_campaign.py:budget": {
+      "current": "c9248ceae26063a3a9263c809cfce4737c401d7d2057899fe7455c67a2529794",
+      "prior_r5": "c9248ceae26063a3a9263c809cfce4737c401d7d2057899fe7455c67a2529794"
+    },
+    "run_campaign.py:gate": {
+      "current": "7da42b82549f594de3647d86cffc0ff139413c54ab2b7bd499e34006cb9717b9",
+      "prior_r5": "7da42b82549f594de3647d86cffc0ff139413c54ab2b7bd499e34006cb9717b9"
+    },
+    "run_campaign.py:create_db": {
+      "current": "cbbabb1e0d1e35b366ab3a879de24b1cb60cc0301c7f82061452ddb999f842ff",
+      "prior_r5": "cbbabb1e0d1e35b366ab3a879de24b1cb60cc0301c7f82061452ddb999f842ff"
+    },
+    "full_partition.py:build_partition": {
+      "current": "784088ba99170723e8a1d86cd78c75d97df7087e81b9bf2ce244e6ca8069b61c",
+      "prior_r5": "784088ba99170723e8a1d86cd78c75d97df7087e81b9bf2ce244e6ca8069b61c"
+    },
+    "full_partition.py:projected_groups": {
+      "current": "82d47ffbc5bc67b84d4c0eccb117e0fd682ffc7509cf95ec68551e1fb7721328",
+      "prior_r5": "82d47ffbc5bc67b84d4c0eccb117e0fd682ffc7509cf95ec68551e1fb7721328"
+    },
+    "full_partition.py:validate_partition": {
+      "current": "50aee508295c980297367d48006aa4ab67e3b4161984443ceb1182a6b47de235",
+      "prior_r5": "50aee508295c980297367d48006aa4ab67e3b4161984443ceb1182a6b47de235"
+    }
+  },
+  "compiled_sources": [
+    "awake_guard.py",
+    "awake_status.py",
+    "bootstrap_resumption.py",
+    "capture_native.py",
+    "case_resumption.py",
+    "cleanup_native.py",
+    "clock_probe.py",
+    "complete_handoff.py",
+    "composite_evidence.py",
+    "deliver_native.py",
+    "diagnostics/close_acceptance.py",
+    "diagnostics/verify_preserved_contract.py",
+    "discover_candidate.py",
+    "finalize_preflight.py",
+    "full_partition.py",
+    "handoff_runtime.py",
+    "host_observer.py",
+    "host_resources.py",
+    "interpreter_preflight.py",
+    "launch_native.py",
+    "native_support.py",
+    "prepare_native.py",
+    "recorded_suite.py",
+    "restore_native.py",
+    "retire_install_cache.py",
+    "run_campaign.py",
+    "run_remainder.py",
+    "scan_security.py"
+  ],
+  "static_issues": [],
+  "source_changes_during_verification": [],
+  "candidate_input_sha256": "addcc4d7ba3a5798afb7d75873bd4d1139eff3d840e00e1db6837a053c621c56",
+  "finalize_preflight_metadata": {
+    "formal_application_tests_executed_field_present": true,
+    "preserved_contract_receipt_reference_present": false
+  },
+  "services_started": false,
+  "application_modules_imported": false
+}

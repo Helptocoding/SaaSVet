@@ -1,0 +1,15 @@
+{
+  "decision": "FAIL",
+  "cause": "El gate bloqueante Gitleaks del historial devolvió exit 1 con 3156 detecciones generic-api-key; no se declaran 3156 credenciales reales confirmadas. Se conservan los PASS y los cinco perfiles quedan NOT_EXECUTED por la parada exigida.",
+  "date_local": "2026-10-20",
+  "timezone": "America/Mexico_City",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "accepted_historical_evidence_limitation": true,
+  "historical_monitor_absence_still_visible": true,
+  "source_integrity_verified": true,
+  "previous_PASS_cases_rerun": 0,
+  "frontend_cases_PASS_retained": 355,
+  "blocking_failure": "security",
+  "classification": "security-classification.json",
+  "activation": "PENDING_ACTIVATION_REQUIREMENTS"
+}

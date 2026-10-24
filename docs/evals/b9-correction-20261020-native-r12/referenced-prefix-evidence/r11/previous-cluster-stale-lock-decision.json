@@ -1,0 +1,98 @@
+{
+  "state": "VERIFIED_ORPHANED_PIDFILE",
+  "previous_campaign": "b9-correction-20261020-native-r10",
+  "data_directory": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pgdata",
+  "port": 35490,
+  "preserved_file": {
+    "path": "previous-cluster-stale-postmaster.pid",
+    "bytes": 105,
+    "sha256": "483e9ed5d3acb71e3adc70517533cb8a4e5b8de63e90e9f3bba7ef4ff41f29fc"
+  },
+  "process_absence": {
+    "observed_epoch_seconds": 1792540978.9028513,
+    "previous_wrapper_pid": 27224,
+    "previous_postmaster_pid": 27812,
+    "previous_pids_absent": true,
+    "matching_postgresql_image_present": null,
+    "global_postgresql_image_absence_claimed": false,
+    "unknown_other_postgresql_images": [
+      {
+        "pid": 7768,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8388,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8556,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8564,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8572,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8580,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8588,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 9528,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 9536,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 9556,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      }
+    ],
+    "other_postgresql_images": [],
+    "owned_status_receipt": "previous-cluster-owned-status.json",
+    "owned_status_receipt_sha256": "e1eb637951a31db44ead8fb5284e453c1b79e0d827f30c29bebdfa68ddcc1ecd",
+    "owned_pg_ctl_status_exit_code": 3
+  },
+  "port_verified_free": true,
+  "only_this_lock_removed": true,
+  "no_clean_shutdown_claim": true
+}

@@ -1,0 +1,407 @@
+Found 41 test(s).
+Creating test database for alias 'default' ('test_inbox_srch01_fb7b3a679c0c')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying organizations.0001_initial... OK
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying users.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying organizations.0002_organization_timezone_and_more... OK
+  Applying organizations.0003_organization_tax_rate... OK
+  Applying organizations.0004_org_default_timezone_mexico... OK
+  Applying organizations.0005_organizationsettings... OK
+  Applying organizations.0006_alter_organizationsettings_auto_create_invoice_on_done_and_more... OK
+  Applying organizations.0007_sync_org_settings_data... OK
+  Applying organizations.0008_day6_add_public_id... OK
+  Applying organizations.0009_organizationsettings_require_open_cash_session... OK
+  Applying organizations.0010_organization_is_demo... OK
+  Applying organizations.0011_clinic_configuration_phase1... OK
+  Applying organizations.0012_remove_organizationsettings_auto_create_invoice_on_done_and_more... OK
+  Applying patients.0001_initial... OK
+  Applying patients.0002_alter_owner_organization_alter_pet_organization... OK
+  Applying patients.0003_alter_pet_owner... OK
+  Applying patients.0004_pet_birth_date_pet_color_pet_sex_alter_pet_breed... OK
+  Applying patients.0005_owner_created_at_owner_created_by_owner_is_active_and_more... OK
+  Applying patients.0006_remove_pet_patients_pe_organiz_ac3681_idx_and_more... OK
+  Applying patients.0007_remove_owner_patients_ow_organiz_e2fb0a_idx_and_more... OK
+  Applying patients.0008_pet_is_generic... OK
+  Applying patients.0009_add_public_id_to_exposed_models... OK
+  Applying patients.0010_unique_generic_pet_per_organization... OK
+  Applying patients.0011_alter_pet_owner... OK
+  Applying patients.0012_owner_owner_name_trgm_pet_pet_name_trgm... OK
+  Applying patients.0013_owner_legacy_id_pet_legacy_id_and_more... OK
+  Applying patients.0014_alter_owner_phone... OK
+  Applying patients.0015_alter_pet_species... OK
+  Applying patients.0016_owner_extra_data_pet_extra_data... OK
+  Applying patients.0017_owner_owner_phone_trgm_owner_owner_legacy_trgm_and_more... OK
+  Applying agent.0001_initial... OK
+  Applying channels.0001_initial... OK
+  Applying channels.0002_channelaccount_access_token_encrypted_and_more... OK
+  Applying channels.0003_message_process_attempts... OK
+  Applying patients.0018_owner_phone_normalized... OK
+  Applying agent.0002_initial... OK
+  Applying agent.0003_conversation_total_llm_calls_humanhandoff_llmcall_and_more... OK
+  Applying agent.0004_agentsettings_default_veterinarian_and_more... OK
+  Applying agent.0005_contactidentity_linked_via... OK
+  Applying agent.0006_conversation_processing_until... OK
+  Applying agent.0007_contactidentity_proactive_opt_out... OK
+  Applying agent.0008_conversationgoal... OK
+  Applying agent.0009_remove_agentsettings_business_hours... OK
+  Applying agent.0010_turndecision... OK
+  Applying agent.0011_alter_humanhandoff_reason_code... OK
+  Applying agent.0012_commitment_lifecycle... OK
+  Applying agent.0013_identity_commitments... OK
+  Applying agent.0014_contactidentity_auto_rematch_blocked... OK
+  Applying agent.0015_contact_identity_verification... OK
+  Applying agent.0016_f2_message_contact_and_close_reason... OK
+  Applying channels.0004_f2_message_contact_and_close_reason... OK
+  Applying channels.0005_f2_backfill_message_contact... OK
+  Applying channels.0006_f2_message_contact_index... OK
+  Applying channels.0007_channelaccount_public_id... OK
+  Applying channels.0008_message_semantic_operation... OK
+  Applying channels.0009_message_idempotency_key... OK
+  Applying channels.0010_message_processing_failure_notice... OK
+  Applying agent.0017_contactidentity_public_id... OK
+  Applying agent.0018_f5_drop_conversation_summary... OK
+  Applying agent.0019_conversation_intake_path... OK
+  Applying agent.0020_conversationgoal_authorization_message... OK
+  Applying agent.0021_turn_operation_assessment... OK
+  Applying agent.0022_conversation_ownership_epoch_turnwork... OK
+  Applying channels.0011_message_origin_epoch_message_output_ordinal_and_more... OK
+  Applying channels.0012_b3_scope_and_membership... OK
+  Applying channels.0013_b4_durable_sender... OK
+  Applying channels.0014_alter_message_semantic_type... OK
+  Applying appointments.0001_initial... OK
+  Applying appointments.0002_appointment_end_datetime_appointment_start_datetime_and_more... OK
+  Applying appointments.0003_backfill_start_end_datetime... OK
+  Applying appointments.0004_appointment_created_at_appointment_created_by_and_more... OK
+  Applying appointments.0005_appointment_appointment_end_after_start... OK
+  Applying appointments.0006_appointment_appointment_organiz_abc1ec_idx... OK
+  Applying appointments.0007_add_cancellation_reason_and_new_statuses... OK
+  Applying appointments.0008_appointmentstatuschange... OK
+  Applying appointments.0009_add_public_id_to_exposed_models... OK
+  Applying appointments.0010_appointment_walk_in... OK
+  Applying appointments.0011_appointment_idx_appt_org_start_status... OK
+  Applying appointments.0012_alter_appointment_end_datetime_and_more... OK
+  Applying appointments.0013_appointment_idempotency_key_and_more... OK
+  Applying appointments.0014_appointment_no_overlap_per_vet... OK
+  Applying appointments.0015_appointment_category... OK
+  Applying agent.0023_humanhandoff_acknowledged_at_and_more... OK
+  Applying agent.0024_matter_binding_b6... OK
+  Applying agent.0025_conversation_operation_b7a... OK
+  Applying agent.0026_b7b_consent_evidence... OK
+  Applying channels.0015_b7b_receipt_guard... OK
+  Applying agent.0027_attendance_consent_policy... OK
+  Applying agent.0028_b9_operational_budget... OK
+  Applying agent.0029_inbox_read_state... OK
+  Applying medical_records.0001_initial... OK
+  Applying medical_records.0002_medicalrecord_veterinarian_alter_medicalrecord_pet... OK
+  Applying medical_records.0003_alter_medicalrecord_options_and_more... OK
+  Applying medical_records.0004_medicalrecord_created_by_medicalrecord_is_active_and_more... OK
+  Applying medical_records.0005_medicalrecord_medical_rec_organiz_12d8fd_idx... OK
+  Applying medical_records.0006_medicalrecord_close_fields... OK
+  Applying inventory.0001_initial... OK
+  Applying inventory.0002_product_category_product_requires_prescription... OK
+  Applying inventory.0003_product_sale_price... OK
+  Applying inventory.0004_add_internal_code_and_presentation... OK
+  Applying inventory.0005_data_create_presentations... OK
+  Applying inventory.0006_add_presentation_fks_to_movements... OK
+  Applying inventory.0007_data_populate_presentation_fks... OK
+  Applying inventory.0008_finalize_inventory_restructure... OK
+  Applying inventory.0009_alter_presentation_organization... OK
+  Applying billing.0001_initial... OK
+  Applying billing.0002_initial... OK
+  Applying billing.0003_invoice_invoice_type_invoice_medical_record... OK
+  Applying billing.0004_invoiceitem_presentation_alter_invoice_status_and_more... OK
+  Applying inventory.0010_stockmovement_invoice... OK
+  Applying inventory.0011_medicalrecordproduct_created_at_and_more... OK
+  Applying inventory.0012_presentation_presentation_stock_non_negative_and_more... OK
+  Applying billing.0005_invoiceitem_discount... OK
+  Applying billing.0006_invoice_is_active_invoice_updated_by_and_more... OK
+  Applying billing.0007_remove_invoiceitem_billing_inv_organiz_6da732_idx_and_more... OK
+  Applying billing.0008_remove_product_legacy_xor_constraint... OK
+  Applying billing.0009_remove_invoiceitem_invoiceitem_exactly_one_source_and_more... OK
+  Applying billing.0010_invoice_medical_record_onetoone_invoiceitem_unique... OK
+  Applying medical_records.0007_add_medicalrecordservice... OK
+  Applying medical_records.0008_vaccinerecord... OK
+  Applying medical_records.0009_allow_blank_diagnosis_treatment... OK
+  Applying medical_records.0010_add_public_id_to_exposed_models... OK
+  Applying medical_records.0011_alter_medicalrecord_diagnosis_and_more... OK
+  Applying medical_records.0012_add_consultation_type... OK
+  Applying medical_records.0013_create_vitalsigns... OK
+  Applying medical_records.0014_medicalrecord_closed_status_requires_closed_at... OK
+  Applying medical_records.0015_medicalrecord_closed_at_provenance... OK
+  Applying inventory.0013_alter_presentation_options_and_more... OK
+  Applying inventory.0014_add_public_id_to_exposed_models... OK
+  Applying billing.0011_alter_invoice_pet... OK
+  Applying billing.0012_add_public_id_to_exposed_models... OK
+  Applying billing.0013_unique_invoice_service... OK
+  Applying billing.0014_service_base_price_positive... OK
+  Applying billing.0015_invoice_paid_status_requires_paid_at... OK
+  Applying billing.0016_invoice_anchor_completeness... OK
+  Applying billing.0017_invoice_anchor_backfill_and_constraints... OK
+  Applying billing.0018_invoice_idx_inv_org_status_paid_and_more... OK
+  Applying inventory.0015_stockmovement_idx_stockmov_org_pres_created... OK
+  Applying inventory.0016_remove_presentation_inventory_p_product_3223d8_idx_and_more... OK
+  Applying cash.0001_initial... OK
+  Applying billing.0019_payment... OK
+  Applying billing.0020_payment_cash_session... OK
+  Applying billing.0021_externalprescriptionattestation... OK
+  Applying analytics.0001_initial... OK
+  Applying analytics.0002_metricadjustment... OK
+  Applying appointments.0016_appointment_source_operation... OK
+  Applying appointments.0017_appointment_mutation_effect... OK
+  Applying appointments.0018_confirm_attendance_effect... OK
+  Applying medical_records.0016_rename_medical_rec_medical_9efa5c_idx_medical_rec_medical_a94e83_idx_and_more... OK
+  Applying medical_records.0017_alter_medicalrecord_pet_alter_vaccinerecord_pet... OK
+  Applying medical_records.0018_day6_vaccine_public_id... OK
+  Applying inventory.0017_medicalrecordproduct_cost_behavior... OK
+  Applying inventory.0018_adr_p31_product_stock_and_presentation_format... OK
+  Applying inventory.0019_presentation_barcode_unique_index... OK
+  Applying prescriptions.0001_initial... OK
+  Applying prescriptions.0002_prescription_created_by_prescription_is_active_and_more... OK
+  Applying prescriptions.0003_remove_prescriptionitem_prescriptio_organiz_e427c3_idx_and_more... OK
+  Applying prescriptions.0004_add_public_id_to_exposed_models... OK
+  Applying prescriptions.0005_prescription_idx_presc_org_created... OK
+  Applying prescriptions.0006_alter_prescription_pet... OK
+  Applying billing.0022_creditnote_creditnoteitem_refundpayment_and_more... OK
+  Applying billing.0023_invoiceitem_dispensed_from_prescription_item... OK
+  Applying billing.0024_invoice_idx_invoice_org_created_id... OK
+  Applying inventory.0020_stockmovement_idx_stockmov_org_created_id... OK
+  Applying inventory.0021_product_manufacturer_product_tracks_lots_and_more... OK
+  Applying inventory.0022_medicalrecordproduct_lot... OK
+  Applying inventory.0023_product_default_cost_behavior... OK
+  Applying inventory.0024_product_extra_data... OK
+  Applying inventory.0025_presentation_conversion_factor_positive... OK
+  Applying inventory.0026_medical_record_product_factor_snapshot... OK
+  Applying medical_records.0019_medicalrecord_consultation_draft... OK
+  Applying medical_records.0020_consultationassessment... OK
+  Applying medical_records.0021_vaccinerecord_lot_vaccinerecord_lot_expiry_and_more... OK
+  Applying medical_records.0022_surgeryrecord... OK
+  Applying medical_records.0023_emergencyrecord... OK
+  Applying medical_records.0024_medicalrecord_originated_from... OK
+  Applying cash.0002_cashmovement... OK
+  Applying billing.0025_invoiceitem_lot... OK
+  Applying billing.0026_checkout_checkoutestimate_checkoutevent_checkoutitem_and_more... OK
+  Applying billing.0027_alter_checkoutprescriptionselection_eligible_remaining_at_open... OK
+  Applying billing.0028_checkout_dispute... OK
+  Applying billing.0029_external_attestation_corrections... OK
+  Applying billing.0030_collection_case_public_id... OK
+  Applying billing.0031_rename_invoice_void_anchor... OK
+  Applying billing.0032_reconcile_checkout_schema... OK
+  Applying billing.0033_repair_checkout_billing_schema... OK
+  Applying billing.0034_contract_legacy_invoice_anchors... OK
+  Applying billing.0035_unit_snapshots_and_multilot_returns... OK
+  Applying core.0001_rbac_models... OK
+  Applying imports.0001_initial... OK
+  Applying imports.0002_alter_importjob_entity_type... OK
+  Applying legal.0001_initial... OK
+  Applying notifications.0001_initial... OK
+  Applying patients.0019_pet_registration_effect... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+  Applying users.0002_simplify_roles... OK
+  Applying users.0003_seed_test_data... OK
+  Applying users.0004_seed_more_test_data... OK
+  Applying users.0005_user_users_user_organiz_5da7d7_idx... OK
+  Applying users.0006_alter_user_organization... OK
+  Applying users.0007_day6_add_public_id... OK
+  Applying users.0008_user_password_must_change_and_more... OK
+  Applying users.0009_dedup_user_email... OK
+  Applying users.0010_user_email_ci_unique... OK
+  Applying users.0011_user_is_service_account_alter_user_role... OK
+System check identified no issues (0 silenced).
+test_contact_display_name_matches_partial_case_insensitive (apps.agent.tests.test_inbox_search.InboxSearchTests.test_contact_display_name_matches_partial_case_insensitive) ... C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:49Z", "request_id": "4dd544a4-6e2a-4749-8ba3-a6b9153560ad", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:49Z", "request_id": "30469625-109c-469a-bcf3-f50b70e7f592", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_cursor_scope_includes_trimmed_query_and_all_other_filters (apps.agent.tests.test_inbox_search.InboxSearchTests.test_cursor_scope_includes_trimmed_query_and_all_other_filters) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:49Z", "request_id": "66499746-bdd6-4943-9aac-1e52d5f7a1be", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:49Z", "request_id": "bd68552f-6267-48a5-ac0b-e1cd99f64e19", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:49Z", "request_id": "60d38fb3-81da-461d-a6e0-0a41ee21e728", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:49Z", "request_id": "220d1693-f482-4ee9-8fd8-72294e482fdf", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:49Z", "request_id": "9951268e-d318-4106-b82f-9fe23179c5dd", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:49Z", "request_id": "0543e4b6-cd55-40e7-8678-71a05eb1a6c5", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_delta_reconciles_contact_rename_out_of_search (apps.agent.tests.test_inbox_search.InboxSearchTests.test_delta_reconciles_contact_rename_out_of_search) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:49Z", "request_id": "7b9277e9-ce88-4162-acf7-aa946649183c", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "e45b9835-e58e-45f1-87ad-9d3e965190d0", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_empty_and_short_queries_are_ignored_and_share_cursor_scope (apps.agent.tests.test_inbox_search.InboxSearchTests.test_empty_and_short_queries_are_ignored_and_share_cursor_scope) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "c3e86eb0-9a37-4a38-9134-c285d598fb88", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "2ccab926-74f6-4c65-bed5-1dbe05fd6e49", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "5e997e92-1ddc-417a-bfc7-a84437a58cde", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "b30cc820-f6c1-41e2-99c5-93732826c728", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "b3301090-8848-4994-9738-aab71099e457", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "52aa22f7-76d8-4489-8b5b-ed0199208c63", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "de15b749-b17c-4844-9a76-dbed9b6934a2", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "0b5ede47-a31f-4c1c-abbc-86a59d12ab8a", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "09da1572-71c2-42b7-82dc-dd6583bd9efb", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_external_id_is_searchable_even_without_normalized_phone (apps.agent.tests.test_inbox_search.InboxSearchTests.test_external_id_is_searchable_even_without_normalized_phone) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "81af1edf-18a2-441d-9205-d1ba96542427", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "ea081154-337e-4d67-a615-8ab851949d00", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_linked_owner_name_matches_but_owner_phone_is_not_a_lookup (apps.agent.tests.test_inbox_search.InboxSearchTests.test_linked_owner_name_matches_but_owner_phone_is_not_a_lookup) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "dad660c0-86a0-45c5-8552-e10819e85d01", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "c340148e-047f-412c-8be8-39df902e58aa", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_no_results_returns_empty_200_and_global_unread_total (apps.agent.tests.test_inbox_search.InboxSearchTests.test_no_results_returns_empty_200_and_global_unread_total) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "48d39a66-7472-4cbe-a71f-e61d70eba49b", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "470a0408-f83b-4df9-994e-915a0f300588", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_phone_fragment_and_formatted_digits_match (apps.agent.tests.test_inbox_search.InboxSearchTests.test_phone_fragment_and_formatted_digits_match) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:50Z", "request_id": "55fd8618-efab-4052-808f-0d245a27bba8", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:51Z", "request_id": "c6e3cc2f-e3be-4acc-938d-7a6b5db77f2c", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:51Z", "request_id": "7d2dd023-264e-4163-be84-19ea4a0cccff", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:51Z", "request_id": "d4ad3a03-15bb-4b3c-abf5-b45e468c7aee", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_query_plan_keeps_search_in_one_bounded_list_select (apps.agent.tests.test_inbox_search.InboxSearchTests.test_query_plan_keeps_search_in_one_bounded_list_select) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "f2988a02-d53f-473e-a53b-224b25efa4ff", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_same_names_owner_and_phone_in_another_tenant_do_not_leak (apps.agent.tests.test_inbox_search.InboxSearchTests.test_same_names_owner_and_phone_in_another_tenant_do_not_leak) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "1d92809f-e088-489a-babd-5d01e1f7488a", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "9392444c-d10c-4d12-ab4b-98bd2223ab68", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "da1621ee-0d66-47d9-af11-a281c41aefd8", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "2809a12a-5264-4e68-b39a-e1184e4d4d58", "user_id": 2, "organization_id": 2, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_search_applies_before_offset_and_groups_accounts (apps.agent.tests.test_inbox_search.InboxSearchTests.test_search_applies_before_offset_and_groups_accounts) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "cd597acb-28ad-4ee2-a7c3-09ce56fece0d", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "5317a5b6-c00f-4de3-be8d-ddd8dbc9c841", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "b6cfe9a0-d5db-4808-91ce-2eb5205043f2", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_search_combines_with_segments_and_archived (apps.agent.tests.test_inbox_search.InboxSearchTests.test_search_combines_with_segments_and_archived) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "b8b3c725-7140-4206-b80f-0a2179deaedd", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "308da78b-1b30-4b1e-827f-190c9b40eda8", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "a7fe3f8b-9fe1-40b4-bc84-f5e50fbc6cae", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_search_does_not_bypass_authentication_or_view_permission (apps.agent.tests.test_inbox_search.InboxSearchTests.test_search_does_not_bypass_authentication_or_view_permission) ... {"event": "RBAC_DENIED", "level": "WARNING", "ts": "2026-10-21T20:47:52Z", "request_id": "b60f7495-f47e-4525-8916-4a6893319174", "user_id": 3, "organization_id": 1, "role": "AGENT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_search_is_not_message_content_search (apps.agent.tests.test_inbox_search.InboxSearchTests.test_search_is_not_message_content_search) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "8d35e884-b0da-4579-889a-15c48f66c5b7", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_sql_and_like_metacharacters_are_literal_values (apps.agent.tests.test_inbox_search.InboxSearchTests.test_sql_and_like_metacharacters_are_literal_values) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "5985b3d3-e567-42b1-816b-407e7afa7f6a", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "4f313f93-9c64-4f9d-92b7-e6dac26d204e", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:52Z", "request_id": "ebd1a734-e768-427c-82b1-bd08125e8624", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:53Z", "request_id": "cbe8ab76-02e2-4f5b-84b8-18815789b922", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:53Z", "request_id": "f4226d6b-7e67-4755-9943-1da7b5bb8180", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_text_queries_do_not_add_an_empty_phone_match (apps.agent.tests.test_inbox_search.InboxSearchTests.test_text_queries_do_not_add_an_empty_phone_match) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:53Z", "request_id": "88082e26-9ee4-4e31-a4dd-51c6448e37b3", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:53Z", "request_id": "e25212bd-9025-4b0a-9a6a-a45797b9fefb", "user_id": 1, "organization_id": 1, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_archived_includes_closed_but_stale_claim_and_handoff_are_not_actionable (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_archived_includes_closed_but_stale_claim_and_handoff_are_not_actionable) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:55Z", "request_id": "98d15645-11b5-4602-b0b8-cc400d183d14", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:55Z", "request_id": "0cc3e3ee-1ad8-4c42-a21e-e1717258cdc3", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_combination_with_no_match_returns_empty_200 (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_combination_with_no_match_returns_empty_200) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:55Z", "request_id": "82c21734-29c3-4093-af76-6c85514f08aa", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_cursor_cannot_be_replayed_in_another_segment (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_cursor_cannot_be_replayed_in_another_segment) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:55Z", "request_id": "abf4fd8c-fae9-41b5-b74c-338f5615ccc3", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:55Z", "request_id": "42356668-6b5b-4eb4-9a46-bb92bc450a22", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:55Z", "request_id": "2dd797e1-b9ff-4f5c-8d18-24e1caa722a8", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:55Z", "request_id": "8c32a3f4-9ebf-4a64-bd52-4d0a0d3ccc2c", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:55Z", "request_id": "bcd53d60-f4e1-479c-b34b-4cb0802c001b", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:55Z", "request_id": "23d9c77b-fd41-4c32-b124-758d514db674", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_delta_removes_answered_thread_from_unanswered_segment (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_delta_removes_answered_thread_from_unanswered_segment) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:55Z", "request_id": "706eddbc-84c8-457f-8b73-6760fc9b85fb", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:56Z", "request_id": "11bd3593-b466-4bec-a1c0-ae6c9df0992f", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:56Z", "request_id": "dc0ca16a-ea88-40c9-8e2a-6b92d9ef8716", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_effective_equivalent_filters_share_cursor_scope (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_effective_equivalent_filters_share_cursor_scope) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:56Z", "request_id": "911855fb-bdd5-40f6-b081-da0170c46090", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:56Z", "request_id": "6b53d7d3-c125-4a36-9b21-25c61bb3619b", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_filters_apply_before_pagination_without_per_row_queries (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_filters_apply_before_pagination_without_per_row_queries) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:56Z", "request_id": "0cbdc19d-5441-4bed-a923-6a2bd9648fc1", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:56Z", "request_id": "e29b1273-71d3-4393-8bf3-4b4195b5efdb", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:56Z", "request_id": "0eaaa641-67b8-4619-9670-3f788a6ea45b", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_filters_do_not_bypass_authentication_or_view_permission (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_filters_do_not_bypass_authentication_or_view_permission) ... {"event": "RBAC_DENIED", "level": "WARNING", "ts": "2026-10-21T20:47:57Z", "request_id": "1511230f-f65f-499a-93f1-cc9a1901f020", "user_id": 7, "organization_id": 3, "role": "AGENT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_foreign_user_id_and_foreign_org_are_not_visible (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_foreign_user_id_and_foreign_org_are_not_visible) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "f1e6f3a7-7342-4992-835f-0e678c87ff26", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "0f3da30f-bbdd-440c-9f76-2cc24ad77da0", "user_id": 6, "organization_id": 4, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_invalid_filter_values_return_canonical_400 (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_invalid_filter_values_return_canonical_400) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "d23ef9dd-56b3-4e38-9d13-dfd66a77df3c", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "17f703dc-c5ef-407d-b92b-76a932436074", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "964a0bbe-7a28-4b2a-a3a3-8d4f9d672372", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "4ae8042e-f3d8-431e-9827-cd1614fc51dc", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "324b5501-d66c-491d-8016-eb6165e6142b", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "48445849-e514-41ac-be2b-cb1c0c59041a", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_mine_and_public_user_id_use_current_claim (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_mine_and_public_user_id_use_current_claim) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "0f1ee9e3-9553-4aa3-8735-65d1a7efd95d", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "efd007ac-f58b-4fd0-9106-e43ed1188d5e", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_segments_combine_with_and (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_segments_combine_with_and) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "660bca07-aba2-46bf-b3cb-ccbe475f5ea7", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:57Z", "request_id": "85e0b60f-1060-48ac-b7d2-8eef221a087f", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:58Z", "request_id": "9c3831a8-d0be-42a2-a263-b66de0a5ff49", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_unanswered_only_matches_inbound_and_keeps_global_unread_total (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_unanswered_only_matches_inbound_and_keeps_global_unread_total) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:58Z", "request_id": "a733dc90-d6b4-42a1-8cf4-6c683db258f1", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:58Z", "request_id": "9a8065c5-a193-431c-897f-85a88853a235", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:58Z", "request_id": "baf50296-5652-44ef-af34-06359532b19a", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_urgent_uses_unresolved_handoff_on_current_head (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_urgent_uses_unresolved_handoff_on_current_head) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:58Z", "request_id": "cf13bca3-697d-41f8-99d9-fd81e2b861da", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_waiting_client_matches_outbound_and_excludes_empty_threads (apps.agent.tests.test_inbox_filters.InboxFilterTests.test_waiting_client_matches_outbound_and_excludes_empty_threads) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:58Z", "request_id": "e4c1f55c-8a1d-40ae-9685-addffaebe64e", "user_id": 4, "organization_id": 3, "role": "ASSISTANT", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_250_threads_are_reachable_in_stable_urgent_first_pages (apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_250_threads_are_reachable_in_stable_urgent_first_pages) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:59Z", "request_id": "4341e36a-1196-44f1-bca7-1fa5b3ee2413", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:47:59Z", "request_id": "23637fa8-f529-4907-a782-e08e2ba5b7ac", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:00Z", "request_id": "f50ad56e-3237-46c4-9030-d4ccdc24e5f4", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:00Z", "request_id": "ddc1cc8c-5f91-475b-909d-33ecd4cd9757", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_archived_flag_is_kept_on_later_pages (apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_archived_flag_is_kept_on_later_pages) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:00Z", "request_id": "916b256c-4e5e-4569-a7f2-bfecb52496c4", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:01Z", "request_id": "e05e0210-5cc0-4caa-9403-6b84e452642d", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_exact_page_boundary_has_no_phantom_next_page (apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_exact_page_boundary_has_no_phantom_next_page) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:01Z", "request_id": "97914fd1-6d07-4923-93a9-5daf40c6159b", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:01Z", "request_id": "c0d4593f-4140-42b9-ab92-2d4fef3e226f", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_invalid_offsets_return_400 (apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_invalid_offsets_return_400) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:02Z", "request_id": "d4ce88ae-2d5f-4357-9185-91ccd80f4183", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:02Z", "request_id": "074b9ef4-d44e-4bf7-ab55-b24a8e924811", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:02Z", "request_id": "3c04aef8-727a-4697-96ae-79de836d7620", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:02Z", "request_id": "7886f260-5825-485b-b800-abda0fdcaa01", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:02Z", "request_id": "2fb386df-b817-4da8-b87a-3fe427cf5895", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:02Z", "request_id": "a8126c54-b274-432e-8264-a05d9d1dfe7d", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_offset_does_not_bypass_authentication_or_tenant_scope (apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_offset_does_not_bypass_authentication_or_tenant_scope) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:02Z", "request_id": "326cc2fd-ef2a-444c-84b4-804dcd2708b9", "user_id": 9, "organization_id": 6, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:02Z", "request_id": "696fbcec-1054-495f-8eac-078fb8e698b8", "user_id": 9, "organization_id": 6, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_offset_past_the_end_returns_an_empty_final_page (apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_offset_past_the_end_returns_an_empty_final_page) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:02Z", "request_id": "1da9c7d4-fd66-4663-a6f7-c66fa6d176cb", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:02Z", "request_id": "035e727c-e756-4975-a99c-78e1691ab0fb", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_same_contact_on_another_account_is_a_distinct_thread (apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_same_contact_on_another_account_is_a_distinct_thread) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:03Z", "request_id": "3584ebbf-92d2-4fe1-84a3-3d81302d4c06", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:03Z", "request_id": "ae920b04-dcf1-4f06-b48b-afb663191898", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:03Z", "request_id": "a2aec3bb-720a-436b-bde7-7351a13a9d9e", "user_id": 8, "organization_id": 5, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_characterization_payload_matches_frozen_baseline (apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_characterization_payload_matches_frozen_baseline) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:05Z", "request_id": "45841132-4853-468f-862f-38a908c19d3f", "user_id": 10, "organization_id": 7, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:05Z", "request_id": "412c91d8-e5bc-4efc-b0b3-9130cc5506fc", "user_id": 10, "organization_id": 7, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_closed_history_is_counted_without_materializing_each_episode (apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_closed_history_is_counted_without_materializing_each_episode) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:05Z", "request_id": "3e0330c8-8f3d-4c4a-bf5a-577833526ec4", "user_id": 10, "organization_id": 7, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_first_page_is_applied_after_urgent_ordering (apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_first_page_is_applied_after_urgent_ordering) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:06Z", "request_id": "b510717a-f9da-4a0d-9550-ae64cc45d819", "user_id": 10, "organization_id": 7, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+test_query_count_is_constant_with_thirty_more_threads (apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_query_count_is_constant_with_thirty_more_threads) ... {"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:06Z", "request_id": "4b6ec731-b54f-4c2f-a727-d6a8b6f9b4fa", "user_id": 10, "organization_id": 7, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:06Z", "request_id": "b6e3018e-8228-4dbf-a985-cebd0b8f435e", "user_id": 10, "organization_id": 7, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:09Z", "request_id": "de10be3a-e195-497a-a888-87029a7e7bf7", "user_id": 10, "organization_id": 7, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-21T20:48:09Z", "request_id": "7ea205d3-8201-4aea-b4d3-6faded44fd30", "user_id": 10, "organization_id": 7, "role": "ADMIN", "endpoint": "/api/inbox/threads/", "method": "GET", "required_permission": "agentinbox.view"}
+ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 21.129s
+
+OK
+Destroying test database for alias 'default' ('test_inbox_srch01_fb7b3a679c0c')...

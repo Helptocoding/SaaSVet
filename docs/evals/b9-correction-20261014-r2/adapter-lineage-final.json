@@ -1,0 +1,117 @@
+{
+  "state": "RECORDED_BEFORE_FORMAL_EXECUTION",
+  "helpers": {
+    "awake_guard.py": {
+      "sha256": "64780ecc569c8839cd67dbfcb7ee2ce030589371a8c6691ad239e5e5ca2fde78",
+      "prior_sha256": "64780ecc569c8839cd67dbfcb7ee2ce030589371a8c6691ad239e5e5ca2fde78",
+      "diff": ""
+    },
+    "awake_status.py": {
+      "sha256": "0ec83beb8432b3939e35fa7acd4bde2dc42bf9d1c9d18b855b08b1ab7a463967",
+      "prior_sha256": "0ec83beb8432b3939e35fa7acd4bde2dc42bf9d1c9d18b855b08b1ab7a463967",
+      "diff": ""
+    },
+    "bootstrap.py": {
+      "sha256": "43262e9e9a3ea16b0a6056d2a56012a811a3ddfbea76e606d1b6c2a87a27cb12",
+      "prior_sha256": null
+    },
+    "capture_wsl.py": {
+      "sha256": "cabc18db5ab98ceb847a0e095cef2485c4cffb3eacb13824bf4d90c17b4deda7",
+      "prior_sha256": "76c0a59c838e400e0f0fba8c0796a9059f29a1e82fd2e1403022c1228ed573cc",
+      "diff": "--- b9-correction-20261013/capture_wsl.py\n+++ b9-correction-20261014-r2/capture_wsl.py\n@@ -7,11 +7,14 @@\n \n HERE = Path(__file__).resolve().parent\n LINUX = '/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/' + HERE.name\n-WORK = '/home/lap/b9i-correction-20261013'\n+WORK = '/home/lap/b9i-correction-20261014-r2'\n \n def main():\n     step = sys.argv[1]\n     args = {\n+        'setup': ['/usr/bin/python3','-B',LINUX+'/prepare_campaign.py','setup'],\n+        'frontend': [WORK+'/tools/rtk','proxy',WORK+'/venv/bin/python','-B',LINUX+'/prepare_campaign.py','frontend'],\n+        'frontend-continue': [WORK+'/tools/rtk','proxy',WORK+'/venv/bin/python','-B',LINUX+'/prepare_campaign.py','frontend'],\n         'preseal-prepare': [WORK + '/tools/rtk', 'proxy', WORK + '/venv/bin/python', '-B', LINUX + '/preseal_prepare.py'],\n         'assemble': ['/usr/bin/python3', '-B', LINUX + '/prepare_wsl.py', 'assemble'],\n         'interpreters': [WORK + '/tools/rtk', 'proxy', WORK + '/venv/bin/python', '-B', LINUX + '/interpreter_preflight.py'],\n"
+    },
+    "cleanup_linux.py": {
+      "sha256": "2a959f68c817b83cc7c8158dbc0c79bf2c4a3236ce9caf070db06557c3f05dc2",
+      "prior_sha256": "c3f6597632d59f53cf2165a201aea2541aa0d2f0a2e549b9745298417b12783d",
+      "diff": "--- b9-correction-20261013/cleanup_linux.py\n+++ b9-correction-20261014-r2/cleanup_linux.py\n@@ -9,7 +9,7 @@\n     assert (EVIDENCE / 'STOP.json').exists() or (EVIDENCE / 'technical-completion.json').exists()\n     integrity('final-before-cleanup')\n     resolved = WORK.resolve()\n-    assert resolved == Path('/home/lap/b9i-correction-20261013')\n+    assert resolved == Path('/home/lap/b9i-correction-20261014-r2')\n     assert json.loads((EVIDENCE / 'assembly.json').read_text())['workspace'] == str(resolved)\n     import psycopg\n     from psycopg import sql\n"
+    },
+    "clock_setup.py": {
+      "sha256": "316241089b3a65ff367433ac144b8c612d8caeec2fb9d81c9698772e39498db7",
+      "prior_sha256": "3b61a492760feb04926ef8f2bd29f6d63572073974cb03b2d24b019549be1a29",
+      "diff": "--- b9-correction-20261013/clock_setup.py\n+++ b9-correction-20261014-r2/clock_setup.py\n@@ -11,7 +11,7 @@\n HERE=Path(__file__).resolve().parent\n PREVIOUS=Path('C:/Users/LAP/AppData/Local/Temp/b9-clock-isolation-gp1mngqo')\n BASELINE=Path('C:/Users/LAP/AppData/Local/Temp/b9-clock-diagnostic-ry8snt_d')\n-WORK='/home/lap/b9i-correction-20261013'\n+WORK='/home/lap/b9i-correction-20261014-r2'\n \n def digest(p):\n     return hashlib.sha256(p.read_bytes()).hexdigest()\n"
+    },
+    "deliver_wsl.py": {
+      "sha256": "388d0669a9a10cfb11f4fd02e451a89bb9323e4deda1474f04debf8379be346f",
+      "prior_sha256": "f7c5a65bd83ed0c6ea84e1050e70280cc2483cc09ea57bae67beff07598f01b3",
+      "diff": "--- b9-correction-20261013/deliver_wsl.py\n+++ b9-correction-20261014-r2/deliver_wsl.py\n@@ -66,10 +66,11 @@\n     save('index-before-delivery.json', baseline)\n     assert HERE.name not in (REPO / '.gitattributes').read_text(encoding='utf-8')\n     assert HERE.name not in (REPO / '.gitignore').read_text(encoding='utf-8')\n-    attributes = (f'\\n# B9E WSL corrected-20261013: preserve original evidence bytes.\\n'\n+    attributes = (f'\\n# B9E WSL corrected-20261014-r2: preserve original evidence bytes.\\n'\n         f'docs/evals/{HERE.name}/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol\\n'\n         f'docs/evals/{HERE.name}/evidence-packages/* -diff\\n'\n-        f'docs/evals/{HERE.name}/receipt-adapter.diff whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol\\n')\n+        f'docs/evals/{HERE.name}/receipt-adapter.diff whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol\\n'\n+        f'docs/evals/{HERE.name}/correction.diff whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol\\n')\n     ignore = (f'\\n# Original logs are included in the independently verified evidence package.\\n'\n         f'docs/evals/{HERE.name}/**/*.log\\n'\n         f'docs/evals/{HERE.name}/**/__pycache__/\\n')\n@@ -98,9 +99,9 @@\n         target = package / ('campaign.zip.part' + str(n).zfill(3))\n         target.write_bytes(content)\n         parts.append({'path': target.relative_to(HERE).as_posix(), 'sha256': digest(content), 'bytes': len(content)})\n-    save('preservation-manifest.json', {'schema': 'b9i-wsl-corrected-20261013-preservation-v1', 'files': files,\n+    save('preservation-manifest.json', {'schema': 'b9i-wsl-corrected-20261014-r2-preservation-v1', 'files': files,\n         'parts': parts, 'archive_sha256': digest(data)})\n-    with tempfile.TemporaryDirectory(prefix='b9i-corrected-20261013-recovery-') as temporary:\n+    with tempfile.TemporaryDirectory(prefix='b9i-corrected-20261014-r2-recovery-') as temporary:\n         proof = restore(HERE, Path(temporary) / 'restored')\n         cli = json.loads(run(sys.executable, '-B', HERE / 'restore_wsl.py', '--destination', Path(temporary) / 'cli-restored'))\n         assert cli['state'] == 'PASS'\n"
+    },
+    "discover_candidate.py": {
+      "sha256": "637a9dca79db5d92ecd2d98cb347eb2393c519114840ffca08afa49a972de5bd",
+      "prior_sha256": "47e5cf72dc90892f1ca01479135c02d6e691035dd4cff928d6e29c9fc4baed52",
+      "diff": "--- b9-correction-20261013/discover_candidate.py\n+++ b9-correction-20261014-r2/discover_candidate.py\n@@ -14,7 +14,7 @@\n os.chdir(TREE / 'backend')\n sys.path.insert(0, str(TREE / 'backend'))\n os.environ.update(DJANGO_SETTINGS_MODULE='config.settings', SECRET_KEY='b9i-disposable-test-only',\n-    ENVIRONMENT='dev', DEBUG='False', DATABASE_URL='postgresql://b9e@127.0.0.1:35481/test_b9i_control',\n+    ENVIRONMENT='dev', DEBUG='False', DATABASE_URL='postgresql://b9e@127.0.0.1:35482/test_b9i_control',\n     DISABLE_SENTRY='True', SENTRY_DSN='', REDIS_URL='', DISCORD_WEBHOOK_URL='',\n     HEALTHCHECK_AGENT_WORKER_URL='', HEALTHCHECK_AGENT_SENDER_URL='',\n     AGENT_LLM_API_KEY='', AGENT_LLM_BASE_URL='', WHATSAPP_ACCESS_TOKEN='',\n"
+    },
+    "host_observer.py": {
+      "sha256": "0552f16181a28f06b9ceba3858468f88ce6b89e76167bf9d9d26cf1c4987ba56",
+      "prior_sha256": "0552f16181a28f06b9ceba3858468f88ce6b89e76167bf9d9d26cf1c4987ba56",
+      "diff": ""
+    },
+    "host_resources.py": {
+      "sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "prior_sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "diff": ""
+    },
+    "interpreter_preflight.py": {
+      "sha256": "24961cfbb864f8c56179f8cbc01a2c1621f6b2024596da1c307b5ab1599566c0",
+      "prior_sha256": "ff4c59e8a7be66149c33a57fe40f4f22be7e608c56f77098b06b671f4219da6c",
+      "diff": "--- b9-correction-20261013/interpreter_preflight.py\n+++ b9-correction-20261014-r2/interpreter_preflight.py\n@@ -38,7 +38,7 @@\n         rows[label]=json.loads(result.stdout)\n         row=rows[label]\n         assert row['state']=='DEPENDENCY_PREFLIGHT_READY'\n-        assert row['database']['HOST']=='127.0.0.1' and row['database']['PORT']=='35481'\n+        assert row['database']['HOST']=='127.0.0.1' and row['database']['PORT']=='35482'\n         assert row['database']['NAME']=='test_b9i_control'\n         for key in ('django_file','psycopg_file'):\n             assert Path(row[key]).resolve().is_relative_to(WORK.resolve())\n"
+    },
+    "launch_campaign.py": {
+      "sha256": "2b70976f7ea726bb24b2ea60eb5b8642e2d3efad0006c25058ac4b9be01bf053",
+      "prior_sha256": "c0700dc3b0587007400e4ad13a2922e6b9a4c0f63d06dc0d77f28bba63dc0ce4",
+      "diff": "--- b9-correction-20261013/launch_campaign.py\n+++ b9-correction-20261014-r2/launch_campaign.py\n@@ -15,7 +15,7 @@\n         assert get_runner(settings,'recorded_suite.'+name) is getattr(recorded_suite,name)\n     assert settings.SECRET_KEY=='b9i-wsl-disposable-test-only'\n     assert settings.DATABASES['default']['HOST']=='127.0.0.1'\n-    assert str(settings.DATABASES['default']['PORT'])=='35481'\n+    assert str(settings.DATABASES['default']['PORT'])=='35482'\n     result={'state':'PASS','django_setup':'PASS','runner_resolution':names,\n         'application_tests_executed':False,'formal_campaign_restarted':False,\n         'original_controller_preserved':True,'durable_stop_preserved':(EVIDENCE/'STOP.json').exists()}\n"
+    },
+    "prepare_campaign.py": {
+      "sha256": "da7f11087a2d6624bd47eb42acba397a18add89d6a211c1aac68b6ed6582f473",
+      "prior_sha256": null
+    },
+    "prepare_wsl.py": {
+      "sha256": "45d73d5766c918d363ee16c6337253d6feedc7c9484a87961fdd42d43c7b4543",
+      "prior_sha256": "5800063d918ffe6cd95ec6ea7f100db3a847d0c41de504edce9d9d1243ab9c04",
+      "diff": "--- b9-correction-20261013/prepare_wsl.py\n+++ b9-correction-20261014-r2/prepare_wsl.py\n@@ -19,7 +19,7 @@\n REPO = EVIDENCE.parents[2]\n OLD = REPO / 'docs/evals/b9-integral-acceptance-1947726'\n SHA = '196aceb4f5f234c086b96d8e8af93787613f3c25'\n-WORK = Path('/home/lap/b9i-correction-20261013')\n+WORK = Path('/home/lap/b9i-correction-20261014-r2')\n TREE = WORK / 'src'\n RTK = WORK / 'tools/rtk'\n PYTHON = WORK / 'venv/bin/python'\n@@ -27,7 +27,7 @@\n NODE = WORK / 'node-v20.20.2-linux-x64/bin/node'\n PNPM = WORK / 'pnpm/package/bin/pnpm.cjs'\n DATA = WORK / 'pgdata'\n-PORT = 35481\n+PORT = 35482\n GIB = 1024**3\n \n def save(name, value):\n"
+    },
+    "preseal.py": {
+      "sha256": "ad920f261c3ddf6edbb0e9e8ef142e0246bcd70102121c7d7aae6ee006e1a8e1",
+      "prior_sha256": "93adddfcdca6ab52d3d7fae76d838aa2aee8abc5aaa8e236ba5d5ab5516fb745",
+      "diff": "--- b9-correction-20261013/preseal.py\n+++ b9-correction-20261014-r2/preseal.py\n@@ -6,7 +6,7 @@\n import sys\n \n HERE = Path(__file__).resolve().parent\n-PRIOR = HERE.with_name('b9-integral-acceptance-1947726-wsl-20261012-r9')\n+PRIOR = HERE.with_name('b9-correction-20261013')\n \n def main():\n     target = HERE / ('adapter-lineage-final.json' if sys.argv[1:]==['--final'] else 'adapter-lineage.json')\n"
+    },
+    "preseal_prepare.py": {
+      "sha256": "0a1cc90fd32f0689052da885c6faed3212ac6589df3f43966d7bd122a799619b",
+      "prior_sha256": "a62f6f151081f1a214e6a079c12c832b3e8eb4fb3f44781e32cb6ab886e0f995",
+      "diff": "--- b9-correction-20261013/preseal_prepare.py\n+++ b9-correction-20261014-r2/preseal_prepare.py\n@@ -6,7 +6,7 @@\n from prepare_wsl import EVIDENCE,WORK,save,sha256,resources,integrity\n \n def main():\n-    assert WORK.resolve()==Path('/home/lap/b9i-correction-20261013')\n+    assert WORK.resolve()==Path('/home/lap/b9i-correction-20261014-r2')\n     assert not (EVIDENCE/'evaluation-seal.json').exists()\n     assert not (EVIDENCE/'preseal-preparation-cleanup.json').exists()\n     rows=[]\n@@ -20,7 +20,7 @@\n     integrity('after-bootstrap-cleanup')\n     save('preseal-preparation-cleanup.json',{'state':'PASS','retired':rows,'resources':resources(),\n         'candidate_or_installed_dependencies_removed':False,'foreign_processes_terminated':False,'application_tests_executed':False})\n-    prior=EVIDENCE.with_name('b9-integral-acceptance-1947726-wsl-20261011-r8')\n+    prior=EVIDENCE.with_name('b9-correction-20261013')\n     helpers={}\n     for file in sorted(EVIDENCE.glob('*.py')):\n         source=file.read_text(encoding='utf-8');compile(source,str(file),'exec')\n"
+    },
+    "recorded_suite.py": {
+      "sha256": "7a4400d0c3b0c2f85dafe9c227d2f5331c1f04a45b31391a20a1f9f625026328",
+      "prior_sha256": "7a4400d0c3b0c2f85dafe9c227d2f5331c1f04a45b31391a20a1f9f625026328",
+      "diff": ""
+    },
+    "restore_wsl.py": {
+      "sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "prior_sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "diff": ""
+    },
+    "run_campaign.py": {
+      "sha256": "044ff426e456e761510c4b44fee48fbae56608c9dd0ee66f543eee68535b092f",
+      "prior_sha256": "efe205de9b5deff74e4f5805d44c4da26097ff6ac844533aedc335e0dfa524f3",
+      "diff": "--- b9-correction-20261013/run_campaign.py\n+++ b9-correction-20261014-r2/run_campaign.py\n@@ -85,24 +85,20 @@\n         'candidate_runner_sources_unchanged':True,'critical_guards_preserved_by_super':True,\n         'change':'Django receives an import path; record subtest failures without changing assertions',\n         'application_tests_executed':False})\n-    paths=[*EVIDENCE.glob('*.py'),EVIDENCE/'scope-manifest.json',EVIDENCE/'PLAN.md',\n-        EVIDENCE/'candidate-sources.json',EVIDENCE/'assembly.json',EVIDENCE/'authorization.json',\n-        EVIDENCE/'assembly-adaptations.json',EVIDENCE/'candidate.json',EVIDENCE/'correction.diff',\n-        EVIDENCE/'resource-policy.json',EVIDENCE/'resource-observer-control.json',\n-        EVIDENCE/'adapter-lineage.json',EVIDENCE/'clock-control.json',\n-        EVIDENCE/'adapter-lineage-final.json',EVIDENCE/'preseal-resource-observer.json',\n-        EVIDENCE/'awake-request/control.json',EVIDENCE/'preseal-awake-validation.json',\n-        EVIDENCE/'preseal-sleep-event-messages.json',\n-        EVIDENCE/'preparation-resumption.json',EVIDENCE/'preparation-history/REPORT-before-resumption.md',\n-        EVIDENCE/'preseal-preparation-cleanup.json',EVIDENCE/'preseal-environment-amendments.json',\n-        EVIDENCE/'dependency-files.json',EVIDENCE/'interpreter-preflight.json',EVIDENCE/'base-python-environment.json',\n+    paths=[*EVIDENCE.glob('*.py'),*[EVIDENCE/n for n in [\n+        'scope-manifest.json','PLAN.md','candidate-sources.json','assembly.json','authorization.json',\n+        'candidate.json','correction.diff','resource-policy.json','resource-observer-control.json',\n+        'adapter-lineage.json','adapter-lineage-final.json','clock-control.json',\n+        'awake-request/control.json','preseal-awake-validation.json','prior-focused-verification.json',\n+        'preseal-preparation-cleanup.json','preseal-environment-amendments.json',\n+        'dependency-files.json','interpreter-preflight.json','base-python-environment.json',\n+        'toolchain.json','python-environment.json','profile-compatibility.json','campaign-adaptation.json',\n+        'effective-configuration.json','preparation-incident-frontend.json','code-selection.json']],\n         *[p for p in (EVIDENCE/'clock-diagnostics').rglob('*') if p.is_file()],\n         Path(json.loads((EVIDENCE/'clock-control.json').read_text())['guard_source_linux']),\n         Path(json.loads((EVIDENCE/'clock-control.json').read_text())['guard_rtk_linux']),\n-        EVIDENCE/'effective-configuration.json',EVIDENCE/'toolchain.json',EVIDENCE/'python-environment.json',\n-        EVIDENCE/'profile-compatibility.json',*EVIDENCE.glob('*-selected.json'),\n-        PYTHON,Path(sys._base_executable),NODE,PNPM,WORK/'gitleaks/gitleaks',\n-        *PG.glob('*'),DATA/'postgresql.conf',DATA/'pg_hba.conf']\n+        *EVIDENCE.glob('*-selected.json'),PYTHON,Path(sys._base_executable),NODE,PNPM,\n+        WORK/'gitleaks/gitleaks',*PG.glob('*'),DATA/'postgresql.conf',DATA/'pg_hba.conf']\n     paths=[p for p in paths if p.is_file()]\n     save('evaluation-seal.json',{'candidate_sha':SHA,'files':{str(p):sha256(p.read_bytes()) for p in paths},\n         'candidate_manifest_sha256':sha256((EVIDENCE/'candidate-sources.json').read_bytes())})\n@@ -111,7 +107,7 @@\n     save('preflight.json',{'state':'PASS' if observation['ready'] else 'PENDING',\n         'candidate_sha':SHA,'exact_git_files':3332,'directed_ids':87,'full_ids':discovery['counts']['full'],\n         'resource_budget':{'suite_estimate_not_reserved':3*GIB,'admission_floor':2*GIB,'memory_reserve':2*GIB,'prior_5_gib_admission_waived_by_user':True,'backing_disk_reserve':GIB},\n-        'resources':observation,'no_formal_application_tests_yet':True,'focused_verification_recorded':True,\n+        'resources':observation,'no_formal_application_tests_yet':True,'prior_focused_verification_reference':'prior-focused-verification.json',\n         'formal_runs_per_block_max':1,'profile_runs_per_scenario_max':1,\n         'host_clock_configuration_unchanged':True,'runtime_and_lock_changes':False,'resource_policy':'USER_AMENDED_ADMISSION_HEADROOM'})\n     if not observation['ready']:\n"
+    },
+    "scan_security.py": {
+      "sha256": "7adc8f9aff0d46b468a63e500de42f1392d2554746b069f70a63f2e33b3fa8ee",
+      "prior_sha256": "7adc8f9aff0d46b468a63e500de42f1392d2554746b069f70a63f2e33b3fa8ee",
+      "diff": ""
+    },
+    "stage_wsl.py": {
+      "sha256": "ba66213035833899db323154d1e92b0ac38fd2049d7e3d236aa74c2db1afa8f2",
+      "prior_sha256": "7ce24235a2d8374eddc79d24191aa4b6d00ca0645abc87b502f59fc52bb013ec",
+      "diff": "--- b9-correction-20261013/stage_wsl.py\n+++ b9-correction-20261014-r2/stage_wsl.py\n@@ -78,9 +78,17 @@\n     save('security-history.json',{'head':run('git','rev-parse','HEAD',cwd=WORK/'history').decode().strip(),\n         'refs':run('git','show-ref',cwd=WORK/'history').decode(),'full_history':True,\n         'source':'local independent clone, no uncommitted evidence injected into scanner'})\n+    changes=json.loads((EVIDENCE/'candidate.json').read_text())['changed_paths']\n+    for name in changes:\n+        target=WORK/'security-patch'/name;target.parent.mkdir(parents=True,exist_ok=True)\n+        shutil.copy2(TREE/name,target)\n+    save('security-history.json',{'head':'194772677ca4e9fe1a1dec7f4dafa48396a6c583','full_history':True,\n+        'candidate_tree':SHA,'additional_current_tree_paths':changes,'patch_scan_source':str(WORK/'security-patch')})\n     command('audit-venv',[PYTHON,'-m','venv',WORK/'audit-venv'])\n     command('audit-tool-install',[WORK/'audit-venv/bin/python','-m','pip','install','--no-cache-dir','pip-audit'])\n     save('audit-toolchain.json',json.loads(run(WORK/'audit-venv/bin/python','-m','pip','list','--format=json')))\n+    command('interpreters',[PYTHON,'-B',EVIDENCE/'interpreter_preflight.py'],cwd=TREE/'backend')\n+    save('base-python-environment.json',json.loads((EVIDENCE/'interpreter-preflight.json').read_text())['interpreters']['legacy_base'])\n     integrity('ready')\n     save('host-resource-preflight-observation.json',host_resources())\n     save('environment-ready.json',{'candidate_sha':SHA,'state':'READY_FOR_SEAL',\n"
+    }
+  },
+  "candidate_sources_changed": "Two authorized test-file corrections; immutable Git tree in candidate.json",
+  "workload_timing_or_thresholds_changed": false,
+  "test_corrections": "F2 fixture isolation and validated catalog price assertion",
+  "directed_original_runner_configuration": {
+    "entrypoint": "apps.agent.tests.run_b9a_acceptance -> run_b8e_acceptance",
+    "local_postgresql_guard": "preserved",
+    "password_hasher": "Original runner prepends MD5PasswordHasher only within isolated directed test process",
+    "critical_regression_runners": "super methods preserve original guards"
+  }
+}

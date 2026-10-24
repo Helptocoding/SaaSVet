@@ -1,0 +1,31 @@
+--- native-r10/run_campaign.py
++++ native/run_campaign.py
+@@ -61,6 +61,9 @@
+         ('interpreter-preflight.json','PASS'),('native-preflight.json','PASS'),
+         ('launcher-validation.json','PASS'),('backend-reference-validation.json','PASS'),
+         ('frontend-resumption-validation.json','PASS'),
++        ('diagnostics/selector-discovery-check.json','PASS'),
++        ('selector-repair-decision.json','HARNESS_ONLY_REPAIR_APPROVED'),
++        ('selector-runtime-integrity.json','PASS'),
+         ('diagnostics/preserved-contract-checks.json','PASS'),
+         ('diagnostics/composite-validator-checks.json','PASS_VALIDATOR_CHECKS')]:
+         assert json.loads((EVIDENCE/name).read_text(encoding='utf-8'))['state']==state, name
+@@ -76,13 +79,17 @@
+     adapter_diff=''.join(difflib.unified_diff(
+         (EVIDENCE.with_name('b9-correction-20261020-native-r9')/'recorded_suite.py').read_text(encoding='utf-8').splitlines(True),
+         (EVIDENCE/'recorded_suite.py').read_text(encoding='utf-8').splitlines(True),
+-        fromfile='native-r9/recorded_suite.py',tofile='native-r10/recorded_suite.py'))
++        fromfile='native-r9/recorded_suite.py',tofile='native-r11/recorded_suite.py'))
+     (EVIDENCE/'receipt-adapter.diff').write_text(adapter_diff,encoding='utf-8',newline='\n')
+     save('adapter-validation.json',{'syntax':'PASS','django_runner_resolution':'PASS',
+         'backend_application_tests_executed':False,'backend_results_origin':'REFERENCED_COMPLETED_R9',
+         'change':'Only one exactly filtered frontend case; eight original execution/partition functions preserved',
+         'all_original_guards_preserved':True})
+     required_names=[
++        'selector-repair-decision.json','selector-runtime-integrity.json','selector-history-manifest.json',
++        'diagnostics/verify_selector.py','diagnostics/verify_selector.cjs',
++        'diagnostics/selector-discovery-check.json','diagnostics/selection-discovery.json',
++        'diagnostics/selector-static-discovery.json','diagnostics/planned-selector.json',
+         'frontend-resumption-authorization.json','frontend-equivalence.json','frontend-proposal-analysis.json',
+         'frontend-correction.diff','completed-reference-manifest.json','backend-reference-validation.json',
+         'frontend-resumption-manifest.json','frontend-resumption-validation.json',

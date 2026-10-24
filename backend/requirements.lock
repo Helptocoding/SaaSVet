@@ -4,12 +4,18 @@
 #
 #    pip-compile --output-file=requirements.lock requirements.txt
 #
+# 2026-10-22: add the verified boto3 dependency closure without refreshing
+# unrelated existing pins. Receipt: docs/evals/inbox-phase3-2026-10-22/dependencies.json
 asgiref==3.11.1
     # via
     #   django
     #   django-cors-headers
 bleach==6.3.0
     # via -r requirements.txt
+boto3==1.43.95
+    # via -r requirements.txt
+botocore==1.43.95
+    # via boto3, s3transfer
 certifi==2026.5.20
     # via
     #   requests
@@ -48,6 +54,8 @@ gunicorn==26.0.0
     # via -r requirements.txt
 idna==3.13
     # via requests
+jmespath==1.1.0
+    # via boto3, botocore
 openpyxl==3.1.5
     # via -r requirements.txt
 packaging==26.2
@@ -66,6 +74,8 @@ pypdf==6.12.1
     # via -r requirements.txt
 python-decouple==3.8
     # via -r requirements.txt
+python-dateutil==2.9.0.post0
+    # via botocore
 redis==8.0.0
     # via django-redis
 reportlab==4.5.1
@@ -74,6 +84,10 @@ requests==2.33.1
     # via -r requirements.txt
 sentry-sdk==2.60.0
     # via -r requirements.txt
+s3transfer==0.19.2
+    # via boto3
+six==1.17.0
+    # via python-dateutil
 sqlparse==0.5.5
     # via django
 tblib==3.2.2

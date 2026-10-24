@@ -1,0 +1,29 @@
+{
+  "free_physical_kib": 4026068,
+  "events": [
+    {
+      "provider": "Microsoft-Windows-Kernel-Power",
+      "utc": "2026-10-14T00:08:27.3802030Z",
+      "message": "Se reinició el sistema sin apagarlo limpiamente primero. Este error puede producirse si el sistema dejó de responder, se bloqueó o se interrumpió el suministro eléctrico de forma inesperada.",
+      "id": 41,
+      "xml": "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='Microsoft-Windows-Kernel-Power' Guid='{331c3b3a-2005-44c2-ac5e-77220c37d6b4}'/><EventID>41</EventID><Version>10</Version><Level>1</Level><Task>63</Task><Opcode>0</Opcode><Keywords>0x8000400000000002</Keywords><TimeCreated SystemTime='2026-10-14T00:08:27.3802030Z'/><EventRecordID>319248</EventRecordID><Correlation/><Execution ProcessID='4' ThreadID='8'/><Channel>System</Channel><Computer>DESKTOP-83BUM0M</Computer><Security UserID='S-1-5-18'/></System><EventData><Data Name='BugcheckCode'>0</Data><Data Name='BugcheckParameter1'>0x0</Data><Data Name='BugcheckParameter2'>0x0</Data><Data Name='BugcheckParameter3'>0x0</Data><Data Name='BugcheckParameter4'>0x0</Data><Data Name='SleepInProgress'>5</Data><Data Name='PowerButtonTimestamp'>134363498211835749</Data><Data Name='BootAppStatus'>3221225595</Data><Data Name='Checkpoint'>16</Data><Data Name='ConnectedStandbyInProgress'>false</Data><Data Name='SystemSleepTransitionsToOn'>1</Data><Data Name='CsEntryScenarioInstanceId'>1</Data><Data Name='BugcheckInfoFromEFI'>false</Data><Data Name='CheckpointStatus'>0</Data><Data Name='CsEntryScenarioInstanceIdV2'>1</Data><Data Name='LongPowerButtonPressDetected'>false</Data><Data Name='LidReliability'>false</Data><Data Name='InputSuppressionState'>0</Data><Data Name='PowerButtonSuppressionState'>0</Data><Data Name='LidState'>1</Data><Data Name='WHEABootErrorCount'>0</Data></EventData></Event>"
+    },
+    {
+      "provider": "EventLog",
+      "utc": "2026-10-14T00:09:39.7749740Z",
+      "message": "Se inició el servicio de Registro de eventos.",
+      "id": 6005,
+      "xml": "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='EventLog'/><EventID Qualifiers='32768'>6005</EventID><Version>0</Version><Level>4</Level><Task>0</Task><Opcode>0</Opcode><Keywords>0x80000000000000</Keywords><TimeCreated SystemTime='2026-10-14T00:09:39.7749740Z'/><EventRecordID>319226</EventRecordID><Correlation/><Execution ProcessID='3000' ThreadID='3036'/><Channel>System</Channel><Computer>DESKTOP-83BUM0M</Computer><Security/></System><EventData><Binary>EA070A0003000E0000000900270006030000000000000000</Binary></EventData></Event>"
+    },
+    {
+      "provider": "EventLog",
+      "utc": "2026-10-14T00:09:39.7723552Z",
+      "message": "El cierre anterior del sistema a las 01:12:43 a. m. del ‎13/‎10/‎2026 resultó inesperado.",
+      "id": 6008,
+      "xml": "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='EventLog'/><EventID Qualifiers='32768'>6008</EventID><Version>0</Version><Level>2</Level><Task>0</Task><Opcode>0</Opcode><Keywords>0x80000000000000</Keywords><TimeCreated SystemTime='2026-10-14T00:09:39.7723552Z'/><EventRecordID>319215</EventRecordID><Correlation/><Execution ProcessID='3000' ThreadID='3036'/><Channel>System</Channel><Computer>DESKTOP-83BUM0M</Computer><Security/></System><EventData><Data>01:12:43 a. m.</Data><Data>‎13/‎10/‎2026</Data><Data></Data><Data></Data><Data>11735</Data><Data></Data><Data></Data><Binary>EA070A0002000D0001000C002B000803EA070A0002000D0007000C002B000803DC0500003C00000001000000DC05000001000000580200000000000000000000</Binary></EventData></Event>"
+    }
+  ],
+  "observed_utc": "2026-10-14T01:50:48.0250560Z",
+  "last_boot_utc": "2026-10-14T00:08:22.5000000Z",
+  "prior_monitor_pids_now": []
+}

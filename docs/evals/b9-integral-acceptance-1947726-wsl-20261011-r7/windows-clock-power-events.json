@@ -1,0 +1,56 @@
+{
+  "state": "RECORDED",
+  "created_after_stop": true,
+  "read_only": true,
+  "query_utc_start": "2026-10-12T04:50:30Z",
+  "query_utc_end": "2026-10-12T05:00:30Z",
+  "exit_code": 0,
+  "stderr": "",
+  "events": [
+    {
+      "id": 1,
+      "provider": "Microsoft-Windows-Kernel-General",
+      "utc": "2026-10-12T04:58:29.5005220Z",
+      "data": {
+        "ProcessID": "4",
+        "TimeZoneBias": "360",
+        "CmosTime": "2026-10-11T22:58:29.5000000Z",
+        "SystemInCmosMode": "false",
+        "TimeDeltaInMs": "389093",
+        "OldTime": "2026-10-12T04:52:00.4066681Z",
+        "RealTimeIsUniversal": "false",
+        "ProcessName": "",
+        "Reason": "2",
+        "NewTime": "2026-10-12T04:58:29.5000000Z"
+      }
+    },
+    {
+      "id": 107,
+      "provider": "Microsoft-Windows-Kernel-Power",
+      "utc": "2026-10-12T04:52:00.4068982Z",
+      "data": {
+        "WakeRequesterTypeDc": "4",
+        "TargetState": "4",
+        "EffectiveState": "4",
+        "WakeRequesterTypeAc": "2",
+        "ProgrammedWakeTimeDc": "2026-10-12T07:51:58.2734894Z",
+        "WakeFromState": "4",
+        "ProgrammedWakeTimeAc": "2026-10-12T06:59:30.8535908Z"
+      }
+    },
+    {
+      "id": 42,
+      "provider": "Microsoft-Windows-Kernel-Power",
+      "utc": "2026-10-12T04:51:58.2474581Z",
+      "data": {
+        "TargetState": "4",
+        "Flags": "0",
+        "TransitionsToOn": "5",
+        "EffectiveState": "4",
+        "Reason": "7"
+      }
+    }
+  ],
+  "application_tests_executed": false,
+  "configuration_changed": false
+}

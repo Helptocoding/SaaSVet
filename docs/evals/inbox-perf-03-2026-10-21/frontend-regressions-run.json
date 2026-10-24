@@ -1,0 +1,20 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "src/pages/inbox/index.window.test.jsx",
+    "src/pages/inbox/index.retry.test.jsx",
+    "src/pages/inbox/index.unread.test.jsx",
+    "src/pages/inbox/index.context.test.jsx",
+    "src/pages/inbox/useThreadRead.test.jsx",
+    "--fileParallelism=false",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-perf-03-2026-10-21\\vitest-regressions.json"
+  ],
+  "exit_code": 1
+}

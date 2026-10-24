@@ -1,0 +1,76 @@
+--- native-r1/prepare_native.py
++++ native/prepare_native.py
+@@ -16,6 +16,7 @@
+ from native_support import EVIDENCE, REPO, OLD, WORK, TREE, PYTHON, PG, NODE, PNPM, DATA, PORT, SHA, RTK, GIB, save, sha256, resources, environment, run, command, integrity
+ 
+ PRIOR = EVIDENCE.with_name('b9-correction-20261014-r4')
++NATIVE_PRIOR = EVIDENCE.with_name('b9-correction-20261015-native-r1')
+ BASE = Path('C:/Users/LAP/AppData/Local/Programs/Python/Python313')
+ LOCKED = Path('C:/Users/LAP/AppData/Local/Temp/vet-b8b-locked')
+ 
+@@ -50,8 +51,8 @@
+                  'resource-policy.json', 'prior-focused-verification.json'):
+         (EVIDENCE / name).write_bytes((PRIOR / name).read_bytes())
+     with (EVIDENCE / 'PLAN.md').open('a', encoding='utf-8', newline='\n') as stream:
+-        stream.write('\n\n## Adaptación nativa Windows autorizada, 2026-10-15\n\n'
+-            'El usuario autorizó «ok hazlo» para preparar y ejecutar sin WSL. Se conserva '
++        stream.write('\n\n## Adaptación nativa Windows autorizada, 2026-10-16\n\n'
++            'El usuario indicó «continua» para reanudar la alternativa autorizada para preparar y ejecutar sin WSL. Se conserva '
+             'el árbol corregido y el contrato fijo completo. Python3.13.2 y sus dependencias '
+             'bloqueadas se copian a un runtime privado verificado, PostgreSQL16.15 usa '
+             'binarios existentes de solo lectura y un cluster privado nuevo, Node20.20.2 '
+@@ -61,17 +62,17 @@
+             'guards, locks, cargas, tiempos, umbrales, reservas2GiB RAM/1GiBdisco y reloj1s. '
+             'No se invoca WSL ni se modifica W32Time, instalaciones compartidas o políticas '
+             'globales. Una ejecución formal por bloque, sin reintentos adaptativos.\n')
+-    save('authorization.json', {'user': 'ok hazlo', 'date_local': '2026-10-15',
++    save('authorization.json', {'user': 'continua', 'date_local': '2026-10-16',
+         'scope': 'One fixed native Windows B9 campaign after native preflight',
+-        'candidate_tree': SHA, 'prior_campaign': PRIOR.name,
+-        'prior_decision': 'PENDING_MEMORY_RESERVE', 'maximum_formal_runs_per_block': 1,
++        'candidate_tree': SHA, 'prior_campaign': NATIVE_PRIOR.name,
++        'prior_decision': 'PENDING_DISK_RESERVE', 'maximum_formal_runs_per_block': 1,
+         'maximum_formal_runs_per_profile_variant': 1, 'further_test_or_product_changes': False,
+         'commits_push_deploy_activation_authorized': False})
+     contract = json.loads((PRIOR / 'full-partition-contract.json').read_text())
+     save('full-partition-contract.json', contract)
+     for name in ('recorded_suite.py', 'full_partition.py', 'awake_guard.py', 'awake_status.py',
+                  'host_resources.py', 'host_observer.py'):
+-        source = (PRIOR / name).read_text(encoding='utf-8')
++        source = (NATIVE_PRIOR / name).read_text(encoding='utf-8')
+         if name == 'full_partition.py':
+             source = source.replace("path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8')",
+                                     "path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8', newline='\\n')")
+@@ -90,23 +91,6 @@
+     save('prior-evidence-before.json', prior)
+     assemble_native()
+ 
+-
+-def continue_setup():
+-    original = json.loads((EVIDENCE / 'invocation-setup.json').read_text())
+-    incident = json.loads((EVIDENCE / 'preparation-incident-setup.json').read_text())
+-    assert original['state'] == 'COMPLETED' and original['exit_code'] == 1
+-    assert incident['tests_executed'] is False
+-    assert WORK.exists() and not TREE.exists() and not (EVIDENCE / 'assembly.json').exists()
+-    assert not (EVIDENCE / 'evaluation-seal.json').exists()
+-    assert run('git', 'rev-parse', 'HEAD').decode().strip() == '194772677ca4e9fe1a1dec7f4dafa48396a6c583'
+-    save('preparation-amendment.json', {
+-        'state': 'BEFORE_APPLICATION_TESTS_AND_SEAL',
+-        'original_incident': 'preparation-incident-setup.json',
+-        'cause': 'Private CLAUDE_CONFIG_DIR caused RTK to prepend its missing-hook reminder to raw Git stdout',
+-        'resolution': 'Read the existing global RTK hook configuration; keep tracking/cache private',
+-        'hooks_installed_or_changed': False, 'head_or_candidate_changed': False,
+-        'application_tests_executed': False, 'formal_campaign_restarted': False})
+-    assemble_native()
+ 
+ 
+ def assemble_native():
+@@ -286,7 +270,7 @@
+ 
+ if __name__ == '__main__':
+     try:
+-        {'setup': setup, 'setup-continue': continue_setup, 'frontend': frontend, 'stage': stage}[sys.argv[1]]()
++        {'setup': setup, 'frontend': frontend, 'stage': stage}[sys.argv[1]]()
+     except Exception as exc:
+         name = 'preparation-incident-' + sys.argv[1] + '.json'
+         assert not (EVIDENCE / name).exists()

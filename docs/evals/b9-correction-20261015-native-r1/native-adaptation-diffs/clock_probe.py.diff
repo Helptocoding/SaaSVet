@@ -1,0 +1,25 @@
+--- r4/clock_probe.py
++++ native/clock_probe.py
+@@ -0,0 +1,22 @@
++"""Observe native Windows clock continuity; never change clock configuration."""
++import time
++from native_support import save
++
++started, wall = time.monotonic(), time.time()
++rows = []
++while True:
++    now = time.monotonic()
++    skew = (time.time() - wall) - (now - started)
++    rows.append({'elapsed_seconds': now - started, 'wall_minus_monotonic_seconds': skew})
++    if now - started >= 120:
++        break
++    time.sleep(.5)
++maximum = max(abs(row['wall_minus_monotonic_seconds']) for row in rows)
++save('clock-observation.json', rows)
++save('clock-preflight.json', {'state': 'PASS' if maximum <= 1 else 'PENDING',
++     'elapsed_seconds': rows[-1]['elapsed_seconds'], 'samples': len(rows),
++     'max_absolute_wall_minus_monotonic_seconds': maximum,
++     'host_clock_configuration_changed': False, 'W32Time_changed': False, 'wsl_invoked': False,
++     'observation_only': True, 'continuous_execution_guard_seconds': 1})
++assert maximum <= 1
++print('NATIVE_CLOCK_OBSERVATION_PASS', flush=True)

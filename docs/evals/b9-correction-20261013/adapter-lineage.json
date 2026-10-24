@@ -1,0 +1,136 @@
+{
+  "state": "RECORDED_BEFORE_FORMAL_EXECUTION",
+  "helpers": {
+    "awake_guard.py": {
+      "sha256": "64780ecc569c8839cd67dbfcb7ee2ce030589371a8c6691ad239e5e5ca2fde78",
+      "prior_sha256": "64780ecc569c8839cd67dbfcb7ee2ce030589371a8c6691ad239e5e5ca2fde78",
+      "diff": ""
+    },
+    "awake_status.py": {
+      "sha256": "0ec83beb8432b3939e35fa7acd4bde2dc42bf9d1c9d18b855b08b1ab7a463967",
+      "prior_sha256": "0ec83beb8432b3939e35fa7acd4bde2dc42bf9d1c9d18b855b08b1ab7a463967",
+      "diff": ""
+    },
+    "capture_diagnostic.py": {
+      "sha256": "93516c44353d90cccbb8996b1ffb4a524670619f3d40a2d344059f03c42596f2",
+      "prior_sha256": null
+    },
+    "capture_wsl.py": {
+      "sha256": "76c0a59c838e400e0f0fba8c0796a9059f29a1e82fd2e1403022c1228ed573cc",
+      "prior_sha256": "26778615bd7bef6eb45dfcd2811f848af1fe028dc614daaac99d0c94cff03abe",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/capture_wsl.py\n+++ b9-correction-20261013/capture_wsl.py\n@@ -7,7 +7,7 @@\n \n HERE = Path(__file__).resolve().parent\n LINUX = '/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/' + HERE.name\n-WORK = '/home/lap/b9i-wsl-1947726-20261012-r9'\n+WORK = '/home/lap/b9i-correction-20261013'\n \n def main():\n     step = sys.argv[1]\n@@ -19,6 +19,8 @@\n         'postgres-packages': ['/usr/bin/python3', '-B', LINUX + '/prepare_wsl.py', 'postgres-packages'],\n         'stage': [WORK + '/tools/rtk', 'proxy', WORK + '/venv/bin/python', '-B', LINUX + '/stage_wsl.py'],\n         'validate': [WORK + '/tools/rtk', 'proxy', WORK + '/venv/bin/python', '-B', LINUX + '/launch_campaign.py', '--validate-only'],\n+        'complete-preparation': [WORK + '/tools/rtk', 'proxy', WORK + '/venv/bin/python', '-B', LINUX + '/complete_preparation.py'],\n+        'continue-preparation': [WORK + '/tools/rtk', 'proxy', WORK + '/venv/bin/python', '-B', LINUX + '/complete_preparation.py'],\n         'formal': [WORK + '/tools/rtk', 'proxy', WORK + '/venv/bin/python', '-B', LINUX + '/launch_campaign.py'],\n         'cleanup': [WORK + '/tools/rtk', 'proxy', WORK + '/venv/bin/python', '-B', LINUX + '/cleanup_linux.py'],\n     }[step]\n"
+    },
+    "cleanup_diagnostic.py": {
+      "sha256": "749cdb2fbd08763bd53213ad8eb3e6aa17f09c36f9cfe4f40d6749c5f065bf73",
+      "prior_sha256": null
+    },
+    "cleanup_linux.py": {
+      "sha256": "c3f6597632d59f53cf2165a201aea2541aa0d2f0a2e549b9745298417b12783d",
+      "prior_sha256": "5fc44054b917a5764d37bcf8082bafd9c9202af485216bcf7c417d4930929718",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/cleanup_linux.py\n+++ b9-correction-20261013/cleanup_linux.py\n@@ -9,7 +9,7 @@\n     assert (EVIDENCE / 'STOP.json').exists() or (EVIDENCE / 'technical-completion.json').exists()\n     integrity('final-before-cleanup')\n     resolved = WORK.resolve()\n-    assert resolved == Path('/home/lap/b9i-wsl-1947726-20261012-r9')\n+    assert resolved == Path('/home/lap/b9i-correction-20261013')\n     assert json.loads((EVIDENCE / 'assembly.json').read_text())['workspace'] == str(resolved)\n     import psycopg\n     from psycopg import sql\n"
+    },
+    "clock_setup.py": {
+      "sha256": "3b61a492760feb04926ef8f2bd29f6d63572073974cb03b2d24b019549be1a29",
+      "prior_sha256": "13319d6f652e4da01575bc946d9be7a57833e507eade404b8e2f91444ba723fb",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/clock_setup.py\n+++ b9-correction-20261013/clock_setup.py\n@@ -11,7 +11,7 @@\n HERE=Path(__file__).resolve().parent\n PREVIOUS=Path('C:/Users/LAP/AppData/Local/Temp/b9-clock-isolation-gp1mngqo')\n BASELINE=Path('C:/Users/LAP/AppData/Local/Temp/b9-clock-diagnostic-ry8snt_d')\n-WORK='/home/lap/b9i-wsl-1947726-20261012-r9'\n+WORK='/home/lap/b9i-correction-20261013'\n \n def digest(p):\n     return hashlib.sha256(p.read_bytes()).hexdigest()\n"
+    },
+    "complete_preparation.py": {
+      "sha256": "3f2731b0030e12d8b57803afd117298a6a2f0c66b1e63908327a0849ee8e7c6b",
+      "prior_sha256": null
+    },
+    "deliver_wsl.py": {
+      "sha256": "f7c5a65bd83ed0c6ea84e1050e70280cc2483cc09ea57bae67beff07598f01b3",
+      "prior_sha256": "50b709a0ad7fc7fc74d84b1ec93208f8fc075b2314365e577345d68658ea4a24",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/deliver_wsl.py\n+++ b9-correction-20261013/deliver_wsl.py\n@@ -66,7 +66,7 @@\n     save('index-before-delivery.json', baseline)\n     assert HERE.name not in (REPO / '.gitattributes').read_text(encoding='utf-8')\n     assert HERE.name not in (REPO / '.gitignore').read_text(encoding='utf-8')\n-    attributes = (f'\\n# B9E WSL r9: preserve original evidence bytes.\\n'\n+    attributes = (f'\\n# B9E WSL corrected-20261013: preserve original evidence bytes.\\n'\n         f'docs/evals/{HERE.name}/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol\\n'\n         f'docs/evals/{HERE.name}/evidence-packages/* -diff\\n'\n         f'docs/evals/{HERE.name}/receipt-adapter.diff whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol\\n')\n@@ -98,9 +98,9 @@\n         target = package / ('campaign.zip.part' + str(n).zfill(3))\n         target.write_bytes(content)\n         parts.append({'path': target.relative_to(HERE).as_posix(), 'sha256': digest(content), 'bytes': len(content)})\n-    save('preservation-manifest.json', {'schema': 'b9i-wsl-r9-preservation-v1', 'files': files,\n+    save('preservation-manifest.json', {'schema': 'b9i-wsl-corrected-20261013-preservation-v1', 'files': files,\n         'parts': parts, 'archive_sha256': digest(data)})\n-    with tempfile.TemporaryDirectory(prefix='b9i-r9-recovery-') as temporary:\n+    with tempfile.TemporaryDirectory(prefix='b9i-corrected-20261013-recovery-') as temporary:\n         proof = restore(HERE, Path(temporary) / 'restored')\n         cli = json.loads(run(sys.executable, '-B', HERE / 'restore_wsl.py', '--destination', Path(temporary) / 'cli-restored'))\n         assert cli['state'] == 'PASS'\n"
+    },
+    "diagnostic_suite.py": {
+      "sha256": "6b58aef67243943622c5004de2c86101cef28785281561c6b9c46c097d38da5f",
+      "prior_sha256": null
+    },
+    "discover_candidate.py": {
+      "sha256": "47e5cf72dc90892f1ca01479135c02d6e691035dd4cff928d6e29c9fc4baed52",
+      "prior_sha256": "5e30f6deec93275937bbead3750c2bad3a746e76a39aaddd9f7f71bb68011063",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/discover_candidate.py\n+++ b9-correction-20261013/discover_candidate.py\n@@ -14,7 +14,7 @@\n os.chdir(TREE / 'backend')\n sys.path.insert(0, str(TREE / 'backend'))\n os.environ.update(DJANGO_SETTINGS_MODULE='config.settings', SECRET_KEY='b9i-disposable-test-only',\n-    ENVIRONMENT='dev', DEBUG='False', DATABASE_URL='postgresql://b9e@127.0.0.1:35479/test_b9i_control',\n+    ENVIRONMENT='dev', DEBUG='False', DATABASE_URL='postgresql://b9e@127.0.0.1:35481/test_b9i_control',\n     DISABLE_SENTRY='True', SENTRY_DSN='', REDIS_URL='', DISCORD_WEBHOOK_URL='',\n     HEALTHCHECK_AGENT_WORKER_URL='', HEALTHCHECK_AGENT_SENDER_URL='',\n     AGENT_LLM_API_KEY='', AGENT_LLM_BASE_URL='', WHATSAPP_ACCESS_TOKEN='',\n"
+    },
+    "host_observer.py": {
+      "sha256": "0552f16181a28f06b9ceba3858468f88ce6b89e76167bf9d9d26cf1c4987ba56",
+      "prior_sha256": "0552f16181a28f06b9ceba3858468f88ce6b89e76167bf9d9d26cf1c4987ba56",
+      "diff": ""
+    },
+    "host_resources.py": {
+      "sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "prior_sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "diff": ""
+    },
+    "interpreter_preflight.py": {
+      "sha256": "ff4c59e8a7be66149c33a57fe40f4f22be7e608c56f77098b06b671f4219da6c",
+      "prior_sha256": "08a8ffe75e2927e910d16dbcbb6e5df060d3668b27f3a21896f5c96c72189e2c",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/interpreter_preflight.py\n+++ b9-correction-20261013/interpreter_preflight.py\n@@ -38,7 +38,7 @@\n         rows[label]=json.loads(result.stdout)\n         row=rows[label]\n         assert row['state']=='DEPENDENCY_PREFLIGHT_READY'\n-        assert row['database']['HOST']=='127.0.0.1' and row['database']['PORT']=='35479'\n+        assert row['database']['HOST']=='127.0.0.1' and row['database']['PORT']=='35481'\n         assert row['database']['NAME']=='test_b9i_control'\n         for key in ('django_file','psycopg_file'):\n             assert Path(row[key]).resolve().is_relative_to(WORK.resolve())\n"
+    },
+    "launch_campaign.py": {
+      "sha256": "c0700dc3b0587007400e4ad13a2922e6b9a4c0f63d06dc0d77f28bba63dc0ce4",
+      "prior_sha256": "bf06c62ddf22361edc4faa4a461023ec4c737b24215fe47765b4251db22bc2f6",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/launch_campaign.py\n+++ b9-correction-20261013/launch_campaign.py\n@@ -15,7 +15,7 @@\n         assert get_runner(settings,'recorded_suite.'+name) is getattr(recorded_suite,name)\n     assert settings.SECRET_KEY=='b9i-wsl-disposable-test-only'\n     assert settings.DATABASES['default']['HOST']=='127.0.0.1'\n-    assert str(settings.DATABASES['default']['PORT'])=='35479'\n+    assert str(settings.DATABASES['default']['PORT'])=='35481'\n     result={'state':'PASS','django_setup':'PASS','runner_resolution':names,\n         'application_tests_executed':False,'formal_campaign_restarted':False,\n         'original_controller_preserved':True,'durable_stop_preserved':(EVIDENCE/'STOP.json').exists()}\n"
+    },
+    "prepare_diagnostic.py": {
+      "sha256": "b9271b5b0239cd5026969dce4800d6adc479c2a8950f8e6cd478b3e6e4ce9ae6",
+      "prior_sha256": null
+    },
+    "prepare_wsl.py": {
+      "sha256": "5800063d918ffe6cd95ec6ea7f100db3a847d0c41de504edce9d9d1243ab9c04",
+      "prior_sha256": "df57ceede1fceed777e1e7c74fdc96efc610270115f7f88f77ef7cb4ebe801bf",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/prepare_wsl.py\n+++ b9-correction-20261013/prepare_wsl.py\n@@ -18,8 +18,8 @@\n EVIDENCE = Path(__file__).resolve().parent\n REPO = EVIDENCE.parents[2]\n OLD = REPO / 'docs/evals/b9-integral-acceptance-1947726'\n-SHA = '194772677ca4e9fe1a1dec7f4dafa48396a6c583'\n-WORK = Path('/home/lap/b9i-wsl-1947726-20261012-r9')\n+SHA = '196aceb4f5f234c086b96d8e8af93787613f3c25'\n+WORK = Path('/home/lap/b9i-correction-20261013')\n TREE = WORK / 'src'\n RTK = WORK / 'tools/rtk'\n PYTHON = WORK / 'venv/bin/python'\n@@ -27,7 +27,7 @@\n NODE = WORK / 'node-v20.20.2-linux-x64/bin/node'\n PNPM = WORK / 'pnpm/package/bin/pnpm.cjs'\n DATA = WORK / 'pgdata'\n-PORT = 35479\n+PORT = 35481\n GIB = 1024**3\n \n def save(name, value):\n"
+    },
+    "preseal.py": {
+      "sha256": "93adddfcdca6ab52d3d7fae76d838aa2aee8abc5aaa8e236ba5d5ab5516fb745",
+      "prior_sha256": "4f5a3027fd540a6c2462109d24b20f51ae4e85ad0d205e4a159dd6e00bd8d068",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/preseal.py\n+++ b9-correction-20261013/preseal.py\n@@ -6,7 +6,7 @@\n import sys\n \n HERE = Path(__file__).resolve().parent\n-PRIOR = HERE.with_name('b9-integral-acceptance-1947726-wsl-20261011-r8')\n+PRIOR = HERE.with_name('b9-integral-acceptance-1947726-wsl-20261012-r9')\n \n def main():\n     target = HERE / ('adapter-lineage-final.json' if sys.argv[1:]==['--final'] else 'adapter-lineage.json')\n@@ -24,7 +24,7 @@\n                 old.read_text(encoding='utf-8').splitlines(True), current.decode('utf-8').splitlines(True),\n                 fromfile=PRIOR.name + '/' + file.name, tofile=HERE.name + '/' + file.name))\n     target.write_text(json.dumps({'state': 'RECORDED_BEFORE_FORMAL_EXECUTION', 'helpers': rows,\n-        'candidate_sources_changed': False, 'fixtures_workload_timing_or_thresholds_changed': False,\n+        'candidate_sources_changed': 'Two authorized test-file corrections; immutable Git tree in candidate.json', 'workload_timing_or_thresholds_changed': False, 'test_corrections': 'F2 fixture isolation and validated catalog price assertion',\n         'directed_original_runner_configuration': {\n             'entrypoint': 'apps.agent.tests.run_b9a_acceptance -> run_b8e_acceptance',\n             'local_postgresql_guard': 'preserved',\n"
+    },
+    "preseal_prepare.py": {
+      "sha256": "a62f6f151081f1a214e6a079c12c832b3e8eb4fb3f44781e32cb6ab886e0f995",
+      "prior_sha256": "ac6bea6d6751c0862bd092b673760b24cd37ced4a79c3c1b44a6db391d7c21aa",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/preseal_prepare.py\n+++ b9-correction-20261013/preseal_prepare.py\n@@ -6,7 +6,7 @@\n from prepare_wsl import EVIDENCE,WORK,save,sha256,resources,integrity\n \n def main():\n-    assert WORK.resolve()==Path('/home/lap/b9i-wsl-1947726-20261012-r9')\n+    assert WORK.resolve()==Path('/home/lap/b9i-correction-20261013')\n     assert not (EVIDENCE/'evaluation-seal.json').exists()\n     assert not (EVIDENCE/'preseal-preparation-cleanup.json').exists()\n     rows=[]\n@@ -29,7 +29,7 @@\n             old.read_text(encoding='utf-8').splitlines(True) if old.exists() else [],source.splitlines(True),\n             fromfile=prior.name+'/'+file.name,tofile=EVIDENCE.name+'/'+file.name))}\n     save('preseal-environment-amendments.json',{'state':'FINAL_BEFORE_SEAL','helpers':helpers,\n-        'authorized_admission_policy_amended':True,'product_assertions_or_workloads_changed':False,'application_tests_executed':False})\n+        'authorized_admission_policy_amended':True,'workload_timing_or_thresholds_changed':False,'authorized_test_corrections':'candidate.json','further_changes_after_seal_permitted':False,'application_tests_executed':False})\n     print('PRESEAL_PREPARATION_PASS',flush=True)\n \n if __name__=='__main__':\n"
+    },
+    "recorded_suite.py": {
+      "sha256": "7a4400d0c3b0c2f85dafe9c227d2f5331c1f04a45b31391a20a1f9f625026328",
+      "prior_sha256": "4d6012a72e6253d2aef1fc6fc3cee5520d21dbc9c25603489bffec448db907ca",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/recorded_suite.py\n+++ b9-correction-20261013/recorded_suite.py\n@@ -4,6 +4,7 @@\n from pathlib import Path\n import sys\n import time\n+import traceback\n import unittest\n \n EVIDENCE = Path(__file__).resolve().parent\n@@ -36,18 +37,22 @@\n     def get_resultclass(self):\n         base = super().get_resultclass() or unittest.TextTestResult\n         class RecordedResult(base):\n-            def record(self, test, outcome, reason=None):\n+            def record(self, test, outcome, reason=None, err=None):\n                 with Path(os.environ['B9I_ID_JOURNAL']).open('a', encoding='utf-8') as stream:\n-                    stream.write(json.dumps({'id': test.id(), 'outcome': outcome, 'reason': reason}) + '\\n')\n+                    stream.write(json.dumps({'id': test.id(), 'outcome': outcome, 'reason': reason,\n+                        'utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),\n+                        'traceback': ''.join(traceback.format_exception(*err)) if err else None}) + '\\n')\n+                    stream.flush()\n+                    os.fsync(stream.fileno())\n             def addSuccess(self, test):\n                 super().addSuccess(test)\n                 self.record(test, 'PASS')\n             def addFailure(self, test, err):\n                 super().addFailure(test, err)\n-                self.record(test, 'FAIL')\n+                self.record(test, 'FAIL', err=err)\n             def addError(self, test, err):\n                 super().addError(test, err)\n-                self.record(test, 'ERROR')\n+                self.record(test, 'ERROR', err=err)\n             def addSkip(self, test, reason):\n                 super().addSkip(test, reason)\n                 self.record(test, 'SKIP', reason)\n@@ -60,7 +65,7 @@\n             def addSubTest(self, test, subtest, err):\n                 super().addSubTest(test, subtest, err)\n                 if err is not None:\n-                    self.record(test, 'FAIL' if issubclass(err[0], test.failureException) else 'ERROR', subtest.id())\n+                    self.record(test, 'FAIL' if issubclass(err[0], test.failureException) else 'ERROR', subtest.id(), err)\n         return RecordedResult\n \n     def suite_result(self, suite, result, **kwargs):\n"
+    },
+    "restore_wsl.py": {
+      "sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "prior_sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "diff": ""
+    },
+    "run_campaign.py": {
+      "sha256": "efe205de9b5deff74e4f5805d44c4da26097ff6ac844533aedc335e0dfa524f3",
+      "prior_sha256": "7e453b36c936bc8f4a19d8a40999eeac47e6b2c2904095564d91659c69fcb573",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/run_campaign.py\n+++ b9-correction-20261013/run_campaign.py\n@@ -87,7 +87,8 @@\n         'application_tests_executed':False})\n     paths=[*EVIDENCE.glob('*.py'),EVIDENCE/'scope-manifest.json',EVIDENCE/'PLAN.md',\n         EVIDENCE/'candidate-sources.json',EVIDENCE/'assembly.json',EVIDENCE/'authorization.json',\n-        EVIDENCE/'assembly-adaptations.json',EVIDENCE/'resource-policy.json',EVIDENCE/'resource-observer-control.json',\n+        EVIDENCE/'assembly-adaptations.json',EVIDENCE/'candidate.json',EVIDENCE/'correction.diff',\n+        EVIDENCE/'resource-policy.json',EVIDENCE/'resource-observer-control.json',\n         EVIDENCE/'adapter-lineage.json',EVIDENCE/'clock-control.json',\n         EVIDENCE/'adapter-lineage-final.json',EVIDENCE/'preseal-resource-observer.json',\n         EVIDENCE/'awake-request/control.json',EVIDENCE/'preseal-awake-validation.json',\n@@ -110,7 +111,7 @@\n     save('preflight.json',{'state':'PASS' if observation['ready'] else 'PENDING',\n         'candidate_sha':SHA,'exact_git_files':3332,'directed_ids':87,'full_ids':discovery['counts']['full'],\n         'resource_budget':{'suite_estimate_not_reserved':3*GIB,'admission_floor':2*GIB,'memory_reserve':2*GIB,'prior_5_gib_admission_waived_by_user':True,'backing_disk_reserve':GIB},\n-        'resources':observation,'no_application_tests_yet':True,\n+        'resources':observation,'no_formal_application_tests_yet':True,'focused_verification_recorded':True,\n         'formal_runs_per_block_max':1,'profile_runs_per_scenario_max':1,\n         'host_clock_configuration_unchanged':True,'runtime_and_lock_changes':False,'resource_policy':'USER_AMENDED_ADMISSION_HEADROOM'})\n     if not observation['ready']:\n@@ -244,8 +245,7 @@\n         code=execute(label,args,cwd=TREE/'frontend',advisory=task=='lint')\n         if code and task!='lint':stop('PENDING_CLASSIFICATION',label,'Frontend blocking command nonzero',exit_code=code)\n         gate(label,'ADVISORY_NONZERO' if code else 'PASS',exit_code=code)\n-    code=execute('security',[WORK/'gitleaks/gitleaks','detect','--source',WORK/'history','--config',TREE/'.gitleaks.toml',\n-        '--redact','--no-banner','--verbose','--report-format','json','--report-path',BLOCKS/'gitleaks-report.json','--exit-code','1'],cwd=WORK/'history')\n+    code=execute('security',[PYTHON,'-B',EVIDENCE/'scan_security.py'],cwd=WORK/'history')\n     if code:stop('PENDING_CLASSIFICATION','security','Gitleaks nonzero; distinguish findings from scanner error',exit_code=code)\n     gate('security')\n     for label,args,cwd in [('pip-audit',[WORK/'audit-venv/bin/pip-audit','-r',TREE/'backend/requirements.lock','--format=json','--output',BLOCKS/'pip-audit.json'],TREE),\n"
+    },
+    "run_diagnostic.py": {
+      "sha256": "73da06b5bad6c7d5697a50f6326e459aa546980978a3791663dc51b472f8938d",
+      "prior_sha256": null
+    },
+    "scan_security.py": {
+      "sha256": "7adc8f9aff0d46b468a63e500de42f1392d2554746b069f70a63f2e33b3fa8ee",
+      "prior_sha256": null
+    },
+    "stage_wsl.py": {
+      "sha256": "7ce24235a2d8374eddc79d24191aa4b6d00ca0645abc87b502f59fc52bb013ec",
+      "prior_sha256": "4dd450cb8b1c0ab8dc7d2b0dff2291ca2d36e1daf381a9bd9daf37e9224c7d8f",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261012-r9/stage_wsl.py\n+++ b9-correction-20261013/stage_wsl.py\n@@ -72,7 +72,7 @@\n     extract(download(base+gitleaks,gitleaks,digest),WORK/'gitleaks')\n     command('gitleaks-version',[WORK/'gitleaks/gitleaks','version'])\n     command('history-clone',['git','clone','--no-hardlinks','--no-checkout',REPO,WORK/'history'])\n-    command('history-checkout',['git','checkout','--detach',SHA],cwd=WORK/'history')\n+    command('history-checkout',['git','checkout','--detach','194772677ca4e9fe1a1dec7f4dafa48396a6c583'],cwd=WORK/'history')\n     if run('git','rev-parse','--is-shallow-repository',cwd=WORK/'history').strip()!=b'false':\n         raise RuntimeError('Security history is shallow')\n     save('security-history.json',{'head':run('git','rev-parse','HEAD',cwd=WORK/'history').decode().strip(),\n"
+    },
+    "update_focused.py": {
+      "sha256": "de31a622b89c57b823ed7dd67dd9d4fe45ad7fa6d8694c46a7dd86c2433c94c3",
+      "prior_sha256": null
+    }
+  },
+  "candidate_sources_changed": "Two authorized test-file corrections; immutable Git tree in candidate.json",
+  "workload_timing_or_thresholds_changed": false,
+  "test_corrections": "F2 fixture isolation and validated catalog price assertion",
+  "directed_original_runner_configuration": {
+    "entrypoint": "apps.agent.tests.run_b9a_acceptance -> run_b8e_acceptance",
+    "local_postgresql_guard": "preserved",
+    "password_hasher": "Original runner prepends MD5PasswordHasher only within isolated directed test process",
+    "critical_regression_runners": "super methods preserve original guards"
+  }
+}

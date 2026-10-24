@@ -1,0 +1,687 @@
+[
+  {
+    "path": ".gitignore",
+    "sha256": "5839b7c6dd1bae39bbeaf91e1623fb3945bc1599b814bdd32b2ceea1602f87c1",
+    "bytes": 7425
+  },
+  {
+    "path": "backend/.env.example",
+    "sha256": "6b071f76dc2641daf9eb7d8ea502a2e1fae3d3a6dc7033d74c6f4c940fd3a00f",
+    "bytes": 1734
+  },
+  {
+    "path": "backend/apps/agent/inbox_media.py",
+    "sha256": "4b35af7d7d5fe3d4ede14751c1788ae14fff879c9304d547b869f05aef9c4967",
+    "bytes": 2989
+  },
+  {
+    "path": "backend/apps/agent/inbox_sync.py",
+    "sha256": "0503ccac2bb922d79c6b0a39248f3f7518dd36984b3c346b099376cfb4363ec4",
+    "bytes": 10642
+  },
+  {
+    "path": "backend/apps/agent/management/commands/run_agent_worker.py",
+    "sha256": "34fea26eab2ede01ee94ff2cacee44f1ace56841102f19ab610681f0b837ed2b",
+    "bytes": 4504
+  },
+  {
+    "path": "backend/apps/agent/sender.py",
+    "sha256": "18f425aca02b5f015e39d4746b870b6953eaeb40cc95dfb0f3c3788be8327813",
+    "bytes": 19562
+  },
+  {
+    "path": "backend/apps/agent/serializers.py",
+    "sha256": "02ff7d0222c6f5d85d6349a9b90495034e7f8d64f3d7fc68cfb6071bf1780795",
+    "bytes": 15905
+  },
+  {
+    "path": "backend/apps/agent/services.py",
+    "sha256": "ffc0f5087f283a4b586058e13ffd4c52df4511d0cc0664a89ad065c1caa58475",
+    "bytes": 46552
+  },
+  {
+    "path": "backend/apps/agent/tests/test_inbox_media.py",
+    "sha256": "27e2c968ff36c90ccf83d8cf404f9e6432e15e5296999903e86b9f4cff71ec21",
+    "bytes": 12959
+  },
+  {
+    "path": "backend/apps/agent/tests/test_inbox_replies.py",
+    "sha256": "1fa3813bcd108faa9a7512fd32f709df934136d76215cf70f75a5bc2db0b6ade",
+    "bytes": 18561
+  },
+  {
+    "path": "backend/apps/agent/tests/test_inbox_thread_performance.py",
+    "sha256": "a9d70a16fcde8a498c0f8bdd30ed9f88c29bc7c5aa1cb3f5e361a3d17295b2c4",
+    "bytes": 10321
+  },
+  {
+    "path": "backend/apps/agent/urls.py",
+    "sha256": "400bb20e5ef01c10a3f87a03ef5d25c89a6c86e915560a9d60256ab87fca413a",
+    "bytes": 2873
+  },
+  {
+    "path": "backend/apps/agent/views.py",
+    "sha256": "735ba5bd32efd03cb4aebf764c21f5e7df7576b7146dae963d4da4bf991ff843",
+    "bytes": 59015
+  },
+  {
+    "path": "backend/apps/channels/events.py",
+    "sha256": "5a6f964aca7c75ffe99bc1e0f133bfe220a6813788b9b83d79e064ddb1f7b845",
+    "bytes": 7171
+  },
+  {
+    "path": "backend/apps/channels/management/commands/maintain_inbox_media.py",
+    "sha256": "82193c16037aaf45517041e0ff0da30df4d9bcb06a2a42d2e185e7646b2d2030",
+    "bytes": 1293
+  },
+  {
+    "path": "backend/apps/channels/media_ingest.py",
+    "sha256": "9cb930743f89485d2cfe5bb6dbed365dbce94e6935286bbea6ea6b52cf815353",
+    "bytes": 1129
+  },
+  {
+    "path": "backend/apps/channels/media_policy.py",
+    "sha256": "f3b3a33149a31f9e4e169593ef8fa690d6773b5c021b700e1fe92cbeb60b51fa",
+    "bytes": 2456
+  },
+  {
+    "path": "backend/apps/channels/media_storage.py",
+    "sha256": "bf66d69b40d0b05b1a32e4a0e253fda02933c30dada9280d20236cd0e8b072c0",
+    "bytes": 6765
+  },
+  {
+    "path": "backend/apps/channels/media_transfer.py",
+    "sha256": "790f7593f74b6ddaf21e1f079667f974850c193c27acf3f83dfa709be8dcf9e8",
+    "bytes": 7176
+  },
+  {
+    "path": "backend/apps/channels/media_worker.py",
+    "sha256": "8ad45437af7632bd193812023a90dcaf9c08a472fbbacc21ba16ff11a6606308",
+    "bytes": 10963
+  },
+  {
+    "path": "backend/apps/channels/migrations/0017_message_media.py",
+    "sha256": "a045e068cc236ccde7f1a8dd33d9ba9e8bb1aca242e92b93c7c113021672ac11",
+    "bytes": 5375
+  },
+  {
+    "path": "backend/apps/channels/models.py",
+    "sha256": "3dab685bd001d707c5982645dd17fb9124e1df96a3179b9bfa9c338e9a204e55",
+    "bytes": 21034
+  },
+  {
+    "path": "backend/apps/channels/providers.py",
+    "sha256": "4951ef17cea3a7edc6d9e177917de046dba0ee4ae687553992c9e69648984d6d",
+    "bytes": 5299
+  },
+  {
+    "path": "backend/apps/channels/replies.py",
+    "sha256": "4bb6001a67df9487f7e76e0b73d76a10775f2f67894d719ffdc58815c13f89eb",
+    "bytes": 2580
+  },
+  {
+    "path": "backend/apps/channels/tests/test_media_integration.py",
+    "sha256": "34782a06e48f62e105bc7447150cfb5ae16d11bbc5526c999fdd41a46502c86b",
+    "bytes": 4246
+  },
+  {
+    "path": "backend/apps/channels/tests/test_media_pipeline.py",
+    "sha256": "060e159816546b6b5fe29e658c0cc0407f52fec90c7c3797aeb3f47de3431212",
+    "bytes": 23384
+  },
+  {
+    "path": "backend/apps/channels/tests/test_webhook.py",
+    "sha256": "54c174f5735f2f5ce1f27d8209e8ccdf0e825cf9813097555461db1ba8146a4c",
+    "bytes": 25391
+  },
+  {
+    "path": "backend/apps/channels/views.py",
+    "sha256": "53fa35d4ec014957be3ad10a89d2fad14eb1ca50612d2a9a108a26c97d2d4ed5",
+    "bytes": 7123
+  },
+  {
+    "path": "backend/config/settings.py",
+    "sha256": "90f72505632959e632010516d9a7ab2b22e1e6d699a9b9d5e9f01f862ebae8c4",
+    "bytes": 33642
+  },
+  {
+    "path": "backend/Procfile",
+    "sha256": "3e8b84fd76475d81745f512d96013a418a80c77099debf225681843f5b25adf8",
+    "bytes": 2125
+  },
+  {
+    "path": "backend/requirements.lock",
+    "sha256": "4408a6511b0ced562d9d70bf89e1835dfb0fab7ed17bc32243e97d754847cc6f",
+    "bytes": 2502
+  },
+  {
+    "path": "backend/requirements.txt",
+    "sha256": "969f19165f29da92568e00c186f11f4160a22f6c5ef237b885023767520b1d30",
+    "bytes": 662
+  },
+  {
+    "path": "CHANGELOG.md",
+    "sha256": "ee00bac3670e636f912ae10415012a7147381fdfe1c233834501ea4f677a87ac",
+    "bytes": 13283
+  },
+  {
+    "path": "docs/CIERRE-INBOX-WHATSAPP.md",
+    "sha256": "9305e2eeede0b4969da37e5546cc2a28bfb4eed329474d0097c3cd03d6ed1a0f",
+    "bytes": 33410
+  },
+  {
+    "path": "docs/decisions/2026-08-22-p60-whatsapp-inbox-decisions.md",
+    "sha256": "0ddcd93d877cc9669854ee7fb3b4e493fa5570f259d9c4b62c1e38d733a19cb7",
+    "bytes": 13788
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-affected.json",
+    "sha256": "f7e011615f9ac91df737f1b3932cfabefb89b7f89341ffa7a6d8c7c15c62417a",
+    "bytes": 983
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-affected.log",
+    "sha256": "ce96a3ebc524339267d0adca4ea3ddf1affb90141736a2cd6423ea5e97fc2921",
+    "bytes": 89600
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-b1-caption.json",
+    "sha256": "9734644d40b1fbd8e84777801fd696657b5a0dccd9ef7abcb3aebd5bfc7f4bb8",
+    "bytes": 286
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-b1-caption.log",
+    "sha256": "6e603d25ff5a98be0dc95b862ed5e4a320157f7c229cd0f64fa6b9c339eca4ba",
+    "bytes": 31675
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-b1-raw-contract.json",
+    "sha256": "404946276b56775b5d396600a84e3d6bad5c48d7f4a45297b376c26695ad6fe7",
+    "bytes": 475
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-b1-raw-contract.log",
+    "sha256": "85e3028293da9379d6db1596e854f2f82422561507595846ee4a2b0a6beb366b",
+    "bytes": 17469
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-corrected.json",
+    "sha256": "6d78d73ee39dc5c5169c1b056eb015ff364cf61faf446416e37434df0ff80420",
+    "bytes": 997
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-corrected.log",
+    "sha256": "0a7a15f563296973d4d611dd817b1e196f38e7b2af929429bd9c3ce92b14c4c1",
+    "bytes": 100570
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-final-integration.json",
+    "sha256": "863bd5a9917bd0cb7d8cd8caee9d2829a5e25f7b174cd65606e1e9a762c8b599",
+    "bytes": 410
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-final-integration.log",
+    "sha256": "21046a32429ced163885f95e9de492f0f5c6a471d74e9949fb1984f56f7e848c",
+    "bytes": 17824
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-new-media.json",
+    "sha256": "24ab13fef4c3e21a3d79174d43a35d3318edd40a73d808765b7aa79219c3688a",
+    "bytes": 317
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-new-media.log",
+    "sha256": "c78f822563dfa7854ded4c62d09ee7d6c1df1c9762871fec57ef0a05686e388f",
+    "bytes": 60517
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-proxy-final.json",
+    "sha256": "9c20808cd097817a3003d9256c5d88b5e2e068907e396d4b20248d40ec7c5341",
+    "bytes": 286
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/backend-proxy-final.log",
+    "sha256": "fde4131865e2bc7b9466db791b0f7c83c9fa71bde57a25926fb6b5081b2b9175",
+    "bytes": 25210
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-fixed/browser-run.json",
+    "sha256": "8c2b32abab0d23c1ba19918f461cfb5fb8c9ce9dddbd3b75185687e1fa4e2d70",
+    "bytes": 123
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-fixed/browser.json",
+    "sha256": "6da2592895b2c054df2cb77d73ffbbe68457237be943f651dbe16dfebcac98a8",
+    "bytes": 98
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-fixed/browser.log",
+    "sha256": "1390cc333642a7ed9c22c9a582255080e13922c0bb125f6048809eeecd683038",
+    "bytes": 1567
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-fixed/media-lightbox-desktop.png",
+    "sha256": "07276cdba9fa575be1494ee559109619221509e01c14c5609186e451d0e0a61b",
+    "bytes": 47163
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-fixed/media-states-desktop.png",
+    "sha256": "82a22efaa9cc2bceeda7bf3eeabfdecf4e160fa3950fc6d733032d908a29b7d4",
+    "bytes": 58049
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-fixed/vite.log",
+    "sha256": "d548b0b1f30b48d72330c4f9ccba92d09b047df734f558aaf88095d396b8d8ac",
+    "bytes": 74
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-focus/browser-run.json",
+    "sha256": "c1c8cc464e397f074c2dd969a96028de3b5f7bdd0107f993c0a822fb864c99af",
+    "bytes": 123
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-focus/browser.json",
+    "sha256": "4a811f96b53fe6e5f976b95673104a494ef610f4fd95fa80f762525ef6485f59",
+    "bytes": 662
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-focus/browser.log",
+    "sha256": "6893118bd5c80435bbab30e78749f6ea7f7d3d2ffe82bdf105f598ca988520d4",
+    "bytes": 1428
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-focus/media-lightbox-desktop.png",
+    "sha256": "158d345ebe15a0674ddabcf0a4e5dcb7e371b936d5d019b9a966188f87f4e4f3",
+    "bytes": 47182
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-focus/media-lightbox-mobile.png",
+    "sha256": "05759257f91a98ab181c0d6d59ba46363023fd08d5b93e56c07824bcf4953af4",
+    "bytes": 48727
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-focus/media-states-desktop.png",
+    "sha256": "82a22efaa9cc2bceeda7bf3eeabfdecf4e160fa3950fc6d733032d908a29b7d4",
+    "bytes": 58049
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-focus/media-states-mobile.png",
+    "sha256": "f905908c13a6eb85b461a14b611ca959a9397a4e91e960571b45e80e15ebf68e",
+    "bytes": 44218
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-focus/vite.log",
+    "sha256": "dafcc3fc102fc65aee2f9c2d54e660831152c8f79857c31df4f78498c54b7aef",
+    "bytes": 74
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-retained/browser-run.json",
+    "sha256": "71df2e23897d56a12e030ba8e691d8ff70852084cfb11a657e3369d4c9fefa5f",
+    "bytes": 122
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-retained/browser.json",
+    "sha256": "8adf9695df7458d0fd733b054c039725f9b30d74a362e0595c9495b5c5ab8cb8",
+    "bytes": 1219
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-retained/browser.log",
+    "sha256": "4cc964b75629b1fbd0e4a2cc827637c3104eae2c2c5b975e0d948e25bd8ef6ff",
+    "bytes": 887
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-retained/media-lightbox-desktop.png",
+    "sha256": "fc52f74b3eb51d59320adcbc0a898d099b4c4cdee1ace7478671491ca6e57e5c",
+    "bytes": 47174
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-retained/media-lightbox-mobile.png",
+    "sha256": "bb33d86967003638dd44435de963c8dba96ab572b043c2fe38a9087078c1ddb3",
+    "bytes": 44428
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-retained/media-states-desktop.png",
+    "sha256": "82a22efaa9cc2bceeda7bf3eeabfdecf4e160fa3950fc6d733032d908a29b7d4",
+    "bytes": 58049
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-retained/media-states-mobile.png",
+    "sha256": "f905908c13a6eb85b461a14b611ca959a9397a4e91e960571b45e80e15ebf68e",
+    "bytes": 44218
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-retained/vite.log",
+    "sha256": "78e9fd6f55736652c5c54625385b0be150e25ad68ec6c8e93441f894e4d0ea6a",
+    "bytes": 74
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser-run.json",
+    "sha256": "63a42679403ff7f515e760a61233f2413a860f3862303a1b1dd90fc4dece39c3",
+    "bytes": 124
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser.json",
+    "sha256": "6da2592895b2c054df2cb77d73ffbbe68457237be943f651dbe16dfebcac98a8",
+    "bytes": 98
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/browser.log",
+    "sha256": "6978b0a098ac9d6693ed2c1ee65b4ff419d83ce1faae40827e9b3c12404c4ec1",
+    "bytes": 1612
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/build-final.json",
+    "sha256": "b095f0683b7f070e5297f5088844168b49c814b8c465eec4e0da7c07a6b8d92d",
+    "bytes": 204
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/build-final.log",
+    "sha256": "ec054b3118e884605c2f41263231829955e6f12cba9b8cef72756e1f876f3425",
+    "bytes": 1610
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/build-media.json",
+    "sha256": "0abe317f3247a586ded841aee81870d949023077bd425f557c7397dc0c497ca6",
+    "bytes": 204
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/build-media.log",
+    "sha256": "3953d7dc30aa2dc34598d328dcc80e0a646f597f3af60d569855ff58f3a4275c",
+    "bytes": 1858
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/cases.json",
+    "sha256": "081e14eb22c9f8520f257603084837f775414172cd48fdafb97de676ed3e612f",
+    "bytes": 95073
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/check_browser.py",
+    "sha256": "0b788087f8465f3e927ea850e3fd6afd0c68c4bbe3d4acfae7f7a3d7b7887ab8",
+    "bytes": 9763
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/check_dependencies.py",
+    "sha256": "a7cb2048a7ee1ba795be4db9372273e35663a9877f7c074f368671728de24a60",
+    "bytes": 1287
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/dependencies.json",
+    "sha256": "018eacda8a70c8525b4daec2e6e65347fc04530157b77071366415f2438b11d3",
+    "bytes": 1362
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/drift-final.json",
+    "sha256": "0fabe139dc3d6dd30b39d187a1abc97e0451b7c56e514b532c1b2acd9dd6c16a",
+    "bytes": 134
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/drift-final.log",
+    "sha256": "83e965fb2084698f4abcfe46458af51aadf4ffa739d8e32cdf83632e7f2dd576",
+    "bytes": 70
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/drift-initial.json",
+    "sha256": "017cfd48b5d6814becedb155509066f9e5ac25f3375194f9489b1d5a4723127b",
+    "bytes": 133
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/drift-initial.log",
+    "sha256": "83e965fb2084698f4abcfe46458af51aadf4ffa739d8e32cdf83632e7f2dd576",
+    "bytes": 70
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/final-checks.json",
+    "sha256": "4887b76376bb9f98faa2acf0b602b0b6321e66cc64b9aac02040bffc004ccfe2",
+    "bytes": 377
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/final_checks.py",
+    "sha256": "039ff1aeb8d97d151a2ae7bfd863c6f100d8456f90a4f748546c9a1a1c692b93",
+    "bytes": 2198
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-affected-vitest.json",
+    "sha256": "8fef407d8cbc1f054d2e9d6721c68e618b9da608f37e60c7bf103ea86e8ae02f",
+    "bytes": 79899
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-affected.json",
+    "sha256": "8daa4e96242a3afe3c06fd2ea77e4a8adae26b3e673c210a198b93179d129f72",
+    "bytes": 1163
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-affected.log",
+    "sha256": "4b229509b8c034d80d3c459013ed5a0c641f3d06dd669d6b36e916d2284df689",
+    "bytes": 125
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-final-media-vitest.json",
+    "sha256": "b295052a720f23b4aab29c0db0edf364f5015cea56e5d7564e4765faee3589a4",
+    "bytes": 6170
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-final-media.json",
+    "sha256": "0e61b2df0cae59e3db667aac731bd7b5c2dc368851ef2ed6564235476892d50d",
+    "bytes": 611
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-final-media.log",
+    "sha256": "0e14c0f2f28c7ca31b74df9c84144aac07a08223f8df010038b6bd8bf0b189a0",
+    "bytes": 128
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-historical-cap-vitest.json",
+    "sha256": "b2a3c0f8a9bbd990095b739ed421714f17007c724a41d349af7a50aa478ab4b0",
+    "bytes": 29908
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-historical-cap.json",
+    "sha256": "1cdce50f55d68978bb360b6758cdb8e184ed7c08add42f50bc4a78a7e2123971",
+    "bytes": 739
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-historical-cap.log",
+    "sha256": "295ab89ff97176717f4e9dda464c07c23ebbfef28256a9c9827b01b0e3ab3e9d",
+    "bytes": 131
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-historical-fixed-vitest.json",
+    "sha256": "ef0a0891d37c697b01e22547d485d2729ddbf0d628ac60fa0bcef9df677540bf",
+    "bytes": 31545
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-historical-fixed.json",
+    "sha256": "f80f720dcbe44a52779a8b0fde659c56ad7ab1702854f269e9e04baff37d960a",
+    "bytes": 793
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-historical-fixed.log",
+    "sha256": "e2bde6adacf6853adbd9d51d1cf304eaa9295313608b96977966a3ab730bb9c0",
+    "bytes": 133
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-media-fixed-vitest.json",
+    "sha256": "d9cd502957eb4247f302f0d7501c38129b27bff9b697f07e2b9ce25b5202bf72",
+    "bytes": 16133
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-media-fixed.json",
+    "sha256": "06420b9e309502a09e6cb7624bc909970c11c94144dba2970503efe5752dfa1d",
+    "bytes": 704
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-media-fixed.log",
+    "sha256": "76cc0abe915dccb7243a1b732ce4f42079f3c751ae24d86813bb89ab4079ea30",
+    "bytes": 128
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-media-vitest.json",
+    "sha256": "bb5d4c0150d13a56acac2e032b4a13322709caec30603d813854cc2be3b6dfc9",
+    "bytes": 36594
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-media.json",
+    "sha256": "11407e93759a1dee3b4c0b7bb0d6b0c560fc01a3ddf237082bd08f00917bf15b",
+    "bytes": 659
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/frontend-media.log",
+    "sha256": "1ae9d7718c0e340d3c177a857da999495e9a56c761cf0ce4487408e428af74f6",
+    "bytes": 122
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/lint-final.json",
+    "sha256": "7a7d3788edc9cba5a665f1e359da29268deac27767f9dc11054a16f159c33f7a",
+    "bytes": 757
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/lint-final.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/lint-initial.json",
+    "sha256": "bb63877e160c12a681c3a7c7a4792e8c67b1d75dc020f40e9c0c7edaa43c930c",
+    "bytes": 513
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/lint-initial.log",
+    "sha256": "f23c892d38d438d5adf5f2faf76a161bfac5528feded8e3a6b588532078499f4",
+    "bytes": 1086
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/lint-media-fixed.json",
+    "sha256": "7d027add9c11bf7272d7ba4cdfc4f9ee484f899445d768b442c90029a2199493",
+    "bytes": 758
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/lint-media-fixed.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/media-states-desktop.png",
+    "sha256": "bf74ecb9941f7772e0b28168ca97d5042dc83a66a75441b9a04748124ab892d6",
+    "bytes": 58049
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/migration-generate-m4.json",
+    "sha256": "9e6e8f75d4547c661f9a59185498a4b99803879a4fbe436b12728fad79670f83",
+    "bytes": 138
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/migration-generate-m4.log",
+    "sha256": "3209860cfb81272f669049cf1ccf7c26f331cf8764ae65c31a78819c11056903",
+    "bytes": 162
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/PLAN.md",
+    "sha256": "79cf91def58be47fd72060d76eb48ec949bab49c3ebfc601fd9393405610db78",
+    "bytes": 2553
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/query-plan-affected.json",
+    "sha256": "9499c56a97c3abd49040fd34f8b66019a6a4668ee08fad4fd825a52c6e1b3aa5",
+    "bytes": 30137
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/README.md",
+    "sha256": "39199640776660293853c2bbb7385699193af731c3a911bf7beba02484572559",
+    "bytes": 8934
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/run_browser.py",
+    "sha256": "fa0afec5a67d3352114ca349c19ebc7d9e5a4a883b2e9cca1a46ba4e92f0b64c",
+    "bytes": 2310
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/run_checks.py",
+    "sha256": "13d516d1bae82458a80e944cb7ce7c3c3e87d16582735d7c54c5e2bb328155ec",
+    "bytes": 4407
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/summary.json",
+    "sha256": "399e3b8ce6a6a583d371734ac17e7c07f6c5a1c6158e729d276b35e26d852da9",
+    "bytes": 767
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/update_docs.py",
+    "sha256": "396ff9cfdc80385baceead9fba19fb7df68b9dad931fb35ea4ccc73693adfc66",
+    "bytes": 11662
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/verify_evidence.py",
+    "sha256": "25b8b24b678cbe000b4bc7f5d38f202ae7259d090962295eb11a39bf7b08a8a5",
+    "bytes": 6318
+  },
+  {
+    "path": "docs/evals/inbox-phase3-2026-10-22/vite.log",
+    "sha256": "1dbc5c4717d977d1c144d000caad432ef3bd99d3c9bef05955a2e55fcf388ad7",
+    "bytes": 74
+  },
+  {
+    "path": "docs/modules/agent.md",
+    "sha256": "6da905ca9868e0b2bdbc8c13929b964b92146579e957dea91ba53b441a097fb4",
+    "bytes": 136865
+  },
+  {
+    "path": "docs/modules/frontend.md",
+    "sha256": "36725510bb2eabb56a8e91d66a81d05ac53e112ce0789cc44012f6bc4cf39980",
+    "bytes": 107656
+  },
+  {
+    "path": "docs/plan-implementacion-whatsapp-inbox-2026-08-22.md",
+    "sha256": "ca6df060a0ad5f4b5749609defd810bda2efba5c3fa24ab012499c669c0b48e2",
+    "bytes": 131585
+  },
+  {
+    "path": "docs/runbooks/inbox-media.md",
+    "sha256": "6a3437ed06eaaa35a39915aa760bf193cdb5dcb7bc6cd1cb89dec7741e6356fb",
+    "bytes": 8192
+  },
+  {
+    "path": "frontend/src/api/inbox.js",
+    "sha256": "4c3b662a0a4c5774671fc7eaaf4a12a544c5a673928e5654c850721211442ca1",
+    "bytes": 6032
+  },
+  {
+    "path": "frontend/src/api/inbox.test.js",
+    "sha256": "d8cdc0fca28dbcc96a0f1dfc45ae4ddc5180fc09750ef53054dd454edb8fd0b3",
+    "bytes": 6342
+  },
+  {
+    "path": "frontend/src/pages/inbox/inbox.module.css",
+    "sha256": "0c9c06aeae9488bf06c3d5a0159948a2f5ad28889a66a25a94943894bf3185cf",
+    "bytes": 22005
+  },
+  {
+    "path": "frontend/src/pages/inbox/index.jsx",
+    "sha256": "1f11adf459b3a86d3a3c4d3b4b1d984f50d3957621d78e6145336c5fa6b51241",
+    "bytes": 88477
+  },
+  {
+    "path": "frontend/src/pages/inbox/index.replies.test.jsx",
+    "sha256": "d436f4e0e6d797e53980ba71d0c5f9285c7a463852baf173b9c62f6aa8eb6a8e",
+    "bytes": 15116
+  },
+  {
+    "path": "frontend/src/pages/inbox/MediaBubble.jsx",
+    "sha256": "1365e911b6950790f8f3f73455123de787645fad8cf43507942806c3f14d346d",
+    "bytes": 6945
+  },
+  {
+    "path": "frontend/src/pages/inbox/MediaBubble.test.jsx",
+    "sha256": "0f36bea14543d946134c1f26ec22c61fdecb43ab266b9482e17f1d6c43979a5e",
+    "bytes": 9869
+  },
+  {
+    "path": "frontend/src/pages/inbox/useMediaUrl.js",
+    "sha256": "6b3c817ba2c80ca3d1a52a578da115f6db80767bf4ac6746693daea7c8a6ca45",
+    "bytes": 2688
+  },
+  {
+    "path": "scripts/crontab.example",
+    "sha256": "798283cc0e12091e8583db76b06d1f5d417d8973da8655d00196127725e3d0b6",
+    "bytes": 8234
+  }
+]

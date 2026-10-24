@@ -1,0 +1,15 @@
+{
+  "status": "FAIL",
+  "synthetic_api": true,
+  "measurements": [],
+  "requests": [
+    {
+      "viewport": "desktop",
+      "path": "inbox/conversations/session-ana/messages/42/retry/",
+      "body": {},
+      "key": "original-key"
+    }
+  ],
+  "page_errors": [],
+  "error": "Locator expected to have count '1'\nActual value: 0 \nCall log:\n  - Expect \"to_have_count\" with timeout 5000ms\n  - waiting for get_by_text(\"Respuesta original de Mar\u00eda\", exact=True)\n    9 \u00d7 locator resolved to 0 elements\n      - unexpected value \"0\"\n"
+}

@@ -259,8 +259,11 @@ def dispatch_claim(claim, provider_factory=get_provider):
         return False
     from .services import wa_id_to_sendable
     try:
+        from apps.channels.replies import outbound_provider_reply_id
+        reply_id = outbound_provider_reply_id(message)
         result = provider_factory(message.channel_account).send_text(
-            wa_id_to_sendable(message.conversation.contact.external_id), message.body)
+            wa_id_to_sendable(message.conversation.contact.external_id), message.body,
+            **({'reply_to_id': reply_id} if reply_id else {}))
     except Exception as exc:
         # Legacy retryable exceptions (and unknown adapter failures) prove nothing.
         result = SendResult('uncertain', code=f'adapter_{type(exc).__name__}')

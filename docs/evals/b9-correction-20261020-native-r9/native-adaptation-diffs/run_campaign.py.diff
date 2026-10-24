@@ -1,0 +1,11 @@
+--- native-r8/run_campaign.py
++++ native/run_campaign.py
+@@ -93,6 +93,8 @@
+         'RESUMPTION-PROPOSAL.md','prepared-runtime-references.json','runtime-handoff-supplement.json',
+         'snapshot-resumption-authorization.json','snapshot-equivalence.json','case-resumption-inputs.json',
+         'snapshot-correction.diff','resumption.json',
++        'baseline-resumption-authorization.json','baseline-equivalence.json',
++        'baseline-correction.diff','baseline-proposal-analysis.json',
+         'authorization.json','candidate.json','correction.diff','resource-policy.json',
+         'scope-manifest.json','PLAN.md','assembly.json','candidate-sources.json',
+         'toolchain.json','python-environment.json','dependency-files.json','interpreter-preflight.json',

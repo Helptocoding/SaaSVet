@@ -1,0 +1,131 @@
+{
+  "schema": "b9i-wsl-r3-block-status-v1",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "decision": "PENDING",
+  "blocks": {
+    "directed": {
+      "state": "PASS",
+      "raw_gate_state": "PASS",
+      "formal_runs": 1,
+      "command_exit_code": 0,
+      "seconds": 1159.888256488,
+      "receipt": "blocks/directed.command.json"
+    },
+    "django-check": {
+      "state": "PASS",
+      "raw_gate_state": "PASS",
+      "formal_runs": 1,
+      "command_exit_code": 0,
+      "seconds": 3.028934023999682,
+      "receipt": "blocks/django-check.command.json"
+    },
+    "migration-drift": {
+      "state": "PASS",
+      "raw_gate_state": "PASS",
+      "formal_runs": 1,
+      "command_exit_code": 0,
+      "seconds": 3.0236950270000307,
+      "receipt": "blocks/migration-drift.command.json"
+    },
+    "migrate": {
+      "state": "PASS",
+      "raw_gate_state": "PASS",
+      "formal_runs": 1,
+      "command_exit_code": 0,
+      "seconds": 137.750029456,
+      "receipt": "blocks/migrate.command.json"
+    },
+    "billing-schema": {
+      "state": "PASS",
+      "raw_gate_state": "PASS",
+      "formal_runs": 1,
+      "command_exit_code": 0,
+      "seconds": 4.028581151000253,
+      "receipt": "blocks/billing-schema.command.json"
+    },
+    "b0": {
+      "state": "PASS",
+      "raw_gate_state": "PASS",
+      "formal_runs": 1,
+      "command_exit_code": 0,
+      "seconds": 156.254072319,
+      "receipt": "blocks/b0.command.json"
+    },
+    "b3": {
+      "state": "PENDING_ENVIRONMENT",
+      "raw_gate_state": "NONPASS_REQUIRES_CLASSIFICATION",
+      "formal_runs": 1,
+      "command_exit_code": 1,
+      "seconds": 378.05218939299994,
+      "receipt": "blocks/b3.command.json"
+    },
+    "b4": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0
+    },
+    "b5": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0
+    },
+    "full": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0
+    },
+    "frontend-build": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0
+    },
+    "frontend-test": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0
+    },
+    "frontend-lint": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0
+    },
+    "frontend-smoke-urls": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0
+    },
+    "security": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0
+    },
+    "pip-audit": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0
+    },
+    "pnpm-audit": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0
+    },
+    "profile-base": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0,
+      "original_gate_definitions_unchanged": true
+    },
+    "profile-blocked_llm": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0,
+      "original_gate_definitions_unchanged": true
+    },
+    "profile-meta_slow": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0,
+      "original_gate_definitions_unchanged": true
+    },
+    "profile-duplicate": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0,
+      "original_gate_definitions_unchanged": true
+    },
+    "profile-saturation": {
+      "state": "NOT_EXECUTED",
+      "formal_runs": 0,
+      "original_gate_definitions_unchanged": true
+    }
+  },
+  "raw_stop": "STOP.json",
+  "final_classification": "incident-classification.json",
+  "formal_reruns": 0
+}

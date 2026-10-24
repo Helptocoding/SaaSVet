@@ -1,0 +1,36 @@
+{
+  "state": "PASS",
+  "platform": "Windows native",
+  "wsl_invoked": false,
+  "host_clock_configuration_changed": false,
+  "W32Time_changed": false,
+  "global_power_policy_changed": false,
+  "display_policy_changed": false,
+  "owned_helpers_exited": true,
+  "private_postgresql_stopped": true,
+  "owned_workspace_removed": true,
+  "application_tests_executed": true,
+  "formal_controller_invocations": 1,
+  "formal_reruns": 0,
+  "closure_receipt_sha256": {
+    "cleanup.json": "46ef13a087a4f797940cd88239a15ecd98558bf59ca6f5a0073579a0cfb954c1",
+    "resource-observer-closure.json": "09313efdfe298c3b0898c5d24b197e79cc01e835657c4560e34f5962d6fccba8",
+    "awake-request/closure.json": "6788138609249ff66219dbad7503e7008f00304cf29326b14bbf1ad5bd0ac8c1"
+  },
+  "helper_stop_method": "Explicit stop.request files after cleanup PASS; both owned helpers returned exit code 0.",
+  "read_only_status_monitor": {
+    "session_id": 44967,
+    "exited": true,
+    "exit_code": 0
+  },
+  "port_closed_rechecked": true,
+  "resources": {
+    "utc": "2026-10-17T05:08:19Z",
+    "utc_epoch_seconds": 1792213699.0137467,
+    "physical_total": 17031217152,
+    "physical_available": 6382022656,
+    "page_available": 8638676992,
+    "disk_available": 15864647680,
+    "platform": "Windows native"
+  }
+}

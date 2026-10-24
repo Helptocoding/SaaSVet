@@ -1,0 +1,63 @@
+{
+  "branch": "codex/e4-capacity-scheduling",
+  "head": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "tracked_change_count": 5685,
+  "landing_repo_exists": true,
+  "environment_media_presence": {
+    "MEDIA_B2_ENDPOINT_URL": false,
+    "MEDIA_B2_BUCKET": false,
+    "MEDIA_B2_ACCESS_KEY_ID": false,
+    "MEDIA_B2_SECRET_ACCESS_KEY": false
+  },
+  "env_files": {
+    "backend\\.env": {
+      "exists": true,
+      "present": {
+        "MEDIA_BACKEND": false,
+        "INBOX_MEDIA_ENABLED": false,
+        "INBOX_MEDIA_PRODUCTION_APPROVED": false,
+        "MEDIA_B2_ENDPOINT_URL": false,
+        "MEDIA_B2_REGION_NAME": false,
+        "MEDIA_B2_BUCKET": false,
+        "MEDIA_B2_ACCESS_KEY_ID": false,
+        "MEDIA_B2_SECRET_ACCESS_KEY": false
+      },
+      "dedicated_media_keys": []
+    },
+    ".env": {
+      "exists": false
+    },
+    ".env.prod": {
+      "exists": false
+    }
+  },
+  "tools": {
+    "python": "C:\\Users\\LAP\\AppData\\Local\\Programs\\Python\\Python313\\python.EXE",
+    "node": "C:\\Program Files\\nodejs\\node.EXE",
+    "pnpm": "C:\\Users\\LAP\\AppData\\Roaming\\npm\\pnpm.CMD",
+    "git": "C:\\Program Files\\Git\\cmd\\git.EXE",
+    "pg_dump": null,
+    "gitleaks": null,
+    "ssh": "C:\\WINDOWS\\System32\\OpenSSH\\ssh.EXE",
+    "b2": null,
+    "rclone": "C:\\Users\\LAP\\AppData\\Local\\Microsoft\\WinGet\\Links\\rclone.EXE"
+  },
+  "packages": {
+    "boto3": "1.43.95",
+    "psycopg": "3.3.4"
+  },
+  "python": "3.13.2",
+  "django_database": {
+    "engine": "django.db.backends.postgresql",
+    "host": "localhost",
+    "port": 5432,
+    "name": "veterinaria_saas",
+    "local": true
+  },
+  "media_settings": {
+    "backend": "local",
+    "enabled": false,
+    "production_approved": false,
+    "dedicated_credentials_present": false
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "apps.channels.tests.test_media_restore_drill.MediaDatabaseRestoreDrill.test_old_dump_cannot_reactivate_revoked_expired_or_recovered_jobs": {
+    "passed": true,
+    "receipt": "test-operations-final.json"
+  },
+  "apps.channels.tests.test_media_integration.MediaEntrypointTests.test_nightly_job_is_bounded_and_disabled_is_inert": {
+    "passed": true,
+    "receipt": "test-operations-final.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_absent_recipient_is_visible_nonblocking_debt_and_sends_nothing": {
+    "passed": true,
+    "receipt": "test-operations-final.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_failed_batch_does_not_starve_later_rows_or_exit_success": {
+    "passed": true,
+    "receipt": "test-operations-final.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_capacity_limit_reports_remaining_due_instead_of_silent_success": {
+    "passed": true,
+    "receipt": "test-operations-final.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_escalation_queued_during_delivery_is_not_lost_by_older_claim": {
+    "passed": true,
+    "receipt": "test-operations-final.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_authenticated_stream_has_private_headers_and_stored_mime": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_cross_org_unknown_and_corrupt_scope_return_identical_404_without_io": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_deadline_is_410_even_before_purge_and_not_a_storage_read": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_deadline_updates_delta_without_media_or_parent_write": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_document_uses_attachment_and_sanitized_name": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_dto_is_bounded_and_never_exposes_provider_or_storage_details": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_media_change_updates_delta_without_touching_parent": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_missing_object_logs_error_without_filename_or_provider_id": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_pending_and_failed_are_explicit_without_io": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_permission_is_required_before_storage_access": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_storage_outage_is_generic_503": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_thread_list_adds_type_and_filename_with_caption_preserved": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.agent.tests.test_inbox_media.InboxMediaTests.test_transcript_query_count_is_constant_with_many_files": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.PurgeVerificationTests.test_all_pages_batches_and_exact_neighbor_are_verified": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.PurgeVerificationTests.test_delete_ack_with_remaining_version_or_marker_is_not_success": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.PurgeVerificationTests.test_verification_listing_outage_propagates": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_24_hour_boundary_does_not_depend_on_retry_due_or_app_clock": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_database_clock_rejects_expired_and_serves_valid_despite_wrong_app_clock": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_delete_without_removing_local_object_keeps_pointer_and_incident": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_exact_deadline_uses_persisted_value_before_storage": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_first_alert_delivery_receipt_is_not_ack_and_escalation_is_separate": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_first_failure_persisted_retry_daily_access_denied_and_success_needs_evidence": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_independent_revocation_survives_old_db_state_and_recreated_pending_job": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_missing_or_corrupt_ledger_and_restore_hold_fail_closed": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_restore_command_preserves_dates_reapplies_revocations_and_freezes_pending": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_seven_day_backlog_creates_compliance_incident_before_success_and_blocks_close": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaStorageTests.test_b2_private_upload_and_physical_purge_all_versions_exact_key": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaStorageTests.test_b2_purge_errors_are_not_silenced": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaStorageTests.test_storage_fails_closed_and_never_generates_urls": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_crash_upload_pointer_is_purged_before_retry": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_disabled_jobs_are_inert": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_durable_success_retention_and_single_claim_for_discarded_inbound": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_expired_lease_recovers_and_old_worker_cannot_publish": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_fifth_expired_claim_stops_without_loop": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_missing_object_is_error_without_fabricated_expiration": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_purge_retry_denies_immediately_and_preserves_caption": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_reconcile_storage_outage_preserves_ready_and_recovers": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_retry_backoff_new_claim_and_permanent_failure": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_two_workers_have_one_claim_and_two_purgers_delete_once": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_integration.MediaEntrypointTests.test_b2_missing_variants_are_normalized_and_other_errors_propagate": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_integration.MediaEntrypointTests.test_filefield_keys_remain_posix_on_windows_and_linux": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_integration.MediaEntrypointTests.test_media_mode_is_independent_and_uses_one_item": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  },
+  "apps.channels.tests.test_media_integration.MediaProviderRaceTests.test_two_messages_with_same_provider_reference_create_one_media": {
+    "passed": true,
+    "receipt": "test-policy-first.json"
+  }
+}

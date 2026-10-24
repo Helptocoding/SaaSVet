@@ -1,0 +1,29 @@
+{
+  "state": "INTERRUPTED_FINAL_EXIT_UNKNOWN",
+  "observed_utc": "2026-10-20T04:23:33Z",
+  "latest_boot_utc": "2026-10-20T04:06:40.5000000Z",
+  "source_invocation": "invocation-formal.json",
+  "source_invocation_sha256": "3a2d03dd1503704933841a1d27f95b41ad4be3f2a155607781992666594334f4",
+  "original_invocation_state_unchanged": "RUNNING",
+  "original_invocation_exit_code": null,
+  "source_command": "blocks/full-general-remainder.command.json",
+  "source_command_sha256": "0e165f19ac321d93a9ddd65f12008e6f06cabb747474fefcca3f1a4caea95879",
+  "journal_sha256": "cb08107644c049b21695590a5700b8adfffc127ccdf9a6dcc2f2d8d67a27bb28",
+  "recorded": 407,
+  "PASS": 405,
+  "FAIL": 2,
+  "without_outcome": 321,
+  "failed_ids": [
+    "apps.agent.tests.test_contracts.CommitmentContractTests.test_fields_match_snapshot",
+    "apps.agent.tests.test_contracts.ToolOutcomeContractTests.test_fields_match_snapshot"
+  ],
+  "last_result_utc": "2026-10-20T03:49:17Z",
+  "last_observer_sample_utc": "2026-10-20T03:58:23Z",
+  "last_awake_heartbeat_utc": "2026-10-20T03:58:22Z",
+  "original_metadata_or_outcomes_rewritten": false,
+  "old_auxiliary_API_restoration_observed": false,
+  "prior_owned_processes_absent_after_boot": true,
+  "old_pid_values_are_not_authority_to_terminate_current_processes": true,
+  "product_failure_cause": "Contract snapshot discrepancies require classification from exact sources; not attributed to RAM or disk",
+  "new_tests_executed_by_recovery": false
+}

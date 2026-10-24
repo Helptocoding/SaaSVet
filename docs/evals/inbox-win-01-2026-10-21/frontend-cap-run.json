@@ -1,0 +1,15 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "--testNamePattern=aplica el cap global",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-win-01-2026-10-21\\vitest-cap.json"
+  ],
+  "exit_code": 1
+}

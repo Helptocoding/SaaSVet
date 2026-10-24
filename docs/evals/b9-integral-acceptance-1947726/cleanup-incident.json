@@ -1,0 +1,8 @@
+{
+  "phase": "CLEANUP_ONLY",
+  "application_tests_executed": 0,
+  "cause": "WinError 145 removing a deeply nested pnpm dependency directory",
+  "correction": "Use Windows extended-length path for the same verified absolute owned workspace",
+  "sql_snapshot_limitation": "SQL checks and DROP DATABASE completed before the exception; in-memory row snapshots were not persisted because the final write followed recursive deletion",
+  "postgresql_restart_or_test_rerun": false
+}

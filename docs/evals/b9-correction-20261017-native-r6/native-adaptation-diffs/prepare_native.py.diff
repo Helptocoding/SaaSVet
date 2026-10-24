@@ -1,0 +1,118 @@
+--- native-r5/prepare_native.py
++++ native/prepare_native.py
+@@ -16,7 +16,7 @@
+ from native_support import EVIDENCE, REPO, OLD, WORK, TREE, PYTHON, PG, NODE, PNPM, DATA, PORT, SHA, RTK, GIB, save, sha256, resources, environment, run, command, integrity
+ 
+ PRIOR = EVIDENCE.with_name('b9-correction-20261014-r4')
+-NATIVE_PRIOR = EVIDENCE.with_name('b9-correction-20261016-native-r3')
++NATIVE_PRIOR = EVIDENCE.with_name('b9-correction-20261017-native-r5')
+ BASE = Path('C:/Users/LAP/AppData/Local/Programs/Python/Python313')
+ LOCKED = Path('C:/Users/LAP/AppData/Local/Temp/vet-b8b-locked')
+ 
+@@ -42,46 +42,73 @@
+ def setup():
+     assert not WORK.exists() and not (EVIDENCE / 'authorization.json').exists()
+     assert resources()['disk_available'] >= 3 * GIB
++    assert json.loads((EVIDENCE / 'candidate-input.json').read_text(encoding='utf-8'))['candidate_tree'] == SHA
+     WORK.mkdir()
+     for name in ('downloads', 'rtk-config', 'tool-data', 'tool-config', 'cache', 'pnpm-home'):
+         (WORK / name).mkdir()
+     for name in ('empty.npmrc', 'empty-global.npmrc'):
+         (WORK / name).write_text('', encoding='utf-8')
+-    for name in ('PLAN.md', 'scope-manifest.json', 'candidate.json', 'correction.diff',
+-                 'resource-policy.json', 'prior-focused-verification.json'):
+-        (EVIDENCE / name).write_bytes((PRIOR / name).read_bytes())
++    for name in ('PLAN.md', 'scope-manifest.json', 'resource-policy.json', 'prior-focused-verification.json'):
++        (EVIDENCE / name).write_bytes((NATIVE_PRIOR / name).read_bytes())
++    for target, source in (('candidate.json', 'candidate-input.json'), ('correction.diff', 'correction-input.diff')):
++        (EVIDENCE / target).write_bytes((EVIDENCE / source).read_bytes())
++    scope = json.loads((EVIDENCE / 'scope-manifest.json').read_text(encoding='utf-8'))
++    for key in ('candidate_sha', 'candidate_tree'):
++        if scope.get(key) == '196aceb4f5f234c086b96d8e8af93787613f3c25':
++            scope[key] = SHA
++    scope['fixture_clock_equivalence'] = 'fixture-clock-authorization.json'
++    save('scope-manifest.json', scope)
+     with (EVIDENCE / 'PLAN.md').open('a', encoding='utf-8', newline='\n') as stream:
+-        stream.write('\n\n## Adaptación nativa Windows autorizada, 2026-10-16\n\n'
+-            'El usuario indicó «continua» para reanudar la alternativa autorizada para preparar y ejecutar sin WSL. Se conserva '
+-            'el árbol corregido y el contrato fijo completo. Python3.13.2 y sus dependencias '
+-            'bloqueadas se copian a un runtime privado verificado, PostgreSQL16.15 usa '
+-            'binarios existentes de solo lectura y un cluster privado nuevo, Node20.20.2 '
+-            'y pnpm9.15.9 son privados. pnpm usa node-linker=hoisted y '
+-            'package-import-method=copy con --frozen-lockfile para evitar enlaces simbólicos. '
+-            'Se conservan los3331 IDs y cinco grupos full, procesos internos, assertions, '
+-            'guards, locks, cargas, tiempos, umbrales, reservas2GiB RAM/1GiBdisco y reloj1s. '
+-            'No se invoca WSL ni se modifica W32Time, instalaciones compartidas o políticas '
+-            'globales. Una ejecución formal por bloque, sin reintentos adaptativos.\n')
+-    save('authorization.json', {'user': 'si hagamos eso', 'date_local': '2026-10-17',
+-        'scope': 'One native segment of explicitly authorized composite acceptance',
+-        'candidate_tree': SHA, 'prior_campaign': NATIVE_PRIOR.name,
+-        'prior_decision': 'PENDING_ENVIRONMENT_DISK_RESERVE_EXHAUSTED', 'maximum_formal_runs_per_block': 1,
+-        'maximum_formal_runs_per_profile_variant': 1, 'further_test_or_product_changes': False,
++        stream.write('\n\n## Corrección temporal y reuso acotado autorizados, 2026-10-17\n\n'
++            'El usuario autorizó «Sí, corregir y continuar conservando lo válido». '
++            'El candidato 68dffd746793700071f577a58528b0f9636930db difiere del '
++            '196aceb4f5f234c086b96d8e8af93787613f3c25 únicamente en '
++            'backend/apps/notifications/tests/test_notifications.py: imports estándar '
++            'y un decorador mock que fija mediodía UTC solo durante test_upcoming_window. '
++            'El cuerpo, los IDs, assertions, validadores y constraint siguen idénticos. '
++            'Los otros 3331 blobs, producto, dependencias y locks no cambian. '
++            'Esta autorización sustituye exclusivamente la exigencia de mismo SHA para '
++            'trece bloques PASS cuya selección no ejecuta ese método y cuya equivalencia '
++            'se verifica antes del sello; no permite otros cambios ni omisiones. '
++            'Se conservan once bloques ya referenciados y full-b8d/full-b8e de native-r5 '
++            '(369 IDs únicos; 118 IDs de full), con su candidato probado y el candidato '
++            'aceptado explícitos. El grupo general parcial y su ERROR temporal e incidente '
++            'de vigilia permanecen como evidencia no aprobada. Se ejecutan completos los '
++            '3213 IDs de general y luego frontend, seguridad, auditorías y cinco perfiles '
++            'con sus migraciones, cargas, tiempos 30/300/20 y gates originales. '
++            'Antes del sello se permite una comprobación de desarrollo del método '
++            'corregido, sin crédito formal y sin sustituir el grupo general completo. '
++            'La aceptación es compuesta; no se afirma una campaña continua. '
++            'Referencias: fixture-clock-authorization.json, fixture-resumption-amendment.json, '
++            'reuse-manifest.json y reuse-validation.json. Reservas 2 GiB RAM/1 GiB disco, '
++            'reloj 1s, auxiliares acotados 12h/13h sin renovación adaptativa y restauración '
++            'explícita. No se autorizan commits, push, despliegue ni activación.\n')
++    policy = json.loads((EVIDENCE / 'resource-policy.json').read_text(encoding='utf-8'))
++    policy.update(resumption_instruction='Sí, corregir y continuar conservando lo válido',
++                  fixture_clock_authorization='fixture-clock-authorization.json')
++    save('resource-policy.json', policy)
++    save('authorization.json', {'user': 'Sí, corregir y continuar conservando lo válido',
++        'date_local': '2026-10-17', 'scope': 'Fixture-only successor with bounded verified reuse',
++        'candidate_tree': SHA, 'previous_candidate_tree': '196aceb4f5f234c086b96d8e8af93787613f3c25',
++        'prior_campaign': NATIVE_PRIOR.name, 'prior_decision': 'PENDING_FIXTURE_AND_AWAKE_INCIDENT',
++        'maximum_formal_runs_per_block': 1, 'maximum_formal_runs_per_profile_variant': 1,
++        'authorized_fixture_correction': 'fixture-clock-authorization.json',
++        'further_test_or_product_changes': False, 'product_runtime_changes': False,
+         'commits_push_deploy_activation_authorized': False})
+-    contract = json.loads((PRIOR / 'full-partition-contract.json').read_text())
++    contract = json.loads((NATIVE_PRIOR / 'full-partition-contract.json').read_text(encoding='utf-8'))
++    assert contract['candidate_tree'] == '196aceb4f5f234c086b96d8e8af93787613f3c25'
++    contract['candidate_tree'] = SHA
+     save('full-partition-contract.json', contract)
+     for name in ('recorded_suite.py', 'full_partition.py', 'awake_guard.py', 'awake_status.py',
+                  'host_resources.py', 'host_observer.py'):
+-        source = (NATIVE_PRIOR / name).read_text(encoding='utf-8')
+-        if name == 'full_partition.py':
+-            source = source.replace("path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8')",
+-                                    "path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8', newline='\\n')")
+-        (EVIDENCE / name).write_text(source, encoding='utf-8', newline='\n')
++        (EVIDENCE / name).write_text((NATIVE_PRIOR / name).read_text(encoding='utf-8'),
++                                    encoding='utf-8', newline='\n')
+     source = (PRIOR / 'discover_candidate.py').read_text(encoding='utf-8')
+     begin = source.index('os.environ.update(')
+     end = source.index('\nimport django', begin)
+     source = source[:begin] + 'from native_support import environment\nos.environ.update(environment())' + source[end:]
+     source = source.replace("encoding='utf-8')\n\n\nscope", "encoding='utf-8', newline='\\n')\n\n\nscope")
++    source = source.replace('196aceb4f5f234c086b96d8e8af93787613f3c25', SHA)
+     (EVIDENCE / 'discover_candidate.py').write_text(source, encoding='utf-8', newline='\n')
+     prior = {}
+     for folder in EVIDENCE.parent.iterdir():
+@@ -90,6 +117,7 @@
+                           for p in folder.rglob('*') if p.is_file() and '__pycache__' not in p.parts})
+     save('prior-evidence-before.json', prior)
+     assemble_native()
++
+ 
+ 
+ 

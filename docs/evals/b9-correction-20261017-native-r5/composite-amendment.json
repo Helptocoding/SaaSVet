@@ -1,0 +1,40 @@
+{
+  "state": "USER_AUTHORIZED_BEFORE_FORMAL_SEAL",
+  "date_local": "2026-10-17",
+  "user": "si hagamos eso",
+  "evidence_mode": "COMPOSITE_ACCEPTANCE",
+  "continuous_campaign_claimed": false,
+  "supersedes": "Only historical-evidence exclusion and whole-campaign restart rules",
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "historical_pass_source_plan": {
+    "b9-correction-20261016-native-r4": [
+      "directed",
+      "django-check",
+      "migration-drift",
+      "migrate",
+      "billing-schema"
+    ],
+    "b9-correction-20261016-native-r3": [
+      "b0",
+      "b3",
+      "b4",
+      "b5",
+      "full-b8b",
+      "full-b8c"
+    ]
+  },
+  "reference_validation": "reuse-manifest.json and reuse-validation.json",
+  "reference_copies_are_current_executions": false,
+  "reference_scope": "Backend only",
+  "frontend_all_checks_executed_here": true,
+  "valid_failure_can_be_discarded_or_retried": false,
+  "interrupted_block_resume": "Whole block, distinct new receipt, after environment revalidation",
+  "app_sources_tests_fixtures_locks_gates_loads_changed": false,
+  "profile_warmup_measurement_drain_seconds": [
+    30,
+    300,
+    20
+  ],
+  "plan_prior_prefix_sha256": "9a124833067ad147b0f09f82a8bce2b088e03c9f305fdaca14fa4bbb9d61fbbc",
+  "plan_append_sha256": "edee0a34652325d741489ca77a6f3a5fc05a4ad68f9d38b1857b87a78356c5b2"
+}

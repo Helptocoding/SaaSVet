@@ -1,0 +1,22 @@
+[
+ {
+  "Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+  "StartLine": 1,
+  "EndLine": 1,
+  "StartColumn": 1,
+  "EndColumn": 66,
+  "Match": "api_key = \"REDACTED\"",
+  "Secret": "REDACTED",
+  "File": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\runtime\\scanner-control\\backend\\apps\\agent\\tests\\test_b9a_e2e.py",
+  "SymlinkFile": "",
+  "Commit": "",
+  "Entropy": 5.088221,
+  "Author": "",
+  "Email": "",
+  "Date": "",
+  "Message": "",
+  "Tags": [],
+  "RuleID": "generic-api-key",
+  "Fingerprint": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\runtime\\scanner-control\\backend\\apps\\agent\\tests\\test_b9a_e2e.py:generic-api-key:1"
+ }
+]

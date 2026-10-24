@@ -1,0 +1,78 @@
+{
+  "state": "PASS",
+  "evidence_mode": "COMPOSITE_ACCEPTANCE",
+  "continuous_single_campaign": false,
+  "manifest": "reuse-manifest.json",
+  "manifest_sha256": "641badfea1f6dd7111b41ba120c3f340971dcb726808414e3caee0c4edca06d3",
+  "referenced_pass_blocks": {
+    "directed": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r4",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r4/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r4/blocks/directed.command.json"
+    },
+    "django-check": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r4",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r4/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r4/blocks/django-check.command.json"
+    },
+    "migration-drift": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r4",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r4/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r4/blocks/migration-drift.command.json"
+    },
+    "migrate": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r4",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r4/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r4/blocks/migrate.command.json"
+    },
+    "billing-schema": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r4",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r4/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r4/blocks/billing-schema.command.json"
+    },
+    "b0": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r3",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r3/blocks/b0.command.json"
+    },
+    "b3": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r3",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r3/blocks/b3.command.json"
+    },
+    "b4": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r3",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r3/blocks/b4.command.json"
+    },
+    "b5": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r3",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r3/blocks/b5.command.json"
+    },
+    "full-b8b": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r3",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r3/blocks/full-b8b.command.json"
+    },
+    "full-b8c": {
+      "evidence_origin": "REFERENCED_PASS",
+      "source_campaign": "b9-correction-20261016-native-r3",
+      "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+      "command_receipt": "referenced-evidence/b9-correction-20261016-native-r3/blocks/full-b8c.command.json"
+    }
+  },
+  "reference_count": 11,
+  "historical_receipts_copied_as_current_execution": false,
+  "preservation_copies_identified_by_manifest": true
+}

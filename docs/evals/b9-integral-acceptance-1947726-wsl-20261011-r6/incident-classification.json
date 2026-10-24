@@ -1,0 +1,24 @@
+{
+  "state": "PENDING_ENVIRONMENT_CLOCK",
+  "cause": "Host suspension/resume coincides with a 121.912111-second civil-minus-monotonic discontinuity during the private checks migration",
+  "product_failure_attributed": false,
+  "raw_stop_preserved": true,
+  "clock_skew_seconds": 121.91211131459704,
+  "original_clock_limit_seconds": 1,
+  "windows_sleep_time": "2026-10-12T03:59:21.1775343Z",
+  "windows_wake_time": "2026-10-12T04:01:24.4712272Z",
+  "windows_sleep_resume_events_confirmed": true,
+  "correlation_limit": "Windows events confirm host suspension/resume in this interval; no claim that pausing WSL NTP prevents host suspension or every clock incident",
+  "memory_or_disk_reserve_exhausted": false,
+  "partial_migration_is_not_a_pass": true,
+  "termination": "Controller SIGTERM of its owned process group, exit -15",
+  "formal_reruns": 0,
+  "evidence": [
+    "STOP.json",
+    "monitor-migrate.json",
+    "blocks/migrate.command.json",
+    "blocks/migrate.command.log",
+    "windows-clock-power-events.json",
+    "resource-observer/samples.jsonl"
+  ]
+}

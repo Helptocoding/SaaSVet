@@ -1,0 +1,15 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "--testNamePattern=el poll conserva p\u00e1ginas anteriores",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-ctx-01-2026-10-21\\vitest-history.json"
+  ],
+  "exit_code": 1
+}

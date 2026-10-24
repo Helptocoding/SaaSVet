@@ -1,0 +1,53 @@
+{
+  "label": "migration-drift",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261011-r3/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011-r3/venv/bin/python",
+    "-B",
+    "manage.py",
+    "makemigrations",
+    "--check",
+    "--dry-run"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261011-r3/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-12T01:43:24Z",
+      "physical_available": 7532339200,
+      "physical_total": 8252514304,
+      "disk_available": 4451717120,
+      "linux_virtual_disk_available": 1017133187072
+    },
+    "host": {
+      "utc": "2026-10-12T01:43:25Z",
+      "physical_total": 17031217152,
+      "physical_available": 6235492352,
+      "page_available": 8461869056
+    },
+    "ready": true
+  },
+  "pid": 2144,
+  "exit_code": 0,
+  "seconds": 3.0236950270000307,
+  "invalidating_incident": null,
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-12T01:43:28Z",
+      "physical_available": 7530692608,
+      "physical_total": 8252514304,
+      "disk_available": 4451713024,
+      "linux_virtual_disk_available": 1017133015040
+    },
+    "host": {
+      "utc": "2026-10-12T01:43:28Z",
+      "physical_total": 17031217152,
+      "physical_available": 6225866752,
+      "page_available": 8445923328
+    }
+  }
+}

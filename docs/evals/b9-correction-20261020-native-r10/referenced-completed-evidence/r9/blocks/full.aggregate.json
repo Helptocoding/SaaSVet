@@ -1,0 +1,151 @@
+{
+  "state": "PASS",
+  "tests": 3331,
+  "evidence_mode": "COMPOSITE_ACCEPTANCE",
+  "continuous_campaign_claimed": false,
+  "accepted_historical_evidence_limitation": true,
+  "group_receipts": [
+    {
+      "label": "full-b8b",
+      "database": "test_b8b_b9i_full",
+      "command_receipt": "referenced-evidence\\b9-correction-20261016-native-r3\\blocks\\full-b8b.command.json",
+      "provenance": {
+        "origin": "REFERENCED_PASS",
+        "campaign": "b9-correction-20261016-native-r3",
+        "artifactdir": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r9\\referenced-evidence\\b9-correction-20261016-native-r3\\blocks",
+        "tested_candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+        "accepted_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+        "fixture_clock_equivalence": "reuse-validation.json#inputs.fixture_clock_equivalence",
+        "snapshot_equivalence": "reuse-validation.json#inputs.snapshot_equivalence",
+        "baseline_equivalence": "reuse-validation.json#inputs.baseline_equivalence"
+      },
+      "seconds": 967.1782597000001,
+      "tests": 21
+    },
+    {
+      "label": "full-b8c",
+      "database": "test_b8c_b9i_full",
+      "command_receipt": "referenced-evidence\\b9-correction-20261016-native-r3\\blocks\\full-b8c.command.json",
+      "provenance": {
+        "origin": "REFERENCED_PASS",
+        "campaign": "b9-correction-20261016-native-r3",
+        "artifactdir": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r9\\referenced-evidence\\b9-correction-20261016-native-r3\\blocks",
+        "tested_candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+        "accepted_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+        "fixture_clock_equivalence": "reuse-validation.json#inputs.fixture_clock_equivalence",
+        "snapshot_equivalence": "reuse-validation.json#inputs.snapshot_equivalence",
+        "baseline_equivalence": "reuse-validation.json#inputs.baseline_equivalence"
+      },
+      "seconds": 1431.2610174000001,
+      "tests": 41
+    },
+    {
+      "label": "full-b8d",
+      "database": "test_b8d_b9i_full",
+      "command_receipt": "referenced-evidence\\b9-correction-20261017-native-r5\\blocks\\full-b8d.command.json",
+      "provenance": {
+        "origin": "REFERENCED_PASS",
+        "campaign": "b9-correction-20261017-native-r5",
+        "artifactdir": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r9\\referenced-evidence\\b9-correction-20261017-native-r5\\blocks",
+        "tested_candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+        "accepted_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+        "fixture_clock_equivalence": "reuse-validation.json#inputs.fixture_clock_equivalence",
+        "snapshot_equivalence": "reuse-validation.json#inputs.snapshot_equivalence",
+        "baseline_equivalence": "reuse-validation.json#inputs.baseline_equivalence"
+      },
+      "seconds": 1148.0950110999984,
+      "tests": 27
+    },
+    {
+      "label": "full-b8e",
+      "database": "test_b8e_b9i_full",
+      "command_receipt": "referenced-evidence\\b9-correction-20261017-native-r5\\blocks\\full-b8e.command.json",
+      "provenance": {
+        "origin": "REFERENCED_PASS",
+        "campaign": "b9-correction-20261017-native-r5",
+        "artifactdir": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r9\\referenced-evidence\\b9-correction-20261017-native-r5\\blocks",
+        "tested_candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+        "accepted_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+        "fixture_clock_equivalence": "reuse-validation.json#inputs.fixture_clock_equivalence",
+        "snapshot_equivalence": "reuse-validation.json#inputs.snapshot_equivalence",
+        "baseline_equivalence": "reuse-validation.json#inputs.baseline_equivalence"
+      },
+      "seconds": 1246.1054879000003,
+      "tests": 29
+    },
+    {
+      "label": "full-general",
+      "database": "test_b9i_full_general",
+      "command_receipt": "blocks\\full-general-assemble.command.json",
+      "provenance": {
+        "state": "PASS",
+        "candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+        "source_candidate_tree": "5e11236daabf4ef70ea9d0f08fee52aed5c30ff2",
+        "retained_ids": 3212,
+        "retained_PASS": 3200,
+        "retained_SKIP": 12,
+        "new_selected_ids": 1,
+        "previous_accepted_cases": 3212,
+        "prior_pass": 3200,
+        "prior_skips": 12,
+        "current_cases": 1,
+        "historical_failed_attempts": 3,
+        "result_general": 3213,
+        "corrected_failed_case_ids": [
+          "apps.core.tests.test_tenant_scoping_audit.TenantScopingAuditTests.test_no_unbaselined_objects_access_without_for_organization"
+        ],
+        "snapshot_corrected_case_ids": [
+          "apps.agent.tests.test_contracts.CommitmentContractTests.test_fields_match_snapshot",
+          "apps.agent.tests.test_contracts.ToolOutcomeContractTests.test_fields_match_snapshot"
+        ],
+        "retained_sources": {
+          "r6": {
+            "tests": 2485,
+            "PASS": 2483,
+            "SKIP": 2
+          },
+          "r7": {
+            "tests": 405,
+            "PASS": 405,
+            "SKIP": 0,
+            "source_journal_observations": 407,
+            "excluded_historical_FAIL": 2
+          },
+          "r8": {
+            "tests": 322,
+            "PASS": 312,
+            "SKIP": 10,
+            "source_journal_observations": 323,
+            "excluded_historical_FAIL": 1
+          }
+        },
+        "original_invocation_exits": {
+          "r6": "UNKNOWN",
+          "r7": "UNKNOWN",
+          "r8": 1
+        },
+        "historical_disk_and_monotonic_evidence_verified": false,
+        "accepted_historical_evidence_limitation": true,
+        "manifest": "case-resumption-manifest.json",
+        "validation": "case-resumption-validation.json",
+        "authorization": "baseline-resumption-authorization.json",
+        "manifest_sha256": "85f01293e758e3f47023a7a042d9f1a14e5821d1a5b6497bd6ac5404e99ca21a",
+        "origin": "COMPOSITE_CASE_EVIDENCE",
+        "command_origin": "CURRENT_ASSEMBLER",
+        "campaign": "b9-correction-20261020-native-r9",
+        "tested_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+        "accepted_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+        "full_general_scope": "logical case aggregate",
+        "artifactdir": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r9\\blocks",
+        "command_receipt": "blocks/full-general-assemble.command.json",
+        "case_manifest": "case-resumption-manifest.json"
+      },
+      "seconds": 6.253931000001103,
+      "tests": 3213
+    }
+  ],
+  "additional_test_execution": false,
+  "duplicate_ids": 0,
+  "missing_ids": [],
+  "gate_evaluated_by_original_check_suite": true
+}

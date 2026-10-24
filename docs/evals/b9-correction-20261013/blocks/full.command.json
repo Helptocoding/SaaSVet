@@ -1,0 +1,67 @@
+{
+  "label": "full",
+  "candidate_sha": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "argv": [
+    "/home/lap/b9i-correction-20261013/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-correction-20261013/venv/bin/python",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261013/recorded_suite.py",
+    "full",
+    "test_b9i_full"
+  ],
+  "cwd": "/home/lap/b9i-correction-20261013/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-14T06:55:15Z",
+      "physical_available": 7485124608,
+      "physical_total": 8252518400,
+      "disk_available": 7527895040,
+      "linux_virtual_disk_available": 1016963923968
+    },
+    "host": {
+      "utc": "2026-10-14T06:55:15Z",
+      "physical_total": 17031217152,
+      "physical_available": 2820001792,
+      "page_available": 9338470400,
+      "utc_epoch_seconds": 1791960915.0843933,
+      "observer_pid": 23380
+    },
+    "ready": true
+  },
+  "pid": 2203,
+  "exit_code": -15,
+  "seconds": 938.3002057029998,
+  "invalidating_incident": "Memory reserve exhausted",
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-14T07:10:53Z",
+      "physical_available": 7480532992,
+      "physical_total": 8252518400,
+      "disk_available": 7489028096,
+      "linux_virtual_disk_available": 1016938180608
+    },
+    "host": {
+      "utc": "2026-10-14T07:10:53Z",
+      "physical_total": 17031217152,
+      "physical_available": 1525739520,
+      "page_available": 7729512448,
+      "utc_epoch_seconds": 1791961853.2670028,
+      "observer_pid": 23380
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-14T07:10:53Z",
+        "utc_epoch_seconds": 1791961853.8345203,
+        "pid": 16012,
+        "thread_id": 25728,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.10199427604675293
+    }
+  }
+}

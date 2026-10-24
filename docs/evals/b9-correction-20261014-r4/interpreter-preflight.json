@@ -1,0 +1,329 @@
+{
+  "state": "PASS",
+  "interpreters": {
+    "primary": {
+      "state": "DEPENDENCY_PREFLIGHT_READY",
+      "executable": "/home/lap/b9i-correction-20261014-r4/venv/bin/python",
+      "base_executable": "/home/lap/b9i-correction-20261014-r4/python/cpython-3.13.2-linux-x86_64-gnu/bin/python3.13",
+      "prefix": "/home/lap/b9i-correction-20261014-r4/venv",
+      "site_packages": "/home/lap/b9i-correction-20261014-r4/venv/lib/python3.13/site-packages",
+      "django_file": "/home/lap/b9i-correction-20261014-r4/venv/lib/python3.13/site-packages/django/__init__.py",
+      "psycopg_file": "/home/lap/b9i-correction-20261014-r4/venv/lib/python3.13/site-packages/psycopg/__init__.py",
+      "durable_file": "/home/lap/b9i-correction-20261014-r4/src/backend/apps/agent/durable.py",
+      "worker_file": "/home/lap/b9i-correction-20261014-r4/src/backend/apps/agent/worker.py",
+      "database": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "test_b9i_control",
+        "HOST": "127.0.0.1",
+        "PORT": "35484"
+      },
+      "packages": [
+        {
+          "name": "asgiref",
+          "version": "3.11.1"
+        },
+        {
+          "name": "bleach",
+          "version": "6.3.0"
+        },
+        {
+          "name": "certifi",
+          "version": "2026.5.20"
+        },
+        {
+          "name": "cffi",
+          "version": "2.1.0"
+        },
+        {
+          "name": "charset-normalizer",
+          "version": "3.4.7"
+        },
+        {
+          "name": "cryptography",
+          "version": "49.0.0"
+        },
+        {
+          "name": "dj-database-url",
+          "version": "3.1.2"
+        },
+        {
+          "name": "Django",
+          "version": "6.0.5"
+        },
+        {
+          "name": "django-cors-headers",
+          "version": "4.9.0"
+        },
+        {
+          "name": "django-redis",
+          "version": "7.0.0"
+        },
+        {
+          "name": "djangorestframework",
+          "version": "3.17.1"
+        },
+        {
+          "name": "djangorestframework_simplejwt",
+          "version": "5.5.1"
+        },
+        {
+          "name": "et_xmlfile",
+          "version": "2.0.0"
+        },
+        {
+          "name": "gunicorn",
+          "version": "26.0.0"
+        },
+        {
+          "name": "idna",
+          "version": "3.13"
+        },
+        {
+          "name": "openpyxl",
+          "version": "3.1.5"
+        },
+        {
+          "name": "packaging",
+          "version": "26.2"
+        },
+        {
+          "name": "pillow",
+          "version": "12.2.0"
+        },
+        {
+          "name": "pip",
+          "version": "24.3.1"
+        },
+        {
+          "name": "psycopg",
+          "version": "3.3.4"
+        },
+        {
+          "name": "psycopg-binary",
+          "version": "3.3.4"
+        },
+        {
+          "name": "pycparser",
+          "version": "3.0"
+        },
+        {
+          "name": "PyJWT",
+          "version": "2.13.0"
+        },
+        {
+          "name": "pypdf",
+          "version": "6.12.1"
+        },
+        {
+          "name": "python-decouple",
+          "version": "3.8"
+        },
+        {
+          "name": "redis",
+          "version": "8.0.0"
+        },
+        {
+          "name": "reportlab",
+          "version": "4.5.1"
+        },
+        {
+          "name": "requests",
+          "version": "2.33.1"
+        },
+        {
+          "name": "sentry-sdk",
+          "version": "2.60.0"
+        },
+        {
+          "name": "sqlparse",
+          "version": "0.5.5"
+        },
+        {
+          "name": "tblib",
+          "version": "3.2.2"
+        },
+        {
+          "name": "tzdata",
+          "version": "2026.2"
+        },
+        {
+          "name": "urllib3",
+          "version": "2.7.0"
+        },
+        {
+          "name": "webencodings",
+          "version": "0.5.1"
+        },
+        {
+          "name": "whitenoise",
+          "version": "6.12.0"
+        }
+      ]
+    },
+    "legacy_base": {
+      "state": "DEPENDENCY_PREFLIGHT_READY",
+      "executable": "/home/lap/b9i-correction-20261014-r4/python/cpython-3.13.2-linux-x86_64-gnu/bin/python3.13",
+      "base_executable": "/home/lap/b9i-correction-20261014-r4/python/cpython-3.13.2-linux-x86_64-gnu/bin/python3.13",
+      "prefix": "/home/lap/b9i-correction-20261014-r4/python/cpython-3.13.2-linux-x86_64-gnu",
+      "site_packages": "/home/lap/b9i-correction-20261014-r4/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/site-packages",
+      "django_file": "/home/lap/b9i-correction-20261014-r4/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/site-packages/django/__init__.py",
+      "psycopg_file": "/home/lap/b9i-correction-20261014-r4/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/site-packages/psycopg/__init__.py",
+      "durable_file": "/home/lap/b9i-correction-20261014-r4/src/backend/apps/agent/durable.py",
+      "worker_file": "/home/lap/b9i-correction-20261014-r4/src/backend/apps/agent/worker.py",
+      "database": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "test_b9i_control",
+        "HOST": "127.0.0.1",
+        "PORT": "35484"
+      },
+      "packages": [
+        {
+          "name": "asgiref",
+          "version": "3.11.1"
+        },
+        {
+          "name": "bleach",
+          "version": "6.3.0"
+        },
+        {
+          "name": "certifi",
+          "version": "2026.5.20"
+        },
+        {
+          "name": "cffi",
+          "version": "2.1.0"
+        },
+        {
+          "name": "charset-normalizer",
+          "version": "3.4.7"
+        },
+        {
+          "name": "cryptography",
+          "version": "49.0.0"
+        },
+        {
+          "name": "dj-database-url",
+          "version": "3.1.2"
+        },
+        {
+          "name": "Django",
+          "version": "6.0.5"
+        },
+        {
+          "name": "django-cors-headers",
+          "version": "4.9.0"
+        },
+        {
+          "name": "django-redis",
+          "version": "7.0.0"
+        },
+        {
+          "name": "djangorestframework",
+          "version": "3.17.1"
+        },
+        {
+          "name": "djangorestframework_simplejwt",
+          "version": "5.5.1"
+        },
+        {
+          "name": "et_xmlfile",
+          "version": "2.0.0"
+        },
+        {
+          "name": "gunicorn",
+          "version": "26.0.0"
+        },
+        {
+          "name": "idna",
+          "version": "3.13"
+        },
+        {
+          "name": "openpyxl",
+          "version": "3.1.5"
+        },
+        {
+          "name": "packaging",
+          "version": "26.2"
+        },
+        {
+          "name": "pillow",
+          "version": "12.2.0"
+        },
+        {
+          "name": "pip",
+          "version": "24.3.1"
+        },
+        {
+          "name": "psycopg",
+          "version": "3.3.4"
+        },
+        {
+          "name": "psycopg-binary",
+          "version": "3.3.4"
+        },
+        {
+          "name": "pycparser",
+          "version": "3.0"
+        },
+        {
+          "name": "PyJWT",
+          "version": "2.13.0"
+        },
+        {
+          "name": "pypdf",
+          "version": "6.12.1"
+        },
+        {
+          "name": "python-decouple",
+          "version": "3.8"
+        },
+        {
+          "name": "redis",
+          "version": "8.0.0"
+        },
+        {
+          "name": "reportlab",
+          "version": "4.5.1"
+        },
+        {
+          "name": "requests",
+          "version": "2.33.1"
+        },
+        {
+          "name": "sentry-sdk",
+          "version": "2.60.0"
+        },
+        {
+          "name": "sqlparse",
+          "version": "0.5.5"
+        },
+        {
+          "name": "tblib",
+          "version": "3.2.2"
+        },
+        {
+          "name": "tzdata",
+          "version": "2026.2"
+        },
+        {
+          "name": "urllib3",
+          "version": "2.7.0"
+        },
+        {
+          "name": "webencodings",
+          "version": "0.5.1"
+        },
+        {
+          "name": "whitenoise",
+          "version": "6.12.0"
+        }
+      ]
+    }
+  },
+  "application_package_parity": "PASS",
+  "hashed_dependency_files": 13508,
+  "application_tests_executed": false,
+  "legacy_B3_entrypoint_executed": false,
+  "sys_base_executable_redirected": false,
+  "base_prefix_private": true
+}

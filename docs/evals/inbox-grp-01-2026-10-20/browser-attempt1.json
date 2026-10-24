@@ -1,0 +1,30 @@
+{
+  "status": "FAIL",
+  "synthetic_api": true,
+  "error": "Locator expected to have count '1'\nActual value: 0 \nCall log:\n  - Expect \"to_have_count\" with timeout 5000ms\n  - waiting for get_by_text(\"Hola, tengo una duda.\", exact=True)\n    9 \u00d7 locator resolved to 0 elements\n      - unexpected value \"0\"\n",
+  "measurements": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    }
+  ],
+  "page_errors": [],
+  "temporary_server_listening": false
+}

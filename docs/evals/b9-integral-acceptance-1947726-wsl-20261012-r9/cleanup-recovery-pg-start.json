@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261012-r9/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261012-r9/pgroot/usr/lib/postgresql/16/bin/pg_ctl",
+    "-D",
+    "/home/lap/b9i-wsl-1947726-20261012-r9/pgdata",
+    "-l",
+    "/home/lap/b9i-wsl-1947726-20261012-r9/postgresql.log",
+    "-w",
+    "start"
+  ],
+  "exit_code": 1,
+  "stdout": "waiting for server to start............................................................... stopped waiting\n",
+  "stderr": "pg_ctl: another server might be running; trying to start server anyway\npg_ctl: server did not start in time\n"
+}

@@ -1,0 +1,349 @@
+{
+  "state": "PASS",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "actual_tests_executed": 0,
+  "authorized_identity": {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto"
+  },
+  "runtime_literal_pattern": "^Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto$",
+  "expected_static_file_identities": 26,
+  "discovery_mode": "pnpm exec vitest list --staticParse, never pnpm run test",
+  "discovery_name_filter": null,
+  "static_runtime_matcher_difference": "Static task parent chain includes the file; runtime omits it. Collect exact file without name filter, then prove identical runtime literal selects one canonical identity.",
+  "planned_selector": "planned-selector.json",
+  "planned_selector_sha256": "fceeb68c27ef663e24c8b6f2d986a326d37bbf0c7cc3908829254d42920bf982",
+  "formal_run_receipt_required": false,
+  "frontend_run_imported_or_invoked": false,
+  "inputs_sha256": {
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\diagnostics\\verify_selector.py": "8eecaa25ef077111e1208c36dfd4a39b994601cbd6423f66be129848c394986a",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\diagnostics\\verify_selector.cjs": "6ad731cdcc19fa051b87b5b9736b47194d3c107a59abd7b6faaccbe48cbe7ab8",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r10\\frontend-remainder-selection.json": "63cf5aadb4464818be6e89f14cf2e30b3283b3a758fdf8e088bc43e6195c9845",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r10\\blocks\\frontend-test-remainder.json": "0b555e264ae5d85f29c2fe7ca19dadfab3d9a242abb133af9011079752a0b9a0",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\diagnostics\\planned-selector.json": "fceeb68c27ef663e24c8b6f2d986a326d37bbf0c7cc3908829254d42920bf982",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\frontend_resumption.py": "dd8016f84586202c9e1e047ddc4d8857b4d78b788f70c5bbbf2c1ac0c7814a8b",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\frontend-remainder-selected.json": "ae05fc6762796c5bd547497b7c7028ea598ba5bc541347c42ff43bcd84c01f76",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend\\src\\pages\\inbox\\index.test.jsx": "21de54d2d3d1b1ad629b76aca48242249c22889c1cfb0962cabc529956a2ecd2",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend\\node_modules\\vitest\\dist\\chunks\\cac.C9xsMMkH.js": "ad53373501bcfae84302164f8ce5445cb8205402b8a37ffe7557de4ded278a9e",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend\\node_modules\\vitest\\dist\\chunks\\cli-api.BfdDOPPI.js": "a000538647c41d8323fd0d9d24b836a6ec428ae8f0057ac4a551af4cf36c9e7a",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend\\node_modules\\@vitest\\runner\\dist\\chunk-artifact.js": "c10a7a80fca65fb42e27eabf7655c5ce5ecf36e8aaeb1811499efd063df62556"
+  },
+  "commands": [
+    {
+      "state": "COMPLETED",
+      "argv": [
+        "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+        "proxy",
+        "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\node-v20.20.2-win-x64\\node.exe",
+        "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pnpm\\package\\bin\\pnpm.cjs",
+        "exec",
+        "vitest",
+        "list",
+        "src/pages/inbox/index.test.jsx",
+        "--staticParse",
+        "--json",
+        "C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261020-native-r11/diagnostics/selector-static-discovery.json"
+      ],
+      "cwd": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend",
+      "actual_tests_executed": 0,
+      "application_test_functions_invoked": false,
+      "utc_started": "2026-10-21T00:07:57Z",
+      "exit_code": 0,
+      "seconds": 8.139794799999436,
+      "stdout": "selector-static-discovery.stdout.log",
+      "stderr": "selector-static-discovery.stderr.log",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "state": "COMPLETED",
+      "argv": [
+        "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+        "proxy",
+        "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\node-v20.20.2-win-x64\\node.exe",
+        "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\diagnostics\\verify_selector.cjs",
+        "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pnpm\\package\\bin\\pnpm.cjs",
+        "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r10\\frontend-remainder-selection.json",
+        "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\diagnostics\\selector-static-discovery.json",
+        "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r10\\blocks\\frontend-test-remainder.json"
+      ],
+      "cwd": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend",
+      "actual_tests_executed": 0,
+      "application_test_functions_invoked": false,
+      "utc_started": "2026-10-21T00:08:06Z",
+      "exit_code": 0,
+      "seconds": 8.113162499999817,
+      "stdout": "selector-windows-argv-proof.stdout.log",
+      "stderr": "selector-windows-argv-proof.stderr.log",
+      "stdout_sha256": "24798f4088e93e88d334b58fa6b6f1092ae37d77aec99a717d06ab1d92f90f61",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "source_assertions_hooks_timeouts_modified": false,
+  "previous_PASS_cases_executed": 0,
+  "finished_utc": "2026-10-21T00:08:14Z",
+  "static_collected": 26,
+  "matched_runtime_identity": 1,
+  "original_windows_pattern_matches": false,
+  "repaired_windows_pattern_matches": true,
+  "selected": [
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+      "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+      "selected_by_runtime_literal": true
+    }
+  ],
+  "inputs_unchanged": {
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\diagnostics\\verify_selector.py": true,
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\diagnostics\\verify_selector.cjs": true,
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r10\\frontend-remainder-selection.json": true,
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r10\\blocks\\frontend-test-remainder.json": true,
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\diagnostics\\planned-selector.json": true,
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\frontend_resumption.py": true,
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\frontend-remainder-selected.json": true,
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend\\src\\pages\\inbox\\index.test.jsx": true,
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend\\node_modules\\vitest\\dist\\chunks\\cac.C9xsMMkH.js": true,
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend\\node_modules\\vitest\\dist\\chunks\\cli-api.BfdDOPPI.js": true,
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend\\node_modules\\@vitest\\runner\\dist\\chunk-artifact.js": true
+  },
+  "static_discovery_json": "selector-static-discovery.json",
+  "static_discovery_sha256": "84a41732b4a3b9a8bc6fef219a65896b929b01a708fd8aa1f5dc908f07d69e9e",
+  "selection_discovery_json": "selection-discovery.json",
+  "selection_discovery_sha256": "eb5b7d0e0924a847554aac9a4f5e3ee10f1a8af6256b9bb10f97537d4353b1ca",
+  "pure_windows_argv_proof": {
+    "state": "PASS",
+    "scope": "Pure Windows child argv echo and RegExp; no Vitest/application imports",
+    "actual_tests_executed": 0,
+    "target": {
+      "file": "src/pages/inbox/index.test.jsx",
+      "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto"
+    },
+    "original_selection": {
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r10\\frontend-remainder-selection.json",
+      "sha256": "63cf5aadb4464818be6e89f14cf2e30b3283b3a758fdf8e088bc43e6195c9845",
+      "bytes": 1217
+    },
+    "installed_pnpm": {
+      "path": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pnpm\\package\\dist\\pnpm.cjs",
+      "sha256": "176d919063eba331742f5e522dd2f997b2eb23c137beeac64fd419effcc860ac",
+      "serializer_line": 101124,
+      "serializer_source": "pts.args?.length && m.scripts?.[stage]) {\n        const escapedArgs = (0, is_windows_1.default)() ? opts.args.map((arg) => JSON.stringify(arg)).join(\" \") : (0, shell_quote_1.quote)(opts.args);\n        m.scripts[stage] = `${m.scripts[stage]} ${escapedArg"
+    },
+    "original": {
+      "input_pattern": "^Inbox\\ —\\ aislamiento\\ del\\ borrador\\ un\\ éxito\\ antiguo\\ A→B→A\\ no\\ borra\\ un\\ draft\\ nuevo\\ aunque\\ tenga\\ el\\ mismo\\ texto$",
+      "serialization": "JSON.stringify(arg), same installed pnpm Windows branch",
+      "command": "\"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\node-v20.20.2-win-x64\\node.exe\" -e \"console.log(JSON.stringify(process.argv.slice(1)))\" \"^Inbox\\\\ —\\\\ aislamiento\\\\ del\\\\ borrador\\\\ un\\\\ éxito\\\\ antiguo\\\\ A→B→A\\\\ no\\\\ borra\\\\ un\\\\ draft\\\\ nuevo\\\\ aunque\\\\ tenga\\\\ el\\\\ mismo\\\\ texto$\"",
+      "shell_argv": [
+        "/d",
+        "/s",
+        "/c",
+        "\"\"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\node-v20.20.2-win-x64\\node.exe\" -e \"console.log(JSON.stringify(process.argv.slice(1)))\" \"^Inbox\\\\ —\\\\ aislamiento\\\\ del\\\\ borrador\\\\ un\\\\ éxito\\\\ antiguo\\\\ A→B→A\\\\ no\\\\ borra\\\\ un\\\\ draft\\\\ nuevo\\\\ aunque\\\\ tenga\\\\ el\\\\ mismo\\\\ texto$\"\""
+      ],
+      "exit_code": 0,
+      "stdout": "[\"^Inbox\\\\\\\\ —\\\\\\\\ aislamiento\\\\\\\\ del\\\\\\\\ borrador\\\\\\\\ un\\\\\\\\ éxito\\\\\\\\ antiguo\\\\\\\\ A→B→A\\\\\\\\ no\\\\\\\\ borra\\\\\\\\ un\\\\\\\\ draft\\\\\\\\ nuevo\\\\\\\\ aunque\\\\\\\\ tenga\\\\\\\\ el\\\\\\\\ mismo\\\\\\\\ texto$\"]\n",
+      "stderr": "",
+      "received_pattern": "^Inbox\\\\ —\\\\ aislamiento\\\\ del\\\\ borrador\\\\ un\\\\ éxito\\\\ antiguo\\\\ A→B→A\\\\ no\\\\ borra\\\\ un\\\\ draft\\\\ nuevo\\\\ aunque\\\\ tenga\\\\ el\\\\ mismo\\\\ texto$",
+      "pattern_preserved": false,
+      "matches_original_identity": false
+    },
+    "repaired": {
+      "input_pattern": "^Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto$",
+      "serialization": "JSON.stringify(arg), same installed pnpm Windows branch",
+      "command": "\"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\node-v20.20.2-win-x64\\node.exe\" -e \"console.log(JSON.stringify(process.argv.slice(1)))\" \"^Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto$\"",
+      "shell_argv": [
+        "/d",
+        "/s",
+        "/c",
+        "\"\"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\node-v20.20.2-win-x64\\node.exe\" -e \"console.log(JSON.stringify(process.argv.slice(1)))\" \"^Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto$\"\""
+      ],
+      "exit_code": 0,
+      "stdout": "[\"^Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto$\"]\n",
+      "stderr": "",
+      "received_pattern": "^Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto$",
+      "pattern_preserved": true,
+      "matches_original_identity": true
+    },
+    "discovery": {
+      "source": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\diagnostics\\selector-static-discovery.json",
+      "sha256": "84a41732b4a3b9a8bc6fef219a65896b929b01a708fd8aa1f5dc908f07d69e9e",
+      "identities": [
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "B5 handoff evidence > does not call discarded guidance pending delivery",
+          "fullName": "B5 handoff evidence does not call discarded guidance pending delivery",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "B5 handoff evidence > allows the current human owner to explicitly acknowledge a new queued case",
+          "fullName": "B5 handoff evidence allows the current human owner to explicitly acknowledge a new queued case",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "B5 handoff evidence > shows a durable queue without inventing notification or acknowledgement",
+          "fullName": "B5 handoff evidence shows a durable queue without inventing notification or acknowledgement",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "B5 handoff evidence > labels explicit acknowledgement without claiming clinical attention",
+          "fullName": "B5 handoff evidence labels explicit acknowledgement without claiming clinical attention",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "B5 handoff evidence > keeps uncertain guidance visible and preserves multiple open legacy cases",
+          "fullName": "B5 handoff evidence keeps uncertain guidance visible and preserves multiple open legacy cases",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > descarta el texto de Ana al cambiar al hilo de Beto",
+          "fullName": "Inbox — aislamiento del borrador descarta el texto de Ana al cambiar al hilo de Beto",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > conserva el borrador al volver a clicar el mismo hilo",
+          "fullName": "Inbox — aislamiento del borrador conserva el borrador al volver a clicar el mismo hilo",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > envía al sessionId vigente con una key de idempotencia no vacía",
+          "fullName": "Inbox — aislamiento del borrador envía al sessionId vigente con una key de idempotencia no vacía",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > no reinstala ni borra el hilo nuevo si el POST anterior termina tarde",
+          "fullName": "Inbox — aislamiento del borrador no reinstala ni borra el hilo nuevo si el POST anterior termina tarde",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > reutiliza la key si se reintenta el mismo texto tras un error de red",
+          "fullName": "Inbox — aislamiento del borrador reutiliza la key si se reintenta el mismo texto tras un error de red",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > conserva la key incierta al navegar B y volver a A con el mismo texto",
+          "fullName": "Inbox — aislamiento del borrador conserva la key incierta al navegar B y volver a A con el mismo texto",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+          "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+          "selected_by_runtime_literal": true
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > A→B→A conserva visible el 201 aunque el GET de regreso esté vacío",
+          "fullName": "Inbox — aislamiento del borrador A→B→A conserva visible el 201 aunque el GET de regreso esté vacío",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > regenera la key cuando cambia el texto después de un error",
+          "fullName": "Inbox — aislamiento del borrador regenera la key cuando cambia el texto después de un error",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > pinta el envío antes del POST y reconcilia el 201 sin duplicar",
+          "fullName": "Inbox — aislamiento del borrador pinta el envío antes del POST y reconcilia el 201 sin duplicar",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > elimina el optimista ante 400 y muestra el error del servidor",
+          "fullName": "Inbox — aislamiento del borrador elimina el optimista ante 400 y muestra el error del servidor",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > conserva el optimista reintentable ante un 5xx",
+          "fullName": "Inbox — aislamiento del borrador conserva el optimista reintentable ante un 5xx",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > deduplica un polling concurrente exclusivamente por client_message_id",
+          "fullName": "Inbox — aislamiento del borrador deduplica un polling concurrente exclusivamente por client_message_id",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > dos envíos consecutivos por Enter reciben keys distintas",
+          "fullName": "Inbox — aislamiento del borrador dos envíos consecutivos por Enter reciben keys distintas",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > no ejecuta continuaciones del POST después de desmontar el Inbox",
+          "fullName": "Inbox — aislamiento del borrador no ejecuta continuaciones del POST después de desmontar el Inbox",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > aplica el cap global de 20 intentos entre sesiones",
+          "fullName": "Inbox — aislamiento del borrador aplica el cap global de 20 intentos entre sesiones",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > oculta failed-local cuando el hilo regresa con otra sesión activa",
+          "fullName": "Inbox — aislamiento del borrador oculta failed-local cuando el hilo regresa con otra sesión activa",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > renderiza un divisor por día local de la organización",
+          "fullName": "Inbox — aislamiento del borrador renderiza un divisor por día local de la organización",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > mantiene la hora del mensaje histórico bajo el divisor Ayer",
+          "fullName": "Inbox — aislamiento del borrador mantiene la hora del mensaje histórico bajo el divisor Ayer",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > integra recibos de entrega solo en mensajes salientes del transcript",
+          "fullName": "Inbox — aislamiento del borrador integra recibos de entrega solo en mensajes salientes del transcript",
+          "selected_by_runtime_literal": false
+        },
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > actualiza todos los divisores con una sola referencia al cruzar medianoche",
+          "fullName": "Inbox — aislamiento del borrador actualiza todos los divisores con una sola referencia al cruzar medianoche",
+          "selected_by_runtime_literal": false
+        }
+      ],
+      "original_zero_outcome_report": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r10\\blocks\\frontend-test-remainder.json",
+      "original_zero_outcome_report_sha256": "0b555e264ae5d85f29c2fe7ca19dadfab3d9a242abb133af9011079752a0b9a0",
+      "static_identity_count": 26,
+      "runtime_literal_matches": 1,
+      "selected": [
+        {
+          "file": "src/pages/inbox/index.test.jsx",
+          "static_display_name": "Inbox — aislamiento del borrador > un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+          "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+          "selected_by_runtime_literal": true
+        }
+      ],
+      "static_name_format": "Vitest list TestCase.fullName joins suites and title with ' > '",
+      "canonical_name_mapping": "Exact ancestorTitles + title mapping from the preserved zero-outcome runtime inventory",
+      "static_matcher_difference": "Static AST task.suite includes the file; runtime task.suite omits it. Collect the single file without a CLI name filter, then verify the identical runtime literal against canonical names.",
+      "actual_tests_executed": 0
+    }
+  },
+  "candidate_test_file_unchanged": true,
+  "preformal_only": true,
+  "application_test_functions_invoked": false
+}

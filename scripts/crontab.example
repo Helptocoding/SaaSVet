@@ -42,7 +42,9 @@ BACKUP_DIR=/var/backups/vet
 #   HEALTHCHECK_URL=https://hc-ping.com/<uuid>
 # Deadman del reset de la demo (ADR p49) — ping solo si el reset termina exit 0:
 #   HEALTHCHECK_DEMO_RESET_URL=https://hc-ping.com/<uuid-demo-reset>
-# La App Key de B2 NO va aquí: vive en ~/.config/rclone/rclone.conf (chmod 600).
+# La App Key de B2 de BACKUPS NO va aquí: vive en ~/.config/rclone/rclone.conf (chmod 600).
+# Media operativa usa otra key dedicada en .env.prod, tras gates p60; jamás
+# reutilizar la de backups. Ver docs/runbooks/inbox-media.md.
 # La PRIVATE key de age NUNCA va al VPS (solo en restore real desde tu máquina).
 
 # m h dom mon dow command
@@ -79,6 +81,11 @@ BACKUP_DIR=/var/backups/vet
 # violation (P1, page on this).
 # ---------------------------------------------------------------------------
 35 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py audit_anchor_integrity --json >> /var/log/vet-anchor.log 2>&1
+
+# 06:45 Monterrey = 12:45 UTC — media Inbox: purga 180 días, reconciliación
+# y spool huérfano. Inerte con INBOX_MEDIA_ENABLED=False. Antes de instalar:
+# gates p60 y lifecycle físico B2 validados; runbook inbox-media.md.
+45 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py maintain_inbox_media --batch 100 --max-batches 10 >> /var/log/vet-inbox-media.log 2>&1
 
 # ---------------------------------------------------------------------------
 # Cada 30 min (:10 y :40) — Reset del tenant demo (ADR p49). Acotado a la org
@@ -122,3 +129,8 @@ BACKUP_DIR=/var/backups/vet
 # 05:00 Monterrey local (domingos) = 11:00 UTC.
 # ---------------------------------------------------------------------------
 0 5 * * 0   sudo journalctl --vacuum-time=14d >> /var/log/vet-cron.log 2>&1
+
+# Inbox: observar/escalar sin I/O binario ni reintentos de purga, mismo cron.
+# Umbral 24h, detección en el siguiente tick (<=15 min si cron funciona).
+# Responsable/canal pendientes NO BLOQUEANTES: decisión del usuario 23-10-2026.
+*/15 * * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py maintain_inbox_media --alerts-only --batch 500 --max-batches 1 >> /var/log/vet-inbox-media.log 2>&1

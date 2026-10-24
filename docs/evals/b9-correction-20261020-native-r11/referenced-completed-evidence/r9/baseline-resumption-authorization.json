@@ -1,0 +1,21 @@
+{
+  "state": "USER_AUTHORIZED_BEFORE_FORMAL_SEAL",
+  "user_answer": "Sí, corregir ese baseline y continuar sin repetir PASS",
+  "recorded_utc": "2026-10-20T06:07:04Z",
+  "previous_candidate_tree": "5e11236daabf4ef70ea9d0f08fee52aed5c30ff2",
+  "candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+  "allowed_path": "backend/apps/core/tests/test_tenant_scoping_audit.py",
+  "patch_sha256": "483810b0b9474e9683316d33622480319d1e08f12a2cd66337a22482505e4aa3",
+  "retained_general_PASS": 3200,
+  "retained_expected_SKIPs": 12,
+  "new_missing_ids": 0,
+  "corrected_FAILED_ids": 1,
+  "historical_FAILED_attempts": 3,
+  "all_old_FAILs_preserved": true,
+  "accepted_historical_evidence_limitation": true,
+  "product_runtime_locks_changed": false,
+  "no_PASS_reruns": true,
+  "all_new_guards_and_remaining_original_stages_required": true,
+  "runtime_reuse_authorized_to_avoid_reinstallation": true,
+  "commits_push_deploy_activation_authorized": false
+}

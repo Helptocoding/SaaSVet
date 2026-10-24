@@ -1,0 +1,395 @@
+{
+  "status": "PASS",
+  "unique_passes": 77,
+  "new_history_cases": 27,
+  "affected_regressions": 50,
+  "initial_failed_cases": 10,
+  "method": "57 unchanged initial PASS plus 20 repaired/new cases; original hook fixtures excluded",
+  "cases": [
+    {
+      "name": "getThreadMessages — WA-HIST-01 transporta el cursor y permite cancelar la página anterior",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "getThreadMessages — WA-HIST-01 conserva la llamada de carga inicial sin opciones adicionales",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GTF-01 — navegación al final cambiar de hilo no conserva el botón del historial anterior",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GTF-01 — navegación al final permite recorrer un hilo archivado sin habilitar el envío",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-AGT-01 — turno del asistente muestra el indicador sin conceder permiso para tomar o liberar",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-AGT-01 — turno del asistente no hereda el indicador de otro hilo ni de la fila antigua",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-AGT-01 — turno del asistente un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión distingue carga inicial de lista y mensajes de un panel sin selección",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión distingue el fallo inicial de lista vacía y permite reintentar",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión explica el fallo inicial de transcript y reintenta la misma conversación",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión recupera ambos paneles automáticamente cuando vuelve la API",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión un fallo tardío del hilo anterior no contamina la racha del nuevo",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión ignora success tardío de lista tras cambiar de filtro",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión ignora failure tardío de lista tras cambiar de filtro",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-VIS-01 — polling del Inbox pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-VIS-01 — polling del Inbox cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-VIS-01 — polling del Inbox si inicia oculto no consulta la lista y usa el filtro vigente al volver",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GRP-01 — ráfagas en el transcript agrupa por autor sin ocultar mensajes, horas ni estados de entrega",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GRP-01 — ráfagas en el transcript corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador descarta el texto de Ana al cambiar al hilo de Beto",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador conserva el borrador al volver a clicar el mismo hilo",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador envía al sessionId vigente con una key de idempotencia no vacía",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador no reinstala ni borra el hilo nuevo si el POST anterior termina tarde",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador reutiliza la key si se reintenta el mismo texto tras un error de red",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador conserva la key incierta al navegar B y volver a A con el mismo texto",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador A→B→A conserva visible el 201 aunque el GET de regreso esté vacío",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador regenera la key cuando cambia el texto después de un error",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador pinta el envío antes del POST y reconcilia el 201 sin duplicar",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador elimina el optimista ante 400 y muestra el error del servidor",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador conserva el optimista reintentable ante un 5xx",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador deduplica un polling concurrente exclusivamente por client_message_id",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador dos envíos consecutivos por Enter reciben keys distintas",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador no ejecuta continuaciones del POST después de desmontar el Inbox",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador aplica el cap global de 20 intentos entre sesiones",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador oculta failed-local cuando el hilo regresa con otra sesión activa",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador renderiza un divisor por día local de la organización",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador mantiene la hora del mensaje histórico bajo el divisor Ayer",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador integra recibos de entrega solo en mensajes salientes del transcript",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Inbox — aislamiento del borrador actualiza todos los divisores con una sola referencia al cruzar medianoche",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — historial en Inbox carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — historial en Inbox el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — historial en Inbox un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — historial en Inbox la página anterior no sustituye la sesión vigente renovada por el poll",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — historial en Inbox ignora success antiguo al cambiar de hilo y aborta su petición",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — historial en Inbox ignora failure antiguo al cambiar de hilo y aborta su petición",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — historial en Inbox los hilos archivados permiten cargar anteriores sin ofrecer envío",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GTF-01 — Ir al final a 201 px del fondo: visible=true",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GTF-01 — Ir al final a 200 px del fondo: visible=false",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GTF-01 — Ir al final a 199 px del fondo: visible=false",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GTF-01 — Ir al final a 0 px del fondo: visible=false",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GTF-01 — Ir al final a -20 px del fondo: visible=false",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GTF-01 — Ir al final no aparece en un historial que cabe completo",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GTF-01 — Ir al final desaparece al volver cerca del fondo y reaparece al subir",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-GTF-01 — Ir al final Enter vuelve al fondo del panel y conserva el foco para seguir leyendo",
+      "receipt": "vitest.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-AGT-01 — turno del asistente active: explica el turno y habilita Tomar y acusar recibo al terminar",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-AGT-01 — turno del asistente human_active: explica el turno y habilita Liberar al terminar",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — umbral del viewport a scrollTop=0 sólo pide anteriores bajo 160 px",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — umbral del viewport a scrollTop=159 sólo pide anteriores bajo 160 px",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — umbral del viewport a scrollTop=160 sólo pide anteriores bajo 160 px",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial recorre 10 mensajes con páginas de 50 y cursores correctos",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial recorre 51 mensajes con páginas de 50 y cursores correctos",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial recorre 500 mensajes con páginas de 50 y cursores correctos",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial ordena empates por ID numérico y no deduplica mensajes por texto",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial fusiona páginas solapadas sin sustituir estados más recientes del poll",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial ancla la posición que la persona tiene al terminar la petición",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial ignora dos disparos mientras existe una carga y permite seguir con el siguiente cursor",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial un cursor rechazado conserva mensajes, posición y cursor y exige reintento explícito",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial detiene un cursor sin progreso con página []",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial detiene un cursor sin progreso con página [ { id: 2, body: 'Mensaje 2', …(1) } ]",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial a 500 mensajes cambia a carga manual sin descartar mensajes",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial reset aborta y descarta success antiguo, incluso A→B→A",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial reset aborta y descarta failure antiguo, incluso A→B→A",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial desmontar aborta la petición y no aplica su resultado",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    },
+    {
+      "name": "WA-HIST-01 — estado acumulativo del historial no inicia carga automática con la pestaña oculta",
+      "receipt": "vitest-repaired.json",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "formal_controller_invocations": 1,
+  "formal_block_runs": 4,
+  "formal_reruns": 0,
+  "backend_test_id_observations": 87,
+  "unique_test_ids_completed": 87,
+  "unique_test_ids_passed": 87,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "xfail": 0,
+  "profile_runs": 0,
+  "discovered_counts_not_execution": {
+    "directed": 87,
+    "full": 3331,
+    "b0": 17,
+    "b3": 42,
+    "b4": 68,
+    "b5": 37
+  },
+  "blocking_gates_passed": [
+    "directed",
+    "django-check",
+    "migration-drift"
+  ],
+  "interrupted_block": "migrate",
+  "remaining_blocks": "NOT_EXECUTED",
+  "prior_campaign_results_transferred_to_r6": false
+}

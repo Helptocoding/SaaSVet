@@ -1,0 +1,26 @@
+{
+  "kind": "frontend",
+  "labels": [
+    "src/pages/inbox/index.filters.test.jsx",
+    "--testNamePattern",
+    "un error del filtro"
+  ],
+  "working_database_migrated": false,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.filters.test.jsx",
+    "--testNamePattern",
+    "un error del filtro",
+    "--fileParallelism=false",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-fil-01-2026-10-21\\vitest-retry-selector.json"
+  ],
+  "sentry_upload_disabled": true,
+  "exit_code": 0,
+  "elapsed_s": 22.8642872999917
+}

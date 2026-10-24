@@ -100,6 +100,8 @@ def _extract_body(msg: dict):
 def _process_payload(payload):
     # Import perezoso: evita ciclos de import channels↔agent al cargar apps.
     from apps.agent.services import ingest_inbound_message, record_status_update
+    from .replies import provider_reply_target
+    from .media_policy import extract_media_metadata
 
     def objects(value):
         return [item for item in value if isinstance(item, dict)] if isinstance(value, list) else []
@@ -140,19 +142,30 @@ def _process_payload(payload):
             }
             for msg in objects(value.get('messages')):
                 event = _extract_body(msg)
-                ingest_inbound_message(
+                message = ingest_inbound_message(
                     channel,
                     wamid=msg.get('id', ''),
                     wa_id=msg.get('from', ''),
                     body=event.text,
                     payload_type=event.payload_type,
                     profile_name=profiles.get(msg.get('from'), ''),
+                    reply_to=provider_reply_target(channel, event.reply_to_id),
+                    media_metadata=extract_media_metadata(msg),
                     raw={
-                        'type': msg.get('type'),
-                        'timestamp': msg.get('timestamp'),
+                        **msg,
                         EVENT_METADATA_KEY: event.projection(),
                     },
                 )
+                # Only a newly persisted inbound reports a missing citation;
+                # redelivery neither rewrites its reference nor repeats the log.
+                if message is not None and event.reply_to_id and message.reply_to_id is None:
+                    logger.warning('INBOUND_REPLY_UNRESOLVED', extra={
+                        'event': 'INBOUND_REPLY_UNRESOLVED',
+                        'organization_public_id': str(channel.organization.public_id),
+                        'channel_account_public_id': str(channel.public_id),
+                        'message_id': message.pk,
+                        'reason': 'missing_ambiguous_or_out_of_scope',
+                    })
             for status_event in objects(value.get('statuses')):
                 record_status_update(
                     channel,

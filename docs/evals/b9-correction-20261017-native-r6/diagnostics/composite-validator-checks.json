@@ -1,0 +1,554 @@
+{
+  "state": "PASS_VALIDATOR_CHECKS",
+  "utc": "2026-10-18T05:20:41Z",
+  "source": "composite_evidence.py",
+  "source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719",
+  "syntax": "PASS",
+  "trailing_whitespace": 0,
+  "checks": [
+    {
+      "name": "relative_path_escape",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: artifact path escapes whitelist",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "invalid_block_suffix",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block suffix",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "old_sha_not_accepted_without_manifest",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: receipt candidate incompatible with block provenance: b0",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "exact_authorized_fixture_AST_and_ids",
+      "state": "PASS",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "unapproved_fixture_import",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: corrected fixture bytes are not the authorized proposal",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "unapproved_fixture_assertion_body",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: corrected fixture bytes are not the authorized proposal",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "exact_3331_blobs_plus_fixture_allowed",
+      "state": "PASS",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "other_git_blob_changed",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: one of the other 3331 Git blobs/modes/bytes changed",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "incompatible_current_candidate",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: candidate file map differs",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "valid_refs_originals_present",
+      "state": "PASS",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "old_sha_accepted_only_thirteen_authorized_labels",
+      "state": "PASS",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "old_sha_on_current_general_forbidden",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: receipt candidate incompatible with block provenance: full-general",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "old_sha_on_unknown_block_forbidden",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: receipt candidate incompatible with block provenance: profile-control",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "current_sha_cannot_masquerade_as_referenced",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: receipt candidate incompatible with block provenance: full-b8d",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "r5_partial_general_never_imported_as_PASS",
+      "state": "PASS",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "altered_bundle_reference",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: bundled reference changed: blocks/fixture.gate.json",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "altered_original_reference",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: original reference changed: blocks/fixture.gate.json",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "missing_artifact_sha",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid artifact digest",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "manifest_source_path_escape",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: source path outside whitelist",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "altered_cross_candidate_proof",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: cross-candidate fixture proof changed",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "portable_bundle_without_originals",
+      "state": "PASS",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "undeclared_block_artifact",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: block artifact outside referenced whitelist",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "manifest_changed_since_validation",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: manifest changed since phase validation",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "historical_PG_config_only_port_normalization",
+      "state": "PASS",
+      "verified_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09"
+    },
+    {
+      "name": "before_manifest:profile-base",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-base.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "before_manifest:profile-base-migrate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-base-migrate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "before_manifest:profile-blocked_llm",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-blocked_llm.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "before_manifest:profile-blocked_llm-migrate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-blocked_llm-migrate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "before_manifest:profile-meta_slow",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-meta_slow.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "before_manifest:profile-meta_slow-migrate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-meta_slow-migrate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "before_manifest:profile-duplicate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-duplicate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "before_manifest:profile-duplicate-migrate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-duplicate-migrate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "before_manifest:profile-saturation",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-saturation.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "before_manifest:profile-saturation-migrate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-saturation-migrate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "validated_manifest_phase:profile-base",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-base.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "validated_manifest_phase:profile-base-migrate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-base-migrate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "validated_manifest_phase:profile-blocked_llm",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-blocked_llm.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "validated_manifest_phase:profile-blocked_llm-migrate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-blocked_llm-migrate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "validated_manifest_phase:profile-meta_slow",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-meta_slow.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "validated_manifest_phase:profile-meta_slow-migrate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-meta_slow-migrate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "validated_manifest_phase:profile-duplicate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-duplicate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "validated_manifest_phase:profile-duplicate-migrate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-duplicate-migrate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "validated_manifest_phase:profile-saturation",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-saturation.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "validated_manifest_phase:profile-saturation-migrate",
+      "state": "PASS",
+      "origin": "CURRENT",
+      "safe_block_path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r6\\blocks\\profile-saturation-migrate.command.json",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_label:../profile-blocked_llm",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block label",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_label:profile/blocked_llm",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block label",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_label:profile\\blocked_llm",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block label",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_label:profile:blocked_llm",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block label",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_label:profile..blocked_llm",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block label",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_label:-profile",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block label",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_label:/profile",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block label",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_label:profile\\..\\escape",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block label",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_suffix:/escape.json",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block suffix",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_suffix:.gate/../../escape.json",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block suffix",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_suffix:.gate\\escape.json",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block suffix",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    },
+    {
+      "name": "invalid_suffix:..json",
+      "state": "PASS",
+      "expected_rejection": "Composite evidence: invalid block suffix",
+      "verified_source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719"
+    }
+  ],
+  "historical_block_audit": {
+    "b9-correction-20261016-native-r3": {
+      "b0": {
+        "state": "PASS",
+        "tests": 17,
+        "monitor_samples": 198,
+        "minimum_ram_bytes": 5617946624,
+        "minimum_disk_bytes": 14808444928,
+        "maximum_clock_skew_seconds": 4.100264868611703e-05
+      },
+      "b3": {
+        "state": "PASS",
+        "tests": 42,
+        "monitor_samples": 466,
+        "minimum_ram_bytes": 5284839424,
+        "minimum_disk_bytes": 14785724416,
+        "maximum_clock_skew_seconds": 0.006127979367192893
+      },
+      "b4": {
+        "state": "PASS",
+        "tests": 68,
+        "monitor_samples": 1463,
+        "minimum_ram_bytes": 5433311232,
+        "minimum_disk_bytes": 14775357440,
+        "maximum_clock_skew_seconds": 0.00011000564882124308
+      },
+      "b5": {
+        "state": "PASS",
+        "tests": 37,
+        "monitor_samples": 509,
+        "minimum_ram_bytes": 5558669312,
+        "minimum_disk_bytes": 14754557952,
+        "maximum_clock_skew_seconds": 6.849735382274957e-05
+      },
+      "full-b8b": {
+        "state": "PASS",
+        "tests": 21,
+        "monitor_samples": 964,
+        "minimum_ram_bytes": 5733941248,
+        "minimum_disk_bytes": 14739746816,
+        "maximum_clock_skew_seconds": 0.0021924471184320282
+      },
+      "full-b8c": {
+        "state": "PASS",
+        "tests": 41,
+        "monitor_samples": 1429,
+        "minimum_ram_bytes": 5867180032,
+        "minimum_disk_bytes": 14734589952,
+        "maximum_clock_skew_seconds": 0.0023725011542410357
+      }
+    },
+    "b9-correction-20261016-native-r4": {
+      "directed": {
+        "state": "PASS",
+        "tests": 87,
+        "monitor_samples": 1804,
+        "minimum_ram_bytes": 6270443520,
+        "minimum_disk_bytes": 9168125952,
+        "maximum_clock_skew_seconds": 0.0014758676911696966
+      },
+      "django-check": {
+        "state": "PASS",
+        "tests": 0,
+        "monitor_samples": 15,
+        "minimum_ram_bytes": 6873182208,
+        "minimum_disk_bytes": 9004724224,
+        "maximum_clock_skew_seconds": 1.640081791265402e-06
+      },
+      "migration-drift": {
+        "state": "PASS",
+        "tests": 0,
+        "monitor_samples": 17,
+        "minimum_ram_bytes": 7215046656,
+        "minimum_disk_bytes": 9001132032,
+        "maximum_clock_skew_seconds": 1.0263488547934685e-06
+      },
+      "migrate": {
+        "state": "PASS",
+        "tests": 0,
+        "monitor_samples": 240,
+        "minimum_ram_bytes": 6717423616,
+        "minimum_disk_bytes": 8984047616,
+        "maximum_clock_skew_seconds": 9.341243276139721e-05
+      },
+      "billing-schema": {
+        "state": "PASS",
+        "tests": 0,
+        "monitor_samples": 15,
+        "minimum_ram_bytes": 6987702272,
+        "minimum_disk_bytes": 8982327296,
+        "maximum_clock_skew_seconds": 1.2948667063028552e-06
+      }
+    },
+    "b9-correction-20261017-native-r5": {
+      "full-b8d": {
+        "state": "PASS",
+        "tests": 27,
+        "monitor_samples": 1146,
+        "minimum_ram_bytes": 4302200832,
+        "minimum_disk_bytes": 12362240000,
+        "maximum_clock_skew_seconds": 0.030151577237120364
+      },
+      "full-b8e": {
+        "state": "PASS",
+        "tests": 29,
+        "monitor_samples": 1244,
+        "minimum_ram_bytes": 5619384320,
+        "minimum_disk_bytes": 12353081344,
+        "maximum_clock_skew_seconds": 0.02715336652181577
+      }
+    }
+  },
+  "r5_required_closure_receipts_present": {
+    "final-classification.json": true,
+    "cleanup.json": true,
+    "native-closure.json": true,
+    "resource-observer-closure.json": true,
+    "awake-request/closure.json": true,
+    "delivery-verification.json": false
+  },
+  "r5_closure_status_at_check": "PENDING_REQUIRED_RECEIPTS",
+  "fixture_blob_equivalence": {
+    "original_sha256": "1c1bbded0782ac4cbfc671cefdfee27365571c05c6172a67b5804002b681838f",
+    "corrected_sha256": "b386adb26db5ee4ee5e6cffa1367ad13dbbed891e5e4f14d7ffd21bd3f23b118",
+    "source_git_blob": "19eadab2cdea2bd9b221d27387ebad1cc3e0276e",
+    "accepted_git_blob": "0933ea88307421cd623d3dbe850bbd26ce99c5af",
+    "source_bytes": 11578,
+    "accepted_bytes": 11782,
+    "body_AST_identical": true,
+    "all_test_ids_identical": true,
+    "state": "PASS",
+    "source_candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+    "accepted_candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+    "allowed_path": "backend/apps/notifications/tests/test_notifications.py",
+    "other_git_blobs_identical": 3331,
+    "authorization_sha256": "6a535723db1f9e59b4ac5d25ea9b7ad609ef425d783725eea0f724f68a4064a2",
+    "candidate_input_sha256": "addcc4d7ba3a5798afb7d75873bd4d1139eff3d840e00e1db6837a053c621c56"
+  },
+  "postgresql_configuration": {
+    "b9-correction-20261016-native-r3": {
+      "postgresql.conf": "b9c039cb7e18f7f7990a9be6dad983c45457640ccfaaef3b380805bcfc19a942",
+      "pg_hba.conf": "26ea6ac3fda1f9c542b2858643a854a716d488fe7eab3c9969d96e0baf0a0658"
+    },
+    "b9-correction-20261016-native-r4": {
+      "postgresql.conf": "b9c039cb7e18f7f7990a9be6dad983c45457640ccfaaef3b380805bcfc19a942",
+      "pg_hba.conf": "26ea6ac3fda1f9c542b2858643a854a716d488fe7eab3c9969d96e0baf0a0658"
+    },
+    "b9-correction-20261017-native-r5": {
+      "postgresql.conf": "b9c039cb7e18f7f7990a9be6dad983c45457640ccfaaef3b380805bcfc19a942",
+      "pg_hba.conf": "26ea6ac3fda1f9c542b2858643a854a716d488fe7eab3c9969d96e0baf0a0658"
+    }
+  },
+  "fixtures": "Virtual in-memory manifests/digests and metadata; exact approved Git blob read only",
+  "application_tests_executed": false,
+  "services_started": false,
+  "build_manifest_invoked": false,
+  "current_inputs_preflight_invoked": false,
+  "actual_reuse_manifest_created": false,
+  "label_API_revision": {
+    "previous_source_sha256": "9d814088d3be05d81ef1bb0267f8f56e59c2dd3bc8d93ce32ed023058829db09",
+    "previous_receipt_sha256": "98a5447cb395b62e42738d6acee43f66443a9c0fcabdf813b9105cc609bde51e",
+    "only_source_change": "source_for label regex [a-z0-9][a-z0-9-]* -> [a-z0-9][a-z0-9_-]*",
+    "unchanged_other_functions_AST": true,
+    "REUSED_mapping_unchanged": true,
+    "reused_blocks": 13,
+    "SCENARIOS_source": "../b9-correction-20261017-native-r5/run_campaign.py",
+    "SCENARIOS_source_sha256": "749c83ca7ef91e4cbcb2135c9cc2baf2382b2427de12457bb79cca62959669a2",
+    "SCENARIOS": [
+      "base",
+      "blocked_llm",
+      "meta_slow",
+      "duplicate",
+      "saturation"
+    ],
+    "tested_PROFILE_labels": [
+      "profile-base",
+      "profile-base-migrate",
+      "profile-blocked_llm",
+      "profile-blocked_llm-migrate",
+      "profile-meta_slow",
+      "profile-meta_slow-migrate",
+      "profile-duplicate",
+      "profile-duplicate-migrate",
+      "profile-saturation",
+      "profile-saturation-migrate"
+    ],
+    "current_revision_checks": 32,
+    "current_revision_positive_checks": 20,
+    "current_revision_negative_checks": 12,
+    "previous_checks_preserved_with_original_source_hash": 24,
+    "manifest_phase_fixture": "Read-only in-memory phase resolution; real safe path checks; no artifact files created",
+    "application_tests_executed": false,
+    "services_started": false,
+    "build_manifest_invoked": false
+  }
+}

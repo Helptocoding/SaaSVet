@@ -1,0 +1,22 @@
+{
+  "kind": "new",
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/ReplyQuote.test.jsx",
+    "src/pages/inbox/useThreadHistory.jump.test.jsx",
+    "src/pages/inbox/index.jump.test.jsx",
+    "--maxWorkers=1",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-rpl-06-04-2026-10-22\\new-directed-vitest.json"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 56.58206250000512,
+  "working_database_migrated": false,
+  "vitest_report": "new-directed-vitest.json",
+  "passed": 44,
+  "failed": 0
+}

@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/useInboxTitle.test.jsx",
+    "src/pages/inbox/index.test.jsx",
+    "--testNamePattern=WA-TAB-01",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-tab-01-2026-10-20\\vitest.json"
+  ],
+  "scope": "Seven new TAB-01 tests only"
+}

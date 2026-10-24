@@ -1,0 +1,401 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "full_payload_bytes": 13006,
+      "empty_delta_bytes": 86,
+      "scroll_anchor_delta_px": 0.15625,
+      "recovery_anchor_delta_px": 0.0,
+      "loaded_messages": 100,
+      "changed_tick": true,
+      "new_message": true,
+      "removed_history": true,
+      "duplicate_ids": false,
+      "explicit_full_recovery": true,
+      "resumed_delta": true,
+      "draft_preserved": true,
+      "horizontal_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "full_payload_bytes": 13006,
+      "empty_delta_bytes": 86,
+      "scroll_anchor_delta_px": 0.15625,
+      "recovery_anchor_delta_px": 0.0,
+      "loaded_messages": 100,
+      "changed_tick": true,
+      "new_message": true,
+      "removed_history": true,
+      "duplicate_ids": false,
+      "explicit_full_recovery": true,
+      "resumed_delta": true,
+      "draft_preserved": true,
+      "horizontal_overflow": false
+    }
+  ],
+  "requests": [
+    {
+      "viewport": "desktop",
+      "path": "me/",
+      "params": {},
+      "status": 200,
+      "mode": null,
+      "payload_bytes": 257
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/",
+      "params": {},
+      "status": 200,
+      "mode": "list_full",
+      "payload_bytes": 283
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/metrics/",
+      "params": {},
+      "status": 200,
+      "mode": null,
+      "payload_bytes": 4
+    },
+    {
+      "viewport": "desktop",
+      "path": "v1/dashboard/activation/",
+      "params": {},
+      "status": 200,
+      "mode": null,
+      "payload_bytes": 15
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {},
+      "status": 200,
+      "mode": "thread_full",
+      "payload_bytes": 13006
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/",
+      "params": {
+        "since": [
+          "l1"
+        ]
+      },
+      "status": 200,
+      "mode": "list_delta",
+      "payload_bytes": 128
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "since": [
+          "m1"
+        ],
+        "floor": [
+          "floor-51"
+        ]
+      },
+      "status": 200,
+      "mode": "thread_delta_empty",
+      "payload_bytes": 86
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "before": [
+          "51"
+        ]
+      },
+      "status": 200,
+      "mode": "history",
+      "payload_bytes": 12601
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/",
+      "params": {
+        "since": [
+          "l2"
+        ]
+      },
+      "status": 200,
+      "mode": "list_delta",
+      "payload_bytes": 128
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "since": [
+          "m2"
+        ],
+        "floor": [
+          "floor-1"
+        ]
+      },
+      "status": 200,
+      "mode": "thread_delta_changed",
+      "payload_bytes": 13298
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/",
+      "params": {
+        "since": [
+          "l2"
+        ]
+      },
+      "status": 400,
+      "mode": null,
+      "payload_bytes": 61
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "since": [
+          "m2"
+        ],
+        "floor": [
+          "floor-1"
+        ]
+      },
+      "status": 400,
+      "mode": null,
+      "payload_bytes": 66
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/",
+      "params": {},
+      "status": 200,
+      "mode": "list_full",
+      "payload_bytes": 283
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "floor": [
+          "floor-1"
+        ]
+      },
+      "status": 200,
+      "mode": "thread_full",
+      "payload_bytes": 25545
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/",
+      "params": {
+        "since": [
+          "l1"
+        ]
+      },
+      "status": 200,
+      "mode": "list_delta",
+      "payload_bytes": 128
+    },
+    {
+      "viewport": "desktop",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "since": [
+          "m1"
+        ],
+        "floor": [
+          "floor-1"
+        ]
+      },
+      "status": 200,
+      "mode": "thread_delta_empty",
+      "payload_bytes": 86
+    },
+    {
+      "viewport": "mobile",
+      "path": "me/",
+      "params": {},
+      "status": 200,
+      "mode": null,
+      "payload_bytes": 257
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/",
+      "params": {},
+      "status": 200,
+      "mode": "list_full",
+      "payload_bytes": 283
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/metrics/",
+      "params": {},
+      "status": 200,
+      "mode": null,
+      "payload_bytes": 4
+    },
+    {
+      "viewport": "mobile",
+      "path": "v1/dashboard/activation/",
+      "params": {},
+      "status": 200,
+      "mode": null,
+      "payload_bytes": 15
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {},
+      "status": 200,
+      "mode": "thread_full",
+      "payload_bytes": 13006
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/",
+      "params": {
+        "since": [
+          "l1"
+        ]
+      },
+      "status": 200,
+      "mode": "list_delta",
+      "payload_bytes": 128
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "since": [
+          "m1"
+        ],
+        "floor": [
+          "floor-51"
+        ]
+      },
+      "status": 200,
+      "mode": "thread_delta_empty",
+      "payload_bytes": 86
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "before": [
+          "51"
+        ]
+      },
+      "status": 200,
+      "mode": "history",
+      "payload_bytes": 12601
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/",
+      "params": {
+        "since": [
+          "l2"
+        ]
+      },
+      "status": 200,
+      "mode": "list_delta",
+      "payload_bytes": 128
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "since": [
+          "m2"
+        ],
+        "floor": [
+          "floor-1"
+        ]
+      },
+      "status": 200,
+      "mode": "thread_delta_changed",
+      "payload_bytes": 13298
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/",
+      "params": {
+        "since": [
+          "l2"
+        ]
+      },
+      "status": 400,
+      "mode": null,
+      "payload_bytes": 61
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "since": [
+          "m2"
+        ],
+        "floor": [
+          "floor-1"
+        ]
+      },
+      "status": 400,
+      "mode": null,
+      "payload_bytes": 66
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/",
+      "params": {},
+      "status": 200,
+      "mode": "list_full",
+      "payload_bytes": 283
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "floor": [
+          "floor-1"
+        ]
+      },
+      "status": 200,
+      "mode": "thread_full",
+      "payload_bytes": 25545
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/",
+      "params": {
+        "since": [
+          "l1"
+        ]
+      },
+      "status": 200,
+      "mode": "list_delta",
+      "payload_bytes": 128
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/threads/ana/main/messages/",
+      "params": {
+        "since": [
+          "m1"
+        ],
+        "floor": [
+          "floor-1"
+        ]
+      },
+      "status": 200,
+      "mode": "thread_delta_empty",
+      "payload_bytes": 86
+    }
+  ],
+  "page_errors": []
+}

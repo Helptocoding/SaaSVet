@@ -1,0 +1,310 @@
+{
+  "status": "PASS",
+  "scope": "WA-RPL-05 quoted reply composer",
+  "unique_pass": 61,
+  "new_cases": 27,
+  "affected_cases": 34,
+  "results": {
+    "frontend/src/api/inbox.test.js::sendInboxMessage envía reply_to_id junto con cuerpo, key y señal sin cambiar el contrato previo": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage omite la cita ausente null en lugar de enviar null": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage omite la cita ausente undefined en lugar de enviar null": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage envía la key en X-Idempotency-Key cuando se proporciona": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage mantiene compatible la llamada sin key durante la integración": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage propaga AbortSignal sin perder la key de idempotencia": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta selecciona una cita con autor y extracto, enfoca el campo y conserva el borrador": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta seleccionar otro mensaje sustituye la única cita activa": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cancelar mediante Escape conserva texto y foco": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cancelar mediante botón conserva texto y foco": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta envía con Enter la cita capturada y limpia antes del acuse": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta envía con botón la cita capturada y limpia antes del acuse": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cancelar y enviar después omite replyToId": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cambiar a Beto-main cancela la cita aunque sea la misma persona": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cambiar a Ana-second cancela la cita aunque sea la misma persona": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta volver a pulsar el hilo seleccionado conserva la cita": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un poll del mismo episodio conserva cita y borrador": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta otro episodio retira la cita antes de permitir un envío nuevo": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta sin permiso send no ofrece selección de cita ni composer": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta el hilo archivado conserva lectura sin acciones de respuesta": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta una ventana cerrada deshabilita seleccionar y enviar": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta si vence la ventana después de seleccionar no envía la cita": {
+      "status": "passed",
+      "receipt": "boundary-corrected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta media sin cuerpo mantiene una cita seleccionable con su tipo": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cita al autor saliente human_staff con su etiqueta existente": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cita al autor saliente agent con su etiqueta existente": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta acota el extracto a 80 puntos Unicode sin cortar un emoji": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un reintento conserva key y cita originales sin consumir la selección siguiente": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un POST antiguo no retira la cita seleccionada en el hilo nuevo": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta Enter de composición IME y Shift+Enter no consumen la cita": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un texto vacío no consume la cita seleccionada": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces copia el cuerpo original completo, sin horas ni autor, y confirma el éxito": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces muestra un error recuperable cuando el navegador rechaza la copia": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces maneja clipboard no disponible sin anunciar una copia falsa": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces copia teléfono y ofrece tel: también con hilo archivado=false": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces copia teléfono y ofrece tel: también con hilo archivado=true": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CMP-01 — altura y contador del composer crece al pegar 2000 caracteres, limita la altura y encoge al borrar": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CMP-01 — altura y contador del composer muestra el contador después de 3600 y conserva el límite de 4000": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CMP-01 — altura y contador del composer reinicia altura y contador al enviar sin esperar el POST": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CMP-01 — altura y contador del composer descarta texto y contador al cambiar de cliente": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador descarta el texto de Ana al cambiar al hilo de Beto": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador conserva el borrador al volver a clicar el mismo hilo": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador envía al sessionId vigente con una key de idempotencia no vacía": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador no reinstala ni borra el hilo nuevo si el POST anterior termina tarde": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador reutiliza la key si se reintenta el mismo texto tras un error de red": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador conserva la key incierta al navegar B y volver a A con el mismo texto": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador A→B→A conserva visible el 201 aunque el GET de regreso esté vacío": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador regenera la key cuando cambia el texto después de un error": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador pinta el envío antes del POST y reconcilia el 201 sin duplicar": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador elimina el optimista ante 400 y muestra el error del servidor": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador conserva el optimista reintentable ante un 5xx": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador deduplica un polling concurrente exclusivamente por client_message_id": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador dos envíos consecutivos por Enter reciben keys distintas": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador no ejecuta continuaciones del POST después de desmontar el Inbox": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador aplica el cap global de 20 intentos entre sesiones": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador oculta failed-local cuando el hilo regresa con otra sesión activa": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador renderiza un divisor por día local de la organización": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador mantiene la hora del mensaje histórico bajo el divisor Ayer": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador integra recibos de entrega solo en mensajes salientes del transcript": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador actualiza todos los divisores con una sola referencia al cruzar medianoche": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    }
+  },
+  "initial_failure": {
+    "receipt": "new-directed-vitest.json",
+    "ids": [
+      "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta si vence la ventana después de seleccionar no envía la cita"
+    ],
+    "cause": "Fixture mocked timers without Date; corrected only the clock and reran one case"
+  },
+  "source_sha256": {
+    "frontend/src/api/inbox.js": "a465b0261da0ebca40592c59e4c4a05bde1d9f0d042ada39603b38751cdd6b48",
+    "frontend/src/api/inbox.test.js": "03d85624fdc8bad1ff590d88ae238158b4f7d3efe58803452cf01c4cc78023e4",
+    "frontend/src/pages/inbox/index.jsx": "11a3a45f2610a0564364a79646f0b6fbbac7d4ff86a4ec4531d744f153239047",
+    "frontend/src/pages/inbox/index.replies.test.jsx": "6d11ffd8c2354d04c03221d69498b8a5e614c8d9534ffff6d380f4133500d1c1",
+    "frontend/src/pages/inbox/inbox.module.css": "d97a11af1cb6d3d518957970dd6dc21e68e03fc4dac2b38a45c790cf259c9b2f",
+    "docs/modules/frontend.md": "b69c81341b96ea0e3d9d3a9ca2a5d28d20ef23c27d8e0145efb7acc96be2dbf4",
+    "docs/CIERRE-INBOX-WHATSAPP.md": "5513ca557e3e82eede54d92eba2ce822157c2b12f28978f9afd215f2ea48db20",
+    "docs/plan-implementacion-whatsapp-inbox-2026-08-22.md": "8b12b176e3a31b10eb44b454414c76eba293d20264d89e06c5d0545f985cea08",
+    "CHANGELOG.md": "b2c1fdbfe25c4f32e520c3bafa868d070ce81b9bb49435acc762bbcbabb54e41",
+    "docs/evals/inbox-rpl-05-2026-10-21/README.md": "e5fe11c1a30ccecc96e7d65c5a5ddd9a194a55b5d35138c2ad815696bcfa25ad",
+    "docs/evals/inbox-rpl-05-2026-10-21/run_checks.py": "5c06e73c9e5337701cdbe7dbade6b5567f496bb3b117eb836693c573bd3d9350",
+    "docs/evals/inbox-rpl-05-2026-10-21/check_browser.py": "d50df1804baae8de441d01a6a45c782e697e6d3c80c30273e5970f215a24f1ad",
+    "docs/evals/inbox-rpl-05-2026-10-21/run_browser.py": "454ad873d2f20755c4e322ca2bbbadb44d8a50b174ad45da38f35f8be66e67dd",
+    "docs/evals/inbox-rpl-05-2026-10-21/verify.py": "8bf8efc10df54b90c432da84a9d8f6434dbc31cc93f592babece10b375332fec"
+  },
+  "artifact_sha256": {
+    "affected-directed-vitest.json": "a8cc535731bf47eacbd3456234c5c72b66d19a23113aded6ce66d2c25d7fd3a8",
+    "affected-directed.json": "94295f1473ebde1741b40b54c96798c2acf928b9b5e1450fe44c6e979edb0853",
+    "affected-directed.log": "5decce40213cd6f30515bd18066f8446b0eb27a4353a9fac377dda3fa5a15e6b",
+    "boundary-corrected-vitest.json": "9cc31b086c48b84a54069d7365bc45b2fb8c6dd04d45cccff29503eaed3008d8",
+    "boundary-corrected.json": "ea7c48ce416a640bb411628df78a9ad843c9f941c5668beef4747dd306eaa731",
+    "boundary-corrected.log": "7256e7bf542482a79bbdf49fbea08f29f83fe4c9d59352c11d1b7ea9b4ae3e37",
+    "browser-run.json": "d3542a7b54b1bef96d690ed9ec35eb5ed04fc6457efda4d57a775dfddc94cba9",
+    "browser.json": "bd0732be20a6ae1e36fd2227ab25716dcfc45f7bfe37fffe7ce816a4d31918a5",
+    "browser.log": "b0a253e8e4097da3dd31057d52ebe6efb7376304dc6df827699746856893dc50",
+    "build-final.json": "43037b58169efd4686a2b6d5d8ab8e80f30af8da1b32fbe0fb43a4240037f030",
+    "build-final.log": "6d8a72d09a0caf4df7ddbe76f64514d8eb46cba4f07ec355ddcd1691d79e3967",
+    "composer-desktop.png": "de250d8f6c3e5036d81b1a5e63721a84258ee620d486525613b63461d62428e2",
+    "composer-mobile.png": "1fb2b06e7fc3d4431160b4227defabae39f41dd966bca0f606d577466c54fea5",
+    "lint-directed.json": "7a1a163f554ac16fd89bb0dba8875ddc10db3a4b961fcf4246abf06ed6d1ef2e",
+    "lint-directed.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "lint-fixture-final.json": "d24611e604af087a9c8b9bc3d699f785bb0dccba8bf2cd4de3400ead700ea8f8",
+    "lint-fixture-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "new-directed-vitest.json": "4bd0d2d1723dc3177efd443ae1e3f303b0b45710909741151c75166a0ad6baae",
+    "new-directed.json": "314b43eca8c4035f40ce9e9cc0b24274e5124e522598b6c113db6bc9d2ddd1e1",
+    "new-directed.log": "46bbb2a3ebcc5463ddab1b9fddcf833c883cc8c93467cd9c098c4bcc7a4a156d",
+    "vite.log": "206dd528697ae03ad84a3449a8177ecd661eb3484b6c50ef5fc599811153b5ce"
+  },
+  "working_database_migrated": false,
+  "backend_changed": false,
+  "synthetic_browser_api": true,
+  "native_provider_citation": "IMPLEMENTATION_PENDING",
+  "real_meta": "POSTPONED_PENDING",
+  "next_task": "WA-RPL-06",
+  "diff_check": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+}

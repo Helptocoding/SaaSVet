@@ -70,8 +70,10 @@ class MetaWhatsAppProvider:
             )
         return token
 
-    def send_text(self, to_wa_id, body):
+    def send_text(self, to_wa_id, body, *, reply_to_id=None):
         """No network retries. 5xx/network/invalid 2xx remain uncertain."""
+        if reply_to_id is not None and not valid_provider_id(reply_to_id):
+            return SendResult('known_rejected', code='invalid_reply_id')
         base = getattr(settings, 'WHATSAPP_API_BASE_URL', DEFAULT_API_BASE)
         url = f"{base}/{self.channel_account.external_account_id}/messages"
         try:
@@ -88,6 +90,7 @@ class MetaWhatsAppProvider:
                     'to': to_wa_id,
                     'type': 'text',
                     'text': {'body': body},
+                    **({'context': {'message_id': reply_to_id}} if reply_to_id else {}),
                 },
                 timeout=15,
                 allow_redirects=False,

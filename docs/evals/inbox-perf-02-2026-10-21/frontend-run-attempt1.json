@@ -1,0 +1,16 @@
+{
+  "exit_code": 1,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "--testNamePattern=WA-PERF-02|WA-LDE-01|WA-VIS-01|WA-TAB-01",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-perf-02-2026-10-21\\vitest.json"
+  ],
+  "scope": "New PERF-02 and directly affected list loading, visibility polling and tab title only"
+}

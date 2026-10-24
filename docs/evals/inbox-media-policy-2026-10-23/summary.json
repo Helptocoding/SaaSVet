@@ -1,0 +1,33 @@
+{
+  "state": "PASS_LOCAL_ONLY",
+  "policy": "180d availability / 7d verified operational purge",
+  "tests": {
+    "test-operations-final.json": {
+      "tests": 6,
+      "errors": 0,
+      "skipped": false,
+      "database_removed": true,
+      "exit_code": 0
+    },
+    "test-policy-first.json": {
+      "tests": 46,
+      "errors": 1,
+      "skipped": false,
+      "database_removed": true,
+      "exit_code": 1
+    }
+  },
+  "unique_tests_passed": 49,
+  "initial_failure": "one outdated maintenance-report mock; corrected and targeted rerun",
+  "restore_drill": "real pg_dump/pg_restore, isolated disposable PostgreSQL, synthetic local objects",
+  "landing_pages": 18,
+  "local_migration": "channels.0018_media_retention_policy",
+  "historical_immutable_artifacts_verified": 102,
+  "ops_recipient_channel": "ACCEPTED_DEBT_NON_BLOCKING",
+  "b9": "ACCEPTED_DEBT_NON_BLOCKING; no rerun",
+  "provider_b2_real": "PENDING",
+  "meta_reception": "DEFERRED_TO_USER",
+  "privacy_published": false,
+  "legal_seed_executed": false,
+  "whatsapp_activated": false
+}

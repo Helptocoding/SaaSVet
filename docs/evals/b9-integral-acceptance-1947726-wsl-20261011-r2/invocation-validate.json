@@ -1,0 +1,21 @@
+{
+  "step": "validate",
+  "state": "COMPLETED",
+  "argv": [
+    "rtk",
+    "proxy",
+    "wsl.exe",
+    "-d",
+    "Ubuntu-24.04",
+    "--exec",
+    "/home/lap/b9i-wsl-1947726-20261011-r2/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011-r2/venv/bin/python",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r2/launch_campaign.py",
+    "--validate-only"
+  ],
+  "utc_started": "2026-10-12T00:30:58Z",
+  "exit_code": 0,
+  "seconds": 4.534144200002629
+}

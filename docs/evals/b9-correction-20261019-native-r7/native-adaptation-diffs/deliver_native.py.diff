@@ -1,0 +1,17 @@
+--- native-r6/deliver_native.py
++++ native-r7/deliver_native.py
+@@ -67,12 +67,13 @@
+     save('index-before-delivery.json', baseline)
+     assert HERE.name not in (REPO / '.gitattributes').read_text(encoding='utf-8')
+     assert HERE.name not in (REPO / '.gitignore').read_text(encoding='utf-8')
+-    attributes = (f'\n# B9E Windows native-20261017-r5: preserve original evidence bytes.\n'
++    attributes = (f'\n# B9E Windows native-r7: preserve original evidence bytes.\n'
+         f'docs/evals/{HERE.name}/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol\n'
+         f'docs/evals/{HERE.name}/evidence-packages/* -diff\n'
+         f'docs/evals/{HERE.name}/receipt-adapter.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol\n'
+         f'docs/evals/{HERE.name}/native-adaptation-diffs/*.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol\n'
+         f'docs/evals/{HERE.name}/referenced-evidence/**/*.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol\n'
++        f'docs/evals/{HERE.name}/referenced-case-evidence/**/*.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol\n'
+         f'docs/evals/{HERE.name}/correction.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol\n')
+     ignore = (f'\n# Original logs are included in the independently verified evidence package.\n'
+         f'docs/evals/{HERE.name}/**/*.log\n'

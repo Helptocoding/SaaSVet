@@ -86,7 +86,7 @@ def normalize_whatsapp_event(msg: dict) -> ChannelEvent:
     kind = _string(msg.get('type')) or 'unknown'
     text, source, interaction, action_id = '', 'none', None, None
     payload_type = kind if kind in {'text', 'audio', 'image', 'document',
-                                   'location', 'sticker'} else 'other'
+                                   'location', 'sticker', 'video'} else 'other'
     media = _mapping(msg.get(kind)) if kind in MEDIA_TYPES else {}
     if kind == 'text':
         text = _string(_mapping(msg.get('text')).get('body'))
@@ -151,10 +151,10 @@ def _valid_projection(value, payload_type: str) -> bool:
     if not kind or source not in {'text', 'caption', 'title', 'none'}:
         return False
     expected = kind if kind in {'text', 'audio', 'image', 'document',
-                               'location', 'sticker'} else 'other'
+                               'location', 'sticker', 'video'} else 'other'
     if kind in {'interactive', 'button'} and source == 'title':
         expected = 'button_reply'
-    if payload_type != expected:
+    if payload_type != expected and not (kind == 'video' and payload_type == 'other'):
         return False
     if source == 'text' and kind != 'text':
         return False

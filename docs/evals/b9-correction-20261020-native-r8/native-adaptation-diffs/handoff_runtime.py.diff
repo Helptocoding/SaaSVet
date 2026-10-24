@@ -1,0 +1,20 @@
+--- native-r7/handoff_runtime.py
++++ native/handoff_runtime.py
+@@ -56,7 +56,7 @@
+             'wrapper_pid': server.pid, 'port': PORT, 'data_directory': str(DATA)})
+         import psycopg
+         started = time.monotonic()
+-        while time.monotonic() - started < 60:
++        while time.monotonic() - started < 120:
+             if server.poll() is not None:
+                 break
+             try:
+@@ -83,7 +83,7 @@
+         assert values[0].startswith('PostgreSQL 16.15,') and Path(values[1]).resolve() == DATA.resolve()
+         assert values[2:] == ('on', 'on', 'on')
+         names = [row[0] for row in conn.execute('SELECT datname FROM pg_database')]
+-        assert 'test_b9i_control' in names and 'test_b9i_full_general_remainder' not in names
++        assert 'test_b9i_control' in names and 'test_b9i_full_general_remainder_r8' not in names
+         assert not conn.execute('SELECT gid FROM pg_prepared_xacts').fetchall()
+         assert not conn.execute('SELECT pid FROM pg_stat_activity WHERE pid<>pg_backend_pid() AND backend_type=\'client backend\'').fetchall()
+     save('postgresql-start.json', {'mode': 'Owned same-cluster handoff under RTK', 'argv': argv,

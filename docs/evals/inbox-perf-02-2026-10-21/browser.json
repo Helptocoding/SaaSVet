@@ -1,0 +1,182 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "rows_reachable": 250,
+      "order_and_uniqueness": true,
+      "filter_resets_offset": true,
+      "error_retains_rows_and_draft": true,
+      "retry_same_offset": true,
+      "button_height": 44,
+      "unobscured_hit_area": true,
+      "horizontal_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "rows_reachable": 250,
+      "order_and_uniqueness": true,
+      "filter_resets_offset": true,
+      "error_retains_rows_and_draft": true,
+      "retry_same_offset": true,
+      "button_height": 44,
+      "unobscured_hit_area": true,
+      "horizontal_overflow": false
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "me/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {
+        "offset": [
+          "100"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {
+        "offset": [
+          "200"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-249/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {
+        "archived": [
+          "1"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {
+        "offset": [
+          "100"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {
+        "offset": [
+          "100"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "me/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {
+        "offset": [
+          "100"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {
+        "offset": [
+          "200"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-249/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {
+        "archived": [
+          "1"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {
+        "offset": [
+          "100"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {
+        "offset": [
+          "100"
+        ]
+      }
+    }
+  ],
+  "page_errors": [],
+  "temporary_server_listening": false
+}

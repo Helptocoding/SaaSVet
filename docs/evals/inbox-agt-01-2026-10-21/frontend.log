@@ -1,0 +1,18 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/index.test.jsx (62 tests | 53 skipped) 6720ms
+     ✓ allows the current human owner to explicitly acknowledge a new queued case  1079ms
+     ✓ active: explica el turno y habilita Tomar y acusar recibo al terminar  419ms
+     ✓ human_active: explica el turno y habilita Liberar al terminar  420ms
+     ✓ no hereda el indicador de otro hilo ni de la fila antigua  414ms
+     ✓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto  735ms
+     ✓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío  2152ms
+     ✓ no ejecuta continuaciones del POST después de desmontar el Inbox  976ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed | 53 skipped (62)
+   Start at  08:30:31
+   Duration  25.07s (transform 1.72s, setup 942ms, import 3.65s, tests 6.72s, environment 8.98s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-agt-01-2026-10-21/vitest.json

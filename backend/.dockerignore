@@ -25,6 +25,8 @@ htmlcov/
 # Local runtime artifacts
 logs/*.log
 staticfiles/
+private-media/
+**/saaslyvet-inbox-media-spool/
 
 # Repo metadata
 .git
@@ -43,3 +45,5 @@ docs/
 
 # Lockfile from old setup is irrelevant inside backend context
 skills-lock.json
+
+**/inbox-media-revocations/

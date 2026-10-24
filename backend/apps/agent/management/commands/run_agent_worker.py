@@ -38,7 +38,7 @@ class Command(BaseCommand):
         parser.add_argument('--poll', type=float, default=1.0,
                             help='Segundos de espera cuando no hay trabajo')
         parser.add_argument('--batch', type=int, default=10)
-        parser.add_argument('--mode', choices=('planner', 'sender', 'both'), default='both',
+        parser.add_argument('--mode', choices=('planner', 'sender', 'media', 'both'), default='both',
                             help='B4: planner y sender pueden ejecutarse por separado')
 
     def handle(self, *args, **options):
@@ -66,25 +66,27 @@ class Command(BaseCommand):
         cycles = 0
         while not self._stop:
             processed = (process_pending_conversations(batch=options['batch'])
-                         if options['mode'] != 'sender' else 0)
+                         if options['mode'] in ('planner', 'both') else 0)
             sent = (send_pending_outbound(batch=options['batch'] * 2)
-                    if options['mode'] != 'planner' else 0)
+                    if options['mode'] in ('sender', 'both') else 0)
+            from apps.channels.media_worker import download_pending_media
+            downloaded = (download_pending_media(batch=1) if options['mode'] in ('media', 'both') else 0)
 
             cycles += 1
             if cycles % _DEADMAN_EVERY_CYCLES == 0:
                 self._ping_deadman()
                 # Pasadas periódicas (baratas, poco frecuentes):
-                if options['mode'] != 'sender':
+                if options['mode'] in ('planner', 'both'):
                     from apps.agent.policy import close_inactive_conversations, nudge_abandoned_flows
                     close_inactive_conversations()
                     nudge_abandoned_flows()
-                if options['mode'] != 'planner':
+                if options['mode'] in ('sender', 'both'):
                     from apps.agent.sender import observe_outbound
                     observe_outbound()
 
             if options['once']:
                 self.stdout.write(
-                    f"ciclo único: {processed} conversaciones, {sent} envíos"
+                    f"ciclo único: {processed} conversaciones, {sent} envíos, {downloaded} archivos"
                 )
                 break
             time.sleep(options['poll'])  # bounded even under conflicts/backlog

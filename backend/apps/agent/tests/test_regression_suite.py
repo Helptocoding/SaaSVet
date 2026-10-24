@@ -147,11 +147,14 @@ class ReadFlowTests(RegressionBase):
             scripted=[
                 LLMResult(kind="tool_call", tool_name="get_service_catalog",
                           tool_args={"query": "consulta"}),
-                LLMResult(kind="text", text="La consulta cuesta $350.00 🙂"),
+                LLMResult(kind="text", text="La consulta cuesta $999.00 USD 🙂"),
             ],
         )
-        self.assertEqual(bodies[-1], tier0.T0_GUARD_BLOCKED)
-        self.assertNotIn("350", bodies[-1])  # B0: precio en prosa requiere revisión.
+        # Only the validated catalog result may supply service, price/currency.
+        # The model's conflicting price and currency must never reach the user.
+        self.assertEqual(bodies[-1], "Consulta general: $350.00 MXN.")
+        self.assertNotIn("999", bodies[-1])
+        self.assertNotIn("USD", bodies[-1])
 
     def test_int10_clinic_info(self):
         bodies, _, _ = self._turn(

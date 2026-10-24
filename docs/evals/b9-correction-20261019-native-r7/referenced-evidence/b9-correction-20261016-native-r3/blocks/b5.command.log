@@ -1,0 +1,464 @@
+Found 37 test(s).
+Creating test database for alias 'default' ('test_b9i_b5')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying organizations.0001_initial... OK
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying users.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying organizations.0002_organization_timezone_and_more... OK
+  Applying organizations.0003_organization_tax_rate... OK
+  Applying organizations.0004_org_default_timezone_mexico... OK
+  Applying organizations.0005_organizationsettings... OK
+  Applying organizations.0006_alter_organizationsettings_auto_create_invoice_on_done_and_more... OK
+  Applying organizations.0007_sync_org_settings_data... OK
+  Applying organizations.0008_day6_add_public_id... OK
+  Applying organizations.0009_organizationsettings_require_open_cash_session... OK
+  Applying organizations.0010_organization_is_demo... OK
+  Applying organizations.0011_clinic_configuration_phase1... OK
+  Applying organizations.0012_remove_organizationsettings_auto_create_invoice_on_done_and_more... OK
+  Applying patients.0001_initial... OK
+  Applying patients.0002_alter_owner_organization_alter_pet_organization... OK
+  Applying patients.0003_alter_pet_owner... OK
+  Applying patients.0004_pet_birth_date_pet_color_pet_sex_alter_pet_breed... OK
+  Applying patients.0005_owner_created_at_owner_created_by_owner_is_active_and_more... OK
+  Applying patients.0006_remove_pet_patients_pe_organiz_ac3681_idx_and_more... OK
+  Applying patients.0007_remove_owner_patients_ow_organiz_e2fb0a_idx_and_more... OK
+  Applying patients.0008_pet_is_generic... OK
+  Applying patients.0009_add_public_id_to_exposed_models... OK
+  Applying patients.0010_unique_generic_pet_per_organization... OK
+  Applying patients.0011_alter_pet_owner... OK
+  Applying patients.0012_owner_owner_name_trgm_pet_pet_name_trgm... OK
+  Applying patients.0013_owner_legacy_id_pet_legacy_id_and_more... OK
+  Applying patients.0014_alter_owner_phone... OK
+  Applying patients.0015_alter_pet_species... OK
+  Applying patients.0016_owner_extra_data_pet_extra_data... OK
+  Applying patients.0017_owner_owner_phone_trgm_owner_owner_legacy_trgm_and_more... OK
+  Applying agent.0001_initial... OK
+  Applying channels.0001_initial... OK
+  Applying channels.0002_channelaccount_access_token_encrypted_and_more... OK
+  Applying channels.0003_message_process_attempts... OK
+  Applying patients.0018_owner_phone_normalized... OK
+  Applying agent.0002_initial... OK
+  Applying agent.0003_conversation_total_llm_calls_humanhandoff_llmcall_and_more... OK
+  Applying agent.0004_agentsettings_default_veterinarian_and_more... OK
+  Applying agent.0005_contactidentity_linked_via... OK
+  Applying agent.0006_conversation_processing_until... OK
+  Applying agent.0007_contactidentity_proactive_opt_out... OK
+  Applying agent.0008_conversationgoal... OK
+  Applying agent.0009_remove_agentsettings_business_hours... OK
+  Applying agent.0010_turndecision... OK
+  Applying agent.0011_alter_humanhandoff_reason_code... OK
+  Applying agent.0012_commitment_lifecycle... OK
+  Applying agent.0013_identity_commitments... OK
+  Applying agent.0014_contactidentity_auto_rematch_blocked... OK
+  Applying agent.0015_contact_identity_verification... OK
+  Applying agent.0016_f2_message_contact_and_close_reason... OK
+  Applying channels.0004_f2_message_contact_and_close_reason... OK
+  Applying channels.0005_f2_backfill_message_contact... OK
+  Applying channels.0006_f2_message_contact_index... OK
+  Applying channels.0007_channelaccount_public_id... OK
+  Applying channels.0008_message_semantic_operation... OK
+  Applying channels.0009_message_idempotency_key... OK
+  Applying channels.0010_message_processing_failure_notice... OK
+  Applying agent.0017_contactidentity_public_id... OK
+  Applying agent.0018_f5_drop_conversation_summary... OK
+  Applying agent.0019_conversation_intake_path... OK
+  Applying agent.0020_conversationgoal_authorization_message... OK
+  Applying agent.0021_turn_operation_assessment... OK
+  Applying agent.0022_conversation_ownership_epoch_turnwork... OK
+  Applying channels.0011_message_origin_epoch_message_output_ordinal_and_more... OK
+  Applying channels.0012_b3_scope_and_membership... OK
+  Applying channels.0013_b4_durable_sender... OK
+  Applying channels.0014_alter_message_semantic_type... OK
+  Applying appointments.0001_initial... OK
+  Applying appointments.0002_appointment_end_datetime_appointment_start_datetime_and_more... OK
+  Applying appointments.0003_backfill_start_end_datetime... OK
+  Applying appointments.0004_appointment_created_at_appointment_created_by_and_more... OK
+  Applying appointments.0005_appointment_appointment_end_after_start... OK
+  Applying appointments.0006_appointment_appointment_organiz_abc1ec_idx... OK
+  Applying appointments.0007_add_cancellation_reason_and_new_statuses... OK
+  Applying appointments.0008_appointmentstatuschange... OK
+  Applying appointments.0009_add_public_id_to_exposed_models... OK
+  Applying appointments.0010_appointment_walk_in... OK
+  Applying appointments.0011_appointment_idx_appt_org_start_status... OK
+  Applying appointments.0012_alter_appointment_end_datetime_and_more... OK
+  Applying appointments.0013_appointment_idempotency_key_and_more... OK
+  Applying appointments.0014_appointment_no_overlap_per_vet... OK
+  Applying appointments.0015_appointment_category... OK
+  Applying agent.0023_humanhandoff_acknowledged_at_and_more... OK
+  Applying agent.0024_matter_binding_b6... OK
+  Applying agent.0025_conversation_operation_b7a... OK
+  Applying agent.0026_b7b_consent_evidence... OK
+  Applying channels.0015_b7b_receipt_guard... OK
+  Applying agent.0027_attendance_consent_policy... OK
+  Applying agent.0028_b9_operational_budget... OK
+  Applying medical_records.0001_initial... OK
+  Applying medical_records.0002_medicalrecord_veterinarian_alter_medicalrecord_pet... OK
+  Applying medical_records.0003_alter_medicalrecord_options_and_more... OK
+  Applying medical_records.0004_medicalrecord_created_by_medicalrecord_is_active_and_more... OK
+  Applying medical_records.0005_medicalrecord_medical_rec_organiz_12d8fd_idx... OK
+  Applying medical_records.0006_medicalrecord_close_fields... OK
+  Applying inventory.0001_initial... OK
+  Applying inventory.0002_product_category_product_requires_prescription... OK
+  Applying inventory.0003_product_sale_price... OK
+  Applying inventory.0004_add_internal_code_and_presentation... OK
+  Applying inventory.0005_data_create_presentations... OK
+  Applying inventory.0006_add_presentation_fks_to_movements... OK
+  Applying inventory.0007_data_populate_presentation_fks... OK
+  Applying inventory.0008_finalize_inventory_restructure... OK
+  Applying inventory.0009_alter_presentation_organization... OK
+  Applying billing.0001_initial... OK
+  Applying billing.0002_initial... OK
+  Applying billing.0003_invoice_invoice_type_invoice_medical_record... OK
+  Applying billing.0004_invoiceitem_presentation_alter_invoice_status_and_more... OK
+  Applying inventory.0010_stockmovement_invoice... OK
+  Applying inventory.0011_medicalrecordproduct_created_at_and_more... OK
+  Applying inventory.0012_presentation_presentation_stock_non_negative_and_more... OK
+  Applying billing.0005_invoiceitem_discount... OK
+  Applying billing.0006_invoice_is_active_invoice_updated_by_and_more... OK
+  Applying billing.0007_remove_invoiceitem_billing_inv_organiz_6da732_idx_and_more... OK
+  Applying billing.0008_remove_product_legacy_xor_constraint... OK
+  Applying billing.0009_remove_invoiceitem_invoiceitem_exactly_one_source_and_more... OK
+  Applying billing.0010_invoice_medical_record_onetoone_invoiceitem_unique... OK
+  Applying medical_records.0007_add_medicalrecordservice... OK
+  Applying medical_records.0008_vaccinerecord... OK
+  Applying medical_records.0009_allow_blank_diagnosis_treatment... OK
+  Applying medical_records.0010_add_public_id_to_exposed_models... OK
+  Applying medical_records.0011_alter_medicalrecord_diagnosis_and_more... OK
+  Applying medical_records.0012_add_consultation_type... OK
+  Applying medical_records.0013_create_vitalsigns... OK
+  Applying medical_records.0014_medicalrecord_closed_status_requires_closed_at... OK
+  Applying medical_records.0015_medicalrecord_closed_at_provenance... OK
+  Applying inventory.0013_alter_presentation_options_and_more... OK
+  Applying inventory.0014_add_public_id_to_exposed_models... OK
+  Applying billing.0011_alter_invoice_pet... OK
+  Applying billing.0012_add_public_id_to_exposed_models... OK
+  Applying billing.0013_unique_invoice_service... OK
+  Applying billing.0014_service_base_price_positive... OK
+  Applying billing.0015_invoice_paid_status_requires_paid_at... OK
+  Applying billing.0016_invoice_anchor_completeness... OK
+  Applying billing.0017_invoice_anchor_backfill_and_constraints... OK
+  Applying billing.0018_invoice_idx_inv_org_status_paid_and_more... OK
+  Applying inventory.0015_stockmovement_idx_stockmov_org_pres_created... OK
+  Applying inventory.0016_remove_presentation_inventory_p_product_3223d8_idx_and_more... OK
+  Applying cash.0001_initial... OK
+  Applying billing.0019_payment... OK
+  Applying billing.0020_payment_cash_session... OK
+  Applying billing.0021_externalprescriptionattestation... OK
+  Applying analytics.0001_initial... OK
+  Applying analytics.0002_metricadjustment... OK
+  Applying appointments.0016_appointment_source_operation... OK
+  Applying appointments.0017_appointment_mutation_effect... OK
+  Applying appointments.0018_confirm_attendance_effect... OK
+  Applying medical_records.0016_rename_medical_rec_medical_9efa5c_idx_medical_rec_medical_a94e83_idx_and_more... OK
+  Applying medical_records.0017_alter_medicalrecord_pet_alter_vaccinerecord_pet... OK
+  Applying medical_records.0018_day6_vaccine_public_id... OK
+  Applying inventory.0017_medicalrecordproduct_cost_behavior... OK
+  Applying inventory.0018_adr_p31_product_stock_and_presentation_format... OK
+  Applying inventory.0019_presentation_barcode_unique_index... OK
+  Applying prescriptions.0001_initial... OK
+  Applying prescriptions.0002_prescription_created_by_prescription_is_active_and_more... OK
+  Applying prescriptions.0003_remove_prescriptionitem_prescriptio_organiz_e427c3_idx_and_more... OK
+  Applying prescriptions.0004_add_public_id_to_exposed_models... OK
+  Applying prescriptions.0005_prescription_idx_presc_org_created... OK
+  Applying prescriptions.0006_alter_prescription_pet... OK
+  Applying billing.0022_creditnote_creditnoteitem_refundpayment_and_more... OK
+  Applying billing.0023_invoiceitem_dispensed_from_prescription_item... OK
+  Applying billing.0024_invoice_idx_invoice_org_created_id... OK
+  Applying inventory.0020_stockmovement_idx_stockmov_org_created_id... OK
+  Applying inventory.0021_product_manufacturer_product_tracks_lots_and_more... OK
+  Applying inventory.0022_medicalrecordproduct_lot... OK
+  Applying inventory.0023_product_default_cost_behavior... OK
+  Applying inventory.0024_product_extra_data... OK
+  Applying inventory.0025_presentation_conversion_factor_positive... OK
+  Applying inventory.0026_medical_record_product_factor_snapshot... OK
+  Applying medical_records.0019_medicalrecord_consultation_draft... OK
+  Applying medical_records.0020_consultationassessment... OK
+  Applying medical_records.0021_vaccinerecord_lot_vaccinerecord_lot_expiry_and_more... OK
+  Applying medical_records.0022_surgeryrecord... OK
+  Applying medical_records.0023_emergencyrecord... OK
+  Applying medical_records.0024_medicalrecord_originated_from... OK
+  Applying cash.0002_cashmovement... OK
+  Applying billing.0025_invoiceitem_lot... OK
+  Applying billing.0026_checkout_checkoutestimate_checkoutevent_checkoutitem_and_more... OK
+  Applying billing.0027_alter_checkoutprescriptionselection_eligible_remaining_at_open... OK
+  Applying billing.0028_checkout_dispute... OK
+  Applying billing.0029_external_attestation_corrections... OK
+  Applying billing.0030_collection_case_public_id... OK
+  Applying billing.0031_rename_invoice_void_anchor... OK
+  Applying billing.0032_reconcile_checkout_schema... OK
+  Applying billing.0033_repair_checkout_billing_schema... OK
+  Applying billing.0034_contract_legacy_invoice_anchors... OK
+  Applying billing.0035_unit_snapshots_and_multilot_returns... OK
+  Applying core.0001_rbac_models... OK
+  Applying imports.0001_initial... OK
+  Applying imports.0002_alter_importjob_entity_type... OK
+  Applying legal.0001_initial... OK
+  Applying notifications.0001_initial... OK
+  Applying patients.0019_pet_registration_effect... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+  Applying users.0002_simplify_roles... OK
+  Applying users.0003_seed_test_data... OK
+  Applying users.0004_seed_more_test_data... OK
+  Applying users.0005_user_users_user_organiz_5da7d7_idx... OK
+  Applying users.0006_alter_user_organization... OK
+  Applying users.0007_day6_add_public_id... OK
+  Applying users.0008_user_password_must_change_and_more... OK
+  Applying users.0009_dedup_user_email... OK
+  Applying users.0010_user_email_ci_unique... OK
+  Applying users.0011_user_is_service_account_alter_user_role... OK
+System check identified no issues (0 silenced).
+test_automation_flag_off_does_not_activate_new_safety_circuit (apps.agent.tests.test_b5_safety.B5SafetyTests.test_automation_flag_off_does_not_activate_new_safety_circuit) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:23Z", "organization_id": 1, "contact_id": 1, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:23Z", "organization_id": 1, "conversation_id": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:23Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_handoff_01_durable_scope_source_and_inbox (apps.agent.tests.test_b5_safety.B5SafetyTests.test_handoff_01_durable_scope_source_and_inbox) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:23Z", "organization_id": 2, "contact_id": 2, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:24Z", "organization_id": 2, "conversation_id": 2, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:24Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:24Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:24Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_handoff_02_ack_only_explicit_scoped_claim (apps.agent.tests.test_b5_safety.B5SafetyTests.test_handoff_02_ack_only_explicit_scoped_claim) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:25Z", "organization_id": 3, "contact_id": 3, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:25Z", "organization_id": 3, "conversation_id": 3, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:25Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:25Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:25Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+C:\Users\LAP\AppData\Local\Temp\b9-native-20261016-r3\python\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\AppData\Local\Temp\b9-native-20261016-r3\src\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-16T22:12:27Z", "request_id": "e1a1ad8d-3646-4068-8348-1107338fffad", "user_id": 1, "organization_id": 3, "role": "ADMIN", "endpoint": "/api/inbox/conversations/83ac2bc8-fd98-4d7c-982c-1339741e1ac5/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-16T22:12:27Z", "request_id": "32f0b05e-9579-400a-8d19-4338936379f1", "user_id": 1, "organization_id": 3, "role": "ADMIN", "endpoint": "/api/inbox/conversations/83ac2bc8-fd98-4d7c-982c-1339741e1ac5/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+ok
+test_handoff_03_duplicate_webhook_repeat_signal_no_spam (apps.agent.tests.test_b5_safety.B5SafetyTests.test_handoff_03_duplicate_webhook_repeat_signal_no_spam) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:28Z", "organization_id": 4, "contact_id": 4, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:28Z", "organization_id": 4, "conversation_id": 4, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:28Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:28Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:28Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:28Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:28Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_no_idle_close_of_unresolved_human_queue (apps.agent.tests.test_b5_safety.B5SafetyTests.test_no_idle_close_of_unresolved_human_queue) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:29Z", "organization_id": 5, "contact_id": 5, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:29Z", "organization_id": 5, "conversation_id": 5, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:29Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:29Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:29Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_observability_snapshot_has_counts_ages_and_no_pii_labels (apps.agent.tests.test_b5_safety.B5SafetyTests.test_observability_snapshot_has_counts_ages_and_no_pii_labels) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:30Z", "organization_id": 6, "contact_id": 6, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:30Z", "organization_id": 6, "conversation_id": 6, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:30Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:30Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:30Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_own_04_grant_revoked_by_next_takeover_and_not_generic_system (apps.agent.tests.test_b5_safety.B5SafetyTests.test_own_04_grant_revoked_by_next_takeover_and_not_generic_system) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:31Z", "organization_id": 7, "contact_id": 7, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:31Z", "organization_id": 7, "conversation_id": 7, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:31Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:31Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:31Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-16T22:12:33Z", "request_id": "ba38d062-6ad7-41b5-b6be-22fb0a3ab589", "user_id": 2, "organization_id": 7, "role": "ADMIN", "endpoint": "/api/inbox/conversations/6d36f88e-bb7e-4ea7-8b24-98507733f4b8/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+ok
+test_partial_event_uniqueness_preserves_multiple_legacy_open (apps.agent.tests.test_b5_safety.B5SafetyTests.test_partial_event_uniqueness_preserves_multiple_legacy_open) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:34Z", "organization_id": 8, "contact_id": 8, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:34Z", "organization_id": 8, "conversation_id": 8, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:34Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:34Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:34Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_01_identity_tool_planner_and_onboarding_independent (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_01_identity_tool_planner_and_onboarding_independent) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:35Z", "organization_id": 9, "contact_id": 9, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:35Z", "organization_id": 9, "conversation_id": 9, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:35Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:35Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:35Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_GOAL_CLOSED", "level": "INFO", "ts": "2026-10-16T22:12:35Z", "organization_id": 9, "conversation_id": 9, "goal": "schedule", "status": "handoff", "request_id": "-"}
+ok
+test_safe_03_honest_finite_guidance (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_03_honest_finite_guidance) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:36Z", "organization_id": 10, "contact_id": 10, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:36Z", "organization_id": 10, "conversation_id": 10, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:36Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:36Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:36Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_context_does_not_cross_time_or_subject (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_context_does_not_cross_time_or_subject) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:37Z", "organization_id": 11, "contact_id": 11, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:37Z", "organization_id": 11, "conversation_id": 11, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:37Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:37Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:37Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_fi_01_crash_after_detection_recovers_same_work (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_fi_01_crash_after_detection_recovers_same_work) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:38Z", "organization_id": 12, "contact_id": 12, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:38Z", "organization_id": 12, "conversation_id": 12, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:38Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:38Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:38Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_fi_02_db_failure_after_handoff_rolls_back_all (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_fi_02_db_failure_after_handoff_rolls_back_all) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:39Z", "organization_id": 13, "contact_id": 13, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:39Z", "organization_id": 13, "conversation_id": 13, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:39Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:39Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:39Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_fi_04_handoff_insert_failure_no_false_claim (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_fi_04_handoff_insert_failure_no_false_claim) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:40Z", "organization_id": 14, "contact_id": 14, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:40Z", "organization_id": 14, "conversation_id": 14, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:40Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:40Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_fi_04_webhook_preserves_inbound_on_consolidation_failure (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_fi_04_webhook_preserves_inbound_on_consolidation_failure) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:41Z", "organization_id": 15, "contact_id": 15, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:41Z", "organization_id": 15, "conversation_id": 15, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:41Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:41Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:41Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_RECEIVE_FALLBACK", "level": "ERROR", "ts": "2026-10-16T22:12:41Z", "error_class": "DatabaseError", "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:41Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_fi_05_takeover_before_finalize_preserves_case_without_output (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_fi_05_takeover_before_finalize_preserves_case_without_output) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:42Z", "organization_id": 16, "contact_id": 16, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:42Z", "organization_id": 16, "conversation_id": 16, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:42Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-16T22:12:44Z", "request_id": "486869d1-2687-45f8-94ee-a186ebe25872", "user_id": 3, "organization_id": 16, "role": "ADMIN", "endpoint": "/api/inbox/conversations/9b7eeb84-9edf-4ba2-b64e-04bf8855483b/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:44Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "486869d1-2687-45f8-94ee-a186ebe25872"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-16T22:12:44Z", "turn_work_id": 16, "conversation_id": 16, "request_id": "-"}
+ok
+test_safe_fi_06_normal_input_does_not_resume_funnel (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_fi_06_normal_input_does_not_resume_funnel) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:44Z", "organization_id": 17, "contact_id": 17, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:44Z", "organization_id": 17, "conversation_id": 17, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:44Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:46Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:46Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:46Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:46Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:46Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_fi_07_uncertain_guidance_does_not_erase_handoff_or_retry (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_fi_07_uncertain_guidance_does_not_erase_handoff_or_retry) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:47Z", "organization_id": 18, "contact_id": 18, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:47Z", "organization_id": 18, "conversation_id": 18, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:47Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:47Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:47Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_fi_08_existing_handoff_is_elevated (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_fi_08_existing_handoff_is_elevated) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:48Z", "organization_id": 19, "contact_id": 19, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:48Z", "organization_id": 19, "conversation_id": 19, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:48Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:48Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:48Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_gate_before_requested_human_and_no_onboarding (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_gate_before_requested_human_and_no_onboarding) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:48Z", "organization_id": 20, "contact_id": 20, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:48Z", "organization_id": 20, "conversation_id": 20, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:48Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:48Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:48Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_human_01_no_ownership_or_output_competition (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_human_01_no_ownership_or_output_competition) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:49Z", "organization_id": 21, "contact_id": 21, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:49Z", "organization_id": 21, "conversation_id": 21, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:49Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-16T22:12:51Z", "request_id": "6a78dc30-a6d2-4a89-844e-321124110789", "user_id": 5, "organization_id": 21, "role": "ADMIN", "endpoint": "/api/inbox/conversations/d46ca29d-f7cf-4946-865e-d41c8750b36a/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:51Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": true, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:52Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": true, "media_uninterpreted": false, "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-16T22:12:52Z", "request_id": "7e3349cd-d834-4425-8385-7d47a9e773b3", "user_id": 5, "organization_id": 21, "role": "ADMIN", "endpoint": "/api/inbox/conversations/d46ca29d-f7cf-4946-865e-d41c8750b36a/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+ok
+test_safe_media_01_no_binary_inference (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_media_01_no_binary_inference) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:52Z", "organization_id": 22, "contact_id": 22, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:52Z", "organization_id": 22, "conversation_id": 22, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:52Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:52Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": true, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:52Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": true, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:52Z", "classification": "POSSIBLE_URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": true, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:52Z", "classification": "POSSIBLE_URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": true, "request_id": "-"}
+ok
+test_safe_mt_01_real_c1_and_exclusive_cursor (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_mt_01_real_c1_and_exclusive_cursor) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:53Z", "organization_id": 23, "contact_id": 23, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:53Z", "organization_id": 23, "conversation_id": 23, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:53Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:53Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:54Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_neg_01_independent_symptoms (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_neg_01_independent_symptoms) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:54Z", "organization_id": 24, "contact_id": 24, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:54Z", "organization_id": 24, "conversation_id": 24, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:54Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_race_01_new_safety_fixed_membership_defers_normal (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_race_01_new_safety_fixed_membership_defers_normal) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:55Z", "organization_id": 25, "contact_id": 25, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:55Z", "organization_id": 25, "conversation_id": 25, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:55Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:55Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:55Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_race_02_pending_commercial_discarded_valid_guidance_admitted (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_race_02_pending_commercial_discarded_valid_guidance_admitted) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:56Z", "organization_id": 26, "contact_id": 26, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:56Z", "organization_id": 26, "conversation_id": 26, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:56Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:56Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:56Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_race_03_admitted_commercial_reality_survives (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_race_03_admitted_commercial_reality_survives) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:57Z", "organization_id": 27, "contact_id": 27, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:57Z", "organization_id": 27, "conversation_id": 27, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:58Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:58Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:58Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_tenant_01_foreign_context_and_ack_rejected (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_tenant_01_foreign_context_and_ack_rejected) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:12:59Z", "organization_id": 28, "contact_id": 28, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:12:59Z", "organization_id": 28, "conversation_id": 28, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:59Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:59Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:12:59Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-16T22:13:02Z", "request_id": "fa076d58-cf94-4924-beba-7dc1d1e9787e", "user_id": 6, "organization_id": 29, "role": "ADMIN", "endpoint": "/api/inbox/conversations/86c4bc78-6a02-4cc6-88ce-ed41baef3674/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+ok
+test_safe_time_01 (apps.agent.tests.test_b5_safety.B5SafetyTests.test_safe_time_01) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:13:02Z", "organization_id": 30, "contact_id": 29, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:13:02Z", "organization_id": 30, "conversation_id": 29, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:13:02Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_sender_refuses_commercial_while_safety_waits_for_w2 (apps.agent.tests.test_b5_safety.B5SafetyTests.test_sender_refuses_commercial_while_safety_waits_for_w2) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:13:02Z", "organization_id": 31, "contact_id": 30, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:13:02Z", "organization_id": 31, "conversation_id": 30, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:13:03Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:13:03Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:13:03Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_02_versioned_adversarial_corpus (apps.agent.tests.test_b5_corpus.B5CorpusTests.test_safe_02_versioned_adversarial_corpus) ... B5_CORPUS {"counts": {"FN": 0, "FP": 0, "TN": 72, "TP": 53}, "critical_detected": 47, "critical_recall": 1.0, "critical_total": 47, "families": {"administrative": {"FN": 0, "FP": 0, "TN": 13, "TP": 0}, "context_boundary": {"FN": 0, "FP": 0, "TN": 7, "TP": 0}, "critical": {"FN": 0, "FP": 0, "TN": 0, "TP": 41}, "historical": {"FN": 0, "FP": 0, "TN": 9, "TP": 0}, "hypothetical": {"FN": 0, "FP": 0, "TN": 9, "TP": 0}, "multiturn": {"FN": 0, "FP": 0, "TN": 0, "TP": 6}, "negation": {"FN": 0, "FP": 0, "TN": 26, "TP": 0}, "possible": {"FN": 0, "FP": 0, "TN": 0, "TP": 6}, "reference_subject": {"FN": 0, "FP": 0, "TN": 8, "TP": 0}}, "review_status": "VETERINARY_REVIEW_REQUIRED"}
+ok
+test_legacy_handoffs_have_no_synthetic_safety_notification_or_ack (apps.agent.tests.test_b5_migration.B5MigrationTests.test_legacy_handoffs_have_no_synthetic_safety_notification_or_ack) ... ok
+test_own_04_two_safety_workers_one_epoch_and_case (apps.agent.tests.test_b5_processes.B5ProcessTests.test_own_04_two_safety_workers_one_epoch_and_case) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:15:10Z", "organization_id": 33, "contact_id": 32, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:15:10Z", "organization_id": 33, "conversation_id": 32, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:15:10Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_dup_01_two_inbound_processes_one_handoff (apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_dup_01_two_inbound_processes_one_handoff) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:15:39Z", "organization_id": 34, "contact_id": 33, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:15:39Z", "organization_id": 34, "conversation_id": 33, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:15:39Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_fi_01_process_killed_after_detection (apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_01_process_killed_after_detection) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:16:09Z", "organization_id": 35, "contact_id": 34, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:16:09Z", "organization_id": 35, "conversation_id": 34, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:16:09Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_fi_02_process_killed_after_case_before_output (apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_02_process_killed_after_case_before_output) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:16:43Z", "organization_id": 36, "contact_id": 35, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:16:43Z", "organization_id": 36, "conversation_id": 35, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:16:43Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_safe_fi_05_safety_worker_vs_human_takeover (apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_05_safety_worker_vs_human_takeover) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-16T22:17:24Z", "organization_id": 37, "contact_id": 36, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-16T22:17:24Z", "organization_id": 37, "conversation_id": 36, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-16T22:17:25Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 330.180s
+
+OK
+Destroying test database for alias 'default' ('test_b9i_b5')...

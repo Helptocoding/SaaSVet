@@ -1,0 +1,55 @@
+--- previous-prepared-adapter
++++ linux-receipt-adapter
+@@ -4,6 +4,7 @@
+ from pathlib import Path
+ import sys
+ import time
++import traceback
+ import unittest
+ 
+ EVIDENCE = Path(__file__).resolve().parent
+@@ -36,18 +37,22 @@
+     def get_resultclass(self):
+         base = super().get_resultclass() or unittest.TextTestResult
+         class RecordedResult(base):
+-            def record(self, test, outcome, reason=None):
++            def record(self, test, outcome, reason=None, err=None):
+                 with Path(os.environ['B9I_ID_JOURNAL']).open('a', encoding='utf-8') as stream:
+-                    stream.write(json.dumps({'id': test.id(), 'outcome': outcome, 'reason': reason}) + '\n')
++                    stream.write(json.dumps({'id': test.id(), 'outcome': outcome, 'reason': reason,
++                        'utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
++                        'traceback': ''.join(traceback.format_exception(*err)) if err else None}) + '\n')
++                    stream.flush()
++                    os.fsync(stream.fileno())
+             def addSuccess(self, test):
+                 super().addSuccess(test)
+                 self.record(test, 'PASS')
+             def addFailure(self, test, err):
+                 super().addFailure(test, err)
+-                self.record(test, 'FAIL')
++                self.record(test, 'FAIL', err=err)
+             def addError(self, test, err):
+                 super().addError(test, err)
+-                self.record(test, 'ERROR')
++                self.record(test, 'ERROR', err=err)
+             def addSkip(self, test, reason):
+                 super().addSkip(test, reason)
+                 self.record(test, 'SKIP', reason)
+@@ -57,6 +62,10 @@
+             def addUnexpectedSuccess(self, test):
+                 super().addUnexpectedSuccess(test)
+                 self.record(test, 'XPASS')
++            def addSubTest(self, test, subtest, err):
++                super().addSubTest(test, subtest, err)
++                if err is not None:
++                    self.record(test, 'FAIL' if issubclass(err[0], test.failureException) else 'ERROR', subtest.id(), err)
+         return RecordedResult
+ 
+     def suite_result(self, suite, result, **kwargs):
+@@ -101,4 +110,5 @@
+     labels = [] if label == 'full' else json.loads((EVIDENCE / (label + '-selected.json')).read_text())
+     runner = {'b0': RecordedB0Runner, 'b3': RecordedB3Runner,
+               'b4': RecordedB4Runner, 'b5': RecordedB5Runner, 'full': RecordedFullRunner}[label]
+-    call_command('test', *labels, interactive=False, verbosity=2, parallel=1, testrunner=runner)
++    call_command('test', *labels, interactive=False, verbosity=2, parallel=1,
++                 testrunner='recorded_suite.' + runner.__name__)

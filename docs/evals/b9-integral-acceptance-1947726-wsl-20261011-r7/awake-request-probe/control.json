@@ -1,0 +1,17 @@
+{
+  "state": "ACTIVE_API_CONFIRMED",
+  "pid": 56884,
+  "thread_id": 56812,
+  "seconds_maximum": 2,
+  "started_utc": "2026-10-12T05:03:14Z",
+  "flags_requested": "0x80000001",
+  "previous_thread_state": "0x80000000",
+  "confirmation_previous_state": "0x80000001",
+  "source_sha256": "2f1155186abbf38d8c0d1248b46d9ce069a19878394d5416a43cdfbca885cd3f",
+  "global_power_policy_changed": false,
+  "display_policy_changed": false,
+  "W32Time_changed": false,
+  "application_tests_executed": false,
+  "limits": "Idle sleep request only; user-requested sleep/lid/power button and policy overrides are not guaranteed to be prevented",
+  "documentation": "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setthreadexecutionstate"
+}

@@ -1,0 +1,79 @@
+{
+  "state": "OBSERVED",
+  "observed_utc": "2026-10-17T15:44:17Z",
+  "query_scope": "Read-only System power/resume and clock events from 2026-10-17T07:35:00Z",
+  "event_query_exit_code": 0,
+  "events": [
+    {
+      "Utc": "2026-10-17T15:40:55.5004252Z",
+      "ProviderName": "Microsoft-Windows-Kernel-General",
+      "Id": 1,
+      "Message": "La hora del sistema ha cambiado a ‎2026‎-‎10‎-‎17T15:40:55.500000000Z de ‎2026‎-‎10‎-‎17T07:41:33.335107600Z.\r\nDiferencia horaria: 28762164 ms\r\n\r\nMotivo del cambio: System time synchronized with the hardware clock.\r\nProceso: '' (PID 4).\r\n\r\nHora de RTC: ‎2026‎-‎10‎-‎17T09:40:55.500000000Z\r\nDiferencia de zona horaria actual: 360\r\nhora RTC es UTC: false\r\nLa hora del sistema se basaba en la hora RTC: false"
+    },
+    {
+      "Utc": "2026-10-17T07:41:33.3353515Z",
+      "ProviderName": "Microsoft-Windows-Kernel-Power",
+      "Id": 107,
+      "Message": "El sistema se reanudó del estado de suspensión."
+    },
+    {
+      "Utc": "2026-10-17T07:41:27.1087881Z",
+      "ProviderName": "Microsoft-Windows-Kernel-Power",
+      "Id": 42,
+      "Message": "El sistema está entrando en suspensión.\r\n\r\nMotivo de la suspensión: Battery"
+    }
+  ],
+  "heartbeat_gaps": {
+    "awake-request/heartbeat.jsonl": {
+      "samples_examined": 3597,
+      "largest_gap_seconds": 28763.274175405502,
+      "before": {
+        "utc": "2026-10-17T07:41:33Z",
+        "utc_epoch_seconds": 1792222893.1333325,
+        "pid": 17976,
+        "thread_id": 3244,
+        "api_previous_state": "0x80000001"
+      },
+      "after": {
+        "utc": "2026-10-17T15:40:56Z",
+        "utc_epoch_seconds": 1792251656.407508,
+        "pid": 17976,
+        "thread_id": 3244,
+        "api_previous_state": "0x80000001"
+      }
+    },
+    "resource-observer/samples.jsonl": {
+      "samples_examined": 3580,
+      "largest_gap_seconds": 28763.808136701584,
+      "before": {
+        "utc": "2026-10-17T07:41:32Z",
+        "physical_total": 17031217152,
+        "physical_available": 6883205120,
+        "page_available": 13260505088,
+        "utc_epoch_seconds": 1792222892.4175,
+        "observer_pid": 9304
+      },
+      "after": {
+        "utc": "2026-10-17T15:40:56Z",
+        "physical_total": 17031217152,
+        "physical_available": 6941626368,
+        "page_available": 13307609088,
+        "utc_epoch_seconds": 1792251656.2256367,
+        "observer_pid": 9304
+      }
+    }
+  },
+  "formal_stop_cause": "Backing disk reserve exhausted; distinct from subsequent prolonged follow-up gap",
+  "disk_consumer_attributed": false,
+  "hibernation_file_allocation_proven": false,
+  "host_policies_or_clock_configuration_changed_by_agent": false,
+  "resources_now": {
+    "utc": "2026-10-17T15:44:17Z",
+    "utc_epoch_seconds": 1792251857.5234706,
+    "physical_total": 17031217152,
+    "physical_available": 5953495040,
+    "page_available": 11973083136,
+    "disk_available": 9098326016,
+    "platform": "Windows native"
+  }
+}

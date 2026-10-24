@@ -1,0 +1,27 @@
+{
+  "state": "PENDING_ENVIRONMENT_RESOURCES",
+  "product_failure_attributed": false,
+  "cause": "Windows backing-host available physical memory fell below the unchanged 5 GiB threshold immediately before the first block",
+  "raw_stop_state_preserved": "PENDING",
+  "block_executed": false,
+  "application_tests_executed": 0,
+  "preflight_host_available_bytes": 6120816640,
+  "before_directed_host_available_bytes": 3867492352,
+  "before_directed_host_available_gib": 3.6018829345703125,
+  "required_host_and_guest_available_bytes": 5368709120,
+  "guest_resources_sufficient": true,
+  "disk_resources_sufficient": true,
+  "dependency_remediation_validated_before_seal": true,
+  "clock_observation_passed": true,
+  "formal_reruns": 0,
+  "blocks_remaining": "NOT_EXECUTED",
+  "cause_of_host_memory_fluctuation": "Not established; temporally separated measurements do not prove a single cause",
+  "evidence": [
+    "STOP.json",
+    "preflight.json",
+    "resource-ready-observation-4.json",
+    "interpreter-preflight.json",
+    "dependency-check-before-directed.json",
+    "seal-check-before-directed.json"
+  ]
+}

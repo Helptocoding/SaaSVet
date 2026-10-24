@@ -1,0 +1,24 @@
+--- native-r3/prepare_native.py
++++ native/prepare_native.py
+@@ -16,7 +16,7 @@
+ from native_support import EVIDENCE, REPO, OLD, WORK, TREE, PYTHON, PG, NODE, PNPM, DATA, PORT, SHA, RTK, GIB, save, sha256, resources, environment, run, command, integrity
+ 
+ PRIOR = EVIDENCE.with_name('b9-correction-20261014-r4')
+-NATIVE_PRIOR = EVIDENCE.with_name('b9-correction-20261016-native-r2')
++NATIVE_PRIOR = EVIDENCE.with_name('b9-correction-20261016-native-r3')
+ BASE = Path('C:/Users/LAP/AppData/Local/Programs/Python/Python313')
+ LOCKED = Path('C:/Users/LAP/AppData/Local/Temp/vet-b8b-locked')
+ 
+@@ -62,10 +62,10 @@
+             'guards, locks, cargas, tiempos, umbrales, reservas2GiB RAM/1GiBdisco y reloj1s. '
+             'No se invoca WSL ni se modifica W32Time, instalaciones compartidas o políticas '
+             'globales. Una ejecución formal por bloque, sin reintentos adaptativos.\n')
+-    save('authorization.json', {'user': 'continua ya hay mas espacio, necesito ya cerrar el plan de inbox/agente wsp', 'date_local': '2026-10-16',
++    save('authorization.json', {'user': 'rocede con lo que falte', 'date_local': '2026-10-16',
+         'scope': 'One fixed native Windows B9 campaign after native preflight',
+         'candidate_tree': SHA, 'prior_campaign': NATIVE_PRIOR.name,
+-        'prior_decision': 'PENDING_ENVIRONMENT_DISK_RESERVE_EXHAUSTED', 'maximum_formal_runs_per_block': 1,
++        'prior_decision': 'PENDING_ENVIRONMENT_MEMORY_RESERVE_EXHAUSTED', 'maximum_formal_runs_per_block': 1,
+         'maximum_formal_runs_per_profile_variant': 1, 'further_test_or_product_changes': False,
+         'commits_push_deploy_activation_authorized': False})
+     contract = json.loads((PRIOR / 'full-partition-contract.json').read_text())

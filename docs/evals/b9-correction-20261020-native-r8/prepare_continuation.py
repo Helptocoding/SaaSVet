@@ -1,0 +1,92 @@
+"""Freeze case provenance and validate only the one-file runtime handoff; no tests."""
+import ast
+import hashlib
+import json
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+PRIOR = HERE.with_name('b9-correction-20261019-native-r7')
+R6 = HERE.with_name('b9-correction-20261017-native-r6')
+REPO = HERE.parents[2]
+
+
+def read(path):
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def save(name, value):
+    target = HERE / name
+    assert not target.exists(), target
+    target.write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\n', encoding='utf-8', newline='\n')
+
+
+def main():
+    candidate = read(HERE / 'candidate.json')
+    r6_manifest = read(PRIOR / 'case-resumption-manifest.json')
+    r6_files = {p: value['sha256'] for p, value in r6_manifest['files'].items()}
+    r6_files['candidate.json'] = sha(R6 / 'candidate.json')
+    proof_path = 'diagnostics/resumption-after-r7/prefix-validation.json'
+    proof = read(PRIOR / proof_path)
+    r7_files = {p: value['sha256'] for p, value in proof['input_artifacts'].items()}
+    r7_files.update({p: sha(PRIOR / p) for p in ('candidate.json', 'recorded_suite.py',
+        'effective-configuration.json', 'assembly.json', 'awake-request/control.json',
+        'resource-observer-control.json', 'diagnostics/resumption-after-r7/verify_interruption.py',
+        'diagnostics/contract-snapshot-proposal.patch', 'diagnostics/contract-snapshot-analysis.json',
+        'interruption-after-407-cases.json', proof_path)})
+    sources = {}
+    for key, folder, files, journal, selected, proof_name in [
+        ('r6', R6, r6_files, 'blocks/full-general.ids.jsonl', 'full-general-selected.json',
+            'diagnostics/resumption-20261019/prefix-validation.json'),
+        ('r7', PRIOR, r7_files, 'blocks/full-general-remainder.ids.jsonl', 'full-general-remainder-selected.json', proof_path)]:
+        assert all(sha(folder / p) == value for p, value in files.items()), key
+        sources[key] = {'campaign': folder.name, 'journal': journal, 'selected': selected,
+            'proof': proof_name, 'files': files}
+    rows6 = [json.loads(x) for x in (R6 / sources['r6']['journal']).read_text(encoding='utf-8').splitlines() if x]
+    rows7 = [json.loads(x) for x in (PRIOR / sources['r7']['journal']).read_text(encoding='utf-8').splitlines() if x]
+    a = sorted(row['id'] for row in rows6)
+    b = sorted(row['id'] for row in rows7 if row['outcome'] == 'PASS')
+    failures = sorted(row['id'] for row in rows7 if row['outcome'] == 'FAIL')
+    missing = read(PRIOR / 'diagnostics/resumption-after-r7/remaining-unexecuted-selected.json')
+    selected = sorted(missing + failures)
+    assert len(a) == 2485 and len(b) == 405 and len(missing) == 321 and len(failures) == 2
+    assert len(selected) == 323 and len(set(a + b + selected)) == 3213
+    assert sorted(a + b + selected) == read(HERE / 'full-general-selected.json')
+    save('retained-r6-observed-ids.json', a)
+    save('retained-r7-pass-ids.json', b)
+    save('full-general-remainder-selected.json', selected)
+    save('case-resumption-inputs.json', {'schema': 'b9-case-resumption-inputs/2',
+        'source_candidate_tree': '68dffd746793700071f577a58528b0f9636930db',
+        'candidate_tree': candidate['candidate_tree'], 'sources': sources,
+        'snapshot_equivalence': {'path': 'snapshot-equivalence.json', 'sha256': sha(HERE / 'snapshot-equivalence.json')},
+        'snapshot_patch': {'path': 'snapshot-correction.diff', 'sha256': sha(HERE / 'snapshot-correction.diff')}})
+    save('preserved-failed-cases.json', {'state': 'ORIGINAL_FAIL_PRESERVED_PENDING_CORRECTED_EXECUTION',
+        'source_campaign': PRIOR.name, 'source_journal_sha256': r7_files[sources['r7']['journal']],
+        'failed_cases': [row for row in rows7 if row['outcome'] == 'FAIL'],
+        'new_selected_contains_exactly_these_two_failed_ids': True,
+        'failed_cases_presented_as_reused_PASS': False})
+    # Only explicitly selected corrections are included in the separate no-git security scope.
+    work = Path(read(HERE / 'assembly.json')['workspace'])
+    for path in candidate['changed_paths']:
+        source = work / 'src' / path
+        assert source.read_bytes().replace(b'\r\n', b'\n') == (REPO / path).read_bytes().replace(b'\r\n', b'\n')
+        target = work / 'security-patch' / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(source.read_bytes())
+    handoff = (PRIOR / 'handoff_runtime.py').read_text(encoding='utf-8')
+    handoff = handoff.replace("'test_b9i_full_general_remainder' not in names", "'test_b9i_full_general_remainder_r8' not in names")
+    handoff = handoff.replace('while time.monotonic() - started < 60:', 'while time.monotonic() - started < 120:')
+    (HERE / 'handoff_runtime.py').write_text(handoff, encoding='utf-8', newline='\n')
+    # The protected AST check reads the actual new declaration; historical input remains unmodified.
+    checker = HERE / 'diagnostics/verify_preserved_contract.py'
+    text = checker.read_text(encoding='utf-8').replace("HERE / 'candidate-input.json'", "HERE / 'candidate.json'")
+    text = text.replace("TREE_SHA = '68dffd746793700071f577a58528b0f9636930db'", "TREE_SHA = '" + candidate['candidate_tree'] + "'")
+    checker.write_text(text, encoding='utf-8', newline='\n')
+    print('R8_SELECTION_FROZEN_2485_PLUS_405_PLUS_323_NO_TESTS', flush=True)
+
+
+if __name__ == '__main__':
+    main()

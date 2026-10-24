@@ -1,0 +1,10 @@
+{
+  "state": "BEFORE_APPLICATION_TESTS_AND_SEAL",
+  "original_incident": "preparation-incident-setup.json",
+  "cause": "Private CLAUDE_CONFIG_DIR caused RTK to prepend its missing-hook reminder to raw Git stdout",
+  "resolution": "Read the existing global RTK hook configuration; keep tracking/cache private",
+  "hooks_installed_or_changed": false,
+  "head_or_candidate_changed": false,
+  "application_tests_executed": false,
+  "formal_campaign_restarted": false
+}

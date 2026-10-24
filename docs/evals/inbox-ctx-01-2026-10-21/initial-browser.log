@@ -1,0 +1,26 @@
+{"status": "FAIL", "synthetic_api": true, "measurements": [], "page_errors": [], "error": "Locator expected to be visible\nActual value: None\nError: element(s) not found \nCall log:\n  - Expect \"to_be_visible\" with timeout 5000ms\n  - waiting for get_by_text(\"Historial sint\u00e9tico 20\", exact=True)\n"}
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\inbox-ctx-01-2026-10-21\check_browser.py", line 90, in <module>
+    expect(page.get_by_text('Historial sintético 20', exact=True)).to_be_visible()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\sync_api\_generated.py", line 21119, in to_be_visible
+    self._sync(self._impl_obj.to_be_visible(visible=visible, timeout=timeout))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_sync_base.py", line 115, in _sync
+    return task.result()
+           ~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_assertions.py", line 765, in to_be_visible
+    await self._expect_impl(
+    ...<5 lines>...
+    )
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_assertions.py", line 85, in _expect_impl
+    raise AssertionError(
+        f"{out_message}\nActual value: {actual}{error_message} {format_call_log(result.get('log'))}"
+    )
+AssertionError: Locator expected to be visible
+Actual value: None
+Error: element(s) not found 
+Call log:
+  - Expect "to_be_visible" with timeout 5000ms
+  - waiting for get_by_text("Historial sintético 20", exact=True)
+

@@ -1,0 +1,56 @@
+--- native-r3/full_partition.py
++++ native/full_partition.py
+@@ -91,25 +91,29 @@
+ 
+ 
+ def aggregate_full():
++    from composite_evidence import block_path, provenance, validate_references
++    validate_references()
+     partition = validate_partition()
+     receipts, journal, command_rows = [], [], []
+     for group in partition['groups']:
+         label = group['label']
+-        gate = read('blocks/' + label + '.gate.json')
+-        receipt = read('blocks/' + label + '.results.json')
+-        command = read('blocks/' + label + '.command.json')
++        group_provenance = provenance(label)
++        gate = json.loads(block_path(label, '.gate.json').read_text(encoding='utf-8'))
++        receipt = json.loads(block_path(label, '.results.json').read_text(encoding='utf-8'))
++        command = json.loads(block_path(label, '.command.json').read_text(encoding='utf-8'))
+         expected = read(label + '-selected.json')
+         assert gate['state'] == 'PASS' and command['exit_code'] == 0
+         assert command['invalidating_incident'] is None
+         assert receipt['candidate_sha'] == partition['candidate_tree']
+         assert sorted(receipt['test_ids']) == expected and receipt['tests'] == len(expected)
+         assert receipt['failures'] == receipt['errors'] == receipt['exit_code'] == 0
+-        rows = [json.loads(line) for line in (HERE / 'blocks' / (label + '.ids.jsonl')).read_text(encoding='utf-8').splitlines()]
++        rows = [json.loads(line) for line in block_path(label, '.ids.jsonl').read_text(encoding='utf-8').splitlines()]
+         assert sorted(row['id'] for row in rows) == expected
+-        journal.extend(rows)
++        journal.extend([dict(row, evidence_source=group_provenance) for row in rows])
+         receipts.append(receipt)
+         command_rows.append({'label': label, 'database': group['database'],
+-                             'command_receipt': 'blocks/' + label + '.command.json',
++                             'command_receipt': str(block_path(label, '.command.json').relative_to(HERE)),
++                             'provenance': group_provenance,
+                              'seconds': command['seconds'], 'tests': receipt['tests']})
+     expected = read('full-selected.json')
+     ids = sorted(test for receipt in receipts for test in receipt['test_ids'])
+@@ -123,7 +127,8 @@
+                 'xpass': sum(row['xpass'] for row in receipts),
+                 'failed_ids': [], 'exit_code': 0,
+                 'seconds': sum(row['seconds'] for row in receipts),
+-                'orchestration': 'Five sequential native groups; one execution per full ID; independent process tests unchanged',
++                'orchestration': 'Composite acceptance of five complete native groups from referenced and current executions; independent process tests unchanged',
++                'evidence_mode': 'COMPOSITE_ACCEPTANCE', 'continuous_campaign_claimed': False,
+                 'group_receipts': command_rows}
+     save('blocks/full.results.json', combined)
+     target = HERE / 'blocks/full.ids.jsonl'
+@@ -131,6 +136,7 @@
+         for row in journal:
+             stream.write(json.dumps(row, ensure_ascii=False) + '\n')
+     save('blocks/full.aggregate.json', {'state': 'PASS', 'tests': len(ids),
++         'evidence_mode': 'COMPOSITE_ACCEPTANCE', 'continuous_campaign_claimed': False,
+          'group_receipts': command_rows, 'additional_test_execution': False,
+          'duplicate_ids': 0, 'missing_ids': [], 'gate_evaluated_by_original_check_suite': True})
+     print('FULL_AGGREGATE_COMPLETE 3331 IDs', flush=True)

@@ -1,0 +1,34 @@
+{
+  "state": "PASS",
+  "previous_campaign": "b9-correction-20261020-native-r8",
+  "workspace": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6",
+  "data_directory": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pgdata",
+  "port": 35490,
+  "port_closed": true,
+  "postmaster_pid_file_absent": true,
+  "wrapper": {
+    "pid": 6552,
+    "image": "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "created_epoch_seconds": 1792470684.477991
+  },
+  "postmaster": {
+    "pid": 22828,
+    "image": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-b8b-pg16-bin\\pgsql\\bin\\postgres.exe",
+    "created_epoch_seconds": 1792470685.1001797
+  },
+  "verified_owned_processes_exited": true,
+  "previous_log": {
+    "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r8\\postgresql-start-1.log",
+    "bytes": 24262,
+    "sha256": "45e7ef6ac31d10bb18d6faa3c17a53738d4c143bba12455ce85f1143672846a1",
+    "stable_after_owned_process_exit": true
+  },
+  "previous_start_receipt_sha256": "e51b7e499ab0934afac0eb183563495781226b5f08d3bb2516df7c82ac54786b",
+  "previous_preflight_sha256": "ef19842d207a413653de23e7b423e40e0a816b22a71d61926004dead57d10efd",
+  "application_tests_executed": false,
+  "runtime_reinstalled": false,
+  "databases_dropped": [],
+  "workspace_removed": false,
+  "foreign_processes_terminated": false,
+  "old_final_logs_closed_before_prior_evidence_snapshot": true
+}

@@ -1,0 +1,20 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/messageGroups.test.js (8 tests) 43ms
+ ✓ src/pages/inbox/index.test.jsx (32 tests | 21 skipped) 8387ms
+     ✓ agrupa por autor sin ocultar mensajes, horas ni estados de entrega  1251ms
+     ✓ corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto  410ms
+     ✓ pinta el envío antes del POST y reconcilia el 201 sin duplicar  1267ms
+     ✓ conserva el optimista reintentable ante un 5xx  1263ms
+     ✓ deduplica un polling concurrente exclusivamente por client_message_id  680ms
+     ✓ dos envíos consecutivos por Enter reciben keys distintas  1122ms
+     ✓ oculta failed-local cuando el hilo regresa con otra sesión activa  1290ms
+     ✓ actualiza todos los divisores con una sola referencia al cruzar medianoche  327ms
+
+ Test Files  2 passed (2)
+      Tests  19 passed | 21 skipped (40)
+   Start at  23:10:16
+   Duration  24.06s (transform 1.80s, setup 1.74s, import 3.93s, tests 8.43s, environment 12.80s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-grp-01-2026-10-20/vitest.json

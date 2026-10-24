@@ -1,0 +1,56 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "controlled_clock_visibility": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "warning_7h12": true,
+      "countdown_7h11": true,
+      "exact_expiry_timer": true,
+      "closed_input": true,
+      "closed_send": true,
+      "draft_preserved": true,
+      "call_link": true,
+      "visibility_refresh": true,
+      "renewed_window": true,
+      "sent_after_renewal": 1,
+      "sent_while_closed": 0,
+      "horizontal_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "warning_7h12": true,
+      "countdown_7h11": true,
+      "exact_expiry_timer": true,
+      "closed_input": true,
+      "closed_send": true,
+      "draft_preserved": true,
+      "call_link": true,
+      "visibility_refresh": true,
+      "renewed_window": true,
+      "sent_after_renewal": 1,
+      "sent_while_closed": 0,
+      "horizontal_overflow": false
+    }
+  ],
+  "requests": [
+    {
+      "viewport": "desktop",
+      "path": "inbox/conversations/session-ana/send/",
+      "body": {
+        "body": "Borrador conservado al vencer"
+      },
+      "key": "e8cb2e21-11c7-488a-8367-65e570b22b2e"
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/conversations/session-ana/send/",
+      "body": {
+        "body": "Borrador conservado al vencer"
+      },
+      "key": "ccd20c09-8235-46f0-8b7c-3ccbf98873d7"
+    }
+  ],
+  "page_errors": []
+}

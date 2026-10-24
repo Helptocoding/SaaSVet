@@ -1,0 +1,41 @@
+--- native-r6/final_helper_snapshot.py
++++ native-r7/final_helper_snapshot.py
+@@ -0,0 +1,38 @@
++"""Record final metadata clarifications before sealing; never execute application tests."""
++import ast
++import difflib
++import json
++from pathlib import Path
++from native_support import EVIDENCE, save, sha256
++
++assert not (EVIDENCE / 'evaluation-seal.json').exists()
++prior = EVIDENCE.with_name('b9-correction-20261017-native-r6')
++path = EVIDENCE / 'campaign-adaptation.json'
++old = path.read_bytes()
++target = EVIDENCE / 'diagnostics/campaign-adaptation-before-final-metadata.json'
++assert not target.exists()
++target.write_bytes(old)
++rows = []
++for helper in sorted(EVIDENCE.glob('*.py')):
++    source = helper.read_text(encoding='utf-8')
++    compile(source, str(helper), 'exec')
++    baseline = prior / helper.name
++    previous = baseline.read_text(encoding='utf-8') if baseline.exists() else ''
++    diff = ''.join(difflib.unified_diff(previous.splitlines(True), source.splitlines(True),
++        fromfile='native-r6/' + helper.name, tofile='native-r7/' + helper.name))
++    if diff:
++        output = EVIDENCE / 'native-adaptation-diffs' / (helper.name + '.diff')
++        output.parent.mkdir(exist_ok=True)
++        output.write_text(diff, encoding='utf-8', newline='\n')
++    rows.append({'path': helper.name, 'sha256': sha256(helper.read_bytes()),
++        'prior_sha256': sha256(baseline.read_bytes()) if baseline.exists() else None,
++        'changed': bool(diff)})
++data = json.loads(old)
++data.update(helper_sources=rows, development_verification='Referenced r6 focused PASS; not executed again',
++    accepted_historical_evidence_limitation=True,
++    case_resumption_authorization='case-resumption-authorization.json',
++    retained_general_ids=2485, new_general_ids=728,
++    runtime_reference='prepared-runtime-references.json', runtime_reinstalled=False,
++    final_metadata_scope='Only provenance and required seal inputs finalized; protected AST and all tests unchanged')
++save('campaign-adaptation.json', data)
++print('FINAL_HELPER_SNAPSHOT_PASS_NO_TESTS', len(rows), flush=True)

@@ -1,0 +1,34 @@
+{
+  "state": "PASS",
+  "candidate_sha": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "exact_git_files": 3332,
+  "directed_ids": 87,
+  "full_ids": 3331,
+  "resource_budget": {
+    "suite_estimate_not_reserved": 3221225472,
+    "admission_floor": 2147483648,
+    "memory_reserve": 2147483648,
+    "prior_5_gib_admission_waived_by_user": true,
+    "backing_disk_reserve": 1073741824
+  },
+  "resources": {
+    "host": {
+      "utc": "2026-10-17T06:52:41Z",
+      "utc_epoch_seconds": 1792219961.33985,
+      "physical_total": 17031217152,
+      "physical_available": 7236472832,
+      "page_available": 13661409280,
+      "disk_available": 9551118336,
+      "platform": "Windows native"
+    },
+    "ready": true
+  },
+  "no_formal_application_tests_yet": true,
+  "prior_focused_verification_reference": "prior-focused-verification.json",
+  "formal_runs_per_block_max": 1,
+  "profile_runs_per_scenario_max": 1,
+  "platform": "windows-native",
+  "host_clock_configuration_unchanged": true,
+  "runtime_and_lock_changes": false,
+  "resource_policy": "USER_AMENDED_ADMISSION_HEADROOM"
+}

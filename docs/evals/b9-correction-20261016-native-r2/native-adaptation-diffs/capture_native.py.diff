@@ -1,0 +1,11 @@
+--- native-r1/capture_native.py
++++ native/capture_native.py
+@@ -9,7 +9,7 @@
+ 
+ def main():
+     step = sys.argv[1]
+-    if step in ('setup', 'setup-continue'):
++    if step == 'setup':
+         args = [sys.executable, '-B', EVIDENCE / 'prepare_native.py', step]
+     elif step in ('frontend', 'stage'):
+         args = [PYTHON, '-B', EVIDENCE / 'prepare_native.py', step]

@@ -1,0 +1,17 @@
+--- native-r9/retire_previous_cluster.py
++++ native/retire_previous_cluster.py
+@@ -1,4 +1,4 @@
+-"""Stop only the verified r8 disposable PostgreSQL; preserve files and databases."""
++"""Stop only the verified r9 disposable PostgreSQL; preserve files and databases."""
+ import ctypes
+ from ctypes import wintypes
+ import json
+@@ -8,7 +8,7 @@
+ from native_support import EVIDENCE, WORK, DATA, TREE, PG, PORT, RTK, save, sha256, command
+ 
+ EXPECTED_WORK=Path('C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6')
+-PREVIOUS=EVIDENCE.with_name('b9-correction-20261020-native-r8')
++PREVIOUS=EVIDENCE.with_name('b9-correction-20261020-native-r9')
+ 
+ 
+ def read(path):

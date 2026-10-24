@@ -1,0 +1,22 @@
+{
+  "state": "FAIL_BLOCKING_SCANNER_GATE",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "actual_exit_code": 1,
+  "scanner_executed_validly": true,
+  "invalidating_incident": null,
+  "history_before_after_verified": true,
+  "redacted": true,
+  "detections": 3156,
+  "rules": {
+    "generic-api-key": 3156
+  },
+  "confirmed_real_credentials": "NOT_ESTABLISHED_BY_SCANNER_ALONE",
+  "claim": "Configured blocking Gitleaks gate failed; detections are not automatically confirmed credentials or a universal product defect.",
+  "finding_report": "blocks/gitleaks-history.json",
+  "finding_report_sha256": "18f373e92020ed9dd6277248a9f2e11449a4efe357aa785b358726ef421a2441",
+  "correction_scope": "NOT_EXECUTED_AFTER_BLOCKING_HISTORY_FINDINGS",
+  "remaining_profiles": "NOT_EXECUTED_PER_PLAN_STOP_RULE",
+  "configuration_or_thresholds_changed": false,
+  "source_integrity_after": "integrity-after-security.json",
+  "original_STOP_preserved": true
+}

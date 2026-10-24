@@ -1,0 +1,177 @@
+{
+  "directed": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 1817.0617662,
+    "formal_runs": 1,
+    "invalidating_incident": null,
+    "tests": 87,
+    "outcomes": {
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "xpass": null
+    },
+    "failed_ids": []
+  },
+  "django-check": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 15.222519100000227,
+    "formal_runs": 1,
+    "invalidating_incident": null
+  },
+  "migration-drift": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 17.24862800000028,
+    "formal_runs": 1,
+    "invalidating_incident": null
+  },
+  "migrate": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 240.90916319999997,
+    "formal_runs": 1,
+    "invalidating_incident": null
+  },
+  "billing-schema": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 15.238634100000127,
+    "formal_runs": 1,
+    "invalidating_incident": null
+  },
+  "b0": {
+    "state": "PENDING_ENVIRONMENT_INTERRUPTION",
+    "exit_code": 1,
+    "seconds": 238.6286073999995,
+    "formal_runs": 1,
+    "invalidating_incident": "Backing disk reserve exhausted",
+    "partial_journal": {
+      "path": "blocks/b0.ids.jsonl",
+      "journal_present": true,
+      "journal_scope": "ALL_RECORDED_OUTCOMES",
+      "observations": 0,
+      "outcomes": {},
+      "skips": [],
+      "unique_ids": 0,
+      "selected_ids": 17,
+      "missing_ids": [
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_direct_pending_commit_is_contained",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_emergency_copy_uses_only_configured_phone",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_failure_after_persistence_leaves_pending_event",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_forced_dispatch_cannot_invoke_any_write_handler",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_forced_planner_write_is_handed_off",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_legacy_pending_cannot_authorize_any_reply",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_llm_timeout_yields_honest_fallback",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_pending_events_and_queued_outbound_do_not_mean_delivery",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_personal_read_needs_current_identity",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_public_read_and_explicit_human_remain_available",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_read_result_does_not_prove_write_or_price",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_registry_covers_every_current_write",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_unsafe_output_corpus_is_replaced_without_retry",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_alert_acceptance_failure_and_no_free_text_export",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_controlled_provider_failure_boundaries",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_failed_empty_skipped_or_expected_failure_cannot_pass_gate",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_fixture_is_required_and_complete"
+      ],
+      "complete_suite_receipt": false,
+      "accepted_as_complete_gate": false
+    }
+  },
+  "b3": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "b4": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "b5": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8b": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8c": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8d": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8e": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-general": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0,
+    "logical_aggregate": true,
+    "groups": [
+      "full-b8b",
+      "full-b8c",
+      "full-b8d",
+      "full-b8e",
+      "full-general"
+    ],
+    "seconds": 0
+  },
+  "frontend-build": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "frontend-test": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "frontend-lint": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "frontend-smoke-urls": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "security": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "pip-audit": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "pnpm-audit": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-base": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-blocked_llm": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-meta_slow": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-duplicate": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-saturation": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  }
+}

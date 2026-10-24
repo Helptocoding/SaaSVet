@@ -1,0 +1,271 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ❯ src/pages/inbox/index.filters.test.jsx (10 tests | 1 failed) 3507ms
+     ✓ Sin atender envía filtro al servidor y muestra su respuesta  934ms
+     ✓ Esperando cliente envía filtro al servidor y muestra su respuesta 202ms
+     ✓ Urgentes envía filtro al servidor y muestra su respuesta 151ms
+     ✓ Míos envía filtro al servidor y muestra su respuesta 152ms
+     ✓ combina segmentos AND, conserva archivo y permite desactivar  418ms
+     ✓ los estados de atención son excluyentes y un segundo clic los limpia 222ms
+     ✓ descarta páginas y cursores previos, aborta peticiones y rechaza respuestas tardías  302ms
+     ✓ paginación y polls conservan el filtro y su cursor propio 276ms
+     ✓ conserva conversación abierta, borrador y total de no leídos al filtrar  515ms
+     × un error del filtro permite reintentar con los mismos parámetros 325ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/inbox/index.filters.test.jsx > WA-FIL-01 — segmentos del Inbox > un error del filtro permite reintentar con los mismos parámetros
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Reintentar"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "WhatsApp":
+  [36m<h1 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"page-subtitle"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"empty-state-title"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"empty-state-sub"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Activas":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"inbox-unread-total"[39m
+    [33maria-label[39m=[32m"Activas"[39m
+    [33maria-pressed[39m=[32m"true"[39m
+    [33mclass[39m=[32m"_filterTab_560897 _filterTabActive_560897"[39m
+  [36m/>[39m
+
+  Name "Archivadas":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Archivadas"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"_filterTab_560897 "[39m
+  [36m/>[39m
+
+  Name "Sin atender":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"_segmentChip_560897 "[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Esperando cliente":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"_segmentChip_560897 "[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Urgentes":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"true"[39m
+    [33mclass[39m=[32m"_segmentChip_560897 _segmentChipActive_560897"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Míos":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"_segmentChip_560897 "[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reintentar ahora":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-secondary btn-md"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Filtros de conversaciones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Filtros de conversaciones"[39m
+    [33mclass[39m=[32m"_segmentRow_560897"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "No se pudieron cargar las conversaciones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"No se pudieron cargar las conversaciones"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_page_560897"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-header _pageHeader_560897"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1>[39m
+            [0mWhatsApp[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-subtitle"[39m
+          [36m>[39m
+            [0mConversaciones con clientes — responde, toma o cierra cada hilo.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_layout_560897"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_listPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_filterRow_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-describedby[39m=[32m"inbox-unread-total"[39m
+              [33maria-label[39m=[32m"Activas"[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"_filterTab_560897 _filterTabActive_560897"[39m
+            [36m>[39m
+              [0mActivas[0m
+              [36m<span[39m
+                [33maria-label[39m=[32m"7 mensajes sin leer en conversaciones activas"[39m
+                [33mclass[39m=[32m"_unreadCount_560897"[39m
+                [33mid[39m=[32m"inbox-unread-total"[39m
+              [36m>[39m
+                [0m7[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Archivadas"[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_filterTab_560897 "[39m
+            [36m>[39m
+              [0mArchivadas[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Filtros de conversaciones"[39m
+            [33mclass[39m=[32m"_segmentRow_560897"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_segmentChip_560897 "[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mSin atender[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_segmentChip_560897 "[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mEsperando cliente[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"_segmentChip_560897 _segmentChipActive_560897"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mUrgentes[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_segmentChip_560897 "[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mMíos[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listScroll_560897"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"No se pudieron cargar las conversaciones"[39m
+              [33mrole[39m=[32m"alert"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"empty-state empty-state-compact"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"empty-state-title"[39m
+                [36m>[39m
+                  [0mNo se pudieron cargar las conversaciones[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"empty-state-sub"[39m
+                [36m>[39m
+                  [0mNo se pudo cargar la lista de conversaciones[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"empty-state-actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn-secondary btn-md"[39m
+                  [36m>[39m
+                    [0mReintentar ahora[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_chatPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_emptyPane_560897"[39m
+          [36m>[39m
+            [0mSelecciona una conversación para ver los mensajes.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ click src/pages/inbox/index.filters.test.jsx:25:54
+     23| const pending = () => { let resolve; const promise = new Promise((done…
+     24| async function flush() { await act(async () => {}); }
+     25| async function click(label) { fireEvent.click(screen.getByRole("button…
+       |                                                      ^
+     26| const lastParams = () => api.getThreads.mock.calls.at(-1)[0];
+     27|
+ ❯ src/pages/inbox/index.filters.test.jsx:99:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  19:38:48
+   Duration  21.84s (transform 2.27s, setup 1.19s, import 4.61s, tests 3.51s, environment 9.10s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-fil-01-2026-10-21/vitest-new.json

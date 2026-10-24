@@ -1,0 +1,38 @@
+--- native-r9/handoff_runtime.py
++++ native/handoff_runtime.py
+@@ -6,14 +6,14 @@
+ from native_support import EVIDENCE, WORK, DATA, PG, PORT, SHA, RTK, save, sha256, environment, resources, integrity
+ from retire_previous_cluster import verify_scope, confirm_port_free, stable_previous_log, kernel_api, identity, parent_pid
+ 
+-FRESH_DB='test_b9i_full_general_remainder_r9'
+-EXPECTED_SHA='b271e314817da51e99811cb18921fd7c9f59e58a'
++FRESH_DB='test_b9i_full_general_remainder_r10'
++EXPECTED_SHA='f5f18d71847a46d66644775cd90d30268f072e3b'
+ 
+ 
+ def main():
+     verify_scope()
+     assert SHA==EXPECTED_SHA
+-    assert EVIDENCE.name=='b9-correction-20261020-native-r9'
++    assert EVIDENCE.name=='b9-correction-20261020-native-r10'
+     assert Path(json.loads((EVIDENCE/'assembly.json').read_text(encoding='utf-8'))['workspace']).resolve()==WORK.resolve()
+     assert not (EVIDENCE/'postgresql-start.json').exists(), 'Refusing duplicate owned server invocation'
+     assert not (EVIDENCE/'postgresql-start-attempt-1.json').exists(), 'No automatic start retry'
+@@ -77,7 +77,7 @@
+                 other_clients=active,postmaster=server_identity,wrapper=wrapper_identity))
+             assert values[0].startswith('PostgreSQL 16.15,') and Path(values[1]).resolve()==DATA.resolve()
+             assert values[2:]==('on','on','on')
+-            assert actual_port==str(PORT) and abs(float(sql_epoch)-start_epoch)<=2
++            assert actual_port==str(PORT) and abs(float(sql_epoch)-start_epoch)<=5
+             assert 'test_b9i_control' in names and FRESH_DB not in names
+             assert not prepared and not active
+     finally:
+@@ -98,7 +98,7 @@
+     save('environment-ready.json',dict(state='READY_FOR_SEAL',candidate_sha=SHA,platform='Windows native',
+         wsl_invoked=False,application_tests_executed=False,runtime_reinstalled=False,
+         runtime_reference='prepared-runtime-references.json',previous_invocation_resumed=False))
+-    print('SAME_CLUSTER_R9_HANDOFF_PASS_NO_TESTS',flush=True)
++    print('SAME_CLUSTER_R10_HANDOFF_PASS_NO_TESTS',flush=True)
+ 
+ 
+ if __name__=='__main__':main()

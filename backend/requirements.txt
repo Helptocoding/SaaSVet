@@ -19,3 +19,5 @@ cryptography>=44
 # Tracebacks picklables para el test runner paralelo (sin esto, un crash en
 # worker paralelo pierde el traceback: "tracebacks cannot be pickled").
 tblib>=3.0
+# Private operational Inbox media (dedicated B2 bucket, S3-compatible API).
+boto3>=1.43.95,<2.0

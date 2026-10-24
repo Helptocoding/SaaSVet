@@ -1,0 +1,27 @@
+{
+  "state": "COMPLETED",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261011/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011/pgroot/usr/lib/postgresql/16/bin/initdb",
+    "-D",
+    "/home/lap/b9i-wsl-1947726-20261011/pgdata",
+    "--username=b9e",
+    "--auth-local=trust",
+    "--auth-host=trust",
+    "--encoding=UTF8",
+    "--locale=C.UTF-8",
+    "-L",
+    "/home/lap/b9i-wsl-1947726-20261011/pgroot/usr/share/postgresql/16"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261011",
+  "exit_code": 0,
+  "seconds": 13.191369166000072,
+  "resources_after": {
+    "utc": "2026-10-11T23:40:21Z",
+    "physical_available": 7738261504,
+    "physical_total": 8252518400,
+    "disk_available": 5368709120,
+    "linux_virtual_disk_available": 1017974849536
+  }
+}

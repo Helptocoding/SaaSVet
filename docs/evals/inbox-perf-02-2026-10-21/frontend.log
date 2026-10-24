@@ -1,0 +1,384 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ❯ src/pages/inbox/index.test.jsx (80 tests | 2 failed | 51 skipped) 11015ms
+     ↓ does not call discarded guidance pending delivery
+     ↓ allows the current human owner to explicitly acknowledge a new queued case
+     ↓ shows a durable queue without inventing notification or acknowledgement
+     ↓ labels explicit acknowledgement without claiming clinical attention
+     ↓ keeps uncertain guidance visible and preserves multiple open legacy cases
+     ↓ cambiar de hilo no conserva el botón del historial anterior
+     ↓ permite recorrer un hilo archivado sin habilitar el envío
+     ↓ active: explica el turno y habilita Tomar y acusar recibo al terminar
+     ↓ human_active: explica el turno y habilita Liberar al terminar
+     ↓ muestra el indicador sin conceder permiso para tomar o liberar
+     ↓ no hereda el indicador de otro hilo ni de la fila antigua
+     ↓ un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada
+     ✓ distingue carga inicial de lista y mensajes de un panel sin selección  595ms
+     ✓ distingue el fallo inicial de lista vacía y permite reintentar 193ms
+     ✓ explica el fallo inicial de transcript y reintenta la misma conversación 213ms
+     ✓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  741ms
+     ✓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  765ms
+     ✓ recupera ambos paneles automáticamente cuando vuelve la API 164ms
+     ✓ un fallo tardío del hilo anterior no contamina la racha del nuevo 221ms
+     ✓ ignora success tardío de lista tras cambiar de filtro 80ms
+     ✓ ignora failure tardío de lista tras cambiar de filtro 72ms
+     ↓ representa staff_verified en ambos paneles sin habilitar acciones de identidad
+     ↓ representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad
+     ↓ representa phone_match en ambos paneles sin habilitar acciones de identidad
+     ↓ representa unknown en ambos paneles sin habilitar acciones de identidad
+     ↓ muestra la verificación del contacto incluso en un hilo archivado
+     ↓ retira el distintivo cuando el siguiente poll informa unknown
+     ✓ pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias 116ms
+     ✓ cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía 198ms
+     ✓ si inicia oculto no consulta la lista y usa el filtro vigente al volver 111ms
+     ✓ refleja el último poll sin solicitar datos adicionales y restaura al salir 28ms
+     ↓ copia el cuerpo original completo, sin horas ni autor, y confirma el éxito
+     ↓ muestra un error recuperable cuando el navegador rechaza la copia
+     ↓ maneja clipboard no disponible sin anunciar una copia falsa
+     ↓ copia teléfono y ofrece tel: también con hilo archivado=false
+     ↓ copia teléfono y ofrece tel: también con hilo archivado=true
+     ↓ renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders
+     ↓ agrupa por autor sin ocultar mensajes, horas ni estados de entrega
+     ↓ corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto
+     ↓ crece al pegar 2000 caracteres, limita la altura y encoge al borrar
+     ↓ muestra el contador después de 3600 y conserva el límite de 4000
+     ↓ reinicia altura y contador al enviar sin esperar el POST
+     ↓ descarta texto y contador al cambiar de cliente
+     ↓ descarta el texto de Ana al cambiar al hilo de Beto
+     ↓ conserva el borrador al volver a clicar el mismo hilo
+     ↓ envía al sessionId vigente con una key de idempotencia no vacía
+     ↓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde
+     ↓ reutiliza la key si se reintenta el mismo texto tras un error de red
+     ↓ conserva la key incierta al navegar B y volver a A con el mismo texto
+     ↓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto
+     ↓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío
+     ↓ regenera la key cuando cambia el texto después de un error
+     ↓ pinta el envío antes del POST y reconcilia el 201 sin duplicar
+     ↓ elimina el optimista ante 400 y muestra el error del servidor
+     ↓ conserva el optimista reintentable ante un 5xx
+     ↓ deduplica un polling concurrente exclusivamente por client_message_id
+     ↓ dos envíos consecutivos por Enter reciben keys distintas
+     ↓ no ejecuta continuaciones del POST después de desmontar el Inbox
+     ↓ aplica el cap global de 20 intentos entre sesiones
+     ↓ oculta failed-local cuando el hilo regresa con otra sesión activa
+     ↓ renderiza un divisor por día local de la organización
+     ↓ mantiene la hora del mensaje histórico bajo el divisor Ayer
+     ↓ integra recibos de entrega solo en mensajes salientes del transcript
+     ↓ actualiza todos los divisores con una sola referencia al cruzar medianoche
+     × permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes 5179ms
+     ✓ deduplica por contacto y cuenta sin ocultar otra cuenta del mismo contacto 143ms
+     ✓ refresca todas las páginas cargadas y conserva selección y borrador  546ms
+     ✓ bloquea el doble clic y el poll mientras carga otra página 188ms
+     ✓ una respuesta de poll anterior no borra una página recién añadida 145ms
+     ✓ conserva las filas ante un error de carga y reintenta el mismo desplazamiento 210ms
+     × un refresco parcial fallido retiene todas las filas y muestra reconexión tras dos fallos 146ms
+     ✓ ignora una carga tardía con éxito después de cambiar de filtro 242ms
+     ✓ ignora una carga tardía con error después de cambiar de filtro 218ms
+     ✓ no inicia otra página del poll al ocultarse y refresca todas al volver 131ms
+     ✓ no continúa un refresco de varias páginas después de desmontar 106ms
+     ✓ reduce las páginas a refrescar cuando la lista se agota antes 115ms
+     ✓ no ofrece un cursor inválido 0 43ms
+     ✓ no ofrece un cursor inválido -1 39ms
+     ✓ no ofrece un cursor inválido 100 30ms
+     ✓ no ofrece un cursor inválido null 31ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-PERF-02 — paginación de conversaciones > permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/pages/inbox/index.test.jsx:1330:5
+    1328|     };
+    1329|
+    1330|     it("permite alcanzar 250 conversaciones en tres páginas y anuncia …
+       |     ^
+    1331|         const all = Array.from({ length: 250 }, (_, i) => ({
+    1332|             ...rows[0], contact_public_id: `contact-${i}`, owner_name:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-PERF-02 — paginación de conversaciones > un refresco parcial fallido retiene todas las filas y muestra reconexión tras dos fallos
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Beto/`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<button[39m
+  [33mclass[39m=[32m"_convItem_560897"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"_convTop_560897"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_convIdentity_560897"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"_convName_560897"[39m
+      [36m>[39m
+        [0mBeto[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"_convTime_560897"[39m
+    [36m>[39m
+      [0m22-ago[0m
+    [36m</span>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"_convTop_560897"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"_convPreview_560897"[39m
+    [36m>[39m
+      [0mHola de Beto[0m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"badge badge-info"[39m
+    [36m>[39m
+      [0mAbierta[0m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</button>[39m
+
+Ignored nodes: comments, script, style
+[36m<button[39m
+  [33mclass[39m=[32m"_convItem_560897"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"_convTop_560897"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_convIdentity_560897"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"_convName_560897"[39m
+      [36m>[39m
+        [0mCaro[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"_convTime_560897"[39m
+    [36m>[39m
+      [0m22-ago[0m
+    [36m</span>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"_convTop_560897"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"_convPreview_560897"[39m
+    [36m>[39m
+      [0mHola de Beto[0m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"badge badge-info"[39m
+    [36m>[39m
+      [0mAbierta[0m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</button>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_page_560897"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-header _pageHeader_560897"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1>[39m
+            [0mWhatsApp[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-subtitle"[39m
+          [36m>[39m
+            [0mConversaciones con clientes — responde, toma o cierra cada hilo.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_layout_560897"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_listPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_filterRow_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"_filterTab_560897 _filterTabActive_560897"[39m
+            [36m>[39m
+              [0mActivas[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_filterTab_560897 "[39m
+            [36m>[39m
+              [0mArchivadas[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listScroll_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mAna[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Ana[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mBeto[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Beto[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mCaro[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Beto[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listPagination_560897"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0m3[0m
+              [0m [0m
+              [0mconversaciones cargadas.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_chatPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_emptyPane_560897"[39m
+          [36m>[39m
+            [0mSelecciona una conversación para ver los mensajes.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/inbox/index.test.jsx:1439:23
+    1437|             ? Promise.reject(new Error("offline")) : Promise.resolve(p…
+    1438|         await advancePoll();
+    1439|         expect(screen.getByRole("button", { name: /Beto/ })).toBeInThe…
+       |                       ^
+    1440|         expect(screen.getByRole("button", { name: /Caro/ })).toBeInThe…
+    1441|         await advancePoll();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 27 passed | 51 skipped (80)
+   Start at  09:52:24
+   Duration  22.96s (transform 1.25s, setup 795ms, import 2.85s, tests 11.01s, environment 5.71s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-perf-02-2026-10-21/vitest.json

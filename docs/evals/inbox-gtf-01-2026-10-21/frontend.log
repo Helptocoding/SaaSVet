@@ -1,0 +1,19 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/ThreadViewport.test.jsx (8 tests) 816ms
+     ✓ a 201 px del fondo: visible=true  485ms
+ ✓ src/pages/inbox/index.test.jsx (64 tests | 47 skipped) 5115ms
+     ✓ cambiar de hilo no conserva el botón del historial anterior  818ms
+     ✓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  697ms
+     ✓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  676ms
+     ✓ muestra el contador después de 3600 y conserva el límite de 4000  385ms
+     ✓ reinicia altura y contador al enviar sin esperar el POST  346ms
+     ✓ descarta texto y contador al cambiar de cliente  367ms
+
+ Test Files  2 passed (2)
+      Tests  25 passed | 47 skipped (72)
+   Start at  08:59:15
+   Duration  21.37s (transform 1.89s, setup 1.33s, import 4.50s, tests 5.93s, environment 14.35s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-gtf-01-2026-10-21/vitest.json

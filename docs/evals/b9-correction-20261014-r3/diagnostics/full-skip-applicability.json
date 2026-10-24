@@ -1,0 +1,48 @@
+{
+  "state": "IDENTIFIED_HISTORICAL_NONCRITICAL_SKIPS",
+  "current_skip_count": 2,
+  "current_partial_observations": 1552,
+  "full_suite_complete": false,
+  "original_candidate": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "historical_receipt": "../b9-integral-acceptance-1947726-wsl-20261012-r9/blocks/full.ids.jsonl",
+  "skips": [
+    {
+      "current": {
+        "id": "apps.agent.tests.test_regression_f2.Int21Tests.test_21_05_bis_new_pet_existing_owner",
+        "outcome": "SKIP",
+        "reason": "INT-21-bis (mascota nueva de cliente existente) sin tool en PR-17a; el alta reusa create-with-patient — pendiente de PR futuro.",
+        "utc": "2026-10-15T02:58:43Z",
+        "traceback": null
+      },
+      "original_skip_rows": [
+        {
+          "id": "apps.agent.tests.test_regression_f2.Int21Tests.test_21_05_bis_new_pet_existing_owner",
+          "outcome": "SKIP",
+          "reason": "INT-21-bis (mascota nueva de cliente existente) sin tool en PR-17a; el alta reusa create-with-patient — pendiente de PR futuro."
+        }
+      ],
+      "critical_inventory_member": false,
+      "observed_before_test_corrections": true,
+      "covers_no_pending_requirement": true
+    },
+    {
+      "current": {
+        "id": "apps.analytics.tests.test_snapshot_v1.VisibilityPolicyFutureProofTests.test_visibility_excludes_voided_when_policy_is_excluding_voided",
+        "outcome": "SKIP",
+        "reason": "Placeholder for historical_excluding_voided policy (ADR required)",
+        "utc": "2026-10-15T03:06:07Z",
+        "traceback": null
+      },
+      "original_skip_rows": [
+        {
+          "id": "apps.analytics.tests.test_snapshot_v1.VisibilityPolicyFutureProofTests.test_visibility_excludes_voided_when_policy_is_excluding_voided",
+          "outcome": "SKIP",
+          "reason": "Placeholder for historical_excluding_voided policy (ADR required)"
+        }
+      ],
+      "critical_inventory_member": false,
+      "observed_before_test_corrections": true,
+      "covers_no_pending_requirement": true
+    }
+  ]
+}

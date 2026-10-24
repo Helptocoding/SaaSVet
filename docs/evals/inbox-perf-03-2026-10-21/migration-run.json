@@ -1,0 +1,14 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "python",
+    "manage.py",
+    "makemigrations",
+    "--check",
+    "--dry-run"
+  ],
+  "exit_code": 0,
+  "sentry_upload_disabled": true,
+  "working_database_migrated": false
+}

@@ -1,0 +1,210 @@
+{
+  "status": "PASS",
+  "scope": "WA-ASN-01 local implementation",
+  "composite": true,
+  "backend_unique_pass": 20,
+  "frontend_unique_pass": 25,
+  "backend": {
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_actor_requires_claim_and_authentication_for_both_endpoints": {
+      "status": "passed",
+      "receipt": "backend-new.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_assign_to_colleague_and_multiple_cases": {
+      "status": "passed",
+      "receipt": "backend-uuid.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_assignment_does_not_acknowledge_handoff_or_mark_read": {
+      "status": "passed",
+      "receipt": "backend-new.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_assignment_invalidates_pending_agent_authority": {
+      "status": "passed",
+      "receipt": "backend-new.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_assignment_moves_incremental_list_and_transcript": {
+      "status": "passed",
+      "receipt": "backend-remaining.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_closed_conversation_stays_closed": {
+      "status": "passed",
+      "receipt": "backend-remaining.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_committed_structured_audit_contains_ids_only": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_directory_minimal_scoped_strict_and_bounded_queries": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_foreign_conversation_and_invalid_uuid_are_404": {
+      "status": "passed",
+      "receipt": "backend-uuid.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_foreign_and_missing_target_indistinguishable_404": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_inactive_target_rejected": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_invalid_target_body_is_400": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_reassign_other_staff_and_self_are_allowed": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_revoked_permission_after_directory_load_rejected": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_rollback_has_no_assignment_or_audit": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_same_assignment_is_idempotent": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_service_account_rejected_even_with_send": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_target_without_send_or_db_role_rejected": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentRaceTests.test_assign_first_claim_waits_then_conflicts": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    },
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentRaceTests.test_claim_first_assign_waits_then_transfers": {
+      "status": "passed",
+      "receipt": "backend-pending.log"
+    }
+  },
+  "frontend": {
+    "WA-ASN-01 — cabecera y transiciones asigna el episodio vigente, refresca e informa sin borrar el borrador": {
+      "status": "passed",
+      "receipt": "vitest-new.json"
+    },
+    "WA-ASN-01 — cabecera y transiciones oculta la acción sin permiso claim": {
+      "status": "passed",
+      "receipt": "vitest-new.json"
+    },
+    "WA-ASN-01 — cabecera y transiciones no permite asignar una conversación archivada": {
+      "status": "passed",
+      "receipt": "vitest-new.json"
+    },
+    "WA-ASN-01 — cabecera y transiciones el turno activo deshabilita asignar como Tomar/Liberar": {
+      "status": "passed",
+      "receipt": "vitest-turn.json"
+    },
+    "WA-ASN-01 — cabecera y transiciones el fallo mantiene elección y borrador para corregir o reintentar": {
+      "status": "passed",
+      "receipt": "vitest-new.json"
+    },
+    "WA-ASN-01 — cabecera y transiciones doble submit bloquea acciones simultáneas": {
+      "status": "passed",
+      "receipt": "vitest-new.json"
+    },
+    "WA-ASN-01 — cabecera y transiciones cambiar de hilo cancela el directorio sin trasladar la selección": {
+      "status": "passed",
+      "receipt": "vitest-new.json"
+    },
+    "WA-ASN-01 — cabecera y transiciones un POST tardío no refresca ni anuncia el hilo anterior": {
+      "status": "passed",
+      "receipt": "vitest-new.json"
+    },
+    "WA-ASN-01 — cabecera y transiciones una respuesta de otra sesión del mismo hilo también invalida el POST": {
+      "status": "passed",
+      "receipt": "vitest-new.json"
+    },
+    "WA-ASN-01 — cabecera y transiciones mantiene el contrato de Tomar y Liberar al compartir el guard": {
+      "status": "passed",
+      "receipt": "vitest-new.json"
+    },
+    "WA-ASN-01 selector carga el directorio solo al abrir y envía el UUID elegido": {
+      "status": "passed",
+      "receipt": "vitest-selector-final.json"
+    },
+    "WA-ASN-01 selector permite cancelar sin asignar y aborta el GET": {
+      "status": "passed",
+      "receipt": "vitest-selector-final.json"
+    },
+    "WA-ASN-01 selector muestra vacío sin una acción inválida": {
+      "status": "passed",
+      "receipt": "vitest-selector-final.json"
+    },
+    "WA-ASN-01 selector explica fallo de carga y permite reintentar": {
+      "status": "passed",
+      "receipt": "vitest-selector-final.json"
+    },
+    "WA-ASN-01 selector evita doble envío y deja visible la elección si la API rechaza": {
+      "status": "passed",
+      "receipt": "vitest-selector-final.json"
+    },
+    "WA-ASN-01 selector un cambio de estado deshabilita la elección y el envío": {
+      "status": "passed",
+      "receipt": "vitest-selector-final.json"
+    },
+    "WA-ASN-01 selector aborta al desmontar y descarta el directorio tardío": {
+      "status": "passed",
+      "receipt": "vitest-selector-final.json"
+    },
+    "WA-ASN-01 selector reabrir revalida el equipo y limpia la selección anterior": {
+      "status": "passed",
+      "receipt": "vitest-selector-final.json"
+    },
+    "B5 handoff evidence allows the current human owner to explicitly acknowledge a new queued case": {
+      "status": "passed",
+      "receipt": "vitest-affected.json"
+    },
+    "WA-AGT-01 — turno del asistente active: explica el turno y habilita Tomar y acusar recibo al terminar": {
+      "status": "passed",
+      "receipt": "vitest-affected.json"
+    },
+    "WA-AGT-01 — turno del asistente human_active: explica el turno y habilita Liberar al terminar": {
+      "status": "passed",
+      "receipt": "vitest-affected.json"
+    },
+    "WA-AGT-01 — turno del asistente muestra el indicador sin conceder permiso para tomar o liberar": {
+      "status": "passed",
+      "receipt": "vitest-affected.json"
+    },
+    "WA-AGT-01 — turno del asistente no hereda el indicador de otro hilo ni de la fila antigua": {
+      "status": "passed",
+      "receipt": "vitest-affected.json"
+    },
+    "WA-AGT-01 — turno del asistente un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada": {
+      "status": "passed",
+      "receipt": "vitest-affected.json"
+    },
+    "WA-ASN-01 — cabecera y transiciones salir del inbox descarta la respuesta tardía de asignación": {
+      "status": "passed",
+      "receipt": "vitest-unmount.json"
+    }
+  },
+  "browser": "browser-check.json",
+  "build": "build-final2.json",
+  "lint": "lint-final2.json",
+  "working_database_migrated": false,
+  "new_migrations": false,
+  "real_reception_meta": "POSTPONED_PENDING",
+  "source_sha256": {
+    "backend/apps/agent/inbox_assignment.py": "362c89af8b04b94051f06c32dea50ab1de7ae5582b2a5599d7212b0310d49c2a",
+    "backend/apps/agent/views.py": "3140e51e1d11f6c76631fe0c5f555a7f4951dd3b6e368af4a5d98ca2f1111a66",
+    "backend/apps/agent/urls.py": "88d18c3e2779351be9720752cb40fe345fe33e2769722ec923cf6847598db164",
+    "backend/apps/agent/tests/test_inbox_assignment.py": "65d1d514809c8dcfc1f0ee75808fb3050ed58bd3aa1c87c52ee9fe9b88700c4e",
+    "frontend/src/api/inbox.js": "61b0761621f515f94c71fee81672db39b5d7b691a8af46a6d25562841682d3f0",
+    "frontend/src/pages/inbox/index.jsx": "5c774634ab90e1638e290827bf591c55e031b7260859d955c987f8c6eb52e851",
+    "frontend/src/pages/inbox/inbox.module.css": "94530bda8cc6a19d253aa78b338374cff353f9acebf2ecc67b2ba572b9f862f2",
+    "frontend/src/pages/inbox/ThreadAssignment.jsx": "5333a2d86d483dee3ddcdcf45a719c613e9e9066cea3a27ead5573d773b7575d",
+    "frontend/src/pages/inbox/ThreadAssignment.test.jsx": "b9695fb1707e4c8df2ef147423d0b6589a497f5ddff6f3bed22a7a3328f59fa4",
+    "frontend/src/pages/inbox/index.assignment.test.jsx": "38a0bf3e3270af70b608c81ee737e9b76bc397ee7c7a86cdce99a6074f9b918a"
+  },
+  "applicability": "Final UUID route correction changes acceptance of numeric IDs only; happy path and foreign/malformed cases retested. Earlier UUID-based permissions, fencing, audit and race results remain applicable. Selector event/loading change covered by all eight component tests; unmount guard covered separately."
+}

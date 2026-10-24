@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\b9-correction-20261020-native-r10\frontend_resumption.py", line 294, in <module>
+    {'prepare': prepare, 'run': run, 'assemble': assemble}[sys.argv[1]]()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\b9-correction-20261020-native-r10\frontend_resumption.py", line 242, in assemble
+    assert data['success'] is True and data['numPassedTests'] == 1 and data['numFailedTests'] == 0
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

@@ -1,0 +1,70 @@
+{
+  "state": "PASS",
+  "historical_r12_fail_preserved": true,
+  "scope": "HEAD ancestry, identical default Gitleaks CI scope; full Git refs observed before/after",
+  "policy": {
+    ".gitleaks.toml": "2627643136939fba771e5cd46446255e2cdf0b8f06e80907fde8836428534a9e",
+    ".gitleaksignore": "b4c7a911257861ffb04424d083dc4e59d1053491f5679197e24c17e41ea17a14"
+  },
+  "negative_control": {
+    "scope": "negative-control",
+    "exit_code": 1,
+    "seconds": 1.5558477999875322,
+    "findings": 1,
+    "redacted": true,
+    "report": "gitleaks-negative-control.json",
+    "argv": [
+      "C:\\Users\\LAP\\.local\\bin\\rtk.EXE",
+      "proxy",
+      "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\runtime\\gitleaks\\gitleaks.exe",
+      "detect",
+      "--source",
+      "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\runtime\\scanner-control",
+      "--config",
+      "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\.gitleaks.toml",
+      "--gitleaks-ignore-path",
+      "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\.gitleaksignore",
+      "--redact",
+      "--no-banner",
+      "--no-color",
+      "--report-format",
+      "json",
+      "--report-path",
+      "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\gitleaks-negative-control.json",
+      "--exit-code",
+      "1",
+      "--no-git"
+    ]
+  },
+  "formal": {
+    "scope": "history",
+    "exit_code": 0,
+    "seconds": 55.928781299997354,
+    "findings": 0,
+    "redacted": true,
+    "report": "gitleaks-history.json",
+    "argv": [
+      "C:\\Users\\LAP\\.local\\bin\\rtk.EXE",
+      "proxy",
+      "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\runtime\\gitleaks\\gitleaks.exe",
+      "detect",
+      "--source",
+      "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS",
+      "--config",
+      "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\.gitleaks.toml",
+      "--gitleaks-ignore-path",
+      "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\.gitleaksignore",
+      "--redact",
+      "--no-banner",
+      "--no-color",
+      "--report-format",
+      "json",
+      "--report-path",
+      "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\gitleaks-history.json",
+      "--exit-code",
+      "1"
+    ]
+  },
+  "history_and_policy_unchanged": true,
+  "current_uncommitted_tree_certified": false
+}

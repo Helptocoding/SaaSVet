@@ -1,5 +1,11 @@
 # Módulos: agent + channels (subsistema del agente conversacional)
 
+> **Inbox, fase 3 local — 22-10-2026:** RPL-07 y MED-01..05 implementadas;
+> 170 pruebas PostgreSQL y 257 frontend únicas PASS. M4 temporal, proxy por clínica y worker
+> privado con expiración a 180 días. [Evidencia](../evals/inbox-phase3-2026-10-22/README.md)
+> y [contrato/operación](../runbooks/inbox-media.md). Producción y gates reales
+> pendientes; no cambia el FAIL B9 ni habilita WRITE. Los cortes inferiores son históricos.
+
 > **Estado consolidado — 2026-10-11:** [acta B9](../evals/b9-consolidation-2026-10-11/ACTA.md). B9A–D COMPLETED técnico; PROFILE 02-10 PASS para `0831046`; expediente B9E consolidado, sin inferir aceptación integral nueva del HEAD instrumentado. E4 CLOSED por límite confirmado; D29 cerrado con R1-04 PENDING aceptado y cero intentos adicionales. H16/H19 conservan límites de cobertura/carga; activación PENDING_ACTIVATION_REQUIREMENTS. Los cortes inferiores son históricos. Esta consolidación sólo organiza evidencia y Git; no cambia APIs, estados runtime, permisos, contratos ni el alcance UX de Inbox.
 
 > **Frontera vigente B4 (2026-09-16):** Message incorpora claim, admisión y
@@ -83,6 +89,449 @@
 > camino y las alternativas que se descartaron.
 >
 > Runbook operativo: [`runbooks/agent-whatsapp.md`](../runbooks/agent-whatsapp.md).
+
+## Inbox: envío API y proyección de citas (WA-RPL-03, 2026-10-21)
+
+`POST /api/inbox/conversations/{uuid}/send/` admite `reply_to_id` opcional, entero
+positivo de 64 bits. Exige `agentinbox.send`. Tras resolver el recurso y el replay
+idempotente, valida el destino de la misma clínica/persona/cuenta bajo el lock de
+Conversation y del mensaje citado. Destino ajeno o inexistente: 400 con
+`code: invalid_reply_target`, antes de takeover/outbox. Recurso de otra clínica:
+404 incluso con una clave previa. Los errores de forma conservan la validación DRF.
+
+La clave idempotente conserva cuerpo y cita originales, incluso si el nuevo POST
+cambia la cita o llega después del cierre. Retry conserva la misma FK y autor.
+Se admite historia de otros episodios y destinos ocultos/fallidos/descartados/media.
+
+`MessageSerializer.reply_to` devuelve null o un nivel `{id, author_type,
+human_author_name, payload_type, excerpt, status}`. Excerpt contiene como máximo
+80 caracteres del cuerpo, incluido vacío. No expande citas de citas. Una FK legada
+de otro hilo/clínica se proyecta como null; nombres de autores de otra clínica
+quedan nulos. La respuesta POST se relee para reflejar si el takeover descartó
+el destino pendiente del agente.
+
+Transcript reciente, `before`, `around`, delta, episodio legado, replay y retry
+cargan `reply_to__human_author` junto con los mensajes. El fingerprint del delta
+incluye campos de la cita y solo los primeros 80 caracteres del destino: cambios
+de excerpt/status/autor actualizan el mensaje que cita, aunque el destino esté
+fuera de página y su propio updated_at no cambie. Una edición posterior al excerpt
+no modifica la proyección del padre. El delta estable conserva mensajes vacíos.
+
+Sin migración nueva ni cambios de frontend. La relación/API no acredita cita
+nativa enviada a WhatsApp: el adaptador actual aún despacha solo texto; ese enlace
+al proveedor debe implementarse al cerrar la cadena replies, además de su gate
+Meta real. Composer, salto y bloques visuales siguen en RPL-05/06/04.
+[Evidencia RPL-03](../evals/inbox-rpl-03-2026-10-21/README.md).
+
+## Inbox: citas entrantes desde webhook (WA-RPL-02, 2026-10-21)
+
+El webhook firmado reutiliza `ChannelEvent.reply_to_id`, el `context.id` normalizado
+de B1. `provider_reply_target` busca un destino único por ID externo dentro de la
+organización y cuenta receptoras, en cualquier dirección e incluyendo historia
+oculta. Dos filas candidatas o ID ausente/inválido/largo no se convierten en cita.
+El ID se compara completo, sin truncar ni convertir objetos a texto.
+
+`ingest_inbound_message(..., reply_to=None)` admite un Message opcional. Después
+del precheck dedup y bajo el lock de Conversation vuelve a resolver clínica,
+contacto y cuenta mediante `resolve_reply_target(lock=True)`. El lock de destino
+se conserva hasta persistir el entrante. Un destino desaparecido o fuera de scope
+deja `reply_to=None`; el entrante se conserva. Se admiten citas entre episodios,
+entrantes/salientes, fallidos/descartados/pendientes y media sin interpretar binarios.
+
+Si un entrante nuevo declara referencia y queda sin relación, registra WARNING
+`INBOUND_REPLY_UNRESOLVED`: UUID de clínica/cuenta, ID interno del entrante y motivo
+genérico. Sin body, teléfono, ID externo o nombre. La redelivery no cambia la cita,
+no hace backfill cuando llega tarde el destino ni repite ese aviso.
+
+La proyección B1 mantiene el ID externo original; `Message.reply_to_id` es la FK
+interna para Inbox. El selector del agente `referenced_message` conserva sus límites
+de episodio, cursor y emisión: la relación Inbox no autoriza operaciones ni convierte
+un mensaje pendiente/descartado en evidencia emitida.
+
+Sin nueva migración; requiere M2 al aplicar el conjunto de cambios. M2/M3 siguen
+sin aplicar a las bases habituales/preview. API/serializer/UI siguen en RPL-03..07.
+[Evidencia RPL-02](../evals/inbox-rpl-02-2026-10-21/README.md).
+
+## Inbox: modelo de respuestas citadas (WA-RPL-01, 2026-10-21)
+
+`channels.Message.reply_to` es FK opcional a Message con `PROTECT` y reverse
+`direct_replies`. El destino se conserva frente a borrado físico. Un índice
+explícito `message_reply_target` sobre `reply_to_id` sustituye al automático de
+FK (`db_index=False`) para no duplicarlo. La migración
+`channels.0016_message_reply_to` (M2) añade columna nullable/FK/índice, sin backfill
+ni default. Los mensajes previos quedan sin cita y el writer anterior sigue válido.
+
+`channels.replies.resolve_reply_target` valida organización, contacto y cuenta
+del destino. El `clean()` de Message lo usa cuando existe cita; `save()` normal
+hereda `full_clean()` de OrganizationalModel. Se permite cruzar episodios de la
+misma persona/cuenta. Incluye historia oculta/descartada: ocultar el destino no
+debe romper un reply persistido. Target inválido devuelve ValidationError del
+campo `reply_to` con código `invalid_reply_target`, sin contenido del mensaje.
+
+La FK de DB asegura existencia; el scope de clínica/hilo lo comprueba la aplicación.
+`save(validate=False)` y operaciones bulk/directas conservan el bypass explícito
+del modelo base y deben validar antes de persistir. Esto está acreditado con dos
+organizaciones: el servicio/save normal rechazan el cruce, la FK sola no lo hace.
+
+M2 se ensayó con modelos históricos, comparando todas las columnas anteriores y
+lectura/escritura de ambas versiones. Sin aplicar a las bases habitual/preview.
+La conexión webhook/ingesta sigue en RPL-02 y API/UI en RPL-03..07.
+[Evidencia RPL-01](../evals/inbox-rpl-01-2026-10-21/README.md).
+
+## Inbox: asignación a compañeros (WA-ASN-01, 2026-10-21)
+
+- `GET /api/inbox/assignable-users/`, permiso `agentinbox.claim`: directorio mínimo
+  `{public_id, name}` de personas activas de la clínica con permiso DB
+  `agentinbox.send` (incluye wildcards y superuser; sin fallback de rol histórico).
+  Excluye service accounts y ADMIN_SAAS. Una consulta de usuarios, sin N+1.
+  No amplía `staff.list` ni expone correos u otros datos del equipo.
+- `POST /api/inbox/conversations/{uuid}/assign/`, mismo permiso, body
+  `{user_public_id: UUID}`. La ruta exige UUID aun si el resolver general permite
+  IDs antiguos. Conversación/objetivo ajenos o inexistentes: 404. Payload inválido,
+  objetivo inactivo/sin permiso/no humano o conversación cerrada: 400.
+- Bajo el mismo lock de Conversation de claim/close/release, revalida el objetivo
+  con `user_has_permission_strict`, bloquea su fila y cambia a `human_active`.
+  Permite reasignar desde otro empleado, asignarse a sí mismo y múltiples casos.
+  Una repetición al mismo objetivo ya activo no cambia epoch, timestamps ni auditoría.
+- Una transferencia real ejecuta `invalidate_ownership(reason='staff_assignment')`:
+  invalida autoridad vieja y conserva las garantías de outbound B4. No envía un
+  mensaje, marca lectura ni inventa acuse/notificación. El handoff mantiene su
+  acuse histórico; asignar no afirma que el nuevo responsable haya acusado recibo.
+- Tras commit registra `INBOX_CONVERSATION_ASSIGNED`, con UUID de clínica,
+  conversación, actor, origen/destino y fecha. Sin nombres, teléfono, correo ni cuerpo;
+  rollback no emite ese evento. El tracking existente alimenta lista/transcript delta.
+
+Sin migración nueva ni activación. [Evidencia ASN-01](../evals/inbox-asn-01-2026-10-21/README.md).
+
+## Inbox: búsqueda de contactos (WA-SRCH-01, 2026-10-21)
+
+`GET /api/inbox/threads/?q=<texto>` requiere el mismo `agentinbox.view`. Recorta
+espacios e ignora consultas de menos de dos caracteres. Aplica OR con `icontains`
+sobre `contact.display_name`, `contact.external_id` y el nombre del cliente
+vinculado de la misma organización. Para teléfono reutiliza `phone_digits` y
+`normalize_wa_id`: los fragmentos conservan sus dígitos; un número MX completo
+con 52/521 se compara con los diez dígitos canónicos. El identificador externo
+también se compara con los dígitos originales. No añade condiciones telefónicas
+vacías ni de un solo dígito que puedan ampliar accidentalmente la búsqueda.
+
+La búsqueda no consulta cuerpos de mensaje ni usa el teléfono del cliente para
+descubrir vínculos. Se combina con los segmentos mediante AND, conserva archivo,
+agrupación y orden y se aplica antes de offset/cap. Se usan valores parametrizados
+del ORM; comillas y metacaracteres LIKE son literales. El total personal de no
+leídos permanece independiente de la búsqueda.
+
+La consulta efectiva forma parte del scope de cursor. Cambiar `q` exige un full;
+espacios de borde y consultas cortas equivalen al mismo filtro efectivo.
+Renombrar un contacto puede retirarlo del delta de búsqueda. Sin nueva migración.
+[Evidencia SRCH-01](../evals/inbox-srch-01-2026-10-21/README.md).
+
+## Inbox: filtros de lista (WA-FIL-01, 2026-10-21)
+
+`GET /api/inbox/threads/` conserva `agentinbox.view`, agrupación y paginación;
+acepta filtros combinables AND, aplicados en SQL después de elegir la cabecera
+del hilo y antes de paginar:
+
+- `unanswered=1`: último mensaje operativo visible entrante, según la semántica
+  existente de `has_unanswered`. `unanswered=0`: último operativo saliente
+  («Esperando cliente»); los hilos sin mensajes quedan fuera de ambos segmentos.
+- `urgent=1`: handoff no resuelto urgente del episodio abierto vigente.
+  `urgent=0` desactiva este filtro; no significa «solo normales».
+- `claimed=me|<user_public_id>`: responsable del episodio abierto vigente,
+  limitado a la organización del solicitante. Un UUID de otra clínica devuelve
+  200 vacío; no permite conocer si existe aquel usuario.
+
+Los booleanos también aceptan `true`/`false`. Valores inválidos devuelven
+`400 {code:'invalid_filter',error}`. `archived=1` conserva su contrato previo:
+incluye hilos cerrados además de los abiertos. Un claim o handoff histórico de
+una sesión cerrada no la convierte en sesión vigente ni califica como urgente/mía.
+Un conjunto sin coincidencias devuelve 200 con `results:[]`, sin siguiente página.
+
+Cada cursor incluye los filtros efectivos normalizados además de org/usuario,
+archivo y offset. `claimed=me` y el UUID propio comparten scope; reutilizar un
+cursor en otro segmento devuelve `invalid_sync_cursor`. El delta retira el hilo
+que deja de cumplir el filtro. `unread_total` sigue siendo el total personal de
+las conversaciones activas, independiente del segmento; filtrar no marca leído,
+responde, toma ni reasigna una conversación. No hay cambios de schema.
+[Evidencia FIL-01](../evals/inbox-fil-01-2026-10-21/README.md).
+
+## Inbox: sincronización incremental (WA-PERF-03, 2026-10-21)
+
+Los GET completos de lista y transcript reciente conservan sus campos y añaden
+`mode='full'`, `sync_cursor: string|null`. El transcript también publica
+`sync_floor`, límite firmado del rango leído; las páginas `before`/`around`
+publican ese límite pero no un cursor delta. Permiso: `agentinbox.view`.
+
+`GET /api/inbox/threads/?since=<sync_cursor>&archived=&offset=` devuelve
+`{mode:'delta',sync_cursor,upserts:Thread[],removals:string[],unread_total,has_more,next_offset}`.
+La clave de hilo es `contact_public_id:channel_account_public_id`. `order` aparece
+solo si cambia el orden/pertenencia de la página y enumera sus claves completas.
+Los cambios de mensaje, responsable, handoff, lectura, archivo y lease se reflejan
+si modifican la proyección pública. No se envían filas cuyo JSON siga idéntico.
+
+`GET /api/inbox/threads/{c}/{a}/messages/?since=<sync_cursor>&floor=<sync_floor>`
+devuelve `{mode:'delta',sync_cursor,messages:Message[],removals:number[],metadata:{...}}`.
+Incluye mensajes nuevos y modificaciones de filas existentes, incluidos ticks,
+fallos y reintentos; `metadata` es vacío cuando no cambió la cabecera/lectura.
+Al ampliar el historial añade `range_ids`, todos los IDs visibles de ese rango,
+para retirar filas desaparecidas durante el GET anterior. No mezcla `since` con
+`before`/`around`. `floor` se obtiene del servidor, sin reloj del cliente, y sigue
+resolviendo el límite aunque se elimine físicamente su fila.
+
+Cursor firmado y ligado a organización, usuario, recurso y filtros/offset.
+Expira a los diez minutos; firma/scope incorrectos, pérdida de snapshot o mezcla
+de cursores → `400 {code:'invalid_sync_cursor',message}` mediante el handler estándar.
+La UI recupera con GET completo y conserva `floor`. Ese full devuelve el rango
+cargado y `reset_range=true` para reconciliar retiradas sin dejar huecos en ráfagas
+de más de 50 mensajes. Si el caché no puede guardar el snapshot, full funciona con
+cursor null; delta sigue disponible tras recuperar el caché.
+
+`inbox_sync` usa el caché default existente para snapshots inmutables de hashes,
+IDs, orden y watermarks `(updated_at,id)`, sin cuerpos, nombres ni teléfonos.
+No almacena autoridad de negocio. Compara pertenencia/fingerprints además del
+watermark: detecta timestamps iguales, commits tardíos dentro del rango cargado,
+retiradas y expiraciones sin escritura. SQL calcula hashes del rango leído;
+materializa cuerpos solo si cambiaron. El preview usa Substr de 120 caracteres y
+el contrato `latest_messages` existente del serializer.
+
+`TimestampedQuerySet`/`OrganizationalModel.save` mantienen updated_at solo en los
+cinco modelos opt-in: Message, Conversation, ContactIdentity, HumanHandoff e
+InboxReadState. Cubre update atómico, bulk_update y save parcial, también con
+all_objects, preservando sus filtros, validación, locks y default manager. No
+cambia reglas de envío/entrega/ownership ni opta por otros dominios.
+
+El coste SQL es proporcional a la página/rango cargados. Con 6.001 mensajes y
+50 cargados, JSON sin compresión pasa de 52.002 a 303 bytes en poll estable;
+EXPLAIN usa el índice existente de organización/contacto/cuenta/created_at para
+50 filas. No se añade índice ni migración; M3 sigue sin aplicar a la base de trabajo.
+[Decisión técnica](../decisions/2026-10-21-p60-perf03-cursors.md) y
+[evidencia PERF-03](../evals/inbox-perf-03-2026-10-21/README.md).
+
+## Inbox: contexto mínimo del cliente (WA-CTX-01, 2026-10-21)
+
+`GET /api/inbox/threads/{contact_public_id}/{account_public_id}/context/`
+requiere `agentinbox.view` y devuelve exactamente:
+
+```json
+{
+  "owner": {"public_id": "uuid", "name": "Cliente", "phone": "5551234567"},
+  "pets": [{"public_id": "uuid", "name": "Mascota", "species": "Perro"}],
+  "last_appointment": {"date": "2026-10-20", "status": "canceled"}
+}
+```
+
+Sin cliente vinculado: `owner=null`, `pets=[]`, `last_appointment=null`.
+Sin citas anteriores: `last_appointment=null`. No busca coincidencias por teléfono
+ni modifica identidad, conversación, mensajes o lectura. Funciona también con
+hilos archivados. Ruta inexistente, par contacto/cuenta sin hilo o cliente
+vinculado fuera de la clínica/inactivo/genérico → 404. VET tiene acceso de lectura;
+AGENT recibe 403. Cada consulta usa la organización del caller.
+
+`inbox_context.thread_context` es una proyección de lectura para la API del staff
+autorizada por WA-CTX-01/D-8; no es una herramienta del agente ni amplía los
+contratos HTTP de su ejecución autónoma. Reutiliza los serializers públicos de
+patients con campos restringidos. Mascotas activas y no genéricas del cliente,
+ordenadas por nombre/PK; las citas también se limitan a esas mascotas y clínica.
+No publica PK internos, notas, motivo de cita, historia clínica ni datos de catálogo.
+
+«Última cita» significa la más reciente cuya hora programada ya llegó; excluye
+citas futuras y conserva su estado real, incluidas cancelada/no asistió. Usa
+`start_datetime` UTC; filas legacy sin él se comparan con fecha/hora local de la
+clínica. Ordena por fecha, hora y PK descendentes. No implica consulta completada.
+El presupuesto medido es seis consultas de dominio tanto con una como con 36
+mascotas, sin consultas por mascota. No añade migración ni aplica M3.
+[Evidencia CTX-01](../evals/inbox-ctx-01-2026-10-21/README.md).
+
+## Inbox: ventana de sesión visible (WA-WIN-01, 2026-10-21)
+
+`ConversationListSerializer` añade dos proyecciones read-only a `conversation`
+en el transcript del hilo y en el endpoint legacy del episodio:
+`session_window_open: bool` y `session_window_expires_at: ISO8601|null`.
+El vencimiento usa la duración B4 existente: `last_inbound_at + 24 horas`
+transcurridas, como instante absoluto. No suma un día de calendario de la clínica;
+un cambio DST no prolonga/acorta la ventana. Sin último entrante: false/null.
+Si el episodio está cerrado: false/null; un hilo archivado conserva conversation=null.
+
+La comparación respeta B4: el instante exacto de vencimiento aún pertenece a la
+ventana; después devuelve false. Un vencimiento pasado conserva su timestamp
+para la sesión abierta. No se añaden queries por mensaje ni se modifica el reloj,
+los guards o el dispatch del sender. El GET no escribe estado de lectura ni conversación.
+
+Un nuevo inbound renueva `last_inbound_at` mediante el servicio de ingesta existente.
+Tras archivo crea el episodio vigente por ese mismo flujo; una página histórica
+continúa proyectando la ventana del episodio vigente. La UI recibe la renovación
+en su siguiente poll o al recuperar visibilidad. Sin migración nueva ni aplicación
+de M3 a la base de trabajo. [Evidencia WIN-01](../evals/inbox-win-01-2026-10-21/README.md).
+
+## Inbox: reintento de fallo conocido (WA-RETRY-01, 2026-10-21)
+
+`POST /api/inbox/conversations/{conversation_public_id}/messages/{message_id}/retry/`
+requiere `agentinbox.send` y devuelve 200 con el mismo `MessageSerializer`.
+`conversation_public_id` es una proyección UUID de solo lectura añadida a cada
+mensaje; identifica su episodio original aunque el transcript cruce sesiones.
+No acepta otro cuerpo ni autor. La cabecera opcional `X-Idempotency-Key`, si se
+envía, debe coincidir con la original; sin cabecera se conserva igualmente la key.
+
+`inbox_retry.retry_failed_message` bloquea Conversation → Message y limita ambas
+consultas a la organización del request. Solo permite outbound FAILED sin wamid,
+aceptación, entrega, lectura ni incertidumbre histórica. No renueva ownership ni
+TurnWork: reutiliza las validaciones B4 de scope, epoch, cuenta y salida autorizada.
+Sesión cerrada → 400 `session_closed`; autoridad invalidada/legacy → 400
+`retry_not_authorized`; evidencia externa → 400 `external_evidence`; estado distinto
+de FAILED o inbound → 400 `message_not_failed`; key distinta → 400
+`idempotency_conflict`; mensaje/ruta fuera de scope → 404.
+
+Ventana desconocida o cerrada según reloj DB → 400
+`{code: 'window_closed', message, suggestion: 'call'}`. Al admitir: misma fila,
+cuerpo, autor, fecha, correlación y epoch; `status=pending`, `attempts=0`,
+`next_attempt_at=now`, `failure_reason=''`, con actor y fecha de actualización.
+Cualquier staff con send puede reintentar el mensaje de otro autor sin reasignar
+la conversación. El evento `INBOX_MESSAGE_RETRY` registra IDs, autor original y
+resultado, sin cuerpo ni clave. Dos POST concurrentes realizan una sola transición.
+
+El sender existente vuelve a validar ventana/autoridad y asigna un token nuevo.
+Se conserva el claim previo hasta entonces; su finalizador no puede modificar
+PENDING ni una reclamación posterior. Acuses permanecen forward-only. UNCERTAIN
+no es reenviable por esta ruta: timeout, desconexión y resultado no demostrado
+conservan B4 y su reemisión operativa separada. Sin migración nueva ni activación.
+[Evidencia local RETRY-01](../evals/inbox-retry-01-2026-10-21/README.md).
+
+## Inbox: identidad de autor para agrupación (WA-GRP-01, 2026-10-20)
+
+`MessageSerializer` añade `human_author_public_id` de sólo lectura: UUID público
+del empleado en mensajes salientes `human_staff` con autor; `null` en los demás.
+Permite distinguir empleados homónimos sin publicar su PK interno ni agrupar por
+nombre. Los queries de transcript ya usan `select_related('human_author')`.
+No requiere migración ni cambia envío, estados o idempotencia. Pruebas nuevas
+sin base de datos y validación UI: [GRP-01](../evals/inbox-grp-01-2026-10-20/README.md).
+
+## Inbox: indicador de turno (WA-AGT-01, 2026-10-21)
+
+`ThreadSerializer.agent_processing` y `conversation.agent_processing` del
+transcript son booleanos de solo lectura: sesión vigente con `processing_until`
+posterior a `timezone.now()`. Lease ausente, vencido o exactamente en el límite
+devuelve false; una sesión cerrada nunca indica actividad. El timestamp no se
+publica. La fila agrupada usa la sesión vigente, sin heredar un turno del historial.
+
+Es una proyección informativa que se actualiza con el polling. TurnWork conserva
+la autoridad del turno; no cambia workers, guards, claim/release ni permisos.
+Sin migraciones. [Evidencia AGT-01](../evals/inbox-agt-01-2026-10-21/README.md).
+
+## Inbox: consulta agrupada (WA-PERF-01, 2026-10-21)
+
+`list_threads` selecciona en PostgreSQL una cabecera por contacto/cuenta: sesión
+abierta más reciente o, al incluir archivados, última cerrada si no hay abierta.
+Subconsultas acotadas obtienen número de episodios, último mensaje operacional
+del hilo y handoff vigente. El preview se recorta a 120 caracteres en SQL.
+Las relaciones de contacto, cliente y empleado se cargan en la misma consulta.
+
+Ordena por urgencia y actividad del mensaje; en empate conserva la actividad
+del bucket. PERF-01 aplicó el cap existente antes de materializar como máximo
+100 conversaciones y conservó `ThreadSerializer[]`. No carga episodios
+históricos ni consulta por cada fila.
+[Evidencia PERF-01](../evals/inbox-perf-01-2026-10-21/README.md).
+
+### Paginación de hilos (WA-PERF-02, 2026-10-21)
+
+`GET /api/inbox/threads/?archived=&offset=` devuelve
+`{results: ThreadSerializer[], has_more: bool, next_offset: int|null, unread_total: int}`
+(el total se añadió en UNR-02, descrito abajo).
+Sin offset devuelve la primera página de 100; offset entero no negativo hasta
+2147483647, inválido → 400 con `code=invalid_offset`. Al agotarse:
+`has_more=false`, `next_offset=null`; fuera del rango de filas, results vacío.
+Obtiene como máximo 101 cabeceras para detectar otra página, sin COUNT.
+Contacto/cuenta desempatan el orden y PK desempatan sesiones de igual actividad.
+La visibilidad operacional, permisos y tenant scoping se conservan.
+Es paginación por offset sobre datos vivos, sin snapshot; la UI reconcilia
+refrescando todas las páginas cargadas. No hay migraciones.
+[Evidencia PERF-02](../evals/inbox-perf-02-2026-10-21/README.md).
+
+### Transcript centrado en un mensaje (WA-HIST-03, 2026-10-21)
+
+`GET /api/inbox/threads/{contact_public_id}/{account_public_id}/messages/?around=<id>`
+requiere `agentinbox.view` y conserva los metadatos del transcript, incluida la
+sesión vigente aunque el destino pertenezca a una sesión cerrada. Obtiene hasta
+25 mensajes operacionales anteriores, el destino y hasta 24 posteriores, en
+orden local `(created_at, id)`. En los extremos devuelve menos de 50, sin rellenar
+desde el otro lado. `has_older` y `has_newer` indican continuidad; `next_before`
+es el id más antiguo de la ventana si quedan anteriores, o null.
+
+Solo el destino puede saltarse el filtro operacional de Inbox. Cada mensaje de
+esta respuesta añade `is_hidden`: true únicamente si el destino no sería visible
+en el transcript normal; conserva su cuerpo y estado real. Los vecinos siguen
+filtrados. Un outbound discarded/failed/uncertain ya es evidencia operacional:
+su `is_hidden` es false y su estado no implica entrega. El selector del agente,
+el anti-eco y los permisos permanecen iguales.
+
+El destino se busca dentro de la organización, contacto y cuenta de la ruta:
+inexistente o ajeno → 404 `{code: 'not_found'}`. `around` debe ser un entero
+positivo hasta 9223372036854775807; inválido → 400 `{code: 'invalid_cursor', message}`.
+Su presencia junto con `before`, incluso vacío, devuelve ese mismo 400.
+Sin `around` se conserva el contrato existente de página reciente/`before`,
+sin los campos adicionales. Las ventanas se limitan en SQL con una fila extra
+por lado; no cargan el historial completo ni ejecutan COUNT.
+
+No hay migraciones. La UI de salto por citas o búsqueda corresponde a RPL-06/SRCH.
+[Evidencia HIST-03](../evals/inbox-hist-03-2026-10-21/README.md).
+
+### Lectura del staff por hilo (WA-UNR-01, 2026-10-21)
+
+`InboxReadState` persiste el marcador por `(organization, user, contact,
+channel_account)`, con unicidad en DB e índice `(organization, user, updated_at)`.
+Usuario, contacto y cuenta tienen FK PROTECT; el mensaje tiene SET_NULL.
+La validación del modelo impide FKs de otra clínica y marcadores salientes o de
+otro hilo. El estado es interno: no expone un ID propio en la API.
+
+`GET /api/inbox/threads/` añade `unread_count: int` por fila para el caller.
+Cuenta solo entrantes operacionales (`pending`, `processed`, `failed`) de la
+sesión vigente con `id > last_read_message_id`. Sin estado o con marcador null,
+cuenta todos esos entrantes del episodio vigente. No cuenta discarded, salientes
+ni sesiones históricas; hilos archivados devuelven 0. Una consulta agregada para
+las cabeceras de la página obtiene los conteos, sin queries por fila ni cargar
+mensajes o marcadores como instancias. Se conservan orden, paginación y campos
+previos, incluido `has_unanswered`, cuya semántica sigue siendo independiente.
+
+`POST /api/inbox/threads/{contact_public_id}/{account_public_id}/read/`, permiso
+`agentinbox.view`, recibe `{last_read_message_id}` y devuelve 200
+`{last_read_message_id, unread_count, unread_total}` (total añadido en UNR-02).
+Organización y usuario salen del request.
+Valida un entero positivo hasta 9223372036854775807 y exige un entrante visible
+del mismo hilo; puede pertenecer a otra sesión. Inexistente/ajeno → 404 con
+`code=not_found`; saliente/invisible → 400 `invalid_read_message`; body inválido →
+400 `invalid_read_request` con errores por campo. Rutas ajenas conservan el 404
+normal de la resolución de contacto/cuenta.
+
+El servicio usa transacción, unicidad y bloqueo de fila para serializar el upsert,
+incluida la carrera de primera creación. Solo avanza a un id mayor; repetir o
+enviar uno anterior conserva marcador y `updated_at`. Registra el actor en los
+campos de auditoría. Lecturas de distintos empleados no se limpian entre sí.
+No modifica Message, claims, TurnWork ni la autoridad conversacional; tampoco
+equivale a un acuse READ del cliente en WhatsApp. Los GET no marcan lectura.
+
+Migración M3: `agent.0029_inbox_read_state`, aditiva y sin backfill. Se requiere
+aplicarla al desplegar este código; la validación local usa una base temporal.
+El contador/divisor y la llamada automática con foco y debounce pertenecen a
+UNR-02. [Evidencia UNR-01](../evals/inbox-unr-01-2026-10-21/README.md).
+
+### Proyecciones de lectura para la interfaz (WA-UNR-02, 2026-10-21)
+
+La lista añade `unread_total`, contador del caller para todos los hilos vigentes,
+también los que están fuera de la página solicitada. No suma solo las filas
+materializadas. El total usa un COUNT con subconsulta de cabeceras; la página
+conserva su agregación por episodio. El presupuesto previo de <=4 consultas y
+la ausencia de N+1 se mantienen. Archivados e historial no aportan unread.
+El POST read devuelve también este total confirmado.
+
+El transcript añade cuatro metadatos propios del caller: `last_read_message_id`,
+`unread_count`, `first_unread_message_id` y `latest_visible_inbound_id`.
+Los dos últimos se calculan exclusivamente sobre los entrantes operacionales del
+episodio vigente incluidos en la página que se devuelve, en su orden cronológico.
+Son null en páginas solo históricas o hilos archivados. El destino automático
+siempre pertenece a la página enviada a la UI. Un GET nunca marca lectura.
+
+Estos metadatos evitan que la UI trate el inicio de una sesión cerrada como
+mensajes nuevos cuando el marcador propio todavía es null. No hay una nueva
+migración: sigue siendo necesaria M3 al incorporar el código.
+[Evidencia UNR-02](../evals/inbox-unr-02-2026-10-21/README.md).
 
 ## Boundary (vinculante)
 

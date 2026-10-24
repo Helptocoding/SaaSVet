@@ -1,0 +1,263 @@
+{
+  "schema": "b9.r7-interruption-observation.v1",
+  "state": "PASS_INTEGRITY_WITH_RECORDED_FAILURES",
+  "utc_started": "2026-10-20T04:25:35.263904+00:00",
+  "utc_finished": "2026-10-20T04:28:27.949800+00:00",
+  "candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+  "application_tests_executed": false,
+  "services_changed": false,
+  "prior_files_modified": false,
+  "helper_sha256": "29b5769773f6eb7509bf57c48dd51578fbcdcf2ec8f3d01987bbc84f9748b8d9",
+  "input_artifacts": {
+    "blocks/full-general-remainder.ids.jsonl": {
+      "sha256": "cb08107644c049b21695590a5700b8adfffc127ccdf9a6dcc2f2d8d67a27bb28",
+      "bytes": 84886
+    },
+    "blocks/full-general-remainder.command.json": {
+      "sha256": "0e165f19ac321d93a9ddd65f12008e6f06cabb747474fefcca3f1a4caea95879",
+      "bytes": 904
+    },
+    "blocks/full-general-remainder.command.log": {
+      "sha256": "d59337bd746f756a825f61ab8392c9705495d9850a5a9115b5c1a3bf6980239e",
+      "bytes": 620289
+    },
+    "invocation-formal.json": {
+      "sha256": "3a2d03dd1503704933841a1d27f95b41ad4be3f2a155607781992666594334f4",
+      "bytes": 393
+    },
+    "invocation-formal.log": {
+      "sha256": "70c75b5032d7341b0b4c9e7bf2d25537d6124b8e467ee1239f136069b24907fd",
+      "bytes": 395
+    },
+    "resource-observer/samples.jsonl": {
+      "sha256": "39dc9308acba6986b11bb0448a602e8ecee327dec92cf03ad7abd0b0f5701dae",
+      "bytes": 4190459
+    },
+    "awake-request/heartbeat.jsonl": {
+      "sha256": "640a96d7d9423836adaa7539fb39873b4e4794c2a5dc9fd3c3a3700800298686",
+      "bytes": 1577743
+    },
+    "full-general-remainder-selected.json": {
+      "sha256": "0d5382ff086958000a7172e5ee4e3dc951d1d6faa48594762be5bfd3c4c0e1fb",
+      "bytes": 79354
+    },
+    "full-general-selected.json": {
+      "sha256": "ad18a91c5142ca90094f7c6cc06690bef2782c5528ffa2d418d6b4be3f984ef3",
+      "bytes": 339608
+    },
+    "retained-general-observed-ids.json": {
+      "sha256": "a0a5227ff78704a5253123e8bcf1a75418e0b4c4c75174b15f400ce7fac4275b",
+      "bytes": 260257
+    },
+    "referenced-case-evidence/r6/blocks/full-general.ids.jsonl": {
+      "sha256": "9695650ebf6af50eb5c3f584b9975296f1abc21cceade08cac757e4d45d3c69e",
+      "bytes": 484097
+    },
+    "case-resumption-authorization.json": {
+      "sha256": "ae7f9f9478d046aaaaa669d10f1015503772f796fba37b70f934c519d1b38edf",
+      "bytes": 1177
+    },
+    "case-resumption-manifest.json": {
+      "sha256": "4045fe52c526cad44991b4901ac3afd4061eb166819e1d62f58bef7c07a199fd",
+      "bytes": 352729
+    },
+    "case-resumption-validation.json": {
+      "sha256": "750d64d3e802285698dd65ef3021782ca12ad746454e90f915683510f2e72429",
+      "bytes": 1006
+    },
+    "candidate-sources.json": {
+      "sha256": "8cab45bc7026c21bf422883663eb0afb3dbc7d80e014655bc406c74754bf5ce1",
+      "bytes": 923890
+    },
+    "dependency-files.json": {
+      "sha256": "b23eb1b535711202693338bc316af8e58dd430563c36d80ad00684b3d0c20164",
+      "bytes": 9235124
+    },
+    "evaluation-seal.json": {
+      "sha256": "0396b8c8a89f4bd7054f637c931b0baa88e5d1c58e69b31d1cf8be1a383a1ff8",
+      "bytes": 31276
+    },
+    "integrity-before-full-general-remainder.json": {
+      "sha256": "323e6faf3ed7671ea8bf8fb53d69734dd6a7141b88c1911f6ebf19fd08529598",
+      "bytes": 48
+    },
+    "dependency-check-before-full-general-remainder.json": {
+      "sha256": "c86332026978d78f25744ddacdb2ac38e30c77c1cc3955f4f511274eb479e350",
+      "bytes": 43
+    },
+    "seal-check-before-full-general-remainder.json": {
+      "sha256": "155be06449ebc577bc9c3f3eaf456a77a383da5c9fade0b89a8310fac10c6061",
+      "bytes": 41
+    }
+  },
+  "original_inputs_unchanged_during_audit": {
+    "blocks/full-general-remainder.ids.jsonl": true,
+    "blocks/full-general-remainder.command.json": true,
+    "blocks/full-general-remainder.command.log": true,
+    "invocation-formal.json": true,
+    "invocation-formal.log": true,
+    "resource-observer/samples.jsonl": true,
+    "awake-request/heartbeat.jsonl": true,
+    "full-general-remainder-selected.json": true,
+    "full-general-selected.json": true,
+    "retained-general-observed-ids.json": true,
+    "referenced-case-evidence/r6/blocks/full-general.ids.jsonl": true,
+    "case-resumption-authorization.json": true,
+    "case-resumption-manifest.json": true,
+    "case-resumption-validation.json": true,
+    "candidate-sources.json": true,
+    "dependency-files.json": true,
+    "evaluation-seal.json": true,
+    "integrity-before-full-general-remainder.json": true,
+    "dependency-check-before-full-general-remainder.json": true,
+    "seal-check-before-full-general-remainder.json": true
+  },
+  "prefix": {
+    "old_retained_count": 2485,
+    "old_journal_count": 2485,
+    "old_retained_matches_journal": true,
+    "new_selected_count": 728,
+    "new_selected_unique": 728,
+    "new_journal_count": 407,
+    "new_journal_unique": 407,
+    "new_outcomes": {
+      "PASS": 405,
+      "FAIL": 2
+    },
+    "new_unexpected_ids": [],
+    "new_duplicate_ids": [],
+    "new_unexpected_outcomes": [],
+    "prior_new_overlap": [],
+    "observed_pending_overlap": [],
+    "old_plus_observed_plus_missing_equals_full": true,
+    "sum_counts": 3213,
+    "full_general_count": 3213,
+    "missing_count": 321,
+    "final_newline": true,
+    "journal_utc_monotonic": true,
+    "first_case": {
+      "id": "apps.users.tests.test_change_password.ChangePasswordSuccessTests.test_response_includes_new_access_and_refresh_pair",
+      "outcome": "PASS",
+      "reason": null,
+      "utc": "2026-10-20T01:03:27Z",
+      "traceback": null
+    },
+    "last_case": {
+      "id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing",
+      "outcome": "PASS",
+      "reason": null,
+      "utc": "2026-10-20T03:49:17Z",
+      "traceback": null
+    },
+    "failed_cases": [
+      {
+        "id": "apps.agent.tests.test_contracts.CommitmentContractTests.test_fields_match_snapshot",
+        "outcome": "FAIL",
+        "reason": null,
+        "utc": "2026-10-20T03:37:45Z",
+        "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 58, in testPartExecutor\n    yield\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 651, in run\n    self._callTestMethod(testMethod)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 606, in _callTestMethod\n    if method() is not None:\n       ~~~~~~^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\backend\\apps\\agent\\tests\\test_contracts.py\", line 94, in test_fields_match_snapshot\n    self.assertEqual(fields, [\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^\n        'asked', 'attempts_failed', 'authorization_message', 'blocked_reason', 'closed_at',\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n        'working_state',\n        ^^^^^^^^^^^^^^^^\n    ])\n    ^^\nAssertionError: Lists differ: ['ask[46 chars]', 'binding_revision', 'blocked_reason', 'boun[337 chars]ate'] != ['ask[46 chars]', 'blocked_reason', 'closed_at', 'closed_reas[268 chars]ate']\n\nFirst differing element 3:\n'binding_revision'\n'blocked_reason'\n\nFirst list contains 4 additional elements.\nFirst extra element 25:\n'supplanted_by'\n\n  ['asked',\n   'attempts_failed',\n   'authorization_message',\n-  'binding_revision',\n   'blocked_reason',\n-  'bound_appointment',\n-  'bound_owner',\n-  'bound_pet',\n   'closed_at',\n   'closed_reason',\n   'conversation',\n   'created_at',\n   'created_by',\n   'id',\n   'is_active',\n   'last_progress_at',\n   'low_confidence',\n   'missing',\n   'name',\n   'operation_assessment',\n   'organization',\n   'return_to',\n   'slots',\n   'stall_turns',\n   'status',\n   'supplanted_by',\n   'updated_at',\n   'updated_by',\n   'working_state']\n"
+      },
+      {
+        "id": "apps.agent.tests.test_contracts.ToolOutcomeContractTests.test_fields_match_snapshot",
+        "outcome": "FAIL",
+        "reason": null,
+        "utc": "2026-10-20T03:37:45Z",
+        "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 58, in testPartExecutor\n    yield\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 651, in run\n    self._callTestMethod(testMethod)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 606, in _callTestMethod\n    if method() is not None:\n       ~~~~~~^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\backend\\apps\\agent\\tests\\test_contracts.py\", line 44, in test_fields_match_snapshot\n    self.assertEqual(fields, [\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^\n        'client_error', 'data', 'detail', 'ok', 'summary',\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ])\n    ^^\nAssertionError: Lists differ: ['client_error', 'completeness', 'cursor', 'data', 'detail'[148 chars]ted'] != ['client_error', 'data', 'detail', 'ok', 'summary']\n\nFirst differing element 1:\n'completeness'\n'data'\n\nFirst list contains 12 additional elements.\nFirst extra element 5:\n'effects'\n\n+ ['client_error', 'data', 'detail', 'ok', 'summary']\n- ['client_error',\n-  'completeness',\n-  'cursor',\n-  'data',\n-  'detail',\n-  'effects',\n-  'error_kind',\n-  'has_more',\n-  'kind',\n-  'observed_at',\n-  'operation_key',\n-  'origin',\n-  'partial_effects',\n-  'retryable',\n-  'scope',\n-  'summary',\n-  'validated']\n"
+      }
+    ],
+    "retained_new_pass_selector_digest": "4f1b3026c0ceaab9d1b92931060efaefce95d88b818085f149d0578fe40090bb",
+    "observed_new_failed_selector_digest": "05240a763cb138ec214d1b57128a3c97aeeec6438ce4159d18e09bfe326de333",
+    "missing_selector_digest": "b45843a1746ace73d192fbb3f00a912dffe16fdead964bf2632bfeb8f53504e5",
+    "observed_new_selector_digest": "0030df408a322a128f1cb9361a1e6fc43529947b31162fe1e96222e270f6a2b5",
+    "logical_general_result": "NON_PASS_TWO_RECORDED_FAILURES_AND_321_WITHOUT_OUTCOME",
+    "failed_cases_are_not_dropped_or_changed_to_pass": true
+  },
+  "durable_host_observer": {
+    "total_durable_rows": 10981,
+    "window_rows": 9989,
+    "first_utc": "2026-10-20T01:00:10Z",
+    "last_utc": "2026-10-20T03:49:18Z",
+    "durable_last_utc": "2026-10-20T03:58:23Z",
+    "covers_start": true,
+    "covers_end": true,
+    "maximum_sample_gap_seconds": 2.1893794536590576,
+    "gaps_over_ten_seconds": [],
+    "backwards_or_duplicate_epoch_count": 0,
+    "maximum_preceding_case_sample_age_seconds": 1.0078606605529785,
+    "uncovered_cases": [],
+    "minimum_ram_bytes": 4079546368,
+    "minimum_disk_bytes": 11024556032,
+    "maximum_absolute_wall_monotonic_skew_seconds": 0.0042475918744457886,
+    "below_2_gib_ram": [],
+    "below_1_gib_disk": [],
+    "skew_over_one_second": [],
+    "observer_pid_values": [
+      18628
+    ],
+    "scope": "actual command start through final observed case second; no command completion claimed"
+  },
+  "durable_awake_observer": {
+    "total_durable_rows": 11132,
+    "window_rows": 10125,
+    "first_utc": "2026-10-20T01:00:10Z",
+    "last_utc": "2026-10-20T03:49:18Z",
+    "durable_last_utc": "2026-10-20T03:58:22Z",
+    "covers_start": true,
+    "covers_end": true,
+    "maximum_sample_gap_seconds": 1.1057863235473633,
+    "gaps_over_ten_seconds": [],
+    "backwards_or_duplicate_epoch_count": 0,
+    "maximum_preceding_case_sample_age_seconds": 1.0237212181091309,
+    "uncovered_cases": [],
+    "unexpected_api_state_rows": [],
+    "pid_values": [
+      25048
+    ],
+    "thread_id_values": [
+      8228
+    ],
+    "old_request_api_restoration_claimed": false
+  },
+  "current_byte_integrity": {
+    "candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+    "scope": "post interruption current bytes; not historical after-run checks",
+    "sources": {
+      "checked_files": 3332,
+      "mismatches": [],
+      "missing": []
+    },
+    "dependencies": {
+      "checked_files": 44636,
+      "mismatches": [],
+      "missing": []
+    },
+    "evaluation_seal": {
+      "checked_files": 177,
+      "mismatches": [],
+      "missing": []
+    }
+  },
+  "audit_problems": [],
+  "guard_coverage_problems": [],
+  "interruption": {
+    "original_command_state": "RUNNING",
+    "original_invocation_state": "RUNNING",
+    "final_exit_code": null,
+    "suite_final_receipt_present": false,
+    "controller_final_monitor_present": false,
+    "r7_completed_gate_claimed": false,
+    "exact_windows_last_boot_utc": "2026-10-20T04:06:40.5000000Z",
+    "boot_value_provenance": "root readonly Get-CimInstance Win32_OperatingSystem UTC2026-10-20T04:22:52Z",
+    "cause_of_interruption_established": false,
+    "raw_controller_after_checks_or_exit_code_synthesized": false,
+    "durable_observer_covers_recorded_cases_subject_to_reported_gap_checks": true
+  },
+  "proposed_selection_only": {
+    "new_missing": 321,
+    "retained_new_pass": 405,
+    "preserved_new_fail": 2,
+    "old_retained": 2485,
+    "permission_to_rerun_failed_cases_is_inferred": false,
+    "selector_file_is_a_proposal_not_execution": true
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "state": "PREPARATION_ONLY_NO_TESTS",
+  "actual_exit_code": 1,
+  "error": "PermissionError [WinError 5] Acceso denegado.",
+  "phase": "query another postgres process, before retirement intent",
+  "foreign_processes_targeted": false,
+  "product_tests_executed": false,
+  "next_action": "Rely on exact own postmaster PID absence, free port and own pg_ctl status; preserve inaccessible foreign process as unknown."
+}

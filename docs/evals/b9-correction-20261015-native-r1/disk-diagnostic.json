@@ -1,0 +1,25 @@
+{
+  "observation_utc": "2026-10-15T06:54:08Z",
+  "disk_available_bytes": 346271744,
+  "physical_available_bytes": 4078260224,
+  "required_backing_disk_reserve_bytes": 1073741824,
+  "required_host_ram_reserve_bytes": 2147483648,
+  "candidate_source_bytes": 280168359,
+  "private_workspace_top_level_logical_bytes": {
+    "src": 520151134,
+    "python": 160857470,
+    "node-v20.20.2-win-x64": 84068021,
+    "pgdata": 49467245,
+    "audit-venv": 39097075,
+    "pnpm": 17420406,
+    "gitleaks": 7301041,
+    "downloads": 3013947,
+    "security-patch": 41092,
+    "postgresql.log": 764
+  },
+  "shared_or_user_files_deleted": false,
+  "private_installer_caches_retired": "install-cache-retirement.json",
+  "application_tests_executed": false,
+  "cause_of_changes_outside_private_workspace": "NOT_DIAGNOSED",
+  "user_requested_action": "Free at least 3 GiB additional space on C: before formal admission"
+}

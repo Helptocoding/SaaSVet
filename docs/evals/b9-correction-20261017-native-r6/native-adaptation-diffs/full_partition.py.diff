@@ -1,0 +1,20 @@
+--- native-r5/full_partition.py
++++ native/full_partition.py
+@@ -91,7 +91,7 @@
+ 
+ 
+ def aggregate_full():
+-    from composite_evidence import block_path, provenance, validate_references
++    from composite_evidence import block_path, candidate_compatible, provenance, validate_references
+     validate_references()
+     partition = validate_partition()
+     receipts, journal, command_rows = [], [], []
+@@ -104,7 +104,7 @@
+         expected = read(label + '-selected.json')
+         assert gate['state'] == 'PASS' and command['exit_code'] == 0
+         assert command['invalidating_incident'] is None
+-        assert receipt['candidate_sha'] == partition['candidate_tree']
++        candidate_compatible(label, receipt['candidate_sha'])
+         assert sorted(receipt['test_ids']) == expected and receipt['tests'] == len(expected)
+         assert receipt['failures'] == receipt['errors'] == receipt['exit_code'] == 0
+         rows = [json.loads(line) for line in block_path(label, '.ids.jsonl').read_text(encoding='utf-8').splitlines()]

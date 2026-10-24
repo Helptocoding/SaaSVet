@@ -1,0 +1,48 @@
+{
+  "state": "PRESERVED_BEFORE_FRESH_PREFLIGHT",
+  "utc": "2026-10-18T17:41:21.223576+00:00",
+  "windows_last_boot_utc": "2026-10-18T11:52:49.5000000Z",
+  "cause": "Windows reboot before formal seal; prior session no longer exists",
+  "old_auxiliary_processes_survived_reboot": false,
+  "old_api_explicit_restoration_claimed": false,
+  "old_thread_requests_end_with_previous_windows_session": true,
+  "global_power_clock_display_policy_changed": false,
+  "candidate_or_test_assertions_changed": false,
+  "formal_tests_executed": false,
+  "archived_observations_sha256": {
+    "awake-request": {
+      "awake-request\\control.json": "ce2c34adc163bd2ed1377c1e2d1f4daf2068f1184837b10d801870e0e6abc586",
+      "awake-request\\heartbeat.jsonl": "eddcabfff80265f383b6d51aeb9004e00f133755f04a1957e6aeb9611247e301"
+    },
+    "resource-observer": {
+      "resource-observer\\samples.jsonl": "607feec4b48fb2162e0d8cc97715a29ab3583a7ec284154150dd30be28ba29c5"
+    },
+    "resource-observer-control.json": {
+      "resource-observer-control.json": "b458dca8417448b00321f5c2fea75c2f959b4ffd8b7434807b268023f2cab287"
+    },
+    "clock-preflight.json": {
+      "clock-preflight.json": "688eb55946d2be13fc3a83f2bdcfb384d44054f044bb34049f8ec2dff65a33a8"
+    },
+    "clock-observation.json": {
+      "clock-observation.json": "f5deaf403d8d626a9cafe16916fff289687f228d439bee453f1ced06873afe4c"
+    },
+    "invocation-clock.json": {
+      "invocation-clock.json": "e61d03e0b206df3369091b7d7d44968761ad8d17b13f649c011c29472ed51ae2"
+    },
+    "invocation-clock.log": {
+      "invocation-clock.log": "90f46c7a18503bbd4ef7c0fd0304418c5d4d7900b97e694824f4b04e77965854"
+    }
+  },
+  "resources": {
+    "utc": "2026-10-18T17:41:21Z",
+    "utc_epoch_seconds": 1792345281.2235763,
+    "physical_total": 17031217152,
+    "physical_available": 4382990336,
+    "page_available": 10834550784,
+    "disk_available": 10804428800,
+    "platform": "Windows native"
+  },
+  "fresh_awake_max_seconds": 43200,
+  "fresh_observer_max_seconds": 46800,
+  "adaptive_renewal": false
+}

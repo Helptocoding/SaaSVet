@@ -1,0 +1,101 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "banners": 2,
+      "draft_preserved": true,
+      "messages_preserved": 7,
+      "groups": 5,
+      "horizontal_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "banners": 2,
+      "draft_preserved": true,
+      "messages_preserved": 7,
+      "groups": 5,
+      "horizontal_overflow": false
+    },
+    {
+      "automatic_recovery_s": 19.18016830000124,
+      "banners_after_recovery": 0,
+      "draft_preserved": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "me/",
+      "offline": false
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "offline": false
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "offline": false
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "offline": false
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "offline": false
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "offline": true
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "offline": true
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "offline": true
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "offline": true
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "offline": true
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "offline": true
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "offline": false
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "offline": false
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "offline": false
+    }
+  ],
+  "page_errors": [],
+  "temporary_server_listening": false
+}

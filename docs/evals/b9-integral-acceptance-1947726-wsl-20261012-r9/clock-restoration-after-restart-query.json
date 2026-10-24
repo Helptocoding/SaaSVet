@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "wsl.exe",
+    "-d",
+    "Ubuntu-24.04",
+    "--exec",
+    "/mnt/c/Users/LAP/AppData/Local/Temp/b9-clock-isolation-r9-pid3g53x/rtk-linux",
+    "proxy",
+    "systemctl",
+    "show",
+    "systemd-timesyncd.service",
+    "--property=ActiveState,SubState,UnitFileState,MainPID"
+  ],
+  "exit_code": 0,
+  "stdout": "MainPID=181\nActiveState=active\nSubState=running\nUnitFileState=enabled\n",
+  "stderr": ""
+}

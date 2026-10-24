@@ -1,0 +1,38 @@
+{
+  "state": "COMPLETED",
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-b8b-pg16-bin\\pgsql\\bin\\pg_ctl.exe",
+    "-D",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pgdata",
+    "-m",
+    "fast",
+    "-w",
+    "-t",
+    "60",
+    "stop"
+  ],
+  "cwd": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6",
+  "preparation_only": true,
+  "resources_before": {
+    "utc": "2026-10-21T00:50:39Z",
+    "utc_epoch_seconds": 1792543839.4623203,
+    "physical_total": 17031217152,
+    "physical_available": 4409065472,
+    "page_available": 9640955904,
+    "disk_available": 11674066944,
+    "platform": "Windows native"
+  },
+  "exit_code": 0,
+  "seconds": 1.4449649999996836,
+  "resources_after": {
+    "utc": "2026-10-21T00:50:40Z",
+    "utc_epoch_seconds": 1792543840.9072478,
+    "physical_total": 17031217152,
+    "physical_available": 4450037760,
+    "page_available": 9819213824,
+    "disk_available": 11679637504,
+    "platform": "Windows native"
+  }
+}

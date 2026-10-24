@@ -1,0 +1,9 @@
+{
+  "state": "DIAGNOSTIC_METADATA_ASSUMPTION",
+  "application_tests_executed": 0,
+  "static_discovery_exit_code": 0,
+  "pure_proof_exit_code": 1,
+  "cause": "Original zero-case Vitest rows use skipped status while numPendingTests is 26; the proof expected pending only. Both statuses with no duration mean filtered metadata, not execution.",
+  "correction": "Accept only pending or skipped with null/zero duration; retain numPassedTests=0,numFailedTests=0 and exact 26 identities.",
+  "candidate_or_runtime_selector_changed": false
+}

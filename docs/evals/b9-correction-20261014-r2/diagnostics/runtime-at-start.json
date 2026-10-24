@@ -1,0 +1,16 @@
+{
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "base_commit": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "formal_session": 33156,
+  "observer_session": 47492,
+  "awake_session": 29297,
+  "clock_guard_session": 84052,
+  "clock_guard_temp": "C:/Users/LAP/AppData/Local/Temp/b9-clock-isolation-r9-iz31_5jv",
+  "work": "/home/lap/b9i-correction-20261014-r2",
+  "port": 35482,
+  "controller_invocations": 1,
+  "formal_reruns": 0,
+  "next_actions": "Wait for this invocation; classify observed PASS/FAIL/PENDING, cleanup once via capture_wsl.py cleanup, stop owned observer/awake via stop.request, clock_setup.py restore, report with diagnostics/close_acceptance.py after final-classification.json, deliver_wsl.py once. Preserve prior evidence. Do not restart invocation or edit frozen root helpers.",
+  "prior_campaign": "b9-correction-20261013",
+  "reporting_note": "Focused verification was prior-campaign evidence, not repeated current. Adapt final REPORT to actual outcomes before packaging. The reporting helper can be edited in diagnostics without changing evaluator."
+}

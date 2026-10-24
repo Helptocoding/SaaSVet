@@ -1,0 +1,68 @@
+{
+  "state": "COMPLETED",
+  "candidate_sha": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "test_invocations": 1,
+  "argv": [
+    "/home/lap/b9i-correction-20261013/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-correction-20261013/venv/bin/python",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261013/diagnostic_suite.py"
+  ],
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-14T05:36:14Z",
+      "physical_available": 7646900224,
+      "physical_total": 8252518400,
+      "disk_available": 8282853376,
+      "linux_virtual_disk_available": 1018174308352
+    },
+    "host": {
+      "utc": "2026-10-14T05:36:13Z",
+      "physical_total": 17031217152,
+      "physical_available": 5913210880,
+      "page_available": 11953217536,
+      "utc_epoch_seconds": 1791956173.9086692,
+      "observer_pid": 23380
+    },
+    "awake": {
+      "utc": "2026-10-14T05:36:14Z",
+      "utc_epoch_seconds": 1791956174.5409834,
+      "pid": 24032,
+      "thread_id": 20476,
+      "api_previous_state": "0x80000001"
+    },
+    "host_age": 0.9777817726135254,
+    "awake_age": 0.34546971321105957
+  },
+  "purpose": "Diagnostic only; not integral acceptance",
+  "exit_code": 0,
+  "seconds": 400.37764391400015,
+  "invalidating_incident": null,
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-14T05:42:55Z",
+      "physical_available": 7649234944,
+      "physical_total": 8252518400,
+      "disk_available": 8068489216,
+      "linux_virtual_disk_available": 1018174242816
+    },
+    "host": {
+      "utc": "2026-10-14T05:42:54Z",
+      "physical_total": 17031217152,
+      "physical_available": 5961355264,
+      "page_available": 11765899264,
+      "utc_epoch_seconds": 1791956574.7836561,
+      "observer_pid": 23380
+    },
+    "awake": {
+      "utc": "2026-10-14T05:42:54Z",
+      "utc_epoch_seconds": 1791956574.6873505,
+      "pid": 24032,
+      "thread_id": 20476,
+      "api_previous_state": "0x80000001"
+    },
+    "host_age": 0.5706725120544434,
+    "awake_age": 0.6669819355010986
+  }
+}

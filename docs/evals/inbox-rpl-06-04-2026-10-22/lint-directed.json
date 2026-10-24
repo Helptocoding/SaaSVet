@@ -1,0 +1,18 @@
+{
+  "kind": "lint",
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "src/pages/inbox/index.jsx",
+    "src/pages/inbox/useThreadHistory.js",
+    "src/pages/inbox/ReplyQuote.jsx",
+    "src/pages/inbox/ReplyQuote.test.jsx",
+    "src/pages/inbox/useThreadHistory.jump.test.jsx",
+    "src/pages/inbox/index.jump.test.jsx"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 20.605844800011255,
+  "working_database_migrated": false
+}

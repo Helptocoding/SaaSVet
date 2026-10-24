@@ -1,0 +1,43 @@
+{
+  "state": "PASS",
+  "utc": "2026-10-17T16:32:33Z",
+  "original_function_AST_identical": {
+    "run_campaign.py:execute": true,
+    "run_campaign.py:check_suite": true,
+    "run_campaign.py:budget": true,
+    "run_campaign.py:gate": true,
+    "run_campaign.py:create_db": true,
+    "full_partition.py:build_partition": true,
+    "full_partition.py:projected_groups": true,
+    "full_partition.py:validate_partition": true
+  },
+  "source_syntax_and_whitespace": "PASS",
+  "application_tests_executed": false,
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "scope": "Composite provenance and block scheduling only; original tests, budgets, gates and five-group inventory remain unchanged",
+  "helpers_sha256": {
+    "awake_guard.py": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+    "awake_status.py": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+    "bootstrap.py": "5f5500a223e40f2c9aded605a261e72b16c42f00ccf7a9f65eff55aeee823cab",
+    "capture_native.py": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+    "cleanup_native.py": "fd7c24075b1c77fee1868e14a75177b1c2ba4239d95c25192e7238c42cc09f7b",
+    "clock_probe.py": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+    "composite_evidence.py": "836e66585e26da8997f25052fbcf5dced435eecc6910eb29e617e302e8d11b18",
+    "deliver_native.py": "0539782e9f4f358c3c6c6b08bee9a4edd6a641267893fda0f1074fa4fe172b8e",
+    "discover_candidate.py": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b",
+    "finalize_preflight.py": "74c2e27ced5c0e72b8106246d8e9fd8812b4cdd97f91a4396259e2f18bdf44ce",
+    "full_partition.py": "21731d5d5ed0561172756a9525bd338347c8c983118d7bb62a4c04eb588a14bf",
+    "host_observer.py": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b",
+    "host_resources.py": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+    "interpreter_preflight.py": "f39ce698bb62f2314657cae75e825c16439afc16d4867f8cf5b78cc8a6e86f92",
+    "launch_native.py": "d39799ab836de20a1ee03112a137002424bb5cf3d11df616c050bdb35b9ff308",
+    "native_support.py": "442bf318f921602805b611f9d12624a3e6728ff9bcbd20e1a6d20f0b2253d1a0",
+    "prepare_native.py": "3df96bb58cdd64291f4e8c7b4bba6ae707abe6bdafa5bbd4730967b67a00926e",
+    "recorded_suite.py": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+    "restore_native.py": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+    "retire_install_cache.py": "834cdb571c422861e7083d8fee361e34bf62ffa7ba9fdeaa41f4bf4c539914f7",
+    "run_campaign.py": "749c83ca7ef91e4cbcb2135c9cc2baf2382b2427de12457bb79cca62959669a2",
+    "scan_security.py": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2",
+    "diagnostics\\close_acceptance.py": "69761d8092bbc03a929cc827c3cc48b0b5775bfb7213d77b8cbc46aa35c495af"
+  }
+}

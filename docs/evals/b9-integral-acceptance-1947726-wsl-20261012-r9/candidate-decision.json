@@ -1,0 +1,315 @@
+{
+  "schema": "b9i-wsl-r9-candidate-decision-v1",
+  "date_local": "2026-10-13",
+  "timezone": "America/Mexico_City",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "decision": "PENDING",
+  "campaign_state": "STOPPED_DURING_FULL_BACKING_DISK_RESERVE_WITH_DAMAGED_FINAL_RECEIPTS",
+  "product_failure_attributed": false,
+  "raw_stop_state_preserved": "PENDING",
+  "formal_block_runs": 10,
+  "formal_reruns": 0,
+  "blocking_gates_passed": [
+    "directed",
+    "django-check",
+    "migration-drift",
+    "migrate",
+    "billing-schema",
+    "b0",
+    "b3",
+    "b4",
+    "b5"
+  ],
+  "directed_complete_gate": true,
+  "directed_ids_pass": 87,
+  "full_partial_outcomes": {
+    "PASS": 2666,
+    "FAIL": 10,
+    "ERROR": 1,
+    "SKIP": 2
+  },
+  "full_gate_passed": false,
+  "full_final_runner_totals": null,
+  "profile_variants_executed": 0,
+  "partial_failure_causes_unclassified": true,
+  "R01_R15": {
+    "R01": "PENDING_INTEGRAL; full interrumpido, frontend/seguridad/PROFILE sin ejecutar",
+    "R02": "PASS_DIRECTED_SCOPE; READ, cinco WRITE, pipeline y procesos del corpus 87/87",
+    "R03": "PASS_DIRECTED_COST_SCOPE; presupuesto compartido/uso desconocido; sin métricas PROFILE",
+    "R04": "PASS_DIRECTED_SCALE_SCOPE; N=1 y procesos independientes; PROFILE pendiente",
+    "R05": "PASS_DIRECTED_SCOPE; reserva/retry sin refund y FI del corpus",
+    "R06": "PENDING_INTEGRAL_CHECKS; nueve gates PASS; full incompleto y frontend/seguridad NOT_EXECUTED",
+    "R07": "PENDING_NOT_EXECUTED; cinco PROFILE",
+    "R08": "DECISION_AND_LIMITS_DOCUMENTED; PENDING técnico separado de activación",
+    "R09": "PENDING_NOT_EXECUTED; no p95/denominadores temporales del candidato",
+    "R10": "PASS_DIRECTED_SCOPE; EVAL/COST/SCALE, diez FI y 41 negativas adicionales; integral pendiente",
+    "R11": "PASS_SELECTED_SCOPE; COST, Django/drift/migrate y Billing schema; no inferir suite B9B completa",
+    "R12": "PASS_DIRECTED_SCOPE; N-minus-one/N/N-plus-one; sin afirmación de capacidad comercial",
+    "R13": "PASS_DIRECTED_RELEASE_NEGATIVES; readiness/aprobaciones reales pendientes",
+    "R14": "PREPARATION_AND_METHOD_RECORDED; fuentes exactas e intérpretes bloqueados; límites de cierre documentados",
+    "R15": "DECISION_AND_EVIDENCE_CONSERVED; privacidad y requisitos operativos separados"
+  },
+  "I01_I14": {
+    "I01": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-E2E-03",
+        "B9E-E2E-04",
+        "B9E-E2E-05",
+        "B9E-E2E-06",
+        "B9E-E2E-07",
+        "B9E-GATE-01",
+        "B9E-GATE-02",
+        "B9E-GATE-03",
+        "B9E-GATE-04",
+        "B9E-GATE-05"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_create_complete_pipeline",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_reschedule_complete_pipeline",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_cancel_complete_pipeline",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open"
+      ],
+      "limit": "Aceptación integral pendiente; alcance dirigido solamente"
+    },
+    "I02": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-E2E-13",
+        "B9E-FI-05"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_16_correction_retires_old_proposal_before_effect",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_worker_reaches_b8a_and_denies_inactive_definition"
+      ],
+      "limit": "Aceptación integral pendiente; alcance dirigido solamente"
+    },
+    "I03": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-E2E-01",
+        "B9E-E2E-15"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_01_public_read_queued_accepted_delivered_read_are_distinct",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_15_client_cannot_reply_to_pending_and_forged_early_reply_is_not_causal"
+      ],
+      "limit": "Aceptación integral pendiente; alcance dirigido solamente"
+    },
+    "I04": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "test_ids": [
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_query_never_mutates_even_forced_wrong_tool",
+        "apps.agent.tests.test_b8d_attendance.B8DAttendanceTests.test_indirect_question_never_confirms",
+        "apps.agent.tests.test_b8d_attendance.B8DAttendanceTests.test_question_never_confirms"
+      ],
+      "limit": "Negativas exactas de pregunta directa/indirecta y herramienta equivocada; no aceptación integral"
+    },
+    "I05": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-GATE-01",
+        "B9E-GATE-02",
+        "B9E-GATE-03",
+        "B9E-GATE-04",
+        "B9E-GATE-05",
+        "B9E-E2E-09"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_confirmation_cannot_cross_tenant_proposal_reference"
+      ],
+      "limit": "Aceptación integral pendiente; alcance dirigido solamente"
+    },
+    "I06": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-E2E-01",
+        "B9E-E2E-03",
+        "B9E-E2E-04",
+        "B9E-E2E-05",
+        "B9E-E2E-06",
+        "B9E-E2E-07",
+        "B9E-E2E-11"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_01_public_read_queued_accepted_delivered_read_are_distinct",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_create_complete_pipeline",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_reschedule_complete_pipeline",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_cancel_complete_pipeline",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_09_uncertain_no_blind_retry_then_signed_reconciliation"
+      ],
+      "limit": "Aceptación integral pendiente; alcance dirigido solamente"
+    },
+    "I07": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "test_ids": [
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_appointment_projection_limit_and_old_appointment",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_appointments_inherit_missing_pet_coverage",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_complete_empty_is_explicit_and_scoped",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_currency_and_multiple_services_stay_associated",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_diagnostics_are_versioned_without_personal_payload",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_each_selected_endpoint_rejects_malformed_collection",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_error_logs_never_include_provider_pii",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_foreign_owner_pet_reference_is_denied",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_foreign_scope_and_coincident_price_rejected",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_missing_null_and_invalid_price",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_overlap_is_not_available_even_if_start_differs",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_pagination_complete_truncated_unknown",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_partial_occupancy_cannot_prove_available_slot",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_personal_read_cannot_bypass_current_identity",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_pet_projection_limit_is_truncated",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_price_uses_field_not_coincident_id",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_public_reads_and_control_do_not_require_onboarding",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_query_never_mutates_even_forced_wrong_tool",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_read_cannot_emit_free_success_prose",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_read_error_cannot_be_rewritten_as_absence",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_read_label_cannot_issue_http_mutation",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_read_shapes_and_http_errors_never_become_empty",
+        "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_real_appointment_endpoint_enforces_pet_date_and_tenant",
+        "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_already_done_requires_matching_fresh_read",
+        "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_compound_partial_only_proves_pet",
+        "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_confirm_malformed_conflict_and_timeout_never_claim_success",
+        "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_direct_commit_cannot_bypass_b0_at_executor",
+        "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_effect_response_must_match_entity_action_and_requested_state",
+        "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_replay_requires_compatible_entity_and_existing_key",
+        "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_valid_effect_can_render_only_its_own_action",
+        "apps.agent.tests.test_b2_results.B2OutcomeContractTests.test_manifest_is_exhaustive_static_and_writes_contained",
+        "apps.agent.tests.test_b2_results.B2OutcomeContractTests.test_no_tool_does_not_prove_absence_or_availability",
+        "apps.agent.tests.test_b2_results.B2OutcomeContractTests.test_numbers_do_not_ground_free_price_or_success",
+        "apps.agent.tests.test_b2_results.B2OutcomeContractTests.test_numeric_strings_are_rejected_in_typed_price_projection",
+        "apps.agent.tests.test_b2_results.B2OutcomeContractTests.test_ok_is_derived_and_legacy_does_not_prove_effect",
+        "apps.agent.tests.test_b2_results.B2TransportTests.test_http_errors_are_distinct",
+        "apps.agent.tests.test_b2_results.B2TransportTests.test_invalid_json_and_empty_are_not_empty_data",
+        "apps.agent.tests.test_b2_results.B2TransportTests.test_network_failure_and_write_uncertainty",
+        "apps.agent.tests.test_b2_results.B2TransportTests.test_valid_http_preserves_body_and_parse"
+      ],
+      "limit": "39 negativas/contratos B2 completos; no aceptación integral"
+    },
+    "I08": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-E2E-14",
+        "B9E-SCALE-02"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_12_safety_precedes_llm_and_normal_write",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_02_guidance_during_blocked_llm_and_slow_meta"
+      ],
+      "limit": "Safety dirigida PASS; SATURATION y comprobación temporal NOT_EXECUTED"
+    },
+    "I09": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-FI-04",
+        "B9E-FI-07",
+        "B9E-E2E-10"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_05_06_live_expired_worker_cannot_progress_after_other_claim",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_11_takeover_during_llm_fences_publication",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_takeover_after_authorizable_proposal_blocks_write"
+      ],
+      "limit": "Aceptación integral pendiente; alcance dirigido solamente"
+    },
+    "I10": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-FI-01",
+        "B9E-FI-02",
+        "B9E-FI-10"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_provider_timeout_retry_keeps_budget_and_releases_only_at_completion",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_effect_and_consent_roll_back_with_receipt_sql_failure"
+      ],
+      "limit": "Aceptación integral pendiente; alcance dirigido solamente"
+    },
+    "I11": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-FI-03",
+        "B9E-E2E-11"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9a_processes.B9AProcessTests.test_provider_accepted_process_killed_local_response_lost_is_uncertain",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_09_uncertain_no_blind_retry_then_signed_reconciliation"
+      ],
+      "limit": "Incertidumbre/reconciliación dirigida PASS; META_SLOW NOT_EXECUTED"
+    },
+    "I12": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-E2E-00C",
+        "B9E-E2E-00D",
+        "B9E-E2E-13",
+        "B9E-READ-03"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_personal_appointments_scoped_to_verified_owner",
+        "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_personal_vaccine_status_requires_conversation_pet_handle",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_16_correction_retires_old_proposal_before_effect",
+        "apps.agent.tests.test_identity.IdentityTests.test_verification_expiry"
+      ],
+      "limit": "Aceptación integral pendiente; alcance dirigido solamente"
+    },
+    "I13": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-E2E-09",
+        "B9E-SCALE-01"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_confirmation_cannot_cross_tenant_proposal_reference",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_01_two_planners_cross_tenant_and_independent_sender"
+      ],
+      "limit": "Aceptación integral pendiente; alcance dirigido solamente"
+    },
+    "I14": {
+      "state": "PASS_DIRECTED_SCOPE",
+      "references": [
+        "B9E-E2E-13",
+        "B9E-FI-05"
+      ],
+      "test_ids": [
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_16_correction_retires_old_proposal_before_effect",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_worker_reaches_b8a_and_denies_inactive_definition"
+      ],
+      "limit": "Aceptación integral pendiente; alcance dirigido solamente"
+    }
+  },
+  "coverage_definition": "Only this campaign complete PASS receipts support directed coverage. Partial full outcomes do not form a valid full gate and raw failures remain unclassified. Historical results are not transferred.",
+  "operational_requirements": {
+    "R06_real_promotion_eval": "PENDING_SEPARATE",
+    "R13_real_release_readiness": "PENDING_SEPARATE",
+    "R15_P_A_P_B_privacy": "PENDING_SEPARATE"
+  },
+  "activation": "PENDING_ACTIVATION_REQUIREMENTS",
+  "R1-04": "PENDING_WITH_ACCEPTED_LIMITATION; zero new physical attempts",
+  "E_P_UX": "SEPARATE_UNCHANGED_SCOPES",
+  "prior_campaign_results_transferred_to_r9": false,
+  "resource_policy": "User-amended 2 GiB admission/execution reserve; original 1 GiB disk and 1-second clock guards",
+  "candidate_sources_checked_after_restart": 3332,
+  "dependency_files_checked_after_restart": 13508,
+  "evaluation_seal_files_checked_after_restart": 108,
+  "cleanup": "PASS_AFTER_POSTGRESQL_CRASH_RECOVERY",
+  "clock_current_state": "PASS_ACTIVE_RUNNING_ENABLED",
+  "monitor_current_absence": "PASS",
+  "normal_monitor_and_guardian_closure_receipts": "MISSING_AFTER_RESTART",
+  "commits_created": 0,
+  "pushes_performed": 0,
+  "production_activation_or_deployment": false
+}

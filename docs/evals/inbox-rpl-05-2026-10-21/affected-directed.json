@@ -1,0 +1,22 @@
+{
+  "kind": "affected",
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "-t",
+    "Inbox — aislamiento del borrador|WA-CMP-01|WA-CPY-01",
+    "--maxWorkers=1",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-rpl-05-2026-10-21\\affected-directed-vitest.json"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 73.26247140001215,
+  "working_database_migrated": false,
+  "vitest_report": "affected-directed-vitest.json",
+  "passed": 31,
+  "failed": 0
+}

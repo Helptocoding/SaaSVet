@@ -4,16 +4,23 @@ agent/urls.py — Bandeja del agente (montado en /api/inbox/, É-F0 PR-6).
 from django.urls import path
 
 from . import views
+from .inbox_media import inbox_media_view
 
 urlpatterns = [
+    path('media/<uuid:public_id>/', inbox_media_view, name='inbox-media'),
+    path('assignable-users/', views.assignable_users_view, name='inbox-assignable-users'),
     path('conversations/', views.list_conversations,
          name='inbox-conversations'),
     path('conversations/<str:pk>/messages/', views.conversation_messages,
          name='inbox-messages'),
     path('conversations/<str:pk>/send/', views.send_message,
          name='inbox-send'),
+    path('conversations/<str:pk>/messages/<int:message_id>/retry/', views.retry_message,
+         name='inbox-message-retry'),
     path('conversations/<str:pk>/claim/', views.claim_conversation,
          name='inbox-claim'),
+    path('conversations/<uuid:pk>/assign/', views.assign_conversation_view,
+         name='inbox-assign'),
     path('conversations/<str:pk>/close/', views.close_conversation,
          name='inbox-close'),
     path('conversations/<str:pk>/release/', views.release_conversation,
@@ -37,6 +44,10 @@ urlpatterns = [
          views.thread_sessions, name='inbox-thread-sessions'),
     path('threads/<str:contact_pid>/<str:account_pid>/messages/',
          views.thread_messages, name='inbox-thread-messages'),
+    path('threads/<str:contact_pid>/<str:account_pid>/read/',
+         views.thread_read, name='inbox-thread-read'),
+    path('threads/<str:contact_pid>/<str:account_pid>/context/',
+         views.thread_context_view, name='inbox-thread-context'),
     path('settings/', views.agent_settings_view, name='inbox-settings'),
     path('metrics/', views.metrics_view, name='inbox-metrics'),
     path('whatsapp-token/', views.whatsapp_token_view, name='inbox-whatsapp-token'),

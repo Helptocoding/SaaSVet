@@ -1,0 +1,31 @@
+{
+  "mode": "Owned same-cluster handoff after verified r10 retirement under RTK",
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-b8b-pg16-bin\\pgsql\\bin\\postgres.exe",
+    "-D",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pgdata"
+  ],
+  "wrapper_pid": 17976,
+  "port": 35490,
+  "data_directory": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pgdata",
+  "previous_invocation_resumed": false,
+  "same_disposable_cluster": true,
+  "previous_cluster_retirement": "previous-cluster-retirement.json",
+  "previous_cluster_retirement_sha256": "6c7119d2789585cf7ce17c588610ed86c64ac80dc64b9f926f68c3fe87dbfe4c",
+  "state": "PASS_READY",
+  "attempt": 1,
+  "maximum_start_attempts": 1,
+  "postmaster_pid": 24384,
+  "postmaster": {
+    "pid": 24384,
+    "image": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-b8b-pg16-bin\\pgsql\\bin\\postgres.exe",
+    "created_epoch_seconds": 1792541011.100256
+  },
+  "wrapper": {
+    "pid": 17976,
+    "image": "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "created_epoch_seconds": 1792541010.8199482
+  }
+}

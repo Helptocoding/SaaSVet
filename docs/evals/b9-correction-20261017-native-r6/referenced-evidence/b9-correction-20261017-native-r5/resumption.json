@@ -1,0 +1,203 @@
+{
+  "state": "COMPOSITE_NATIVE_SEGMENT_PREPARATION",
+  "user": "si hagamos eso",
+  "date_local": "2026-10-17",
+  "previous_campaign": "b9-correction-20261016-native-r4",
+  "source_baseline": "b9-correction-20261016-native-r3",
+  "previous_decision": {
+    "decision": "PENDING",
+    "cause": "La reserva de disco C: cay\u00c3\u00b3 por debajo de 1 GiB durante la preparaci\u00c3\u00b3n de B0. El controlador detuvo \u00c3\u00banicamente su \u00c3\u00a1rbol propio antes de registrar resultados por ID de ese bloque. Cinco gates previos est\u00c3\u00a1n PASS y el corpus dirigido conserva 87/87 PASS. Las regresiones restantes, full, frontend, seguridad y PROFILE quedan sin ejecutar; no se acredita fallo funcional del producto. Windows registr\u00c3\u00b3 suspensi\u00c3\u00b3n por Battery y un intervalo posterior de casi ocho horas en el seguimiento; no se atribuye ese intervalo a ejecuci\u00c3\u00b3n continuada de B0 ni se identifica el consumidor de disco.",
+    "date_local": "2026-10-17",
+    "classified_utc": "2026-10-17T15:45:31Z",
+    "classification": "ENVIRONMENT_DISK_RESERVE_EXHAUSTED",
+    "phase": "b0",
+    "evidence": [
+      "STOP.json",
+      "blocks/b0.command.json",
+      "monitor-b0.json",
+      "invocation-formal.json",
+      "diagnostics/power-and-followup-incident.json"
+    ],
+    "formal_invocations": 1,
+    "formal_reruns": 0,
+    "completed_gates": {
+      "billing-schema": "PASS",
+      "directed": "PASS",
+      "django-check": "PASS",
+      "migrate": "PASS",
+      "migration-drift": "PASS"
+    },
+    "completed_directed": {
+      "tests": 87,
+      "PASS": 87,
+      "FAIL": 0,
+      "ERROR": 0,
+      "SKIP": 0
+    },
+    "interrupted_suite": {
+      "selected_ids": 17,
+      "observed_unique_ids": 0,
+      "outcomes": {},
+      "missing_ids": [
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_direct_pending_commit_is_contained",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_emergency_copy_uses_only_configured_phone",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_failure_after_persistence_leaves_pending_event",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_forced_dispatch_cannot_invoke_any_write_handler",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_forced_planner_write_is_handed_off",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_legacy_pending_cannot_authorize_any_reply",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_llm_timeout_yields_honest_fallback",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_pending_events_and_queued_outbound_do_not_mean_delivery",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_personal_read_needs_current_identity",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_public_read_and_explicit_human_remain_available",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_read_result_does_not_prove_write_or_price",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_registry_covers_every_current_write",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_unsafe_output_corpus_is_replaced_without_retry",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_alert_acceptance_failure_and_no_free_text_export",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_controlled_provider_failure_boundaries",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_failed_empty_skipped_or_expected_failure_cannot_pass_gate",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_fixture_is_required_and_complete"
+      ],
+      "complete_gate": false
+    },
+    "full": {
+      "observed_unique_ids": 0,
+      "selected_ids": 3331,
+      "complete_gate": false,
+      "groups_executed": 0
+    },
+    "resource_evidence": {
+      "disk_reserve_bytes": 1073741824,
+      "ram_reserve_bytes": 2147483648,
+      "disk_bytes_after_stop": 268410880,
+      "minimum_ram_bytes_during_commands": 6270443520,
+      "minimum_disk_bytes_during_commands": 268369920,
+      "maximum_clock_skew_seconds_during_commands": 0.0014758676911696966,
+      "monitor_receipts": [
+        "monitor-b0.json",
+        "monitor-billing-schema.json",
+        "monitor-directed.json",
+        "monitor-django-check.json",
+        "monitor-migrate.json",
+        "monitor-migration-drift.json"
+      ]
+    },
+    "preparation_memory_error_established": true,
+    "preparation_recovered_before_formal_seal": true,
+    "preparation_recovery": "recovered-stage-validation.json",
+    "formal_oom_established": false,
+    "product_failure_established": false,
+    "disk_consumer_attributed": false,
+    "wsl_invoked": false,
+    "read_only_status_monitors_exited": true,
+    "later_blocks_executed": false
+  },
+  "prior_formal_results_copied_as_current": false,
+  "historical_pass_references_authorized": true,
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "tests_or_product_changes_authorized": false,
+  "wsl_invoked": false,
+  "new_workspace": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r5",
+  "private_postgresql_port": 35489,
+  "copied_helpers": [
+    {
+      "path": "awake_guard.py",
+      "prior_sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+      "sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049"
+    },
+    {
+      "path": "awake_status.py",
+      "prior_sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+      "sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1"
+    },
+    {
+      "path": "capture_native.py",
+      "prior_sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+      "sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d"
+    },
+    {
+      "path": "cleanup_native.py",
+      "prior_sha256": "d85b92917abc00f6cbca6e9dc547809d7c49283e752173e8297afe0b97f88f16",
+      "sha256": "fd7c24075b1c77fee1868e14a75177b1c2ba4239d95c25192e7238c42cc09f7b"
+    },
+    {
+      "path": "clock_probe.py",
+      "prior_sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+      "sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2"
+    },
+    {
+      "path": "deliver_native.py",
+      "prior_sha256": "b535c9f77fc991708bd5d83fd0a55513f46cd6be5f6dd4dcfd043ff5d77eb7c0",
+      "sha256": "0539782e9f4f358c3c6c6b08bee9a4edd6a641267893fda0f1074fa4fe172b8e"
+    },
+    {
+      "path": "discover_candidate.py",
+      "prior_sha256": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b",
+      "sha256": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b"
+    },
+    {
+      "path": "finalize_preflight.py",
+      "prior_sha256": "84624ec04217bed441ce571754da0166286fd7030ec771bdca4bb99e28280f14",
+      "sha256": "b69591b11a4968c9cccdadb7fc7c6153b8d7f31a326bb27ec988cebac23606b3"
+    },
+    {
+      "path": "full_partition.py",
+      "prior_sha256": "cb09cbe26bb77fec5a5e5e59cdc123901f0cc2d4e1ee82710c5f47e91449a028",
+      "sha256": "cb09cbe26bb77fec5a5e5e59cdc123901f0cc2d4e1ee82710c5f47e91449a028"
+    },
+    {
+      "path": "host_observer.py",
+      "prior_sha256": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b",
+      "sha256": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b"
+    },
+    {
+      "path": "host_resources.py",
+      "prior_sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083"
+    },
+    {
+      "path": "interpreter_preflight.py",
+      "prior_sha256": "13329fc7ac0011d0247d976fcaf2ccb72f104c5c7612a86d60b35eba0df24261",
+      "sha256": "f39ce698bb62f2314657cae75e825c16439afc16d4867f8cf5b78cc8a6e86f92"
+    },
+    {
+      "path": "launch_native.py",
+      "prior_sha256": "14ba2c288989f78d205a2d0cc4950f6041b5bae9ddc48e96fd59a6472a503a48",
+      "sha256": "d39799ab836de20a1ee03112a137002424bb5cf3d11df616c050bdb35b9ff308"
+    },
+    {
+      "path": "native_support.py",
+      "prior_sha256": "b31d34cc8aaf85a4fda4f83696ea727f1fd32e2e49d1bd8b17c6fe5454d79d96",
+      "sha256": "442bf318f921602805b611f9d12624a3e6728ff9bcbd20e1a6d20f0b2253d1a0"
+    },
+    {
+      "path": "prepare_native.py",
+      "prior_sha256": "35153a89a3519941b7bb1f2759572086d370e50a0624b1b6c8b6881474abeea7",
+      "sha256": "3df96bb58cdd64291f4e8c7b4bba6ae707abe6bdafa5bbd4730967b67a00926e"
+    },
+    {
+      "path": "recorded_suite.py",
+      "prior_sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+      "sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2"
+    },
+    {
+      "path": "restore_native.py",
+      "prior_sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065"
+    },
+    {
+      "path": "retire_install_cache.py",
+      "prior_sha256": "0a99ed91a7de1b59dc044e232ee9c1ef10b47a087952ac2ffbba2e3ade558aaa",
+      "sha256": "834cdb571c422861e7083d8fee361e34bf62ffa7ba9fdeaa41f4bf4c539914f7"
+    },
+    {
+      "path": "run_campaign.py",
+      "prior_sha256": "9c54633c224dff28571ffa77848afa34cc1341dd6e7542260b370de7d0af68f0",
+      "sha256": "9c54633c224dff28571ffa77848afa34cc1341dd6e7542260b370de7d0af68f0"
+    },
+    {
+      "path": "scan_security.py",
+      "prior_sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2",
+      "sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2"
+    }
+  ]
+}

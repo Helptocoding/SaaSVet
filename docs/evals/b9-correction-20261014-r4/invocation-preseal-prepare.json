@@ -1,0 +1,20 @@
+{
+  "step": "preseal-prepare",
+  "state": "COMPLETED",
+  "argv": [
+    "rtk",
+    "proxy",
+    "wsl.exe",
+    "-d",
+    "Ubuntu-24.04",
+    "--exec",
+    "/home/lap/b9i-correction-20261014-r4/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-correction-20261014-r4/venv/bin/python",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261014-r4/preseal_prepare.py"
+  ],
+  "utc_started": "2026-10-15T05:41:12Z",
+  "exit_code": 0,
+  "seconds": 12.328000000008615
+}

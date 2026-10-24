@@ -1,0 +1,16 @@
+{
+  "phase": "pre-seal owned cluster identity, before pg_ctl or tests",
+  "cause": "Integer pidfile process-start timestamp precedes SQL postmaster startup by 2.081980 seconds; newly added two-second preparation bound was too narrow",
+  "identity_checks_passed": [
+    "exact pidfile PID and directory and port",
+    "live process image/parent/creation time",
+    "SQLdata directory and port",
+    "durability all on",
+    "no other clients or prepared transactions"
+  ],
+  "resolution": "Use same five-second startup bound already applied to OS identity; preserve exact PID/image/parent/directory/durability checks",
+  "application_guards_changed": false,
+  "database_or_process_mutation_before_failure": false,
+  "application_tests_executed": false,
+  "original_sql_sha256": "38f6442ebac169af9a992e216895a8b7fff9f13eef81f09ce681f4b268214fb4"
+}

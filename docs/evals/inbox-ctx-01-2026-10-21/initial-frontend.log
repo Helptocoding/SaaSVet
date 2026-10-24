@@ -1,0 +1,2361 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+stderr | src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > representa staff_verified en ambos paneles sin habilitar acciones de identidad
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > representa phone_match en ambos paneles sin habilitar acciones de identidad
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > representa unknown en ambos paneles sin habilitar acciones de identidad
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > muestra la verificación del contacto incluso en un hilo archivado
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > retira el distintivo cuando el siguiente poll informa unknown
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > descarta el texto de Ana al cambiar al hilo de Beto
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > conserva el borrador al volver a clicar el mismo hilo
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > envía al sessionId vigente con una key de idempotencia no vacía
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > no reinstala ni borra el hilo nuevo si el POST anterior termina tarde
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > reutiliza la key si se reintenta el mismo texto tras un error de red
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > conserva la key incierta al navegar B y volver a A con el mismo texto
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > A→B→A conserva visible el 201 aunque el GET de regreso esté vacío
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > regenera la key cuando cambia el texto después de un error
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > pinta el envío antes del POST y reconcilia el 201 sin duplicar
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > elimina el optimista ante 400 y muestra el error del servidor
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > conserva el optimista reintentable ante un 5xx
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > deduplica un polling concurrente exclusivamente por client_message_id
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > dos envíos consecutivos por Enter reciben keys distintas
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > no ejecuta continuaciones del POST después de desmontar el Inbox
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > aplica el cap global de 20 intentos entre sesiones
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > oculta failed-local cuando el hilo regresa con otra sesión activa
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > renderiza un divisor por día local de la organización
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > mantiene la hora del mensaje histórico bajo el divisor Ayer
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > integra recibos de entrega solo en mensajes salientes del transcript
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > actualiza todos los divisores con una sola referencia al cruzar medianoche
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > la página anterior no sustituye la sesión vigente renovada por el poll
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > ignora success antiguo al cambiar de hilo y aborta su petición
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > ignora failure antiguo al cambiar de hilo y aborta su petición
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > los hilos archivados permiten cargar anteriores sin ofrecer envío
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-02 — llegadas en Inbox > una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-02 — llegadas en Inbox > un mensaje nuevo pegado al fondo sigue visible sin contador
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-02 — llegadas en Inbox > bajar manualmente hasta el fondo retira el contador
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-02 — llegadas en Inbox > cambiar de hilo no conserva el contador del anterior
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-02 — llegadas en Inbox > al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-HIST-02 — historial de tres meses > una llegada de hoy conserva la lectura de julio aunque cree un divisor de día
+An error occurred in the <ThreadContextPanel> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ ❯ src/pages/inbox/index.test.jsx (93 tests | 40 failed | 53 skipped) 46106ms
+     ↓ does not call discarded guidance pending delivery
+     ↓ allows the current human owner to explicitly acknowledge a new queued case
+     ↓ shows a durable queue without inventing notification or acknowledgement
+     ↓ labels explicit acknowledgement without claiming clinical attention
+     ↓ keeps uncertain guidance visible and preserves multiple open legacy cases
+     ↓ cambiar de hilo no conserva el botón del historial anterior
+     ↓ permite recorrer un hilo archivado sin habilitar el envío
+     ↓ active: explica el turno y habilita Tomar y acusar recibo al terminar
+     ↓ human_active: explica el turno y habilita Liberar al terminar
+     ↓ muestra el indicador sin conceder permiso para tomar o liberar
+     ↓ no hereda el indicador de otro hilo ni de la fila antigua
+     ↓ un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada
+     ↓ distingue carga inicial de lista y mensajes de un panel sin selección
+     ↓ distingue el fallo inicial de lista vacía y permite reintentar
+     ↓ explica el fallo inicial de transcript y reintenta la misma conversación
+     ↓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar
+     ↓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar
+     ↓ recupera ambos paneles automáticamente cuando vuelve la API
+     ↓ un fallo tardío del hilo anterior no contamina la racha del nuevo
+     ↓ ignora success tardío de lista tras cambiar de filtro
+     ↓ ignora failure tardío de lista tras cambiar de filtro
+     × representa staff_verified en ambos paneles sin habilitar acciones de identidad 1592ms
+     × representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad 1134ms
+     × representa phone_match en ambos paneles sin habilitar acciones de identidad 1115ms
+     × representa unknown en ambos paneles sin habilitar acciones de identidad 1111ms
+     × muestra la verificación del contacto incluso en un hilo archivado 1132ms
+     × retira el distintivo cuando el siguiente poll informa unknown 1137ms
+     ↓ pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias
+     ↓ cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía
+     ↓ si inicia oculto no consulta la lista y usa el filtro vigente al volver
+     ↓ refleja el último poll sin solicitar datos adicionales y restaura al salir
+     ↓ copia el cuerpo original completo, sin horas ni autor, y confirma el éxito
+     ↓ muestra un error recuperable cuando el navegador rechaza la copia
+     ↓ maneja clipboard no disponible sin anunciar una copia falsa
+     ↓ copia teléfono y ofrece tel: también con hilo archivado=false
+     ↓ copia teléfono y ofrece tel: también con hilo archivado=true
+     ↓ renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders
+     ↓ agrupa por autor sin ocultar mensajes, horas ni estados de entrega
+     ↓ corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto
+     ↓ crece al pegar 2000 caracteres, limita la altura y encoge al borrar
+     ↓ muestra el contador después de 3600 y conserva el límite de 4000
+     ↓ reinicia altura y contador al enviar sin esperar el POST
+     ↓ descarta texto y contador al cambiar de cliente
+     × descarta el texto de Ana al cambiar al hilo de Beto 1184ms
+     × conserva el borrador al volver a clicar el mismo hilo 1143ms
+     × envía al sessionId vigente con una key de idempotencia no vacía 1241ms
+     × no reinstala ni borra el hilo nuevo si el POST anterior termina tarde 1123ms
+     × reutiliza la key si se reintenta el mismo texto tras un error de red 1127ms
+     × conserva la key incierta al navegar B y volver a A con el mismo texto 1129ms
+     × un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto 1119ms
+     × A→B→A conserva visible el 201 aunque el GET de regreso esté vacío 1134ms
+     × regenera la key cuando cambia el texto después de un error 1135ms
+     × pinta el envío antes del POST y reconcilia el 201 sin duplicar 1158ms
+     × elimina el optimista ante 400 y muestra el error del servidor 1106ms
+     × conserva el optimista reintentable ante un 5xx 1110ms
+     × deduplica un polling concurrente exclusivamente por client_message_id 1122ms
+     × dos envíos consecutivos por Enter reciben keys distintas 1094ms
+     × no ejecuta continuaciones del POST después de desmontar el Inbox 1109ms
+     × aplica el cap global de 20 intentos entre sesiones 1109ms
+     × oculta failed-local cuando el hilo regresa con otra sesión activa 1107ms
+     × renderiza un divisor por día local de la organización 1123ms
+     × mantiene la hora del mensaje histórico bajo el divisor Ayer 1141ms
+     × integra recibos de entrega solo en mensajes salientes del transcript 1109ms
+     × actualiza todos los divisores con una sola referencia al cruzar medianoche 1106ms
+     ↓ permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes
+     ↓ deduplica por contacto y cuenta sin ocultar otra cuenta del mismo contacto
+     ↓ refresca todas las páginas cargadas y conserva selección y borrador
+     ↓ bloquea el doble clic y el poll mientras carga otra página
+     ↓ una respuesta de poll anterior no borra una página recién añadida
+     ↓ conserva las filas ante un error de carga y reintenta el mismo desplazamiento
+     ↓ un refresco parcial fallido retiene todas las filas y muestra reconexión tras dos fallos
+     ↓ ignora una carga tardía con éxito después de cambiar de filtro
+     ↓ ignora una carga tardía con error después de cambiar de filtro
+     ↓ no inicia otra página del poll al ocultarse y refresca todas al volver
+     ↓ no continúa un refresco de varias páginas después de desmontar
+     ↓ reduce las páginas a refrescar cuando la lista se agota antes
+     ↓ no ofrece un cursor inválido 0
+     ↓ no ofrece un cursor inválido -1
+     ↓ no ofrece un cursor inválido 100
+     ↓ no ofrece un cursor inválido null
+     × carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo 1251ms
+     × el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor 1203ms
+     × un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador 1124ms
+     × la página anterior no sustituye la sesión vigente renovada por el poll 1108ms
+     × ignora success antiguo al cambiar de hilo y aborta su petición 1078ms
+     × ignora failure antiguo al cambiar de hilo y aborta su petición 1091ms
+     × los hilos archivados permiten cargar anteriores sin ofrecer envío 1075ms
+     × una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo 1201ms
+     × un mensaje nuevo pegado al fondo sigue visible sin contador 1204ms
+     × bajar manualmente hasta el fondo retira el contador 1188ms
+     × cambiar de hilo no conserva el contador del anterior 1220ms
+     × al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores 1189ms
+     × una llegada de hoy conserva la lectura de julio aunque cree un divisor de día 1211ms
+ ❯ src/pages/inbox/index.context.test.jsx (15 tests | 15 failed) 1526ms
+     × carga sólo al abrir y llega al expediente correcto en dos clics desde el chat 417ms
+     × el panel conserva borrador e historial y se pliega con estado accesible 104ms
+     × muestra carga propia y aborta si se cierra antes de recibir 83ms
+     × un error reintenta sólo el contexto sin borrar transcript ni borrador 70ms
+     × sin vínculo no inventa cliente, mascotas ni expediente 69ms
+     × con cliente sin mascotas ni citas muestra los estados vacíos 68ms
+     × elige UUIDs de mascotas homónimas sin navegar por nombre ni por PK 76ms
+     × VET con view y retrieve abre contexto aunque no pueda enviar 49ms
+     × sin permiso de consulta de mascota no ofrece abrir expediente 57ms
+     × un hilo archivado conserva el panel pero no el composer 80ms
+     × cambiar de hilo aborta e ignora un contexto antiguo 81ms
+     × cerrar y reabrir consulta el contexto vigente y no revive una respuesta abortada 102ms
+     × el poll de mensajes no vuelve a cargar contexto y una revocación lo retira 99ms
+     × desmontar cancela la petición pendiente 83ms
+     × los nombres HTML se presentan como texto sin insertar elementos ejecutables 78ms
+ ❯ src/pages/inbox/index.window.test.jsx (18 tests | 18 failed) 1698ms
+     × una ventana de más de 12 h permite enviar sin banda innecesaria 492ms
+     × muestra 7 h 12 min y actualiza a 7 h 11 min sin borrar el borrador 85ms
+     × el aviso aparece al pasar de 12 h al intervalo de advertencia 73ms
+     × bloquea en el límite entre ticks, conserva borrador y no envía por Enter 72ms
+     × el guard de Enter comprueba el reloj aunque aún no haya corrido el timer 86ms
+     × el false del servidor bloquea aunque el reloj local vea un vencimiento futuro 61ms
+     × sin último entrante la ventana cerrada tiene explicación 90ms
+     × metadatos incompletos o inválidos impiden enviar: {} 72ms
+     × metadatos incompletos o inválidos impiden enviar: { session_window_open: true, session_window_expires_at: 'invalid' } 77ms
+     × metadatos incompletos o inválidos impiden enviar: { session_window_open: true, session_window_expires_at: null } 78ms
+     × un nuevo inbound proyectado por poll reabre y conserva el borrador anterior 56ms
+     × volver de pestaña oculta corrige el reloj de inmediato y refresca la sesión 65ms
+     × un payload que llega ya expirado se cierra antes del siguiente minuto 62ms
+     × un hilo archivado no muestra composer ni ventana 66ms
+     × view sin send no muestra controles de envío ni aviso de composer 80ms
+     × el estado cerrado y el borrador no se trasladan al cambiar a otro hilo 68ms
+     × un GET tardío del hilo anterior no cierra el composer nuevo 52ms
+     × desmontar cancela los timers de reloj, vencimiento y polling 56ms
+ ❯ src/pages/inbox/index.unread.test.jsx (8 tests | 7 failed) 1070ms
+     ✓ muestra total de todas las páginas y contadores por hilo  465ms
+     × sitúa el divisor antes del primer nuevo y lo quita al confirmar, con view solamente 119ms
+     × la pérdida de visibilidad durante debounce conserva contador y divisor 94ms
+     × no marca al abrir sin foco aunque se pueda ver el historial 69ms
+     × el error se reintenta en el próximo poll sin toast ni desaparición anticipada 75ms
+     × cambiar de hilo durante debounce solo marca el nuevo destino 80ms
+     × un GET de lista iniciado antes del POST no revive el contador 90ms
+     × llegada → contador sube → apertura → divisor → lectura → contador baja 74ms
+ ✓ src/api/inbox.test.js (11 tests | 5 skipped) 14ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 80 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > carga sólo al abrir y llega al expediente correcto en dos clics desde el chat
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > el panel conserva borrador e historial y se pliega con estado accesible
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > muestra carga propia y aborta si se cierra antes de recibir
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > un error reintenta sólo el contexto sin borrar transcript ni borrador
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > sin vínculo no inventa cliente, mascotas ni expediente
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > con cliente sin mascotas ni citas muestra los estados vacíos
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > elige UUIDs de mascotas homónimas sin navegar por nombre ni por PK
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > VET con view y retrieve abre contexto aunque no pueda enviar
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > sin permiso de consulta de mascota no ofrece abrir expediente
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > un hilo archivado conserva el panel pero no el composer
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > cambiar de hilo aborta e ignora un contexto antiguo
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > cerrar y reabrir consulta el contexto vigente y no revive una respuesta abortada
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > el poll de mensajes no vuelve a cargar contexto y una revocación lo retira
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > desmontar cancela la petición pendiente
+ FAIL  src/pages/inbox/index.context.test.jsx > WA-CTX-01 — contexto del cliente en Inbox > los nombres HTML se presentan como texto sin insertar elementos ejecutables
+ FAIL  src/pages/inbox/index.unread.test.jsx > WA-UNR-02 — contador y divisor en Inbox > sitúa el divisor antes del primer nuevo y lo quita al confirmar, con view solamente
+ FAIL  src/pages/inbox/index.unread.test.jsx > WA-UNR-02 — contador y divisor en Inbox > la pérdida de visibilidad durante debounce conserva contador y divisor
+ FAIL  src/pages/inbox/index.unread.test.jsx > WA-UNR-02 — contador y divisor en Inbox > no marca al abrir sin foco aunque se pueda ver el historial
+ FAIL  src/pages/inbox/index.unread.test.jsx > WA-UNR-02 — contador y divisor en Inbox > el error se reintenta en el próximo poll sin toast ni desaparición anticipada
+ FAIL  src/pages/inbox/index.unread.test.jsx > WA-UNR-02 — contador y divisor en Inbox > cambiar de hilo durante debounce solo marca el nuevo destino
+ FAIL  src/pages/inbox/index.unread.test.jsx > WA-UNR-02 — contador y divisor en Inbox > un GET de lista iniciado antes del POST no revive el contador
+ FAIL  src/pages/inbox/index.unread.test.jsx > WA-UNR-02 — contador y divisor en Inbox > llegada → contador sube → apertura → divisor → lectura → contador baja
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > una ventana de más de 12 h permite enviar sin banda innecesaria
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > muestra 7 h 12 min y actualiza a 7 h 11 min sin borrar el borrador
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > el aviso aparece al pasar de 12 h al intervalo de advertencia
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > bloquea en el límite entre ticks, conserva borrador y no envía por Enter
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > el guard de Enter comprueba el reloj aunque aún no haya corrido el timer
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > el false del servidor bloquea aunque el reloj local vea un vencimiento futuro
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > sin último entrante la ventana cerrada tiene explicación
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > metadatos incompletos o inválidos impiden enviar: {}
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > metadatos incompletos o inválidos impiden enviar: { session_window_open: true, session_window_expires_at: 'invalid' }
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > metadatos incompletos o inválidos impiden enviar: { session_window_open: true, session_window_expires_at: null }
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > un nuevo inbound proyectado por poll reabre y conserva el borrador anterior
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > volver de pestaña oculta corrige el reloj de inmediato y refresca la sesión
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > un payload que llega ya expirado se cierra antes del siguiente minuto
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > un hilo archivado no muestra composer ni ventana
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > view sin send no muestra controles de envío ni aviso de composer
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > el estado cerrado y el borrador no se trasladan al cambiar a otro hilo
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > un GET tardío del hilo anterior no cierra el composer nuevo
+ FAIL  src/pages/inbox/index.window.test.jsx > WA-WIN-01 — ventana preventiva en Inbox > desmontar cancela los timers de reloj, vencimiento y polling
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > representa staff_verified en ambos paneles sin habilitar acciones de identidad
+ FAIL  src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad
+ FAIL  src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > representa phone_match en ambos paneles sin habilitar acciones de identidad
+ FAIL  src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > representa unknown en ambos paneles sin habilitar acciones de identidad
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:415:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > muestra la verificación del contacto incluso en un hilo archivado
+TestingLibraryElementError: Unable to find an element with the text: Verificado. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/inbox/index.test.jsx:436:29
+    434|         render(<Inbox />);
+    435|         await user.click(await screen.findByRole("button", { name: /An…
+    436|         expect(await screen.findByText("Verificado")).toBeInTheDocumen…
+       |                             ^
+    437|         expect(screen.queryByPlaceholderText("Escribe una respuesta…")…
+    438|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-VER-01 — verificación en lista y cabecera > retira el distintivo cuando el siguiente poll informa unknown
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:446:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > descarta el texto de Ana al cambiar al hilo de Beto
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:764:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > conserva el borrador al volver a clicar el mismo hilo
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:777:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > envía al sessionId vigente con una key de idempotencia no vacía
+TestingLibraryElementError: Unable to find an element with the text: Beto, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:800:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > no reinstala ni borra el hilo nuevo si el POST anterior termina tarde
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:825:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > reutiliza la key si se reintenta el mismo texto tras un error de red
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:864:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > conserva la key incierta al navegar B y volver a A con el mismo texto
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:893:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:918:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > A→B→A conserva visible el 201 aunque el GET de regreso esté vacío
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:951:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > regenera la key cuando cambia el texto después de un error
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:979:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > pinta el envío antes del POST y reconcilia el 201 sin duplicar
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1001:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > elimina el optimista ante 400 y muestra el error del servidor
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1027:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > conserva el optimista reintentable ante un 5xx
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1050:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > deduplica un polling concurrente exclusivamente por client_message_id
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1081:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > dos envíos consecutivos por Enter reciben keys distintas
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1104:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > no ejecuta continuaciones del POST después de desmontar el Inbox
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1125:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > aplica el cap global de 20 intentos entre sesiones
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1149:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > oculta failed-local cuando el hilo regresa con otra sesión activa
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1193:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > renderiza un divisor por día local de la organización
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1230:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > mantiene la hora del mensaje histórico bajo el divisor Ayer
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1256:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > integra recibos de entrega solo en mensajes salientes del transcript
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1290:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > actualiza todos los divisores con una sola referencia al cruzar medianoche
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1313:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1556:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1583:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1602:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > la página anterior no sustituye la sesión vigente renovada por el poll
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1624:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > ignora success antiguo al cambiar de hilo y aborta su petición
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > ignora failure antiguo al cambiar de hilo y aborta su petición
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1643:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > los hilos archivados permiten cargar anteriores sin ofrecer envío
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/inbox/index.test.jsx:1664:22
+    1662|         render(<Inbox />);
+    1663|         await user.click(await screen.findByRole("button", { name: /An…
+    1664|         await screen.findByText("Ana", { selector: "strong" });
+       |                      ^
+    1665|         await user.click(screen.getByRole("button", { name: "Cargar an…
+    1666|         await screen.findByText("Histórico 1");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-02 — llegadas en Inbox > una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1691:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-02 — llegadas en Inbox > un mensaje nuevo pegado al fondo sigue visible sin contador
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1714:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-02 — llegadas en Inbox > bajar manualmente hasta el fondo retira el contador
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1726:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-02 — llegadas en Inbox > cambiar de hilo no conserva el contador del anterior
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1744:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-02 — llegadas en Inbox > al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1760:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/80]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-02 — historial de tres meses > una llegada de hoy conserva la lectura de julio aunque cree un divisor de día
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:163:18
+    161| const selectConversation = async (user, name) => {
+    162|     await user.click(await screen.findByRole("button", { name: new Reg…
+    163|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    164|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    165| };
+ ❯ src/pages/inbox/index.test.jsx:1788:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/80]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 40 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "representa staff_verified en ambos paneles sin habilitar acciones de identidad". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "representa phone_match en ambos paneles sin habilitar acciones de identidad". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "representa unknown en ambos paneles sin habilitar acciones de identidad". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "muestra la verificación del contacto incluso en un hilo archivado". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "retira el distintivo cuando el siguiente poll informa unknown". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "descarta el texto de Ana al cambiar al hilo de Beto". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "conserva el borrador al volver a clicar el mismo hilo". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "envía al sessionId vigente con una key de idempotencia no vacía". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "no reinstala ni borra el hilo nuevo si el POST anterior termina tarde". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "reutiliza la key si se reintenta el mismo texto tras un error de red". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "conserva la key incierta al navegar B y volver a A con el mismo texto". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "A→B→A conserva visible el 201 aunque el GET de regreso esté vacío". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "regenera la key cuando cambia el texto después de un error". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pinta el envío antes del POST y reconcilia el 201 sin duplicar". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "elimina el optimista ante 400 y muestra el error del servidor". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "conserva el optimista reintentable ante un 5xx". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "deduplica un polling concurrente exclusivamente por client_message_id". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "dos envíos consecutivos por Enter reciben keys distintas". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "no ejecuta continuaciones del POST después de desmontar el Inbox". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "aplica el cap global de 20 intentos entre sesiones". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "oculta failed-local cuando el hilo regresa con otra sesión activa". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "renderiza un divisor por día local de la organización". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "mantiene la hora del mensaje histórico bajo el divisor Ayer". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "integra recibos de entrega solo en mensajes salientes del transcript". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "actualiza todos los divisores con una sola referencia al cruzar medianoche". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "la página anterior no sustituye la sesión vigente renovada por el poll". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "ignora success antiguo al cambiar de hilo y aborta su petición". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "ignora failure antiguo al cambiar de hilo y aborta su petición". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "los hilos archivados permiten cargar anteriores sin ofrecer envío". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "un mensaje nuevo pegado al fondo sigue visible sin contador". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "bajar manualmente hasta el fondo retira el contador". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "cambiar de hilo no conserva el contador del anterior". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'replace')
+ ❯ phoneHref src/pages/inbox/messageText.js:31:26
+     29|
+     30| export const phoneHref = (phone) => {
+     31|     const number = phone.replace(/[\s()-]/g, "");
+       |                          ^
+     32|     return /^\+?\d+$/.test(number) ? `tel:${number}` : undefined;
+     33| };
+ ❯ ThreadContextPanel src/pages/inbox/ThreadContextPanel.jsx:40:18
+ ❯ Object.react_stack_bottom_frame node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "una llegada de hoy conserva la lectura de julio aunque cree un divisor de día". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  4 failed | 1 passed (5)
+      Tests  80 failed | 7 passed | 58 skipped (145)
+     Errors  40 errors
+   Start at  16:08:31
+   Duration  90.20s (transform 1.74s, setup 2.24s, import 5.82s, tests 50.41s, environment 18.21s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-ctx-01-2026-10-21/vitest.json

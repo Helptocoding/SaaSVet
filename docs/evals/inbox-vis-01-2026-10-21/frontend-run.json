@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/hooks/usePollingWhenVisible.test.jsx",
+    "src/pages/inbox/index.test.jsx",
+    "--testNamePattern=WA-VIS-01|WA-TAB-01|deduplica un polling|no reinstala|A\u2192B\u2192A|no ejecuta continuaciones|actualiza todos",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-vis-01-2026-10-21\\vitest.json"
+  ],
+  "scope": "New VIS-01 cases and directly affected polling, navigation, title and midnight regressions only"
+}

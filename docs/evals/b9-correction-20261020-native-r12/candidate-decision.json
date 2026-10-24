@@ -1,0 +1,257 @@
+{
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "base_commit": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "acceptance_label": "FAIL",
+  "accepted_historical_evidence_limitation": true,
+  "historical_disk_and_monotonic_evidence_verified": false,
+  "case_resumption_manifest": "referenced-completed-evidence/r9/case-resumption-manifest.json",
+  "case_resumption_summary": {
+    "state": "PASS",
+    "candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+    "source_candidate_tree": "5e11236daabf4ef70ea9d0f08fee52aed5c30ff2",
+    "retained_ids": 3212,
+    "retained_PASS": 3200,
+    "retained_SKIP": 12,
+    "new_selected_ids": 1,
+    "previous_accepted_cases": 3212,
+    "prior_pass": 3200,
+    "prior_skips": 12,
+    "current_cases": 1,
+    "historical_failed_attempts": 3,
+    "result_general": 3213,
+    "corrected_failed_case_ids": [
+      "apps.core.tests.test_tenant_scoping_audit.TenantScopingAuditTests.test_no_unbaselined_objects_access_without_for_organization"
+    ],
+    "snapshot_corrected_case_ids": [
+      "apps.agent.tests.test_contracts.CommitmentContractTests.test_fields_match_snapshot",
+      "apps.agent.tests.test_contracts.ToolOutcomeContractTests.test_fields_match_snapshot"
+    ],
+    "retained_sources": {
+      "r6": {
+        "tests": 2485,
+        "PASS": 2483,
+        "SKIP": 2
+      },
+      "r7": {
+        "tests": 405,
+        "PASS": 405,
+        "SKIP": 0,
+        "source_journal_observations": 407,
+        "excluded_historical_FAIL": 2
+      },
+      "r8": {
+        "tests": 322,
+        "PASS": 312,
+        "SKIP": 10,
+        "source_journal_observations": 323,
+        "excluded_historical_FAIL": 1
+      }
+    },
+    "original_invocation_exits": {
+      "r6": "UNKNOWN",
+      "r7": "UNKNOWN",
+      "r8": 1
+    },
+    "historical_disk_and_monotonic_evidence_verified": false,
+    "accepted_historical_evidence_limitation": true,
+    "manifest": "case-resumption-manifest.json",
+    "validation": "case-resumption-validation.json",
+    "authorization": "baseline-resumption-authorization.json",
+    "manifest_sha256": "85f01293e758e3f47023a7a042d9f1a14e5821d1a5b6497bd6ac5404e99ca21a",
+    "backend_source_campaign": "b9-correction-20261020-native-r9",
+    "accepted_candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+    "scope": "historical backend r9 aggregate; not a new backend test invocation"
+  },
+  "frontend_resumption_manifest": "referenced-prefix-evidence/r11/frontend-resumption-manifest.json",
+  "frontend_resumption_summary": {
+    "state": "PASS",
+    "total_cases": 355,
+    "retained_pass": 355,
+    "retained_PASS": 355,
+    "new_selected_ids": 0,
+    "source_campaign": "b9-correction-20261020-native-r11",
+    "source_candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+    "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+    "original_command_exit_code": 1,
+    "original_outcome": "PENDING_TIMEOUT",
+    "timeout_ms": 5000,
+    "logical_aggregate": true,
+    "remainder_command": "blocks/frontend-test-remainder.command.json",
+    "remainder_result": "blocks/frontend-test-remainder.json",
+    "assembler_command": "blocks/frontend-test-assemble.command.json",
+    "logical_result": "blocks/frontend-tests.json",
+    "historical_r9_retained_pass": 354,
+    "historical_r11_new_pass": 1,
+    "frontend_manifest": "frontend-resumption-manifest.json",
+    "completed_prefix_manifest": "completed-prefix-manifest.json",
+    "current_test_runs": 0,
+    "current_frontend_test_runs": 0,
+    "current_selected_ids": 0,
+    "filtered_metadata_count": 25,
+    "filtered_metadata_counted_as_acceptance_skips": false,
+    "frontend_smoke": "PASS",
+    "frontend_lint": "ADVISORY_NONZERO",
+    "previous_PASS_cases_rerun": 0,
+    "original_timeout_and_exit_preserved": true,
+    "source_actual_case_execution_count": 1
+  },
+  "completed_prefix_manifest": "completed-prefix-manifest.json",
+  "prior_security_precheck": {
+    "state": "PRESERVED_PENDING_HISTORY_PRECHECK",
+    "source_campaign": "b9-correction-20261020-native-r11",
+    "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+    "head_unchanged": true,
+    "source_head": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+    "scans": [],
+    "scanner_invocations": 0,
+    "product_finding_attributed": false,
+    "source_command_exit_code": 2,
+    "source_controller_exit_code": 2,
+    "changed_internal_capture_refs": [
+      "refs/codex/turn-diffs/captures/1792215842099/6b8b6209-c5da-49af-b7cd-45ca7d039e3a/base",
+      "refs/codex/turn-diffs/captures/1792345048450/c7257052-5ce5-441c-ac0b-98dab93ef60c/base"
+    ],
+    "source_refs_guard_ignored": false,
+    "source_receipts_changed": false,
+    "resumption_decision": "security-history-resumption-decision.json",
+    "resumption_decision_sha256": "c3c1dce1ab53146afad66e91ef7f1f435706719d15c89aadf199b764e699a5bd",
+    "resumption_state": "HARNESS_ONLY_HISTORY_REFRESH",
+    "new_security_scan_required": true,
+    "original_artifacts": {
+      "security-scopes.json": {
+        "path": "referenced-prefix-evidence/r11/security-scopes.json",
+        "sha256": "7425cbba115ff8eabd9ed093dc4442aa993299cc62d99a05e48ac1b4f3fd4a13"
+      },
+      "security-history-before.json": {
+        "path": "referenced-prefix-evidence/r11/security-history-before.json",
+        "sha256": "2076dacce167208493a3a073652cf17c5c4e318aa55615624298e606e75e1959"
+      },
+      "security-history.json": {
+        "path": "referenced-prefix-evidence/r11/security-history.json",
+        "sha256": "cfbd77e8b856f2474eb6e8a53d5a5e0fea9323215aff98cf16d1b66ed2c52908"
+      },
+      "blocks/security.command.json": {
+        "path": "referenced-prefix-evidence/r11/blocks/security.command.json",
+        "sha256": "6be6c4449a72f63e8df2e146bd8437a5cff9b6ea6d6700703c33729e4dd0ef7b"
+      },
+      "invocation-formal.json": {
+        "path": "referenced-prefix-evidence/r11/invocation-formal.json",
+        "sha256": "2c8a50d5a968b1cf30ba8f87d7f2da13b36f69206cadc5b007525c38efa5d221"
+      },
+      "STOP.json": {
+        "path": "referenced-prefix-evidence/r11/STOP.json",
+        "sha256": "71331ecf94aa765d11db66fd970df5d332dba2815a123423e46f6cfa93f97219"
+      }
+    }
+  },
+  "security_history_resumption_decision": "security-history-resumption-decision.json",
+  "previous_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+  "referenced_blocks_executed_on_previous_candidate": true,
+  "cross_candidate_exception_authorization": "frontend-resumption-authorization.json",
+  "selector_repair_decision": "selector-repair-decision.json",
+  "prior_zero_case_selector_attempt": {
+    "state": "PENDING_SELECTOR_NO_CASE_EXECUTED",
+    "source_campaign": "b9-correction-20261020-native-r10",
+    "source_candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+    "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+    "application_test_cases_executed": 0,
+    "passed_cases": 0,
+    "failed_cases": 0,
+    "filtered_case_metadata": 26,
+    "test_duration_ms": 0,
+    "filtered_metadata_is_acceptance_SKIP": false,
+    "original_command_exit_code": 0,
+    "original_assembler_exit_code": 1,
+    "original_controller_exit_code": 2,
+    "original_stop_state": "PENDING",
+    "no_application_source_or_fixture_change": true,
+    "previous_PASS_cases_rerun": false,
+    "manifest": "selector-history-manifest.json",
+    "manifest_sha256": "981ea492b841b492a36b01e1243d9e963d9ecdeabc258096ea1a55ef522d231b",
+    "repair_decision": "selector-repair-decision.json",
+    "repair_decision_sha256": "fe0ee7b3dbe17526ec05357b4645202a3b375a66d5cb105b67b15e1cd262aad0",
+    "repair_state": "HARNESS_ONLY_REPAIR_APPROVED",
+    "exact_one_case_discovery_required": true,
+    "source_artifacts": {
+      "STOP.json": "referenced-selector-evidence/r10/STOP.json",
+      "blocks/frontend-test-assemble.command.json": "referenced-selector-evidence/r10/blocks/frontend-test-assemble.command.json",
+      "blocks/frontend-test-remainder.command.json": "referenced-selector-evidence/r10/blocks/frontend-test-remainder.command.json",
+      "blocks/frontend-test-remainder.json": "referenced-selector-evidence/r10/blocks/frontend-test-remainder.json",
+      "candidate.json": "referenced-selector-evidence/r10/candidate.json",
+      "frontend-remainder-selection.json": "referenced-selector-evidence/r10/frontend-remainder-selection.json",
+      "invocation-formal.json": "referenced-selector-evidence/r10/invocation-formal.json"
+    },
+    "original_receipts_changed": false
+  },
+  "historical_backend_authorizations_root": "referenced-completed-evidence/r9",
+  "cross_candidate_equivalence_proof": "frontend-equivalence.json",
+  "evidence_mode": "COMPOSITE_ACCEPTANCE",
+  "continuous_single_campaign": false,
+  "reference_count": 19,
+  "reference_manifest": "completed-reference-manifest.json",
+  "nested_historical_PASS_block_count": 13,
+  "backend_application_tests_executed_current": 0,
+  "decision": "FAIL",
+  "cause": "El gate bloqueante Gitleaks del historial devolvió exit 1 con 3156 detecciones generic-api-key; no se declaran 3156 credenciales reales confirmadas. Se conservan los PASS y los cinco perfiles quedan NOT_EXECUTED por la parada exigida.",
+  "R01_R15": {
+    "R01": "PENDING_INTEGRAL",
+    "R02": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "R03": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "R04": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "R05": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "R06": "PENDING_LOCAL_BLOCKING_CHECKS",
+    "R07": "PENDING_PROFILE_INCOMPLETE",
+    "R08": "DECISION_AND_LIMITS_DOCUMENTED",
+    "R09": "PENDING_TEMPORAL_COVERAGE; see profile-results-index.json",
+    "R10": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "R11": "PASS_SCHEMA_AND_DIRECTED_COST_SCOPE",
+    "R12": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "R13": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "R14": "EXACT_CORRECTED_TREE_AND_METHOD_DOCUMENTED",
+    "R15": "DECISION_AND_RECOVERY_DOCUMENTED; operational privacy separate"
+  },
+  "I01_I14": {
+    "I01": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I02": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I03": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I04": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I05": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I06": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I07": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I08": "PASS_DIRECTED_SCOPE; PENDING_FULL_TEMPORAL_SAFETY_COVERAGE",
+    "I09": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I10": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I11": "PASS_DIRECTED_SCOPE; PENDING_META_SLOW_TEMPORAL_COVERAGE",
+    "I12": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I13": "PASS_DIRECTED_SCOPE; integral decision FAIL",
+    "I14": "PASS_DIRECTED_SCOPE; integral decision FAIL"
+  },
+  "temporal_variant_states": {
+    "base": "NOT_EXECUTED",
+    "blocked_llm": "NOT_EXECUTED",
+    "meta_slow": "NOT_EXECUTED",
+    "duplicate": "NOT_EXECUTED",
+    "saturation": "NOT_EXECUTED"
+  },
+  "activation": "PENDING_ACTIVATION_REQUIREMENTS",
+  "R1-04": "PENDING_WITH_ACCEPTED_LIMITATION; zero new physical attempts",
+  "E_P_UX": "SEPARATE_UNCHANGED_SCOPES",
+  "operational_requirements": {
+    "R06_real_promotion_eval": "PENDING_SEPARATE",
+    "R13_release_readiness": "PENDING_SEPARATE",
+    "R15_P_A_P_B": "PENDING_SEPARATE"
+  },
+  "production_runtime_changed": false,
+  "locks_changed": false,
+  "test_changes": [
+    "backend/apps/agent/tests/test_contracts.py",
+    "backend/apps/agent/tests/test_regression_f2.py",
+    "backend/apps/agent/tests/test_regression_suite.py",
+    "backend/apps/core/tests/test_tenant_scoping_audit.py",
+    "backend/apps/notifications/tests/test_notifications.py",
+    "frontend/src/pages/inbox/index.test.jsx"
+  ],
+  "commits_created": 0,
+  "pushes_performed": 0,
+  "production_activation_or_deployment": false
+}

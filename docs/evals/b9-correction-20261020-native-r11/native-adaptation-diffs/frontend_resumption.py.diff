@@ -1,0 +1,12 @@
+--- native-r10/frontend_resumption.py
++++ native/frontend_resumption.py
+@@ -220,7 +220,8 @@
+     declarations(check_private=True)
+     from native_support import NODE, PNPM, RTK, TREE, environment
+     assert not (HERE / RAW_REMAINDER).exists() and not (HERE / 'frontend-remainder-selection.json').exists()
+-    pattern = '^' + re.escape(TARGET_NAME) + '$'
++    assert not any(character in TARGET_NAME for character in r'.^$*+?{}[]\|()')
++    pattern = '^' + TARGET_NAME + '$'
+     argv = [str(RTK), 'proxy', str(NODE), str(PNPM), 'run', 'test', TARGET_FILE,
+             '--testNamePattern', pattern, '--reporter=default', '--reporter=json',
+             '--outputFile=' + str(HERE / RAW_REMAINDER)]

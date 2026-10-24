@@ -1,0 +1,56 @@
+{
+  "label": "billing-schema",
+  "candidate_sha": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r4\\python\\python.exe",
+    "-B",
+    "manage.py",
+    "audit_billing_schema",
+    "--json"
+  ],
+  "cwd": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r4\\src\\backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "host": {
+      "utc": "2026-10-17T07:35:30Z",
+      "utc_epoch_seconds": 1792222530.5303912,
+      "physical_total": 17031217152,
+      "physical_available": 7121362944,
+      "page_available": 13668491264,
+      "disk_available": 8982491136,
+      "platform": "Windows native"
+    },
+    "ready": true
+  },
+  "pid": 6044,
+  "wrapper_pid": 6044,
+  "exit_code": 0,
+  "seconds": 15.238634100000127,
+  "invalidating_incident": null,
+  "resources_after": {
+    "host": {
+      "utc": "2026-10-17T07:35:45Z",
+      "utc_epoch_seconds": 1792222545.7652857,
+      "physical_total": 17031217152,
+      "physical_available": 7074099200,
+      "page_available": 13416620032,
+      "disk_available": 8982323200,
+      "platform": "Windows native"
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-17T07:35:45Z",
+        "utc_epoch_seconds": 1792222545.541002,
+        "pid": 17976,
+        "thread_id": 3244,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.22891879081726074
+    }
+  }
+}

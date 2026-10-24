@@ -1,0 +1,21 @@
+--- native-r7/run_remainder.py
++++ native/run_remainder.py
+@@ -1,4 +1,4 @@
+-"""Execute only the 728 selected missing cases with the unchanged recorded runner."""
++"""Execute the 321 unobserved cases and two corrected snapshots, without PASS reruns."""
+ import os
+ from pathlib import Path
+ import sys
+@@ -11,10 +11,10 @@
+     from case_resumption import validate_case_references, remaining_case_ids
+     validate_case_references()
+     ids = remaining_case_ids()
+-    assert len(ids) == 728
++    assert len(ids) == 323
+     assert not any(item.endswith('.test_upcoming_window') for item in ids)
+     label = 'full-general-remainder'
+-    database = 'test_b9i_full_general_remainder'
++    database = 'test_b9i_full_general_remainder_r8'
+     journal = HERE / 'blocks' / (label + '.ids.jsonl')
+     receipt = HERE / 'blocks' / (label + '.results.json')
+     assert not journal.exists() and not receipt.exists()

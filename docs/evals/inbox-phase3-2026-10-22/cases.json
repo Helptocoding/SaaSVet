@@ -1,0 +1,1714 @@
+{
+  "backend": {
+    "apps.channels.tests.test_media_pipeline.MediaModelTests.test_bad_dimensions_do_not_poison_message_ingest": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaModelTests.test_duplicate_reference_reuses_row_without_reparenting": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaModelTests.test_model_rejects_outbound_and_cross_clinic": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaModelTests.test_provider_id_is_unique_per_account_not_globally": {
+      "status": "passed",
+      "receipt": "backend-corrected.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaModelTests.test_ready_and_downloading_require_durable_evidence": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWebhookTests.test_all_five_kinds_capture_metadata_raw_and_caption_without_http": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWebhookTests.test_duplicate_webhook_does_not_create_another_media": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWebhookTests.test_malformed_reference_preserves_caption_and_message": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_authenticated_stream_has_private_headers_and_stored_mime": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_cross_org_unknown_and_corrupt_scope_return_identical_404_without_io": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_deadline_is_410_even_before_purge_and_not_a_storage_read": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_deadline_updates_delta_without_media_or_parent_write": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_document_uses_attachment_and_sanitized_name": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_dto_is_bounded_and_never_exposes_provider_or_storage_details": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_media_change_updates_delta_without_touching_parent": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_missing_object_logs_error_without_filename_or_provider_id": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_pending_and_failed_are_explicit_without_io": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_permission_is_required_before_storage_access": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_storage_outage_is_generic_503": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_thread_list_adds_type_and_filename_with_caption_preserved": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.agent.tests.test_inbox_media.InboxMediaTests.test_transcript_query_count_is_constant_with_many_files": {
+      "status": "passed",
+      "receipt": "backend-proxy-final.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaStorageTests.test_b2_private_upload_and_physical_purge_all_versions_exact_key": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaStorageTests.test_b2_purge_errors_are_not_silenced": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaStorageTests.test_storage_fails_closed_and_never_generates_urls": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaTransferTests.test_expired_binary_url_is_retryable": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaTransferTests.test_image_audio_pdf_success_is_bounded_verified_and_spool_removed": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaTransferTests.test_metadata_not_found_is_permanent": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaTransferTests.test_mime_hash_advertised_and_actual_limits_are_enforced": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaTransferTests.test_network_error_is_retryable_without_leaking_exception": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaTransferTests.test_scavenger_only_removes_old_dedicated_spools": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaTransferTests.test_stream_failure_cleans_spool": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaTransferTests.test_untrusted_redirect_and_private_urls_are_rejected_before_binary_get": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_crash_upload_pointer_is_purged_before_retry": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_disabled_jobs_are_inert": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_durable_success_retention_and_single_claim_for_discarded_inbound": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_expired_lease_recovers_and_old_worker_cannot_publish": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_fifth_expired_claim_stops_without_loop": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_missing_object_is_error_without_fabricated_expiration": {
+      "status": "passed",
+      "receipt": "backend-corrected.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_purge_retry_denies_immediately_and_preserves_caption": {
+      "status": "passed",
+      "receipt": "backend-corrected.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_reconcile_storage_outage_preserves_ready_and_recovers": {
+      "status": "passed",
+      "receipt": "backend-corrected.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_retry_backoff_new_claim_and_permanent_failure": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_two_workers_have_one_claim_and_two_purgers_delete_once": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_absent_or_invalid_external_evidence_preserves_internal_quote": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_context_native_after_admission_once": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_cross_contact_reference_corruption_never_reaches_meta": {
+      "status": "passed",
+      "receipt": "backend-corrected.json"
+    },
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_explicit_provider_rejection_remains_failed": {
+      "status": "passed",
+      "receipt": "backend-corrected.json"
+    },
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_failed_discarded_pending_uncertain_outbound_targets_omit_context": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_http_timeout_stays_uncertain_without_automatic_resend": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_media_target_with_valid_external_id_keeps_native_context": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_takeover_before_admission_prevents_even_native_http": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_unquoted_send_keeps_original_provider_contract": {
+      "status": "passed",
+      "receipt": "backend-new-media.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_api_query_count_does_not_grow_with_quote_count": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_before_around_and_legacy_transcript_include_quote": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_closed_session_rejects_new_quoted_send": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_corrupt_legacy_quote_does_not_leak_foreign_or_other_person_content": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_empty_media_and_discarded_or_failed_targets_keep_status": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_foreign_conversation_is_404_before_replay": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_foreign_human_author_name_is_not_disclosed_in_quote": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_historical_episode_and_hidden_target_are_valid": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_human_author_and_username_fallback_are_projected": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_invalid_input_values_are_400": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_missing_optional_field_keeps_legacy_send_and_null_projection": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_other_person_account_organization_and_missing_target_are_rejected_without_takeover": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_post_get_roundtrip_and_exact_bounded_projection": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_projection_is_one_level_even_when_target_is_a_reply": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_quote_edit_outside_loaded_page_updates_parent_without_touching_it": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_quote_status_and_author_rename_are_detected_without_parent_write": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_replay_after_close_preserves_quote": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_replay_keeps_original_quote_even_with_invalid_changed_request": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_retry_preserves_quote_body_author_and_key": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_serializer_has_one_query_for_many_quotes_and_authors": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_stable_delta_with_quotes_is_empty": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_tail_beyond_excerpt_does_not_change_parent_projection": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_takeover_response_reads_current_discarded_target_status": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_view_only_and_anonymous_cannot_send_but_viewer_can_read_quote": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_ambiguous_provider_id_is_not_guessed": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_discarded_failed_and_unemitted_targets_are_citations": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_duplicate_preserves_first_citation_and_has_no_second_effect": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_foreign_organization_never_resolves_target": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_hidden_historical_target_can_be_cited": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_invalid_signature_cannot_even_resolve_citation": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_malformed_or_absent_context_is_not_coerced_to_a_reference": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_media_reference_needs_no_binary_pipeline": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_other_account_never_resolves_target": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_other_contact_in_same_account_keeps_inbound_without_citation": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_oversized_reference_does_not_truncate_into_a_valid_target": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_reference_across_episodes_of_same_thread": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_reference_to_an_inbound_is_also_valid": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_second_message_in_batch_can_cite_first_inbound": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_service_optional_reply_argument_accepts_same_thread_target": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_service_revalidates_current_target_scope": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_signed_inbound_persists_outbound_citation_and_original_event_id": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_target_removed_between_lookup_and_ingest_does_not_drop_inbound": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_unknown_target_redelivery_does_not_backfill_or_repeat_warning": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_unknown_target_warns_without_pii_and_keeps_inbound": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_providers.MetaProviderTests.test_2xx_without_wamid_is_uncertain_no_retry": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_providers.MetaProviderTests.test_429_is_retryable": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_providers.MetaProviderTests.test_4xx_is_not_retryable": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_providers.MetaProviderTests.test_5xx_is_uncertain": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_providers.MetaProviderTests.test_missing_token_is_not_retryable": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_providers.MetaProviderTests.test_network_error_is_uncertain": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_providers.MetaProviderTests.test_success_returns_wamid_and_builds_request": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_bounded_preview_preserves_text_caption_and_empty_media_labels": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_burst_larger_than_latest_page_has_no_gap": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_cache_loss_requests_recovery_and_stores_no_pii": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_cache_outage_full_response_remains_available": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_central_tracking_covers_save_atomic_all_objects_and_bulk_update": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_claim_close_and_renewal_are_metadata_changes_even_without_messages": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_delta_is_read_only_and_unauthorized_service_cannot_use_it": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_existing_status_failure_and_body_writes_advance_updated_at": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_history_extension_reconciles_rows_removed_while_before_was_in_flight": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_history_floor_is_signed_for_the_user_and_thread": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_invalid_expired_cross_user_org_resource_page_and_filters_are_400": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_lease_expiry_is_detected_without_a_write": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_list_delta_returns_upserts_removals_and_preserves_filter": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_metadata_preview_never_reads_corrupt_foreign_message": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_new_and_modified_messages_are_merged_with_equal_updated_at": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_owner_and_handoff_changes_are_detected_without_touching_conversation": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_query_plan_and_payload_size_for_large_thread": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_read_state_is_per_user_and_metadata_only": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_removed_first_message_does_not_break_cursor_floor": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_replay_does_not_consume_changes_and_late_commits_with_old_time_are_found": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_scroll_back_expands_range_and_preserves_old_message_updates": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_signed_floor_survives_physical_removal_and_cache_recovery": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_since_cannot_be_combined_with_history_cursors_or_foreign_floor": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_stable_delta_does_not_select_message_bodies": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_stable_transcript_transfers_no_bodies_metadata_or_new_cursor": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_two_status_transitions_on_same_id_and_timestamp_are_not_lost": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_characterization_payload_matches_frozen_baseline": {
+      "status": "passed",
+      "receipt": "backend-final-integration.json"
+    },
+    "apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_closed_history_is_counted_without_materializing_each_episode": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_first_page_is_applied_after_urgent_ordering": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_query_count_is_constant_with_thirty_more_threads": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyRaceTests.test_concurrent_same_key_with_different_quotes_returns_one_original": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookRaceTests.test_two_concurrent_deliveries_persist_citation_once": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_b4_transport.B4TransportTests.test_5xx_even_with_error_body_is_uncertain": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_b4_transport.B4TransportTests.test_accepted_requires_valid_message_id": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_b4_transport.B4TransportTests.test_only_explicit_rate_limit_is_safe_retry": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_b4_transport.B4TransportTests.test_send_fi_04_timeout_and_network_are_uncertain": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_b4_transport.B4TransportTests.test_send_fi_05_2xx_without_wamid_is_uncertain": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_b4_transport.B4TransportTests.test_send_fi_06_invalid_json_is_uncertain": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_b4_transport.B4TransportTests.test_send_fi_07_explicit_4xx_rejection": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_b4_transport.B4TransportTests.test_unclassified_responses_are_uncertain": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_b4_command.B4CommandTests.test_compatibility_mode_runs_both": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_b4_command.B4CommandTests.test_invalid_bounds_fail_before_polling": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_b4_command.B4CommandTests.test_planner_mode_never_runs_sender": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_b4_command.B4CommandTests.test_sender_mode_never_waits_for_planner": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_01_individual_durable_claim_and_single_admission": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_known_retry_has_backoff_new_token_and_limit": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_03_post_acceptance_db_failure_is_uncertain_no_retry": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_window_closed_after_claim_blocks_admission": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.channels.tests.test_media_integration.MediaEntrypointTests.test_b2_missing_variants_are_normalized_and_other_errors_propagate": {
+      "status": "passed",
+      "receipt": "backend-final-integration.json"
+    },
+    "apps.channels.tests.test_media_integration.MediaEntrypointTests.test_filefield_keys_remain_posix_on_windows_and_linux": {
+      "status": "passed",
+      "receipt": "backend-final-integration.json"
+    },
+    "apps.channels.tests.test_media_integration.MediaEntrypointTests.test_media_mode_is_independent_and_uses_one_item": {
+      "status": "passed",
+      "receipt": "backend-final-integration.json"
+    },
+    "apps.channels.tests.test_media_integration.MediaEntrypointTests.test_nightly_job_is_bounded_and_disabled_is_inert": {
+      "status": "passed",
+      "receipt": "backend-final-integration.json"
+    },
+    "apps.channels.tests.test_media_integration.MediaProviderRaceTests.test_two_messages_with_same_provider_reference_create_one_media": {
+      "status": "passed",
+      "receipt": "backend-final-integration.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_audio_image_document_without_text_are_explicitly_uninterpretable": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_button_and_list_keep_distinct_ids_kinds_and_visible_titles": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_critical_caption_reaches_existing_safety_from_the_same_context": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_exact_emitted_reference_is_available_without_granting_authority": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_foreign_organization_account_and_contact_cannot_resolve_reference": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_image_and_document_captions_are_body_once_and_media_stays_limited": {
+      "status": "passed",
+      "receipt": "backend-b1-raw-contract.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_interactive_without_id_does_not_synthesize_it_from_title": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_legacy_metadata_is_diagnostic_not_runtime_evidence": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_malformed_or_future_projection_is_unknown": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_malformed_provider_objects_do_not_become_text_or_ids": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_media_without_caption_cannot_use_old_pending_or_llm_to_invent_understanding": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_original_text_and_context_id_survive_persistence": {
+      "status": "passed",
+      "receipt": "backend-b1-raw-contract.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_referenced_inbound_is_preserved": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_template_button_keeps_payload_separate_from_title": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_unemitted_or_later_reference_is_not_resolved": {
+      "status": "passed",
+      "receipt": "backend-b1-caption.json"
+    }
+  },
+  "frontend": {
+    "frontend/src/api/inbox.test.js::MED-04 — authenticated media transport uses the existing authenticated client with a blob response and cancellation": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::WA-CTX-01 — getThreadContext usa ambos UUIDs del hilo y permite cancelar la petición": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::WA-CTX-01 — getThreadContext es una lectura sin cuerpo editable ni necesidad de signal": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::WA-UNR-02 — markThreadRead usa los UUIDs del hilo y transmite solo el id de mensaje": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::WA-UNR-02 — markThreadRead permite cancelar la lectura al cambiar de hilo o perder atención": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::WA-RETRY-01 — retryInboxMessage reutiliza UUID, id original y key sin transmitir un cuerpo editable": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::WA-RETRY-01 — retryInboxMessage conserva la misma fila cuando el mensaje no tiene key": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage envía reply_to_id junto con cuerpo, key y señal sin cambiar el contrato previo": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage omite la cita ausente null en lugar de enviar null": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage omite la cita ausente undefined en lugar de enviar null": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage envía la key en X-Idempotency-Key cuando se proporciona": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage mantiene compatible la llamada sin key durante la integración": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::sendInboxMessage propaga AbortSignal sin perder la key de idempotencia": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::getThreadMessages — WA-HIST-01 transporta el cursor y permite cancelar la página anterior": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/api/inbox.test.js::getThreadMessages — WA-HIST-01 conserva la llamada de carga inicial sin opciones adicionales": {
+      "status": "passed",
+      "receipt": "frontend-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — private blob lifecycle deduplicates consumers, keeps one live URL and revokes only on final release": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — private blob lifecycle separates clinics and aborts pending I/O on final release": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — private blob lifecycle does not reuse a revoked URL after leaving and reentering viewport": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — private blob lifecycle late responses from a previous clinic cannot replace current content": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states loads a thumbnail through authenticated fetch and opens/closes the lightbox": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states waits until an image approaches the viewport": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states audio requires a click, shows weight and never autoplays": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states video requires a click, shows weight and never autoplays": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states large image advertises weight before explicit fetch": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states document downloads only on click and releases its temporary URL": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states pipeline state pending has no fetch/retry loop": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states pipeline state downloading has no fetch/retry loop": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states pipeline state failed has no fetch/retry loop": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states pipeline state expired has no fetch/retry loop": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states network errors offer explicit retry and then recover": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states 410 displays expired without retry or repeated requests": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/MediaBubble.test.jsx::MED-05 — media controls and states deadline revokes the blob and displays expired even without a poll": {
+      "status": "passed",
+      "receipt": "frontend-final-media-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta MED-05 conserva caption y cita junto al adjunto pendiente": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta MED-05 la lista muestra preview legible de image sin caption": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta MED-05 la lista muestra preview legible de audio sin caption": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta MED-05 la lista muestra preview legible de video sin caption": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta MED-05 la lista muestra preview legible de sticker sin caption": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta MED-05 la lista muestra preview legible de document sin caption": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta selecciona una cita con autor y extracto, enfoca el campo y conserva el borrador": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta seleccionar otro mensaje sustituye la única cita activa": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cancelar mediante Escape conserva texto y foco": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cancelar mediante botón conserva texto y foco": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta envía con Enter la cita capturada y limpia antes del acuse": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta envía con botón la cita capturada y limpia antes del acuse": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cancelar y enviar después omite replyToId": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cambiar a Beto-main cancela la cita aunque sea la misma persona": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cambiar a Ana-second cancela la cita aunque sea la misma persona": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta volver a pulsar el hilo seleccionado conserva la cita": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un poll del mismo episodio conserva cita y borrador": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta otro episodio retira la cita antes de permitir un envío nuevo": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta sin permiso send no ofrece selección de cita ni composer": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta el hilo archivado conserva lectura sin acciones de respuesta": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta una ventana cerrada deshabilita seleccionar y enviar": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta si vence la ventana después de seleccionar no envía la cita": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta media sin cuerpo mantiene una cita seleccionable con su tipo": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cita al autor saliente human_staff con su etiqueta existente": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cita al autor saliente agent con su etiqueta existente": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta acota el extracto a 80 puntos Unicode sin cortar un emoji": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un reintento conserva key y cita originales sin consumir la selección siguiente": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un POST antiguo no retira la cita seleccionada en el hilo nuevo": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta Enter de composición IME y Shift+Enter no consumen la cita": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un texto vacío no consume la cita seleccionada": {
+      "status": "passed",
+      "receipt": "frontend-media-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox renderiza la cita en una burbuja in": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox renderiza la cita en una burbuja out": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox un original cargado con client_message_id se localiza por PK sin otra petición": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox carga around, conserva borrador/cita del composer y no usa metadatos antiguos de sesión": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox mientras busca pausa el poll, impide duplicados y permite retomar con el floor ampliado": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox el salto cancela un full antiguo que podría borrar la página alrededor": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox cambiar de hilo aborta around y no traslada contenido, error ni foco": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox 404 conserva el texto y ofrece reintento al volver a pulsar la cita": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox view sin send y un hilo archivado permiten navegar la cita": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox unmount cancela around": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox tras cargar usa since en lista y transcript sin volver a descargar mensajes": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox actualiza una fila y añade una nueva sin duplicar ni perder el borrador": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox retira IDs explícitos sin borrar otros mensajes": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox cursor rechazado recupera el rango cargado una sola vez": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox un delta de lista incompleto recupera full sin publicar el estado parcial": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox publica juntas las páginas con movimientos y sin duplicar un hilo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox mantiene una sola petición de transcript en vuelo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox mantiene una sola petición de lista en vuelo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox cambiar de hilo aborta un delta viejo y no conserva su cursor": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox oculto no inicia polls y al volver conserva cursores delta": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox un fallo HTTP conserva el cursor y reintenta delta en el siguiente poll": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox metadatos de archivo retiran composer y conservan historia": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox ampliar el rango retira una fila histórica que desapareció mientras cargaba": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox cambiar filtro aborta lista y empieza con un cursor propio": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox desmontar cancela ambos recursos": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox conserva el floor opaco del servidor al ampliar historial y reconcilia su rango": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::B5 handoff evidence does not call discarded guidance pending delivery": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::B5 handoff evidence allows the current human owner to explicitly acknowledge a new queued case": {
+      "status": "passed",
+      "receipt": "frontend-historical-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::B5 handoff evidence shows a durable queue without inventing notification or acknowledgement": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::B5 handoff evidence labels explicit acknowledgement without claiming clinical attention": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::B5 handoff evidence keeps uncertain guidance visible and preserves multiple open legacy cases": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-GTF-01 — navegación al final cambiar de hilo no conserva el botón del historial anterior": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-GTF-01 — navegación al final permite recorrer un hilo archivado sin habilitar el envío": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-AGT-01 — turno del asistente active: explica el turno y habilita Tomar y acusar recibo al terminar": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-AGT-01 — turno del asistente human_active: explica el turno y habilita Liberar al terminar": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-AGT-01 — turno del asistente muestra el indicador sin conceder permiso para tomar o liberar": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-AGT-01 — turno del asistente no hereda el indicador de otro hilo ni de la fila antigua": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-AGT-01 — turno del asistente un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-LDE-01 — carga y reconexión distingue carga inicial de lista y mensajes de un panel sin selección": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-LDE-01 — carga y reconexión distingue el fallo inicial de lista vacía y permite reintentar": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-LDE-01 — carga y reconexión explica el fallo inicial de transcript y reintenta la misma conversación": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-LDE-01 — carga y reconexión Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-LDE-01 — carga y reconexión Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-LDE-01 — carga y reconexión recupera ambos paneles automáticamente cuando vuelve la API": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-LDE-01 — carga y reconexión un fallo tardío del hilo anterior no contamina la racha del nuevo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-LDE-01 — carga y reconexión ignora success tardío de lista tras cambiar de filtro": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-LDE-01 — carga y reconexión ignora failure tardío de lista tras cambiar de filtro": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-VER-01 — verificación en lista y cabecera representa staff_verified en ambos paneles sin habilitar acciones de identidad": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-VER-01 — verificación en lista y cabecera representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-VER-01 — verificación en lista y cabecera representa phone_match en ambos paneles sin habilitar acciones de identidad": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-VER-01 — verificación en lista y cabecera representa unknown en ambos paneles sin habilitar acciones de identidad": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-VER-01 — verificación en lista y cabecera muestra la verificación del contacto incluso en un hilo archivado": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-VER-01 — verificación en lista y cabecera retira el distintivo cuando el siguiente poll informa unknown": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-VIS-01 — polling del Inbox pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-VIS-01 — polling del Inbox cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-VIS-01 — polling del Inbox si inicia oculto no consulta la lista y usa el filtro vigente al volver": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-TAB-01 — lista real del Inbox refleja el último poll sin solicitar datos adicionales y restaura al salir": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces copia el cuerpo original completo, sin horas ni autor, y confirma el éxito": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces muestra un error recuperable cuando el navegador rechaza la copia": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces maneja clipboard no disponible sin anunciar una copia falsa": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces copia teléfono y ofrece tel: también con hilo archivado=false": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces copia teléfono y ofrece tel: también con hilo archivado=true": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CPY-01 — copiar y abrir enlaces renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-GRP-01 — ráfagas en el transcript agrupa por autor sin ocultar mensajes, horas ni estados de entrega": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-GRP-01 — ráfagas en el transcript corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CMP-01 — altura y contador del composer crece al pegar 2000 caracteres, limita la altura y encoge al borrar": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CMP-01 — altura y contador del composer muestra el contador después de 3600 y conserva el límite de 4000": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CMP-01 — altura y contador del composer reinicia altura y contador al enviar sin esperar el POST": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-CMP-01 — altura y contador del composer descarta texto y contador al cambiar de cliente": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador descarta el texto de Ana al cambiar al hilo de Beto": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador conserva el borrador al volver a clicar el mismo hilo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador envía al sessionId vigente con una key de idempotencia no vacía": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador no reinstala ni borra el hilo nuevo si el POST anterior termina tarde": {
+      "status": "passed",
+      "receipt": "frontend-historical-fixed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador reutiliza la key si se reintenta el mismo texto tras un error de red": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador conserva la key incierta al navegar B y volver a A con el mismo texto": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador A→B→A conserva visible el 201 aunque el GET de regreso esté vacío": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador regenera la key cuando cambia el texto después de un error": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador pinta el envío antes del POST y reconcilia el 201 sin duplicar": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador elimina el optimista ante 400 y muestra el error del servidor": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador conserva el optimista reintentable ante un 5xx": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador deduplica un polling concurrente exclusivamente por client_message_id": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador dos envíos consecutivos por Enter reciben keys distintas": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador no ejecuta continuaciones del POST después de desmontar el Inbox": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador aplica el cap global de 20 intentos entre sesiones": {
+      "status": "passed",
+      "receipt": "frontend-historical-cap-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador oculta failed-local cuando el hilo regresa con otra sesión activa": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador renderiza un divisor por día local de la organización": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador mantiene la hora del mensaje histórico bajo el divisor Ayer": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador integra recibos de entrega solo en mensajes salientes del transcript": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::Inbox — aislamiento del borrador actualiza todos los divisores con una sola referencia al cruzar medianoche": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones deduplica por contacto y cuenta sin ocultar otra cuenta del mismo contacto": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones refresca todas las páginas cargadas y conserva selección y borrador": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones bloquea el doble clic y el poll mientras carga otra página": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones una respuesta de poll anterior no borra una página recién añadida": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones conserva las filas ante un error de carga y reintenta el mismo desplazamiento": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones un refresco parcial fallido retiene todas las filas y muestra reconexión tras dos fallos": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones ignora una carga tardía con éxito después de cambiar de filtro": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones ignora una carga tardía con error después de cambiar de filtro": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones no inicia otra página del poll al ocultarse y refresca todas al volver": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones no continúa un refresco de varias páginas después de desmontar": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones reduce las páginas a refrescar cuando la lista se agota antes": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones no ofrece un cursor inválido 0": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones no ofrece un cursor inválido -1": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones no ofrece un cursor inválido 100": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-PERF-02 — paginación de conversaciones no ofrece un cursor inválido null": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox la página anterior no sustituye la sesión vigente renovada por el poll": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox ignora success antiguo al cambiar de hilo y aborta su petición": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox ignora failure antiguo al cambiar de hilo y aborta su petición": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox los hilos archivados permiten cargar anteriores sin ofrecer envío": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — llegadas en Inbox una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — llegadas en Inbox un mensaje nuevo pegado al fondo sigue visible sin contador": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — llegadas en Inbox bajar manualmente hasta el fondo retira el contador": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — llegadas en Inbox cambiar de hilo no conserva el contador del anterior": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — llegadas en Inbox al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — historial de tres meses una llegada de hoy conserva la lectura de julio aunque cree un divisor de día": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita identifica al cliente, muestra el extracto y navega con el ID original": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita reutiliza la etiqueta del autor human_staff": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita reutiliza la etiqueta del autor agent": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita reutiliza la etiqueta del autor system": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita explica que el destino failed no se envió sin impedir el salto": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita explica que el destino discarded no se envió sin impedir el salto": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita media muestra tipo y respaldo sin inventar contenido": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita omite referencias inexistentes o inválidas 0": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita omite referencias inexistentes o inválidas 1": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita omite referencias inexistentes o inválidas 2": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita omite referencias inexistentes o inválidas 3": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita mantiene un nivel e interpreta HTML como texto": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita indica y bloquea la carga actual": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-HIST-01 — umbral del viewport a scrollTop=0 sólo pide anteriores bajo 160 px": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-HIST-01 — umbral del viewport a scrollTop=159 sólo pide anteriores bajo 160 px": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-HIST-01 — umbral del viewport a scrollTop=160 sólo pide anteriores bajo 160 px": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-GTF-01 — Ir al final a 201 px del fondo: visible=true": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-GTF-01 — Ir al final a 200 px del fondo: visible=false": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-GTF-01 — Ir al final a 199 px del fondo: visible=false": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-GTF-01 — Ir al final a 0 px del fondo: visible=false": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-GTF-01 — Ir al final a -20 px del fondo: visible=false": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-GTF-01 — Ir al final no aparece en un historial que cabe completo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-GTF-01 — Ir al final desaparece al volver cerca del fondo y reaparece al subir": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-GTF-01 — Ir al final Enter vuelve al fondo del panel y conserva el foco para seguir leyendo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-HIST-02 — control de mensajes nuevos anuncia 1 incluso a menos de 200 px del fondo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/ThreadViewport.test.jsx::WA-HIST-02 — control de mensajes nuevos anuncia 5 incluso a menos de 200 px del fondo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial salta a un ID cargado sin GET, enfoca y resalta exactamente dos segundos": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial respeta movimiento reducido": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial around incorpora el destino processed y deduplica sin retroceder estados": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial around incorpora el destino discarded y deduplica sin retroceder estados": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial around incorpora el destino failed y deduplica sin retroceder estados": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial llenar el intervalo con before mantiene el floor más antiguo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial no cuenta la ventana histórica como nueva ni descarta avisos reales": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial el mismo salto pendiente no duplica GET y una cita distinta cancela el anterior": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial reset descarta resolve tardío incluso al volver al mismo hilo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial reset descarta reject tardío incluso al volver al mismo hilo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial 404 y reintento explícito mantienen historial y cursor": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial rechaza un paquete sin destino o de otro hilo 0": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial rechaza un paquete sin destino o de otro hilo 1": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial rechaza un paquete sin destino o de otro hilo 2": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial una retirada explícita recibida durante around gana al paquete tardío": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial el rango operacional conserva durante el highlight al destino oculto revelado explícitamente": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial Ir al final cancela un around pendiente y conserva su propia intención": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial unmount aborta y limpia el temporizador de highlight": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial IDs inválidos null no hacen GET": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial IDs inválidos -1 no hacen GET": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial IDs inválidos tmp:1 no hacen GET": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial IDs inválidos 0 no hacen GET": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial recorre 10 mensajes con páginas de 50 y cursores correctos": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial recorre 51 mensajes con páginas de 50 y cursores correctos": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial recorre 500 mensajes con páginas de 50 y cursores correctos": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial ordena empates por ID numérico y no deduplica mensajes por texto": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial fusiona páginas solapadas sin sustituir estados más recientes del poll": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial ancla la posición que la persona tiene al terminar la petición": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial ignora dos disparos mientras existe una carga y permite seguir con el siguiente cursor": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial un cursor rechazado conserva mensajes, posición y cursor y exige reintento explícito": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial detiene un cursor sin progreso con página []": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial detiene un cursor sin progreso con página [ { id: 2, body: 'Mensaje 2', …(1) } ]": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial a 500 mensajes cambia a carga manual sin descartar mensajes": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial reset aborta y descarta success antiguo, incluso A→B→A": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial reset aborta y descarta failure antiguo, incluso A→B→A": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial desmontar aborta la petición y no aplica su resultado": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial no inicia carga automática con la pestaña oculta": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas conserva scrollTop al recibir cinco mensajes arriba y no vuelve a contarlos": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas a 0 px del fondo respeta el límite inclusivo de 80": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas a 80 px del fondo respeta el límite inclusivo de 80": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas a 81 px del fondo respeta el límite inclusivo de 80": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas inicializa al fondo sin contar los mensajes ya cargados": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas actualizar recibos o recibir IDs anteriores no incrementa el contador": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas el scrollback no suma nuevos ni borra el contador pendiente": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas poll y página anterior en el mismo render preservan el ancla sin sumar la altura de llegadas al fondo": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas click vuelve al fondo con scroll suave, conserva foco y limpia el contador": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas bajar manualmente al fondo limpia el contador": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas un optimista y su confirmación cuentan una sola vez por client_message_id": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas retira del contador un optimista descartado sin contar mensajes de otra sesión": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas reset borra contador e identidades vistas y la selección nueva comienza sin avisos": {
+      "status": "passed",
+      "receipt": "frontend-affected-vitest.json"
+    }
+  }
+}

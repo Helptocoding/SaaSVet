@@ -1,0 +1,37 @@
+{
+  "state": "PREPARED_BEFORE_FORMAL_SEAL",
+  "user": "continua ya hay mas espacio, necesito ya cerrar el plan de inbox/agente wsp",
+  "purpose": "Allow the original complete campaign to finish within one bounded native helper lifetime",
+  "prior_awake_maximum_seconds": 21600,
+  "awake_maximum_seconds": 43200,
+  "prior_observer_maximum_seconds": 25200,
+  "observer_maximum_seconds": 46800,
+  "source_changes": {
+    "awake_guard.py": {
+      "before_sha256": "64780ecc569c8839cd67dbfcb7ee2ce030589371a8c6691ad239e5e5ca2fde78",
+      "after_sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049"
+    },
+    "host_observer.py": {
+      "before_sha256": "0552f16181a28f06b9ceba3858468f88ce6b89e76167bf9d9d26cf1c4987ba56",
+      "after_sha256": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b"
+    },
+    "run_campaign.py": {
+      "before_sha256": "7709ed90652ce2b1347a05bfcdd97da734798ea525095baca8d6a1f9bec80580",
+      "after_sha256": "9c54633c224dff28571ffa77848afa34cc1341dd6e7542260b370de7d0af68f0",
+      "scope": "Require the operational amendment receipt as a sealed input; no change to execution or gates"
+    }
+  },
+  "plan_prior_prefix_sha256": "9a124833067ad147b0f09f82a8bce2b088e03c9f305fdaca14fa4bbb9d61fbbc",
+  "plan_append_sha256": "d842e95abbf0a694e3b4ca5a2c1735ef12be78f6cc28ab4159b45c1151fa30d2",
+  "host_policies_or_clock_configuration_changed": false,
+  "application_tests_or_gates_changed": false,
+  "profile_warmup_measurement_drain_seconds": [
+    30,
+    300,
+    20
+  ],
+  "heartbeat_seconds": 1,
+  "maximum_heartbeat_age_seconds": 10,
+  "adaptive_formal_renewal": false,
+  "memory_disk_clock_guards_unchanged": true
+}

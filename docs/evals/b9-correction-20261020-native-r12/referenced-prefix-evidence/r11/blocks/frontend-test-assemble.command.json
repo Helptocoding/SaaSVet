@@ -1,0 +1,55 @@
+{
+  "label": "frontend-test-assemble",
+  "candidate_sha": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\python.exe",
+    "-B",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r11\\frontend_resumption.py",
+    "assemble"
+  ],
+  "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "host": {
+      "utc": "2026-10-21T00:14:19Z",
+      "utc_epoch_seconds": 1792541659.3969316,
+      "physical_total": 17031217152,
+      "physical_available": 4838993920,
+      "page_available": 10320330752,
+      "disk_available": 13735858176,
+      "platform": "Windows native"
+    },
+    "ready": true
+  },
+  "pid": 24836,
+  "wrapper_pid": 24836,
+  "exit_code": 0,
+  "seconds": 36.249688900000365,
+  "invalidating_incident": null,
+  "resources_after": {
+    "host": {
+      "utc": "2026-10-21T00:14:55Z",
+      "utc_epoch_seconds": 1792541695.6366546,
+      "physical_total": 17031217152,
+      "physical_available": 4773978112,
+      "page_available": 10136313856,
+      "disk_available": 13731074048,
+      "platform": "Windows native"
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-21T00:14:54Z",
+        "utc_epoch_seconds": 1792541694.9366326,
+        "pid": 2780,
+        "thread_id": 3196,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.7103571891784668
+    }
+  }
+}

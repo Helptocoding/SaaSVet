@@ -1,0 +1,21 @@
+--- native-r6/full_partition.py
++++ native-r7/full_partition.py
+@@ -127,7 +127,9 @@
+                 'xpass': sum(row['xpass'] for row in receipts),
+                 'failed_ids': [], 'exit_code': 0,
+                 'seconds': sum(row['seconds'] for row in receipts),
+-                'orchestration': 'Composite acceptance of five complete native groups from referenced and current executions; independent process tests unchanged',
++                'orchestration': 'Composite case coverage of five groups; general combines the authorized interrupted prefix and current remainder, with the accepted historical monitor limitation',
++                'accepted_historical_evidence_limitation': True,
++                'seconds_scope': 'Sum of known referenced group and new remainder timings; no continuous general invocation duration claimed',
+                 'evidence_mode': 'COMPOSITE_ACCEPTANCE', 'continuous_campaign_claimed': False,
+                 'group_receipts': command_rows}
+     save('blocks/full.results.json', combined)
+@@ -137,6 +139,7 @@
+             stream.write(json.dumps(row, ensure_ascii=False) + '\n')
+     save('blocks/full.aggregate.json', {'state': 'PASS', 'tests': len(ids),
+          'evidence_mode': 'COMPOSITE_ACCEPTANCE', 'continuous_campaign_claimed': False,
++         'accepted_historical_evidence_limitation': True,
+          'group_receipts': command_rows, 'additional_test_execution': False,
+          'duplicate_ids': 0, 'missing_ids': [], 'gate_evaluated_by_original_check_suite': True})
+     print('FULL_AGGREGATE_COMPLETE 3331 IDs', flush=True)

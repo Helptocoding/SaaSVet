@@ -1,0 +1,101 @@
+{
+  "state": "RECORDED",
+  "created_after_stop": true,
+  "read_only": true,
+  "query_utc_start": "2026-10-12T03:58:30Z",
+  "query_utc_end": "2026-10-12T04:02:30Z",
+  "exit_code": 0,
+  "stderr": "",
+  "events": [
+    {
+      "id": 1,
+      "provider": "Microsoft-Windows-Power-Troubleshooter",
+      "utc": "2026-10-12T04:01:27.1797797Z",
+      "data": {
+        "WakeTimerContextLength": "0",
+        "NoMultiStageResumeReason": "0",
+        "HiberPagesWritten": "0",
+        "EffectiveState": "4",
+        "HiberWriteDuration": "0",
+        "WakeTimerContext": "",
+        "WakeSourceType": "1",
+        "WakeTimerOwner": "",
+        "BiosInitDuration": "1",
+        "SleepDuration": "1363",
+        "WakeTimerOwnerLength": "0",
+        "CheckpointDuration": "305",
+        "WakeSourceTextLength": "0",
+        "Attributes": "1912622092",
+        "WakeDuration": "1968",
+        "HiberReadDuration": "0",
+        "SleepTime": "2026-10-12T03:59:21.1775343Z",
+        "TargetState": "4",
+        "WakeTime": "2026-10-12T04:01:24.4712272Z",
+        "DriverInitDuration": "1953",
+        "WakeSourceText": ""
+      }
+    },
+    {
+      "id": 1,
+      "provider": "Microsoft-Windows-Kernel-General",
+      "utc": "2026-10-12T04:01:22.5005000Z",
+      "data": {
+        "ProcessID": "4",
+        "TimeZoneBias": "360",
+        "CmosTime": "2026-10-11T22:01:22.5000000Z",
+        "SystemInCmosMode": "false",
+        "TimeDeltaInMs": "117696",
+        "OldTime": "2026-10-12T03:59:24.8030532Z",
+        "RealTimeIsUniversal": "false",
+        "ProcessName": "",
+        "Reason": "2",
+        "NewTime": "2026-10-12T04:01:22.5000000Z"
+      }
+    },
+    {
+      "id": 107,
+      "provider": "Microsoft-Windows-Kernel-Power",
+      "utc": "2026-10-12T03:59:24.8032362Z",
+      "data": {
+        "WakeRequesterTypeDc": "4",
+        "TargetState": "4",
+        "EffectiveState": "4",
+        "WakeRequesterTypeAc": "4",
+        "ProgrammedWakeTimeDc": "2026-10-12T06:59:22.5413380Z",
+        "WakeFromState": "4",
+        "ProgrammedWakeTimeAc": "2026-10-12T06:59:22.5413380Z"
+      }
+    },
+    {
+      "id": 42,
+      "provider": "Microsoft-Windows-Kernel-Power",
+      "utc": "2026-10-12T03:59:22.5216413Z",
+      "data": {
+        "TargetState": "4",
+        "Flags": "0",
+        "TransitionsToOn": "4",
+        "EffectiveState": "4",
+        "Reason": "7"
+      }
+    },
+    {
+      "id": 1,
+      "provider": "Microsoft-Windows-Kernel-General",
+      "utc": "2026-10-12T03:59:22.0812485Z",
+      "data": {
+        "ProcessID": "3764",
+        "TimeZoneBias": "360",
+        "CmosTime": "2026-10-11T21:59:22.0806272Z",
+        "SystemInCmosMode": "false",
+        "TimeDeltaInMs": "0",
+        "OldTime": "2026-10-12T03:59:22.0798502Z",
+        "RealTimeIsUniversal": "false",
+        "ProcessName": "\\Device\\HarddiskVolume3\\Windows\\System32\\svchost.exe",
+        "Reason": "1",
+        "NewTime": "2026-10-12T03:59:22.0806272Z"
+      }
+    }
+  ],
+  "application_tests_executed": false,
+  "configuration_changed": false
+}

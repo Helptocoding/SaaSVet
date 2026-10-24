@@ -1,0 +1,13 @@
+--- native-r2/awake_guard.py
++++ native/awake_guard.py
+@@ -26,8 +26,8 @@
+     parser.add_argument('--seconds', type=int, required=True)
+     parser.add_argument('--stop-file', type=Path)
+     args = parser.parse_args()
+-    if not 1 <= args.seconds <= 21600:
+-        parser.error('Duration must be between 1 and 21600 seconds')
++    if not 1 <= args.seconds <= 43200:
++        parser.error('Duration must be between 1 and 43200 seconds')
+     directory = args.output.resolve()
+     if directory.exists():
+         parser.error('Output must be a new directory; no overwrite')

@@ -1,0 +1,44 @@
+{
+  "directed": {
+    "samples": 1804,
+    "min_host_bytes": 6270443520,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 9168125952,
+    "max_clock_skew_seconds": 0.0014758676911696966
+  },
+  "django-check": {
+    "samples": 15,
+    "min_host_bytes": 6873182208,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 9004724224,
+    "max_clock_skew_seconds": 1.640081791265402e-06
+  },
+  "migration-drift": {
+    "samples": 17,
+    "min_host_bytes": 7215046656,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 9001132032,
+    "max_clock_skew_seconds": 1.0263488547934685e-06
+  },
+  "migrate": {
+    "samples": 240,
+    "min_host_bytes": 6717423616,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 8984047616,
+    "max_clock_skew_seconds": 9.341243276139721e-05
+  },
+  "billing-schema": {
+    "samples": 15,
+    "min_host_bytes": 6987702272,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 8982327296,
+    "max_clock_skew_seconds": 1.2948667063028552e-06
+  },
+  "b0": {
+    "samples": 237,
+    "min_host_bytes": 6640164864,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 268369920,
+    "max_clock_skew_seconds": 0.00011776226210713503
+  }
+}

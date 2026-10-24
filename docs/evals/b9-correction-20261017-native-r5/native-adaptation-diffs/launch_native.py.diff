@@ -1,0 +1,11 @@
+--- native-r3/launch_native.py
++++ native/launch_native.py
+@@ -14,7 +14,7 @@
+         for name in names:
+             assert get_runner(settings, 'recorded_suite.' + name) is getattr(recorded_suite, name)
+         assert settings.DATABASES['default']['HOST'] == '127.0.0.1'
+-        assert str(settings.DATABASES['default']['PORT']) == '35487'
++        assert str(settings.DATABASES['default']['PORT']) == '35489'
+         import psycopg
+         from pathlib import Path
+         with psycopg.connect(host='127.0.0.1', port=PORT, user='b9e',

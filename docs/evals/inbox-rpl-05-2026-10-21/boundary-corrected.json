@@ -1,0 +1,22 @@
+{
+  "kind": "boundary",
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.replies.test.jsx",
+    "-t",
+    "si vence la ventana después de seleccionar",
+    "--maxWorkers=1",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-rpl-05-2026-10-21\\boundary-corrected-vitest.json"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 24.95107179999468,
+  "working_database_migrated": false,
+  "vitest_report": "boundary-corrected-vitest.json",
+  "passed": 1,
+  "failed": 0
+}

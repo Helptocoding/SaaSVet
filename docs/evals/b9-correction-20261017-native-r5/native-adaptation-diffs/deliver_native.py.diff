@@ -1,0 +1,23 @@
+--- native-r3/deliver_native.py
++++ native/deliver_native.py
+@@ -67,7 +67,7 @@
+     save('index-before-delivery.json', baseline)
+     assert HERE.name not in (REPO / '.gitattributes').read_text(encoding='utf-8')
+     assert HERE.name not in (REPO / '.gitignore').read_text(encoding='utf-8')
+-    attributes = (f'\n# B9E Windows native-20261016-r3: preserve original evidence bytes.\n'
++    attributes = (f'\n# B9E Windows native-20261017-r5: preserve original evidence bytes.\n'
+         f'docs/evals/{HERE.name}/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol\n'
+         f'docs/evals/{HERE.name}/evidence-packages/* -diff\n'
+         f'docs/evals/{HERE.name}/receipt-adapter.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol\n'
+@@ -101,9 +101,9 @@
+         target = package / ('campaign.zip.part' + str(n).zfill(3))
+         target.write_bytes(content)
+         parts.append({'path': target.relative_to(HERE).as_posix(), 'sha256': digest(content), 'bytes': len(content)})
+-    save('preservation-manifest.json', {'schema': 'b9i-native-20261016-r3-preservation-v1', 'files': files,
++    save('preservation-manifest.json', {'schema': 'b9i-native-20261017-r5-preservation-v1', 'files': files,
+         'parts': parts, 'archive_sha256': digest(data)})
+-    with tempfile.TemporaryDirectory(prefix='b9i-native-20261016-r3-recovery-') as temporary:
++    with tempfile.TemporaryDirectory(prefix='b9i-native-20261017-r5-recovery-') as temporary:
+         proof = restore(HERE, Path(temporary) / 'restored')
+         cli = json.loads(run(sys.executable, '-B', HERE / 'restore_native.py', '--destination', Path(temporary) / 'cli-restored'))
+         assert cli['state'] == 'PASS'

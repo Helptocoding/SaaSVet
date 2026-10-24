@@ -257,6 +257,7 @@ class B1ChannelEventTests(TestCase):
         return message, event_from_message(message)
 
     def test_original_text_and_context_id_survive_persistence(self):
+        from apps.channels.events import EVENT_METADATA_KEY
         message, event = self._event('text', {'body': '  Hola, clínica 👋  '},
                                      context_id='wamid.reference')
         self.assertEqual(message.body, '  Hola, clínica 👋  ')
@@ -266,9 +267,13 @@ class B1ChannelEventTests(TestCase):
         self.assertEqual(event.event_type, 'text')
         self.assertEqual(event.reply_to_id, 'wamid.reference')
         self.assertEqual(event.message_id, message.pk)
-        self.assertNotIn(message.body, json.dumps(message.raw_metadata, ensure_ascii=False))
+        # MED-02 preserves raw transport in DB; B1 projection still has no
+        # duplicated body and does not imply binary understanding.
+        self.assertEqual(message.raw_metadata['text']['body'], message.body)
+        self.assertNotIn(message.body, json.dumps(message.raw_metadata[EVENT_METADATA_KEY], ensure_ascii=False))
 
     def test_image_and_document_captions_are_body_once_and_media_stays_limited(self):
+        from apps.channels.events import EVENT_METADATA_KEY
         from apps.agent.turn_context import build_turn_context
         from apps.agent import prompts
         for kind in ('image', 'document'):
@@ -284,7 +289,8 @@ class B1ChannelEventTests(TestCase):
                 self.assertTrue(event.limited_content)
                 self.assertFalse(event.binary_understood)
                 self.assertFalse(event.uninterpretable)
-                self.assertNotIn(message.body, json.dumps(message.raw_metadata, ensure_ascii=False))
+                self.assertEqual(message.raw_metadata[kind]['caption'], message.body)
+                self.assertNotIn(message.body, json.dumps(message.raw_metadata[EVENT_METADATA_KEY], ensure_ascii=False))
                 turn = build_turn_context(message.conversation, [message])
                 rendered = prompts.assemble_messages(message.conversation, turn_context=turn)
                 self.assertEqual(rendered[-2], {'role': 'user', 'content': message.body})

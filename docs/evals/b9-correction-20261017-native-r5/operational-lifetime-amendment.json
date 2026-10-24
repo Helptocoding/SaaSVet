@@ -1,0 +1,21 @@
+{
+  "state": "CONFIRMED_BEFORE_FORMAL_SEAL",
+  "user": "si hagamos eso",
+  "awake_maximum_seconds": 43200,
+  "observer_maximum_seconds": 46800,
+  "source_changes": {
+    "awake_guard.py": {
+      "sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+      "unchanged_from_prior": true
+    },
+    "host_observer.py": {
+      "sha256": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b",
+      "unchanged_from_prior": true
+    }
+  },
+  "heartbeat_seconds": 1,
+  "maximum_heartbeat_age_seconds": 10,
+  "adaptive_formal_renewal": false,
+  "memory_disk_clock_guards_unchanged": true,
+  "reference": "composite-amendment.json"
+}

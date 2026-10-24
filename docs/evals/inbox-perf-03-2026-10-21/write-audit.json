@@ -1,0 +1,1011 @@
+{
+  "status": "PASS",
+  "tracked_models": [
+    {
+      "model": "agent.ContactIdentity",
+      "opted_in": true,
+      "default_manager": "objects",
+      "ordinary_queryset": "TenantQuerySet",
+      "unfiltered_queryset": "TimestampedQuerySet"
+    },
+    {
+      "model": "agent.Conversation",
+      "opted_in": true,
+      "default_manager": "objects",
+      "ordinary_queryset": "TenantQuerySet",
+      "unfiltered_queryset": "TimestampedQuerySet"
+    },
+    {
+      "model": "agent.HumanHandoff",
+      "opted_in": true,
+      "default_manager": "objects",
+      "ordinary_queryset": "TenantQuerySet",
+      "unfiltered_queryset": "TimestampedQuerySet"
+    },
+    {
+      "model": "agent.InboxReadState",
+      "opted_in": true,
+      "default_manager": "objects",
+      "ordinary_queryset": "TenantQuerySet",
+      "unfiltered_queryset": "TimestampedQuerySet"
+    },
+    {
+      "model": "channels.Message",
+      "opted_in": true,
+      "default_manager": "objects",
+      "ordinary_queryset": "TenantQuerySet",
+      "unfiltered_queryset": "TimestampedQuerySet"
+    }
+  ],
+  "other_domains_opted_in": false,
+  "raw_sql_write_literals": [],
+  "inventory_includes_dictionary_updates": true,
+  "write_call_inventory": [
+    {
+      "file": "backend/apps/agent/claim_diagnostics.py",
+      "line": 85,
+      "method": "update",
+      "receiver": "ctx",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/claim_diagnostics.py",
+      "line": 71,
+      "method": "update",
+      "receiver": "row",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/claim_diagnostics.py",
+      "line": 330,
+      "method": "update",
+      "receiver": "ctx",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/claim_diagnostics.py",
+      "line": 237,
+      "method": "update",
+      "receiver": "data",
+      "keywords": [
+        "conversation_id",
+        "organization_id",
+        "epoch"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/claim_diagnostics.py",
+      "line": 240,
+      "method": "update",
+      "receiver": "data",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/claim_diagnostics.py",
+      "line": 245,
+      "method": "update",
+      "receiver": "ctx",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 221,
+      "method": "update",
+      "receiver": "TurnWork.objects.filter(pk=work.pk, lease_token=old_token, status=old_status, ownership_epoch=conv.ownership_epoch, organization_id=conv.organization_id)",
+      "keywords": [
+        "status",
+        "lease_token",
+        "lease_expires_at",
+        "claimed_at",
+        "attempts",
+        "next_attempt_at"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 229,
+      "method": "update",
+      "receiver": "Message.objects.for_organization(conv.organization_id).filter(turn_work=work, direction='in')",
+      "keywords": [
+        "process_attempts"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 231,
+      "method": "update",
+      "receiver": "Conversation.objects.filter(pk=conv.pk)",
+      "keywords": [
+        "processing_until"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 327,
+      "method": "update",
+      "receiver": "TurnWork.objects.filter(pk=work.pk, status__in=TurnWork.NON_TERMINAL)",
+      "keywords": [
+        "status",
+        "outcome_code",
+        "completed_at",
+        "lease_expires_at",
+        "next_attempt_at"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 331,
+      "method": "update",
+      "receiver": "Conversation.objects.filter(pk=conv.pk)",
+      "keywords": [
+        "processing_until"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 363,
+      "method": "update",
+      "receiver": "Conversation.objects.filter(pk=conversation.pk, organization_id=conversation.organization_id)",
+      "keywords": [
+        "ownership_epoch",
+        "processing_until"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 376,
+      "method": "update",
+      "receiver": "Message.objects.for_organization(conversation.organization_id).filter(conversation=conversation, direction='out', status='pending', author_type__in=(Message.AUTHOR_AGENT, Message.AUTHOR_SYSTEM))",
+      "keywords": [
+        "status",
+        "failure_reason"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 383,
+      "method": "update",
+      "receiver": "Message.objects.for_organization(conversation.organization_id).filter(conversation=conversation, direction='out', status='sending', send_admitted_at__isnull=True)",
+      "keywords": [
+        "status",
+        "failure_reason"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 53,
+      "method": "update",
+      "receiver": "extra",
+      "keywords": [
+        "turn_work_id",
+        "conversation_id",
+        "organization_id",
+        "attempts"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 214,
+      "method": "update",
+      "receiver": "Message.objects.for_organization(conv.organization_id).filter(pk__in=context.inbound_ids, conversation=conv, turn_work__isnull=True)",
+      "keywords": [
+        "turn_work"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 317,
+      "method": "update",
+      "receiver": "Message.objects.for_organization(conv.organization_id).filter(turn_work=work, conversation=conv, direction='in', status='pending')",
+      "keywords": [
+        "status"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 320,
+      "method": "update",
+      "receiver": "Conversation.objects.filter(pk=conv.pk, ownership_epoch=witness.ownership_epoch)",
+      "keywords": [
+        "processing_until",
+        null
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 342,
+      "method": "update",
+      "receiver": "witness_query(witness)",
+      "keywords": [
+        "status",
+        "next_attempt_at",
+        "lease_expires_at",
+        "outcome_code",
+        "completed_at"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 349,
+      "method": "update",
+      "receiver": "Conversation.objects.filter(pk=conv.pk)",
+      "keywords": [
+        "processing_until"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/durable.py",
+      "line": 314,
+      "method": "update",
+      "receiver": "witness_query(witness)",
+      "keywords": [
+        "status",
+        "completed_at",
+        "outcome_code",
+        "lease_expires_at"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/guards.py",
+      "line": 352,
+      "method": "update",
+      "receiver": "grounded",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/inbox_read.py",
+      "line": 112,
+      "method": "save",
+      "receiver": "state",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/inbox_retry.py",
+      "line": 73,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/inbox_sync.py",
+      "line": 108,
+      "method": "update",
+      "receiver": "delta",
+      "keywords": [
+        "mode",
+        "sync_cursor",
+        "upserts",
+        "removals"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/llm_budget.py",
+      "line": 67,
+      "method": "update",
+      "receiver": "TurnWork.objects.filter(pk=work.pk, organization_id=witness.organization_id)",
+      "keywords": [
+        "llm_calls_admitted",
+        "llm_output_tokens_reserved"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/llm_budget.py",
+      "line": 93,
+      "method": "update",
+      "receiver": "LLMCall.objects.filter(pk=call.pk, organization_id=call.organization_id, conversation_id=call.conversation_id, turn_work_id=call.turn_work_id, admission_id=call.admission_id, recorded_at__isnull=True)",
+      "keywords": [
+        null
+      ]
+    },
+    {
+      "file": "backend/apps/agent/matter_binding.py",
+      "line": 219,
+      "method": "update",
+      "receiver": "changed",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/matter_binding.py",
+      "line": 220,
+      "method": "update",
+      "receiver": "changed",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/matter_resolution.py",
+      "line": 156,
+      "method": "update",
+      "receiver": "kinds",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/matter_resolution.py",
+      "line": 221,
+      "method": "update",
+      "receiver": "updates",
+      "keywords": [
+        "owner",
+        "pet",
+        "appointment"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/models.py",
+      "line": 350,
+      "method": "save",
+      "receiver": "super()",
+      "keywords": [
+        null
+      ]
+    },
+    {
+      "file": "backend/apps/agent/models.py",
+      "line": 548,
+      "method": "save",
+      "receiver": "super()",
+      "keywords": [
+        null
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operations.py",
+      "line": 147,
+      "method": "update",
+      "receiver": "params",
+      "keywords": [
+        "date",
+        "start_time",
+        "end_time"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operations.py",
+      "line": 357,
+      "method": "update",
+      "receiver": "type(conv).objects.filter(pk=conv.pk, organization_id=conv.organization_id)",
+      "keywords": [
+        "flow"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operations.py",
+      "line": 151,
+      "method": "update",
+      "receiver": "params",
+      "keywords": [
+        "pet_id",
+        "reason"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operations.py",
+      "line": 152,
+      "method": "update",
+      "receiver": "probe",
+      "keywords": [
+        "pet_id",
+        "reason"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operations.py",
+      "line": 347,
+      "method": "save",
+      "receiver": "candidate",
+      "keywords": [
+        "force_insert"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operations.py",
+      "line": 132,
+      "method": "update",
+      "receiver": "preconditions",
+      "keywords": [
+        "schema",
+        "attendance_contract"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operations.py",
+      "line": 188,
+      "method": "update",
+      "receiver": "preconditions",
+      "keywords": [
+        "schema",
+        "registration_contract",
+        "owner_snapshot"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operation_authorization.py",
+      "line": 422,
+      "method": "bulk_create",
+      "receiver": "TurnOperationAssessmentMessage.objects",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/operation_consent.py",
+      "line": 203,
+      "method": "save",
+      "receiver": "operation",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operation_execution.py",
+      "line": 204,
+      "method": "update",
+      "receiver": "models.QuerySet",
+      "keywords": [
+        "execution_state",
+        "result",
+        "result_code",
+        "executed_at",
+        "updated_at"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operation_model_contract.py",
+      "line": 24,
+      "method": "update",
+      "receiver": "super(OperationQuerySet, self.filter(consent_state='PENDING'))",
+      "keywords": [
+        "consent_state",
+        "invalidation_reason",
+        "updated_at"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/operation_model_contract.py",
+      "line": 60,
+      "method": "update",
+      "receiver": "mutable",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/operation_model_contract.py",
+      "line": 67,
+      "method": "update",
+      "receiver": "allowed",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/operation_proposals.py",
+      "line": 203,
+      "method": "save",
+      "receiver": "operation",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/outbound.py",
+      "line": 92,
+      "method": "save",
+      "receiver": "message",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/outbound.py",
+      "line": 94,
+      "method": "save",
+      "receiver": "conversation",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/outbound.py",
+      "line": 143,
+      "method": "save",
+      "receiver": "conversation",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/outbound.py",
+      "line": 189,
+      "method": "save",
+      "receiver": "conversation",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/policy.py",
+      "line": 595,
+      "method": "save",
+      "receiver": "conversation",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/prompts.py",
+      "line": 529,
+      "method": "update",
+      "receiver": "context",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/prompts.py",
+      "line": 562,
+      "method": "update",
+      "receiver": "context",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/safety_handoff.py",
+      "line": 43,
+      "method": "save",
+      "receiver": "handoff",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/safety_handoff.py",
+      "line": 149,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/safety_handoff.py",
+      "line": 176,
+      "method": "save",
+      "receiver": "handoff",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/safety_handoff.py",
+      "line": 72,
+      "method": "save",
+      "receiver": "conv",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/safety_handoff.py",
+      "line": 85,
+      "method": "save",
+      "receiver": "handoff",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 99,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 158,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 184,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 380,
+      "method": "save",
+      "receiver": "conv",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 137,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 143,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 148,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 181,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 233,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 244,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 293,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/sender.py",
+      "line": 214,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 440,
+      "method": "update",
+      "receiver": "pending",
+      "keywords": [
+        "available_at"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 934,
+      "method": "save",
+      "receiver": "record",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 208,
+      "method": "save",
+      "receiver": "contact",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 318,
+      "method": "save",
+      "receiver": "duplicate",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 771,
+      "method": "save",
+      "receiver": "convo",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 1007,
+      "method": "save",
+      "receiver": "handoff",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 124,
+      "method": "save",
+      "receiver": "contact",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 153,
+      "method": "save",
+      "receiver": "contact",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 217,
+      "method": "save",
+      "receiver": "contact",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 253,
+      "method": "save",
+      "receiver": "conv",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 802,
+      "method": "save",
+      "receiver": "handoff",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 386,
+      "method": "save",
+      "receiver": "message",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/services.py",
+      "line": 390,
+      "method": "save",
+      "receiver": "conversation",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/signals.py",
+      "line": 90,
+      "method": "save",
+      "receiver": "contact",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/tools.py",
+      "line": 645,
+      "method": "update",
+      "receiver": "facts",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/tools.py",
+      "line": 3198,
+      "method": "update",
+      "receiver": "_spec",
+      "keywords": [
+        "effect",
+        "identity_policy",
+        "authorization_mode",
+        "result_contract"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/tools.py",
+      "line": 257,
+      "method": "update",
+      "receiver": "details",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/tools.py",
+      "line": 529,
+      "method": "update",
+      "receiver": "expected",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/tools.py",
+      "line": 2325,
+      "method": "update",
+      "receiver": "staged",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/tools.py",
+      "line": 2494,
+      "method": "update",
+      "receiver": "flow_store",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/tools.py",
+      "line": 803,
+      "method": "update",
+      "receiver": "entry",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/turn_changes.py",
+      "line": 154,
+      "method": "save",
+      "receiver": "changes",
+      "keywords": [
+        null
+      ]
+    },
+    {
+      "file": "backend/apps/agent/turn_changes.py",
+      "line": 153,
+      "method": "save",
+      "receiver": "obj",
+      "keywords": [
+        null
+      ]
+    },
+    {
+      "file": "backend/apps/agent/turn_changes.py",
+      "line": 135,
+      "method": "save",
+      "receiver": "obj",
+      "keywords": [
+        "force_insert",
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 804,
+      "method": "save",
+      "receiver": "serializer",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 1139,
+      "method": "update",
+      "receiver": "payload",
+      "keywords": []
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 430,
+      "method": "save",
+      "receiver": "contact",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 483,
+      "method": "save",
+      "receiver": "contact",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 634,
+      "method": "save",
+      "receiver": "convo",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 1146,
+      "method": "update",
+      "receiver": "payload",
+      "keywords": [
+        "has_older",
+        "has_newer"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 216,
+      "method": "save",
+      "receiver": "channel",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 495,
+      "method": "save",
+      "receiver": "conv",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 567,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "validate"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 581,
+      "method": "save",
+      "receiver": "conversation",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/agent/views.py",
+      "line": 654,
+      "method": "save",
+      "receiver": "convo",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/channels/status.py",
+      "line": 56,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    },
+    {
+      "file": "backend/apps/channels/status.py",
+      "line": 51,
+      "method": "save",
+      "receiver": "message",
+      "keywords": [
+        "update_fields"
+      ]
+    }
+  ],
+  "interpretation": "Atomic/bulk/save writes on opted-in models share timestamp maintenance; predicates, locks, validation and tenant filtering are unchanged."
+}

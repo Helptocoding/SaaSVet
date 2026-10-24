@@ -1,0 +1,20 @@
+{
+  "decision": "PENDING",
+  "date_local": "2026-10-14",
+  "cause": "El monitor detuvo B4 al registrar 1,52 GiB de RAM libre en Windows, por debajo de la reserva autorizada de 2 GiB, el 2026-10-15 a las 00:00:44 UTC (14 de octubre, 18:00:44 de Ciudad de Mexico). Los siete bloques terminados aprobaron; B4 conserva 28 PASS parciales de 68 IDs, cero FAIL/ERROR registrados y 40 IDs sin recibo. B5, full, frontend, seguridad, auditorias advisory y cinco variantes PROFILE quedaron NOT_EXECUTED. No se atribuye un fallo al producto ni se declara OOM a partir del exit code de la terminacion controlada.",
+  "stop_receipt": "STOP.json",
+  "command_receipt": "blocks/b4.command.json",
+  "resource_receipt": "monitor-b4.json",
+  "host_available_bytes_at_stop": 1627594752,
+  "host_reserve_bytes": 2147483648,
+  "guest_available_bytes_at_stop": 7341637632,
+  "disk_available_bytes_at_stop": 2923831296,
+  "partial_block": "b4",
+  "partial_pass": 28,
+  "partial_selected": 68,
+  "partial_missing": 40,
+  "formal_reruns": 0,
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "production_failure_attributed": false,
+  "previous_campaign_unchanged": true
+}

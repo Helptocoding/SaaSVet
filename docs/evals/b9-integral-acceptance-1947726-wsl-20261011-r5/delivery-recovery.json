@@ -1,0 +1,31 @@
+{
+  "state": "PASS",
+  "initial_failure": "Git add refused existing .git/index.lock",
+  "package_and_two_recovery_checks_already_passed": true,
+  "package_manifest_unchanged": true,
+  "retired_lock": {
+    "original": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\.git\\index.lock",
+    "backup": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-integral-acceptance-1947726-wsl-20261011-r5\\diagnostics\\abandoned-index-lock.bin",
+    "bytes": 0,
+    "mtime": 1791773877.0930636,
+    "age_seconds": 1056.6495673656464,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "windows_git_processes_at_retirement": [
+    {
+      "pid": 37620,
+      "parent_pid": 15596,
+      "operation": "status"
+    },
+    {
+      "pid": 21388,
+      "parent_pid": 37620,
+      "operation": "status"
+    }
+  ],
+  "wsl_git_processes_at_retirement": 0,
+  "no_git_process_terminated": true,
+  "prior_staged_paths_checked": 623,
+  "script_added_after_package": true,
+  "formal_campaign_retried": false
+}

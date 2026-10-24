@@ -1,0 +1,48 @@
+{
+  "state": "PRESERVED_PENDING_HISTORY_PRECHECK",
+  "source_campaign": "b9-correction-20261020-native-r11",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "head_unchanged": true,
+  "source_head": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "scans": [],
+  "scanner_invocations": 0,
+  "product_finding_attributed": false,
+  "source_command_exit_code": 2,
+  "source_controller_exit_code": 2,
+  "changed_internal_capture_refs": [
+    "refs/codex/turn-diffs/captures/1792215842099/6b8b6209-c5da-49af-b7cd-45ca7d039e3a/base",
+    "refs/codex/turn-diffs/captures/1792345048450/c7257052-5ce5-441c-ac0b-98dab93ef60c/base"
+  ],
+  "source_refs_guard_ignored": false,
+  "source_receipts_changed": false,
+  "resumption_decision": "security-history-resumption-decision.json",
+  "resumption_decision_sha256": "c3c1dce1ab53146afad66e91ef7f1f435706719d15c89aadf199b764e699a5bd",
+  "resumption_state": "HARNESS_ONLY_HISTORY_REFRESH",
+  "new_security_scan_required": true,
+  "original_artifacts": {
+    "security-scopes.json": {
+      "path": "referenced-prefix-evidence/r11/security-scopes.json",
+      "sha256": "7425cbba115ff8eabd9ed093dc4442aa993299cc62d99a05e48ac1b4f3fd4a13"
+    },
+    "security-history-before.json": {
+      "path": "referenced-prefix-evidence/r11/security-history-before.json",
+      "sha256": "2076dacce167208493a3a073652cf17c5c4e318aa55615624298e606e75e1959"
+    },
+    "security-history.json": {
+      "path": "referenced-prefix-evidence/r11/security-history.json",
+      "sha256": "cfbd77e8b856f2474eb6e8a53d5a5e0fea9323215aff98cf16d1b66ed2c52908"
+    },
+    "blocks/security.command.json": {
+      "path": "referenced-prefix-evidence/r11/blocks/security.command.json",
+      "sha256": "6be6c4449a72f63e8df2e146bd8437a5cff9b6ea6d6700703c33729e4dd0ef7b"
+    },
+    "invocation-formal.json": {
+      "path": "referenced-prefix-evidence/r11/invocation-formal.json",
+      "sha256": "2c8a50d5a968b1cf30ba8f87d7f2da13b36f69206cadc5b007525c38efa5d221"
+    },
+    "STOP.json": {
+      "path": "referenced-prefix-evidence/r11/STOP.json",
+      "sha256": "71331ecf94aa765d11db66fd970df5d332dba2815a123423e46f6cfa93f97219"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "state": "PASS",
+  "explicit_paths": [
+    "backend/apps/agent/tests/test_contracts.py",
+    "backend/apps/agent/tests/test_regression_f2.py",
+    "backend/apps/agent/tests/test_regression_suite.py",
+    "backend/apps/core/tests/test_tenant_scoping_audit.py",
+    "backend/apps/notifications/tests/test_notifications.py"
+  ],
+  "staged_code_equals_frozen_candidate_tree": true,
+  "staged_sha256": {
+    "backend/apps/agent/tests/test_regression_f2.py": "14ba321a70cf63d42bf1e376f41610b20bb73d94100cd13adc43e0159457ee99",
+    "backend/apps/agent/tests/test_regression_suite.py": "bbed2b7aa87c83fa6db1a149c87cdc7c425474e79f90bcc7bc13dec4904b2973",
+    "backend/apps/notifications/tests/test_notifications.py": "b386adb26db5ee4ee5e6cffa1367ad13dbbed891e5e4f14d7ffd21bd3f23b118",
+    "backend/apps/agent/tests/test_contracts.py": "fc2d8f4152c25e41700235330a8411ccc9066c64bc3089eb07c7c352cc366aff",
+    "backend/apps/core/tests/test_tenant_scoping_audit.py": "49c17280e8bd20be2d0f13ee9cfe51b665bd5cbb1b45bdd3f957cb3b502e631a"
+  },
+  "commits_created": 0,
+  "pushes_performed": 0,
+  "candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+  "snapshot_authorization": "snapshot-resumption-authorization.json",
+  "baseline_authorization": "baseline-resumption-authorization.json"
+}

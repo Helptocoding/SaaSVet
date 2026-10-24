@@ -1,0 +1,76 @@
+{
+  "state": "OBSERVED_AFTER_DURABLE_STOP",
+  "base_executable": "/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/bin/python3.13",
+  "test_entrypoint_executed": false,
+  "application_entrypoint_executed": false,
+  "django_setup_called": false,
+  "database_accessed": false,
+  "dependencies_installed_or_changed": false,
+  "formal_rerun": false,
+  "original_child_stderr_retained_by_candidate_test": false,
+  "limitation": "The original child stderr was discarded by candidate cleanup. This import-only probe diagnoses dependency visibility in the same interpreter, cwd and application environment; it is not an original child trace.",
+  "probe_source_sha256": "3a508017f0ac2f10e1c0e50ee13d34400c89bec7ddc8c84488871673d90d014b",
+  "commands": [
+    {
+      "label": "venv_module_visibility",
+      "argv": [
+        "/home/lap/b9i-wsl-1947726-20261011-r3/tools/rtk",
+        "proxy",
+        "/home/lap/b9i-wsl-1947726-20261011-r3/venv/bin/python",
+        "-B",
+        "-X",
+        "utf8",
+        "-c",
+        "import importlib.util,json,sys; print(json.dumps({'executable':sys.executable,'prefix':sys.prefix,'base_prefix':sys.base_prefix,'sys_path':sys.path,'django_spec':str(importlib.util.find_spec('django')),'psycopg_spec':str(importlib.util.find_spec('psycopg'))}))"
+      ],
+      "cwd": "/home/lap/b9i-wsl-1947726-20261011-r3/src/backend",
+      "exit_code": 0,
+      "stdout": "{\"executable\": \"/home/lap/b9i-wsl-1947726-20261011-r3/venv/bin/python\", \"prefix\": \"/home/lap/b9i-wsl-1947726-20261011-r3/venv\", \"base_prefix\": \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu\", \"sys_path\": [\"\", \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/lib/python313.zip\", \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13\", \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/lib-dynload\", \"/home/lap/b9i-wsl-1947726-20261011-r3/venv/lib/python3.13/site-packages\"], \"django_spec\": \"ModuleSpec(name='django', loader=<_frozen_importlib_external.SourceFileLoader object at 0x70c8f7f2acd0>, origin='/home/lap/b9i-wsl-1947726-20261011-r3/venv/lib/python3.13/site-packages/django/__init__.py', submodule_search_locations=['/home/lap/b9i-wsl-1947726-20261011-r3/venv/lib/python3.13/site-packages/django'])\", \"psycopg_spec\": \"ModuleSpec(name='psycopg', loader=<_frozen_importlib_external.SourceFileLoader object at 0x70c8f7f86f90>, origin='/home/lap/b9i-wsl-1947726-20261011-r3/venv/lib/python3.13/site-packages/psycopg/__init__.py', submodule_search_locations=['/home/lap/b9i-wsl-1947726-20261011-r3/venv/lib/python3.13/site-packages/psycopg'])\"}\n",
+      "stderr": ""
+    },
+    {
+      "label": "base_module_visibility",
+      "argv": [
+        "/home/lap/b9i-wsl-1947726-20261011-r3/tools/rtk",
+        "proxy",
+        "/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/bin/python3.13",
+        "-B",
+        "-X",
+        "utf8",
+        "-c",
+        "import importlib.util,json,sys; print(json.dumps({'executable':sys.executable,'prefix':sys.prefix,'base_prefix':sys.base_prefix,'sys_path':sys.path,'django_spec':str(importlib.util.find_spec('django')),'psycopg_spec':str(importlib.util.find_spec('psycopg'))}))"
+      ],
+      "cwd": "/home/lap/b9i-wsl-1947726-20261011-r3/src/backend",
+      "exit_code": 0,
+      "stdout": "{\"executable\": \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/bin/python3.13\", \"prefix\": \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu\", \"base_prefix\": \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu\", \"sys_path\": [\"\", \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/lib/python313.zip\", \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13\", \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/lib-dynload\", \"/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/site-packages\"], \"django_spec\": \"None\", \"psycopg_spec\": \"None\"}\n",
+      "stderr": ""
+    },
+    {
+      "label": "base_import_django_only",
+      "argv": [
+        "/home/lap/b9i-wsl-1947726-20261011-r3/tools/rtk",
+        "proxy",
+        "/home/lap/b9i-wsl-1947726-20261011-r3/python/cpython-3.13.2-linux-x86_64-gnu/bin/python3.13",
+        "-B",
+        "-X",
+        "utf8",
+        "-c",
+        "import django; print(django.get_version())"
+      ],
+      "cwd": "/home/lap/b9i-wsl-1947726-20261011-r3/src/backend",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import django; print(django.get_version())\n    ^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'django'\n"
+    }
+  ],
+  "candidate_sources": {
+    "backend/apps/agent/tests/test_b3_processes.py": {
+      "sha256": "7ec2975abb2c7c6bb76bc15eaad83eefd5d85c3f67824cc9a2eca0307626d3f5",
+      "source": "\"\"\"Real process isolation for B3 on PostgreSQL, never an SQLite/mock substitute.\"\"\"\nimport json\nimport os\nimport subprocess\nimport sys\nfrom concurrent.futures import ThreadPoolExecutor\nfrom pathlib import Path\n\nfrom django.db import connection\nfrom django.test import TransactionTestCase\n\nfrom apps.agent import durable\nfrom apps.agent.models import TurnWork\nfrom apps.channels.models import Message\nfrom . import test_b3_durable as fixtures\n\n\nclass B3ProcessTests(TransactionTestCase):\n    setUp = fixtures.DurableTurnTests.setUp\n    inbound = fixtures.DurableTurnTests.inbound\n    claim = fixtures.DurableTurnTests.claim\n    expire = fixtures.DurableTurnTests.expire\n\n    def start(self, mode):\n        env = dict(os.environ)\n        env['B3_TEST_DATABASE'] = json.dumps(connection.settings_dict, default=str)\n        env['PYTHONIOENCODING'] = 'utf-8'\n        proc = subprocess.Popen([getattr(sys, '_base_executable', sys.executable), '-X', 'utf8', '-m',\n            'apps.agent.tests.b3_process', mode, str(self.conv.pk)],\n            cwd=Path(__file__).resolve().parents[3], env=env,\n            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,\n            text=True, encoding='utf-8')\n        self.addCleanup(self.cleanup_process, proc)\n        return proc\n\n    @staticmethod\n    def cleanup_process(proc):\n        if proc.poll() is None:\n            proc.kill()\n        proc.communicate(timeout=10)\n\n    def ready(self, proc):\n        with ThreadPoolExecutor(max_workers=1) as pool:\n            try:\n                line = pool.submit(proc.stdout.readline).result(timeout=45)\n            except Exception:\n                proc.kill()\n                raise\n        self.assertEqual(line.strip(), 'B3_READY')\n\n    def result(self, proc, expected=0):\n        stdout, stderr = proc.communicate(timeout=60)\n        self.assertEqual(proc.returncode, expected, stderr[-2000:])\n        if expected:\n            return None\n        line = next(line for line in stdout.splitlines() if line.startswith('B3_RESULT '))\n        return json.loads(line.removeprefix('B3_RESULT '))\n\n    def test_dup_01_two_processes_compete_for_one_lease(self):\n        processes = [self.start('claim'), self.start('claim')]\n        for process in processes:\n            self.ready(process)\n        for process in processes:\n            process.stdin.write('go\\n')\n            process.stdin.flush()\n        results = [self.result(p) for p in processes]\n        self.assertEqual(sum(r['work'] is not None for r in results), 1)\n        work = TurnWork.objects.get()\n        self.assertEqual(work.attempts, 1)\n        self.assertEqual(work.status, TurnWork.PROCESSING)\n        self.m1.refresh_from_db()\n        self.assertEqual(self.m1.turn_work_id, work.pk)\n        self.assertEqual(self.m1.status, 'pending')\n\n    def test_dur_01_killed_process_restarted_worker_recovers_same_work(self):\n        process = self.start('crash')\n        self.ready(process)\n        process.stdin.write('go\\n')\n        process.stdin.flush()\n        self.result(process, expected=17)\n        work = TurnWork.objects.get()\n        old = durable.OwnershipWitness(self.org.pk, self.conv.pk, work.pk,\n                                        work.lease_token, work.ownership_epoch)\n        context = durable.context_for_work(old)\n        self.assertEqual(Message.objects.get(pk=self.m1.pk).status, 'pending')\n        self.expire(old)\n        restart = self.start('run')\n        self.ready(restart)\n        restart.stdin.write('go\\n')\n        restart.stdin.flush()\n        result = self.result(restart)\n        work.refresh_from_db()\n        self.assertEqual(result['work'], work.pk)\n        self.assertEqual(work.attempts, 2)\n        self.assertEqual(work.status, TurnWork.COMPLETED)\n        self.assertNotEqual(result['token'], str(old.lease_token))\n        self.assertEqual((work.anchor_message_id, work.cursor_message_id),\n                         (context.anchor.message_id, context.history_before.message_id))\n        self.assertEqual(Message.objects.get(direction='out').output_ordinal, 0)\n        self.assertEqual(TurnWork.objects.count(), 1)\n        with self.assertRaises(durable.OwnershipLost):\n            durable.finalize_turn(old, outputs=[{'body': 'Old worker'}])\n\n    def test_llm_timeout_runs_outside_transaction_and_commits_fallback(self):\n        process = self.start('timeout')\n        self.ready(process)\n        process.stdin.write('go\\n')\n        process.stdin.flush()\n        self.result(process)\n        work = TurnWork.objects.get()\n        self.assertEqual(work.status, TurnWork.COMPLETED)\n        self.assertEqual(work.outcome_code, 'escalate')\n        out = Message.objects.get(direction='out')\n        self.assertEqual(out.turn_work_id, work.pk)\n        self.assertEqual(out.status, 'pending')\n"
+    },
+    "backend/apps/agent/tests/b3_process.py": {
+      "sha256": "45062c1d97b41eede0141b07023ad2591876556bc594d56d1ad537a2fb95255f",
+      "source": "\"\"\"Bounded B3 process-isolation probe. Used only against the test database.\"\"\"\nimport json\nimport os\nimport sys\n\n\ndef main():\n    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')\n    import django\n    django.setup()\n    from django.db import connections\n    config = json.loads(os.environ['B3_TEST_DATABASE'])\n    if not config['NAME'].startswith('test_'):\n        raise RuntimeError('B3 probe requires an isolated test database')\n    connections.close_all()\n    connections.databases['default'].update(config)\n    from apps.agent import durable, worker\n    mode, conv_id = sys.argv[1], int(sys.argv[2])\n    print('B3_READY', flush=True)\n    sys.stdin.readline()\n    witness = durable.claim_turn(conv_id)\n    if mode == 'crash':\n        if witness is None:\n            raise RuntimeError('Crash probe did not reach claim')\n        os._exit(17)  # Process dies after the real claim COMMIT, without cleanup.\n    if mode == 'timeout' and witness is not None:\n        from unittest.mock import patch\n        from django.db import connection\n        from apps.agent import planner\n        from apps.agent.llm import LLMError, StubLLMClient\n        from apps.agent.models import AgentSettings\n        from apps.users.services import ensure_agent_user\n        conv = worker.Conversation.objects.get(pk=conv_id)\n        actor, _ = ensure_agent_user(conv.organization)\n        AgentSettings.objects.create(organization=conv.organization, enabled=True, agent_user=actor)\n        stub = StubLLMClient(scripted=[])\n        def timeout(**kwargs):\n            if connection.in_atomic_block:\n                raise RuntimeError('LLM called inside a transaction')\n            raise LLMError('injected timeout', retryable=False)\n        with patch.object(planner, 'get_llm_client', return_value=stub), patch.object(stub, 'complete', side_effect=timeout):\n            worker._run_turn(witness)\n    elif mode == 'run' and witness is not None:\n        worker._run_turn(witness)\n    print('B3_RESULT ' + json.dumps({\n        'work': witness.turn_work_id if witness else None,\n        'token': str(witness.lease_token) if witness else None,\n    }), flush=True)\n    connections.close_all()\n\n\nif __name__ == '__main__':\n    main()\n"
+    }
+  }
+}

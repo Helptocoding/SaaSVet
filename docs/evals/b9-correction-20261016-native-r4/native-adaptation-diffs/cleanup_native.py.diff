@@ -1,0 +1,47 @@
+--- native-r3/cleanup_native.py
++++ native/cleanup_native.py
+@@ -9,7 +9,7 @@
+ import sys
+ from native_support import EVIDENCE, REPO, WORK, TREE, DATA, PG, PORT, save, integrity, command, resources
+ 
+-EXPECTED_WORK=Path('C:/Users/LAP/AppData/Local/Temp/b9-native-20261016-r3')
++EXPECTED_WORK=Path('C:/Users/LAP/AppData/Local/Temp/b9-native-20261016-r4')
+ 
+ 
+ def read(name):
+@@ -27,12 +27,14 @@
+     executable=Path(sys.executable).resolve()
+     assert not executable.is_relative_to(resolved), 'Cleanup interpreter must be outside the owned workspace'
+     assert not PG.resolve().is_relative_to(resolved), 'Shared PostgreSQL binaries must be preserved'
+-    assert PORT==35487
++    assert PORT==35488
+     return resolved,executable
+ 
+ 
+ def wrapper_handle():
+-    path=EVIDENCE/'postgresql-start.json'
++    path=EVIDENCE/'postgresql-preparation-restart.json'
++    if not path.exists():
++        path=EVIDENCE/'postgresql-start.json'
+     if not path.exists():
+         return None,None,None
+     start=read(path.name)
+@@ -80,7 +82,8 @@
+         if cluster_created:
+             assert (EVIDENCE/'postgresql-preflight.json').is_file()
+             postmaster_pid=int((DATA/'postmaster.pid').read_text(encoding='utf-8').splitlines()[0])
+-            assert postmaster_pid==read('postgresql-preflight.json')['postmaster_pid']
++            owner_receipt='postgresql-preparation-restart.json' if (EVIDENCE/'postgresql-preparation-restart.json').exists() else 'postgresql-preflight.json'
++            assert postmaster_pid==read(owner_receipt)['postmaster_pid']
+             assert wrapper_pid is not None
+             import psycopg
+             from psycopg import sql
+@@ -119,7 +122,7 @@
+     finally:
+         if handle is not None:
+             kernel32.CloseHandle(handle)
+-    log=WORK/'postgresql.log'
++    log=WORK/('postgresql-restart.log' if (EVIDENCE/'postgresql-preparation-restart.json').exists() else 'postgresql.log')
+     if cluster_created:
+         assert log.is_file()
+     if log.exists():

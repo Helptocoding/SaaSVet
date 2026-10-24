@@ -328,7 +328,7 @@ def _resolve_duplicate_sessions(open_convs):
 @claim_trace.observed('ingest')
 def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
                            payload_type=Message.PAYLOAD_TEXT,
-                           profile_name='', raw=None):
+                           profile_name='', raw=None, reply_to=None, media_metadata=None):
     """Persistir un entrante con dedup — el corazón del webhook (PR-4).
 
     Devuelve el ``Message`` creado, o ``None`` si el wamid ya se vio (R5:
@@ -337,6 +337,9 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
 
     Contacto bloqueado (GB-10): el mensaje SE persiste (auditable) pero con
     ``status='discarded'`` — el worker no lo procesa y no hay respuesta.
+
+    ``reply_to`` es un Message opcional. Se revalida bajo lock; un destino
+    desaparecido o fuera de scope deja la cita nula sin descartar el entrante.
     """
     from .operation_proposals import capture_receipt, RECEIPT_KEY
     receipt = capture_receipt(channel_account, wa_id)
@@ -383,7 +386,20 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
                     now = db_now()
                     message.conversation = conversation
                     message.available_at = now + QUIET_WINDOW
+                    if reply_to is not None:
+                        from apps.channels.replies import resolve_reply_target
+                        try:
+                            # Fresh scope under lock: target deletion/reassignment
+                            # must not turn a valid inbound into a lost message.
+                            message.reply_to = resolve_reply_target(
+                                organization_id=org.pk, channel_account_id=channel_account.pk,
+                                contact_id=contact.pk, target_id=reply_to.pk, lock=True)
+                        except ValidationError:
+                            message.reply_to = None
                     message.save()
+                    if media_metadata:
+                        from apps.channels.media_ingest import persist_inbound_media
+                        persist_inbound_media(message, media_metadata)
                     claim_trace.persisted(message)
                     conversation.last_inbound_at = now
                     conversation.last_activity_at = now

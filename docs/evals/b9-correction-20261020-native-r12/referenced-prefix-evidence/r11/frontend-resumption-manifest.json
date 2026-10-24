@@ -1,0 +1,26 @@
+{
+  "schema": "b9-frontend-resumption/1",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "source_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+  "source_campaign": "b9-correction-20261020-native-r9",
+  "completed_manifest_sha256": "97486ac37e4b03d23d2ee442151e0d585ca07a780dd81434695364cb8a873cce",
+  "local_inputs": {
+    "frontend-resumption-authorization.json": "3790dde4f9da395ec71458a97bc28b62b6291ea2558d2fa21bf3cd21bdf0d583",
+    "frontend-equivalence.json": "60a665eaa601f4131177f6237c25430b52436914c983afa7445796074ee3c01b",
+    "candidate.json": "c28aadb2f031cb2e3ebe910110082d12d749c40c2a5370df6cac7ef5bc3b7e9f",
+    "frontend-correction.diff": "3d94186cda394428dc02e633b6b8d7478a3ad3b07382b5970645fcd0fdea1bf9",
+    "frontend-proposal-analysis.json": "1a5b0bd15386595e8e164ea70e348efb3b8777f652130a49be84efe7eb28816d",
+    "frontend-retained-pass-selected.json": "dfa9ebfe385ed8f4cc9cfd4933c73f7c72191d91787975c5254d88c7e015b127",
+    "frontend-remainder-selected.json": "ae05fc6762796c5bd547497b7c7028ea598ba5bc541347c42ff43bcd84c01f76",
+    "frontend-full-selected.json": "4cfdbea1af75cdb66a6a7a47524e29d2289eb7d90e7a772cd63a2ede11fecdb0"
+  },
+  "original_artifacts": {
+    "diagnostics/backend-and-frontend-prefix-validation.json": "575339d8ca2f810039c48fe15db3a7c345189ed617f31988f03a4a993caa5449",
+    "blocks/frontend-tests.json": "4b39d34bf9d29f0664a94277d8648f1c6ecbc0ef81c20035041272a9b3c880be",
+    "blocks/frontend-test.command.json": "a48cc24ccc1e24f52f4c23d337305b6940c3ecb2af26712127df371bf4475eb9",
+    "blocks/frontend-test.command.log": "a8d1e91ce8ef3501911cb41c003d62ce9e4c822f544cbd1cbe83c32c08616451"
+  },
+  "previous_PASS_cases_rerun": 0,
+  "original_command_exit_code": 1,
+  "original_outcome": "PENDING_TIMEOUT"
+}

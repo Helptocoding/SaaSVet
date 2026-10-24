@@ -1,0 +1,57 @@
+{
+  "state": "PASS",
+  "platform": "Windows native",
+  "wsl_invoked": false,
+  "host_clock_configuration_changed": false,
+  "W32Time_changed": false,
+  "global_power_policy_changed": false,
+  "display_policy_changed": false,
+  "owned_helpers_exited": true,
+  "private_postgresql_stopped": true,
+  "owned_workspace_removed": true,
+  "application_tests_executed": true,
+  "formal_controller_invocations": 1,
+  "formal_reruns": 0,
+  "closure_receipt_sha256": {
+    "cleanup.json": "6d41b3ee0093021f7cb33216be3e635e05757c905acb4d04ba3d40b2fe1d51a5",
+    "resource-observer-closure.json": "f8c83132beef3c7f46d251dcd03d9f6f77059b0e448afb1cec07f45b5a242d2f",
+    "awake-request/closure.json": "0e7c52a010cf49032043285c18cde43e15899957f52bba989f2ec4988a73ffe7"
+  },
+  "helper_stop_method": "Explicit stop.request files after cleanup PASS; both owned auxiliaries exited 0 and the original own-thread request was restored.",
+  "read_only_status_monitors": [
+    {
+      "session_id": 22673,
+      "exited": true,
+      "exit_code": 0
+    },
+    {
+      "session_id": 47006,
+      "exited": true,
+      "exit_code": 0
+    }
+  ],
+  "host_wall_clock_update_observed": true,
+  "system_sleep_event_observed": true,
+  "system_sleep_reason_recorded": "Battery",
+  "continuous_awake_execution_proven": false,
+  "power_and_followup_incident": "diagnostics/power-and-followup-incident.json",
+  "host_clock_configuration_changed_by_agent": false,
+  "port_closed_rechecked": true,
+  "resources": {
+    "utc": "2026-10-17T15:49:46Z",
+    "utc_epoch_seconds": 1792252186.4840674,
+    "physical_total": 17031217152,
+    "physical_available": 5990842368,
+    "page_available": 11909537792,
+    "disk_available": 10077409280,
+    "platform": "Windows native"
+  },
+  "current_power_status": {
+    "ACLineStatus": 1,
+    "BatteryFlag": 10,
+    "BatteryLifePercent": 14,
+    "SystemStatusFlag": 0,
+    "BatteryLifeTime": 4294967295,
+    "BatteryFullLifeTime": 4294967295
+  }
+}

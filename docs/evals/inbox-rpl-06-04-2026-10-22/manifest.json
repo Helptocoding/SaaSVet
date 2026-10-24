@@ -1,0 +1,596 @@
+{
+  "status": "PASS",
+  "scope": [
+    "WA-RPL-06",
+    "WA-RPL-04"
+  ],
+  "unique_pass": 128,
+  "new_cases": 45,
+  "affected_cases": 83,
+  "results": {
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox renderiza la cita en una burbuja in": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox renderiza la cita en una burbuja out": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox un original cargado con client_message_id se localiza por PK sin otra petición": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox carga around, conserva borrador/cita del composer y no usa metadatos antiguos de sesión": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox mientras busca pausa el poll, impide duplicados y permite retomar con el floor ampliado": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox el salto cancela un full antiguo que podría borrar la página alrededor": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox cambiar de hilo aborta around y no traslada contenido, error ni foco": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox 404 conserva el texto y ofrece reintento al volver a pulsar la cita": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox view sin send y un hilo archivado permiten navegar la cita": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.jump.test.jsx::WA-RPL-06/04 — citas y navegación en Inbox unmount cancela around": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita identifica al cliente, muestra el extracto y navega con el ID original": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita reutiliza la etiqueta del autor human_staff": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita reutiliza la etiqueta del autor agent": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita reutiliza la etiqueta del autor system": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita explica que el destino failed no se envió sin impedir el salto": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita explica que el destino discarded no se envió sin impedir el salto": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita media muestra tipo y respaldo sin inventar contenido": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita omite referencias inexistentes o inválidas 0": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita omite referencias inexistentes o inválidas 1": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita omite referencias inexistentes o inválidas 2": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita omite referencias inexistentes o inválidas 3": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita mantiene un nivel e interpreta HTML como texto": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx::WA-RPL-04 — bloque de cita indica y bloquea la carga actual": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial salta a un ID cargado sin GET, enfoca y resalta exactamente dos segundos": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial respeta movimiento reducido": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial around incorpora el destino processed y deduplica sin retroceder estados": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial around incorpora el destino discarded y deduplica sin retroceder estados": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial around incorpora el destino failed y deduplica sin retroceder estados": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial llenar el intervalo con before mantiene el floor más antiguo": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial no cuenta la ventana histórica como nueva ni descarta avisos reales": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial el mismo salto pendiente no duplica GET y una cita distinta cancela el anterior": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial reset descarta resolve tardío incluso al volver al mismo hilo": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial reset descarta reject tardío incluso al volver al mismo hilo": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial 404 y reintento explícito mantienen historial y cursor": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial rechaza un paquete sin destino o de otro hilo 0": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial rechaza un paquete sin destino o de otro hilo 1": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial rechaza un paquete sin destino o de otro hilo 2": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial una retirada explícita recibida durante around gana al paquete tardío": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial Ir al final cancela un around pendiente y conserva su propia intención": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial unmount aborta y limpia el temporizador de highlight": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial IDs inválidos null no hacen GET": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial IDs inválidos -1 no hacen GET": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial IDs inválidos tmp:1 no hacen GET": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial IDs inválidos 0 no hacen GET": {
+      "status": "passed",
+      "receipt": "new-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta selecciona una cita con autor y extracto, enfoca el campo y conserva el borrador": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta seleccionar otro mensaje sustituye la única cita activa": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cancelar mediante Escape conserva texto y foco": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cancelar mediante botón conserva texto y foco": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta envía con Enter la cita capturada y limpia antes del acuse": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta envía con botón la cita capturada y limpia antes del acuse": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cancelar y enviar después omite replyToId": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cambiar a Beto-main cancela la cita aunque sea la misma persona": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cambiar a Ana-second cancela la cita aunque sea la misma persona": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta volver a pulsar el hilo seleccionado conserva la cita": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un poll del mismo episodio conserva cita y borrador": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta otro episodio retira la cita antes de permitir un envío nuevo": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta sin permiso send no ofrece selección de cita ni composer": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta el hilo archivado conserva lectura sin acciones de respuesta": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta una ventana cerrada deshabilita seleccionar y enviar": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta si vence la ventana después de seleccionar no envía la cita": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta media sin cuerpo mantiene una cita seleccionable con su tipo": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cita al autor saliente human_staff con su etiqueta existente": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta cita al autor saliente agent con su etiqueta existente": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta acota el extracto a 80 puntos Unicode sin cortar un emoji": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un reintento conserva key y cita originales sin consumir la selección siguiente": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un POST antiguo no retira la cita seleccionada en el hilo nuevo": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta Enter de composición IME y Shift+Enter no consumen la cita": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.replies.test.jsx::WA-RPL-05 — composer de respuesta un texto vacío no consume la cita seleccionada": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox tras cargar usa since en lista y transcript sin volver a descargar mensajes": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox actualiza una fila y añade una nueva sin duplicar ni perder el borrador": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox retira IDs explícitos sin borrar otros mensajes": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox cursor rechazado recupera el rango cargado una sola vez": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox un delta de lista incompleto recupera full sin publicar el estado parcial": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox publica juntas las páginas con movimientos y sin duplicar un hilo": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox mantiene una sola petición de transcript en vuelo": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox mantiene una sola petición de lista en vuelo": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox cambiar de hilo aborta un delta viejo y no conserva su cursor": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox oculto no inicia polls y al volver conserva cursores delta": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox un fallo HTTP conserva el cursor y reintenta delta en el siguiente poll": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox metadatos de archivo retiran composer y conservan historia": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox ampliar el rango retira una fila histórica que desapareció mientras cargaba": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox cambiar filtro aborta lista y empieza con un cursor propio": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox desmontar cancela ambos recursos": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.sync.test.jsx::WA-PERF-03 — sincronización en Inbox conserva el floor opaco del servidor al ampliar historial y reconcilia su rango": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-GTF-01 — navegación al final cambiar de hilo no conserva el botón del historial anterior": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-GTF-01 — navegación al final permite recorrer un hilo archivado sin habilitar el envío": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox la página anterior no sustituye la sesión vigente renovada por el poll": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox ignora success antiguo al cambiar de hilo y aborta su petición": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox ignora failure antiguo al cambiar de hilo y aborta su petición": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-01 — historial en Inbox los hilos archivados permiten cargar anteriores sin ofrecer envío": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — llegadas en Inbox una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — llegadas en Inbox un mensaje nuevo pegado al fondo sigue visible sin contador": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — llegadas en Inbox bajar manualmente hasta el fondo retira el contador": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — llegadas en Inbox cambiar de hilo no conserva el contador del anterior": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — llegadas en Inbox al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/index.test.jsx::WA-HIST-02 — historial de tres meses una llegada de hoy conserva la lectura de julio aunque cree un divisor de día": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial recorre 10 mensajes con páginas de 50 y cursores correctos": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial recorre 51 mensajes con páginas de 50 y cursores correctos": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial recorre 500 mensajes con páginas de 50 y cursores correctos": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial ordena empates por ID numérico y no deduplica mensajes por texto": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial fusiona páginas solapadas sin sustituir estados más recientes del poll": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial ancla la posición que la persona tiene al terminar la petición": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial ignora dos disparos mientras existe una carga y permite seguir con el siguiente cursor": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial un cursor rechazado conserva mensajes, posición y cursor y exige reintento explícito": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial detiene un cursor sin progreso con página []": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial detiene un cursor sin progreso con página [ { id: 2, body: 'Mensaje 2', …(1) } ]": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial a 500 mensajes cambia a carga manual sin descartar mensajes": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial reset aborta y descarta success antiguo, incluso A→B→A": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial reset aborta y descarta failure antiguo, incluso A→B→A": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial desmontar aborta la petición y no aplica su resultado": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-01 — estado acumulativo del historial no inicia carga automática con la pestaña oculta": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas conserva scrollTop al recibir cinco mensajes arriba y no vuelve a contarlos": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas a 0 px del fondo respeta el límite inclusivo de 80": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas a 80 px del fondo respeta el límite inclusivo de 80": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas a 81 px del fondo respeta el límite inclusivo de 80": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas inicializa al fondo sin contar los mensajes ya cargados": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas actualizar recibos o recibir IDs anteriores no incrementa el contador": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas el scrollback no suma nuevos ni borra el contador pendiente": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas poll y página anterior en el mismo render preservan el ancla sin sumar la altura de llegadas al fondo": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas click vuelve al fondo con scroll suave, conserva foco y limpia el contador": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas bajar manualmente al fondo limpia el contador": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas un optimista y su confirmación cuentan una sola vez por client_message_id": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas retira del contador un optimista descartado sin contar mensajes de otra sesión": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.test.jsx::WA-HIST-02 — lectura y llegadas nuevas reset borra contador e identidades vistas y la selección nueva comienza sin avisos": {
+      "status": "passed",
+      "receipt": "affected-directed-vitest.json"
+    },
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx::WA-RPL-06 — salto e historial el rango operacional conserva durante el highlight al destino oculto revelado explícitamente": {
+      "status": "passed",
+      "receipt": "retry-hidden-highlight-vitest.json"
+    }
+  },
+  "preserved_dependencies": {
+    "backend/apps/agent/views.py": {
+      "sha256": "33ae9131e47fd1610394a7e8e4ef835a8c578c057634448c4b71c2c543166c42",
+      "prior_manifest": "../inbox-rpl-03-2026-10-21/manifest.json"
+    },
+    "backend/apps/agent/serializers.py": {
+      "sha256": "eec1e9c20a9576762c174ae0361783162e4ca8fd2857c0e80df0273732122dee",
+      "prior_manifest": "../inbox-rpl-03-2026-10-21/manifest.json"
+    },
+    "backend/apps/agent/inbox_sync.py": {
+      "sha256": "43137c827bcce958581852e3d675354967270e332e5cd1213e9d470c461c4393",
+      "prior_manifest": "../inbox-rpl-03-2026-10-21/manifest.json"
+    },
+    "frontend/src/api/inbox.js": {
+      "sha256": "a465b0261da0ebca40592c59e4c4a05bde1d9f0d042ada39603b38751cdd6b48",
+      "prior_manifest": "../inbox-rpl-05-2026-10-21/manifest.json"
+    }
+  },
+  "source_sha256": {
+    "frontend/src/pages/inbox/index.jsx": "de1646c00374b50270396a2f75e3c31f4c7c4a46ebdac30e294922e21ef23157",
+    "frontend/src/pages/inbox/useThreadHistory.js": "28a084413c700ba1c8708be825993fe8fb72fc6f688843b5260286c3604a9fdf",
+    "frontend/src/pages/inbox/ReplyQuote.jsx": "dc19872d048bfd62d0708b13aa7f77ecbbe8840458ed229d90463fdaacf13eef",
+    "frontend/src/pages/inbox/inbox.module.css": "6643f9be80fd800717998d4f24fcbe6cdcf6dbd586b49bd0bdb83a2e618d9335",
+    "frontend/src/pages/inbox/ReplyQuote.test.jsx": "b34facd650cd4c329e4dc53cecf2d717ada033d1dcab6e3a4a2a1f7a4b701b0b",
+    "frontend/src/pages/inbox/useThreadHistory.jump.test.jsx": "79aab926a33e44a3c8a3104c6ce32de175d68bc9b1e840d2c6823a964793c314",
+    "frontend/src/pages/inbox/index.jump.test.jsx": "e75660f16830d71ee08b633b9edaeb8b7c3b9c3aba9630c4d151d40b1f87c191",
+    "docs/modules/frontend.md": "9580ecd47789422083beebbe59494486b39fc0129ccf92bb8baf6f06b53a647f",
+    "docs/CIERRE-INBOX-WHATSAPP.md": "ce2e124e367dd522f4eb5f952c7f46ae5d46c03f0bbb59d696147588344069fa",
+    "docs/plan-implementacion-whatsapp-inbox-2026-08-22.md": "11e8f6462a8df07d7ac1a4dc7186dee15b89f4632f98eb4166724569819cebb9",
+    "CHANGELOG.md": "cf1cac366a47130026cc558184a7a023095c6854892791c286b9afbcbd62d938",
+    "docs/evals/inbox-rpl-06-04-2026-10-22/README.md": "4c908ce515e44be4bb9735f9ca0eeebc56c4fe1e18f978ad6ffc5b7bcc2018ac",
+    "docs/evals/inbox-rpl-06-04-2026-10-22/run_checks.py": "b1a6dd5ba18e0b6e9e0319e7850d4f47447a1e432bb3451923625dcda31c7db3",
+    "docs/evals/inbox-rpl-06-04-2026-10-22/check_browser.py": "05709f0f411ff102bd56ba0d2bd28604f6568d50e6a66e85e796a2a4c3f1046f",
+    "docs/evals/inbox-rpl-06-04-2026-10-22/run_browser.py": "454ad873d2f20755c4e322ca2bbbadb44d8a50b174ad45da38f35f8be66e67dd",
+    "docs/evals/inbox-rpl-06-04-2026-10-22/verify.py": "d57f79716935a37f9c37987115ae7b1b0dd9fc478b87bc7485553eae701ef8e5"
+  },
+  "artifact_sha256": {
+    "affected-directed-vitest.json": "6f702922838c351be4f25104c7e073e94bea87d2be870e897d52615db97e0f95",
+    "affected-directed.json": "38936bdafd6aaedcceb9a83dd065af1a2dd364689d810eeae0be2ca8d68b4d95",
+    "affected-directed.log": "905000932ef23b81e0c66839e247ca8f1d61ad19b6e0b4a5a71951a3cb7aff17",
+    "browser-run.json": "32a0e91e5ff9da8be4e8024306b2eb3c39461ce9de8debe88fd76a62c52b7e55",
+    "browser.json": "ba841d113bc1e06e5a289abffc13b06b15f56f724441d71dd0a08ee8c5874135",
+    "browser.log": "8872d7fe96e2190c387dbe34262dfbd2d3456aecd09704d2f13d1e81f970bb6c",
+    "build-final.json": "e700ff75292adf167b119b84dcd2d788e7d7ef17f13e5a967bd95d7517e952fd",
+    "build-final.log": "bcef979d4887f14eb853f5ed9aecad268bb519a9b12b1034badc9fb468eca5b5",
+    "jump-desktop.png": "57364dde1f0f7ecaba8541a78282c7a8b25ea4088c2972bc38179d8effd1f47d",
+    "jump-mobile.png": "d9d5c60158dacfb1c056016ed73e71fe3a2603cf226b3ecec35205316c7a6eb2",
+    "lint-directed.json": "d86aff74c3bb512525d103b3d2fc330f86afb2a56287f9225b498b279123974d",
+    "lint-directed.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "lint-final.json": "585268223934f961deced776d8527f9f4b2584de72411b785f25f9d4c14f66ce",
+    "lint-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "new-directed-vitest.json": "eddf30da44c78f96928fcb4b31496275e005e22a3c5f007f19618d64db204449",
+    "new-directed.json": "001cd0877f6a7e59fa502c813959f7f723ebfe606ab8445ea8679c55bf67f5de",
+    "new-directed.log": "640a3fec3887abc250a5cef3248b6cb809f4097dc67e411070277f6024767ad0",
+    "quotes-desktop.png": "f17b35656bc982df14c3fd48cef6e7edc030a58f6538b1e6f4a0b296499ca7ce",
+    "quotes-mobile.png": "bde56da9b2645a123efe2e6a818a603a78ab88643346f15b6df498bde8179584",
+    "retry-hidden-highlight-vitest.json": "789c3f896a0f25a88f46fc15039d370bd9741b9ca5b82b1b9285357d4c2789e7",
+    "retry-hidden-highlight.json": "55dc591fd1cdeaa16cb2ccbf36c632f7311083e7d5af997798be19ddc80d0d24",
+    "retry-hidden-highlight.log": "6eccd42dc45077232df57ca86d290874fac345321a2dc037aa0986128c9b0878",
+    "vite.log": "bc4c6e16760d2fd5ccf49b18fcdb48f4f3bdb7134aa87129d5312fe993d87300"
+  },
+  "working_database_migrated": false,
+  "backend_changed": false,
+  "synthetic_browser_api": true,
+  "native_provider_citation": "IMPLEMENTATION_PENDING",
+  "real_meta": "POSTPONED_PENDING",
+  "next_task": "WA-RPL-07",
+  "diff_check": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+}

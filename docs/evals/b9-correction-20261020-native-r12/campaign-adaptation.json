@@ -1,0 +1,197 @@
+{
+  "state": "PREPARED_BEFORE_FORMAL_SEAL",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "formal_application_tests_executed": false,
+  "wsl_invoked": false,
+  "development_verification": "diagnostics/fixture-clock-focused-check.json",
+  "candidate_sources_changed_by_adaptation": false,
+  "evidence_mode": "COMPOSITE_ACCEPTANCE",
+  "continuous_campaign_claimed": false,
+  "composite_authorization": "composite-amendment.json",
+  "referenced_pass_manifest": "reuse-manifest.json",
+  "referenced_pass_blocks": 13,
+  "fixed_contract": "PLAN.md and full-partition-contract.json",
+  "full_inventory": 3331,
+  "full_groups": [
+    {
+      "label": "full-b8b",
+      "database": "test_b8b_b9i_full",
+      "count": 21
+    },
+    {
+      "label": "full-b8c",
+      "database": "test_b8c_b9i_full",
+      "count": 41
+    },
+    {
+      "label": "full-b8d",
+      "database": "test_b8d_b9i_full",
+      "count": 27
+    },
+    {
+      "label": "full-b8e",
+      "database": "test_b8e_b9i_full",
+      "count": 29
+    },
+    {
+      "label": "full-general",
+      "database": "test_b9i_full_general",
+      "count": 3213
+    }
+  ],
+  "preserved": [
+    "All test IDs, assertions, guards and internal concurrency",
+    "Sequential block order and original native test runners",
+    "PROFILE workload, 30/300/20 timings and applicable gates",
+    "Durable PostgreSQL settings and two-planner/one-sender architecture",
+    "One formal invocation per block and variant; no adaptive reruns",
+    "2 GiB host RAM, 1 GiB backing disk and 1 second clock limits"
+  ],
+  "native_adaptations": [
+    "Private verified CPython 3.13.2 copy, with only locked third-party packages",
+    "Private PostgreSQL 16.15 cluster on loopback port 35490",
+    "Private Node 20.20.2, pnpm 9.15.9 and Windows Gitleaks 8.18.4",
+    "Frozen frontend lockfile, hoisted layout, package copy import mode",
+    "Windows process ownership, resource API and local wall/monotonic observation",
+    "Owned bounded Windows sleep request; global power and clock policy unchanged",
+    "Native imports and UTF-8/LF receipts in evaluator helpers",
+    "Read-only original Git history plus separate corrected-test scope for security"
+  ],
+  "resumption_reference": "resumption.json",
+  "previous_native_preparation": "../b9-correction-20261020-native-r11/native-preflight.json",
+  "source_diffs": "native-adaptation-diffs",
+  "helper_sources": [
+    {
+      "path": "awake_guard.py",
+      "sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+      "prior_sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+      "changed": false
+    },
+    {
+      "path": "awake_status.py",
+      "sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+      "prior_sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+      "changed": false
+    },
+    {
+      "path": "backend_resumption.py",
+      "sha256": "b25acc1c3eee5e3e50247756d6b51cdf642e76d4727747437a404d611b4e7301",
+      "prior_sha256": "b25acc1c3eee5e3e50247756d6b51cdf642e76d4727747437a404d611b4e7301",
+      "changed": false
+    },
+    {
+      "path": "capture_native.py",
+      "sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+      "prior_sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+      "changed": false
+    },
+    {
+      "path": "cleanup_native.py",
+      "sha256": "ea0c2e948005882299b688c837eb9953b714acd529c198f8322dfa979931b318",
+      "prior_sha256": "ea0c2e948005882299b688c837eb9953b714acd529c198f8322dfa979931b318",
+      "changed": false
+    },
+    {
+      "path": "clock_probe.py",
+      "sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+      "prior_sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+      "changed": false
+    },
+    {
+      "path": "completed_prefix.py",
+      "sha256": "2e041b069829a14dcfe5f5cc661378929cb4395efd6767a8000faad2bac8450b",
+      "prior_sha256": null,
+      "changed": true
+    },
+    {
+      "path": "composite_evidence.py",
+      "sha256": "245a002fcfe55de566ae91f7c265fc1059e287cbc2885a44d89625d8eadcfac7",
+      "prior_sha256": "96a21339ae75dd342cade1a2fdeffc919cdf01b53e7df1db83650db985b94110",
+      "changed": true
+    },
+    {
+      "path": "deliver_native.py",
+      "sha256": "a4eb4bda40bfc3e549e7867f97460fb683ae90d9892192d88291c168fb4ce77e",
+      "prior_sha256": "f9c3ced8b007d2d1bf9f98dfd083f1f47bde30be00fbb9daa839bf1dadc1fc16",
+      "changed": true
+    },
+    {
+      "path": "finalize_preflight.py",
+      "sha256": "b94fc7a948681f3e6d7edca971bb5ace523c8fe8222e61d482fab5d0ab60cadf",
+      "prior_sha256": "398102eadbe71c80d445583e44811e3e81bafac362f69b9dee3e9b7cbac910df",
+      "changed": true
+    },
+    {
+      "path": "frontend_resumption.py",
+      "sha256": "dd8016f84586202c9e1e047ddc4d8857b4d78b788f70c5bbbf2c1ac0c7814a8b",
+      "prior_sha256": "dd8016f84586202c9e1e047ddc4d8857b4d78b788f70c5bbbf2c1ac0c7814a8b",
+      "changed": false
+    },
+    {
+      "path": "full_partition.py",
+      "sha256": "b1c7f6b6f238bdc017244250ce31aae2576747d5a13a6f7f125153bd8dbec747",
+      "prior_sha256": "b1c7f6b6f238bdc017244250ce31aae2576747d5a13a6f7f125153bd8dbec747",
+      "changed": false
+    },
+    {
+      "path": "handoff_runtime.py",
+      "sha256": "520338f47e1b654d99accc34f999e4c95e2dcfeb22bcc0b425080b0580b56c0c",
+      "prior_sha256": "b07a06f66023d57e1226eac8ed4255f913ab090e09a22e691197ca73db2e7212",
+      "changed": true
+    },
+    {
+      "path": "host_observer.py",
+      "sha256": "aeba1a4994af3bdd8c0a3fa6fead4bfe8a178f8be8634eb909c43fa941deb388",
+      "prior_sha256": "aeba1a4994af3bdd8c0a3fa6fead4bfe8a178f8be8634eb909c43fa941deb388",
+      "changed": false
+    },
+    {
+      "path": "host_resources.py",
+      "sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "prior_sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "changed": false
+    },
+    {
+      "path": "launch_native.py",
+      "sha256": "3308360a29816d10841f3f9994d3c963736f58daaaa018aecf84731955cd36e2",
+      "prior_sha256": "3308360a29816d10841f3f9994d3c963736f58daaaa018aecf84731955cd36e2",
+      "changed": false
+    },
+    {
+      "path": "native_support.py",
+      "sha256": "2d13175d21f40486ceaf3fd933f1e5179461f5031105f655ae088ccf4a97257c",
+      "prior_sha256": "2d13175d21f40486ceaf3fd933f1e5179461f5031105f655ae088ccf4a97257c",
+      "changed": false
+    },
+    {
+      "path": "recorded_suite.py",
+      "sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+      "prior_sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+      "changed": false
+    },
+    {
+      "path": "restore_native.py",
+      "sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "prior_sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "changed": false
+    },
+    {
+      "path": "retire_previous_cluster.py",
+      "sha256": "e38cc57f43e9a3b9465bdd925667dc8238c033578ecff7429b7e937c3b180a49",
+      "prior_sha256": "b04eb5be588fdf7a9c6b9845d0fb94f9572b72ade815cd1f4cc919674c1c3ef3",
+      "changed": true
+    },
+    {
+      "path": "run_campaign.py",
+      "sha256": "559b1c4b1c07363cf0b80d5a1797131b535e2a9ad3e27c1061627ef6952c15dd",
+      "prior_sha256": "855c8d413b586e62aa45cdc6a34a2d7fa44beeef3bcc05413fc76cff81cdeb84",
+      "changed": true
+    },
+    {
+      "path": "scan_security.py",
+      "sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2",
+      "prior_sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2",
+      "changed": false
+    }
+  ]
+}

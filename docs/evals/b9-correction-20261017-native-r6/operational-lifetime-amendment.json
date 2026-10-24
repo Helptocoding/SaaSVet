@@ -1,0 +1,23 @@
+{
+  "state": "USER_AUTHORIZED_BEFORE_FORMAL_SEAL",
+  "user": "Sí, corregir y continuar conservando lo válido",
+  "date_local": "2026-10-17",
+  "awake_maximum_seconds": 43200,
+  "observer_maximum_seconds": 46800,
+  "heartbeat_seconds": 1,
+  "maximum_sample_age_seconds": 10,
+  "adaptive_renewal": false,
+  "explicit_restoration_required": true,
+  "global_power_policy_changes": false,
+  "reference": "fixture-resumption-amendment.json",
+  "helper_sha256": {
+    "awake_guard.py": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+    "host_observer.py": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b"
+  },
+  "pre_seal_reboot_recovery": {
+    "reference": "diagnostics/host-preflight-recovery.json",
+    "sha256": "0fe521f027e6c0bd5f59a2aef3b9aa75eb5883b2a2a02ea37c316a92cced76bf",
+    "fresh_bounded_requests_before_formal_only": true,
+    "old_observations_retained": true
+  }
+}

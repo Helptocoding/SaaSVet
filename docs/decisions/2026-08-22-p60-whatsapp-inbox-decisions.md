@@ -222,3 +222,20 @@ Corpus/protocolo **VETERINARY_REVIEW_REQUIRED**, automatización B5 apagada por
 defecto y activación **PENDING_ACTIVATION_REQUIREMENTS**. No se atribuye revisión
 clínica, notificación secundaria, SLA ni disponibilidad. WRITE autónomo cerrado;
 sin B6–B9, E1–E5 ni P-A/P-B. No despliegue automático.
+
+
+## Implementación local de D-1/D-2 — 22-10-2026
+
+MED-01..05 implementan MessageMedia (M4 aditiva), interfaz local/B2 mediante
+boto3, claves opacas por clínica/UUID/claim, cifrado B2 AES256 y proxy autenticado
+como único contrato. El worker existente incorpora descarga con spool acotado;
+el job nocturno existente ejecuta purga de todas las versiones/markers, reintentos,
+reconciliación y scavenger. Límites conservadores: imagen 5 MiB, sticker 500 KiB,
+audio/video 16 MiB y documento 25 MiB. Retención inalterada: 180 días.
+
+[Evidencia local](../evals/inbox-phase3-2026-10-22/README.md) y
+[runbook](../runbooks/inbox-media.md). Procesamiento apagado por defecto, local
+restringido a dev/CI y B2 bloqueado hasta aprobar gates. M2/M3/M4 no aplicadas a
+bases habitual/preview. No acredita bucket/key/lifecycle/DPA/aviso/ARCO reales,
+merge, despliegue, activación ni validación con recepción/Meta. P40, NO-GO SSE y
+fronteras B4/B5 permanecen vigentes.

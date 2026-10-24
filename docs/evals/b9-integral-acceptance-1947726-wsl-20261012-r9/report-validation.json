@@ -1,0 +1,18 @@
+{
+  "state": "PASS",
+  "report_relative_links_resolved": true,
+  "delivery_links_expected_to_be_created": [
+    "artifact-index.json",
+    "delivery-verification.json",
+    "preservation-manifest.json",
+    "preservation-verification.json"
+  ],
+  "report_counts_checked_against_receipts": true,
+  "diagnostics_syntax_checked": true,
+  "README_restore_contract_clarification": "Destination may be absent or empty; nonempty destination rejected",
+  "closure_script_original_sha256_preserved": "aa84d9baec1459f43b450eb1a792e8f3286a25960961e3ac20d52959ea0a225d",
+  "document_sha256": {
+    "REPORT.md": "182c0eb11a310f99a14573f1ebe2ade1a991b463c5d7df72625b02c265a15dda",
+    "README.md": "57fb10c243554604955feb3e6ad2ef9803e7f60ae8ffdcd67a0f881738017b3b"
+  }
+}

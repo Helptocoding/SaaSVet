@@ -1,0 +1,27 @@
+{
+  "kind": "backend",
+  "labels": [
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_creates_outbound_and_takes_over",
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_same_idempotency_key_replays_same_message_once",
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_replay_survives_conversation_closed_after_first_send",
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_same_key_with_different_body_returns_original",
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_recovers_winner_after_idempotency_integrity_race",
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_does_not_mask_integrity_error_without_winner",
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_empty_body_rejected",
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_to_closed_conversation_rejected",
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_transcript_returns_messages_in_order",
+    "apps.agent.tests.test_inbox_api.InboxRbacTests.test_idempotency_replay_cannot_bypass_cross_tenant_send_404",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_stable_transcript_transfers_no_bodies_metadata_or_new_cursor",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_new_and_modified_messages_are_merged_with_equal_updated_at",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_scroll_back_expands_range_and_preserves_old_message_updates",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_cache_loss_requests_recovery_and_stores_no_pii",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_stable_delta_does_not_select_message_bodies",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_query_plan_and_payload_size_for_large_thread",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_other_staff_requeues_same_row_preserving_payload_author_key_and_claim"
+  ],
+  "working_database_migrated": false,
+  "test_database": "test_inbox_rpl03_07066b846ff9",
+  "test_database_remains": false,
+  "exit_code": 0,
+  "elapsed_s": 163.9922816999897
+}

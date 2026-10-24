@@ -1,0 +1,28 @@
+{
+  "state": "PRESERVED_PENDING_TIMEOUT",
+  "source_campaign": "r9",
+  "original_command_exit_code": 1,
+  "original_outcome": "PENDING_TIMEOUT",
+  "timeout_ms": 5000,
+  "failures": [
+    {
+      "ancestorTitles": [
+        "Inbox — aislamiento del borrador"
+      ],
+      "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+      "status": "failed",
+      "title": "un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+      "duration": 5058.328600000001,
+      "failureMessages": [
+        "Error: STACK_TRACE_ERROR\n    at task (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1784:27)\n    at Object.<anonymous> (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1817:16)\n    at Object.<anonymous> (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1563:28)\n    at chain (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:599:14)\n    at C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx:311:5\n    at file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1889:40\n    at runWithSuite (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:2258:8)\n    at Object.collect (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1889:10)\n    at Object.collect (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1893:54)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)"
+      ],
+      "meta": {},
+      "tags": [],
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx"
+    }
+  ],
+  "original_result": "referenced-completed-evidence/r9/blocks/frontend-tests.json",
+  "original_result_sha256": "4b39d34bf9d29f0664a94277d8648f1c6ecbc0ef81c20035041272a9b3c880be",
+  "original_command": "referenced-completed-evidence/r9/blocks/frontend-test.command.json",
+  "converted_to_original_PASS": false
+}

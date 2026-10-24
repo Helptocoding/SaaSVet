@@ -1,0 +1,74 @@
+{
+  "label": "directed",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261011-r8/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011-r8/venv/bin/python",
+    "-B",
+    "-m",
+    "apps.agent.tests.run_b9a_acceptance",
+    "--suite",
+    "targeted",
+    "--database",
+    "test_b8b_b9i_directed",
+    "--ids-file",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r8/directed-selected.json",
+    "--output",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r8/blocks/directed"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261011-r8/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-12T05:40:45Z",
+      "physical_available": 7555731456,
+      "physical_total": 8252514304,
+      "disk_available": 4079030272,
+      "linux_virtual_disk_available": 1017037320192
+    },
+    "host": {
+      "utc": "2026-10-12T05:40:44Z",
+      "physical_total": 17031217152,
+      "physical_available": 5157994496,
+      "page_available": 6009843712,
+      "utc_epoch_seconds": 1791783644.5808775,
+      "observer_pid": 55836
+    },
+    "ready": true
+  },
+  "pid": 1428,
+  "exit_code": -9,
+  "seconds": 326.3931063939999,
+  "invalidating_incident": "Backing disk reserve exhausted",
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-12T05:46:11Z",
+      "physical_available": 7524687872,
+      "physical_total": 8252514304,
+      "disk_available": 4069318656,
+      "linux_virtual_disk_available": 1016997396480
+    },
+    "host": {
+      "utc": "2026-10-12T05:46:10Z",
+      "physical_total": 17031217152,
+      "physical_available": 4742811648,
+      "page_available": 5620015104,
+      "utc_epoch_seconds": 1791783970.899883,
+      "observer_pid": 55836
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-12T05:46:11Z",
+        "utc_epoch_seconds": 1791783971.4550052,
+        "pid": 54724,
+        "thread_id": 57672,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.12101173400878906
+    }
+  }
+}

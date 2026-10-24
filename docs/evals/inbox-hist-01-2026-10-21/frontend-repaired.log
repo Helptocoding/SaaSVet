@@ -1,0 +1,17 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ↓ src/api/inbox.test.js (5 tests | 5 skipped)
+ ✓ src/pages/inbox/useThreadHistory.test.jsx (15 tests) 322ms
+ ✓ src/pages/inbox/ThreadViewport.test.jsx (11 tests | 8 skipped) 570ms
+     ✓ a scrollTop=0 sólo pide anteriores bajo 160 px  504ms
+ ✓ src/pages/inbox/index.test.jsx (87 tests | 85 skipped) 1408ms
+     ✓ active: explica el turno y habilita Tomar y acusar recibo al terminar  992ms
+     ✓ human_active: explica el turno y habilita Liberar al terminar  407ms
+
+ Test Files  3 passed | 1 skipped (4)
+      Tests  20 passed | 98 skipped (118)
+   Start at  10:22:26
+   Duration  19.24s (transform 2.42s, setup 3.17s, import 7.49s, tests 2.30s, environment 22.17s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-hist-01-2026-10-21/vitest-repaired.json

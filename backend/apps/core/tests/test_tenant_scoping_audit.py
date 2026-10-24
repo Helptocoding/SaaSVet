@@ -64,6 +64,12 @@ NON_TENANT_MODELS = {
 # o interno de analytics por org). Ratchet: el scan actual debe ser exactamente
 # este set. Ver docstring para cómo actualizar.
 BASELINE = {
+    # Revisado en B9: B3 introdujo los dos checks de TurnWork en
+    # services._capture_witness y services._apply_release. Ambos filtran por
+    # conversation=convo bajo lock; la vista resuelve ese padre con
+    # Conversation.objects.for_organization(request.user.organization).
+    # Es scoping por FK padre tenant-validado, no una lectura cross-org.
+    ('agent', 'services.py', 'TurnWork', 'filter'),
     ('analytics', 'services.py', 'DailyOrgMetrics', 'filter'),
     # Revisado 2026-07-16 (É-F0 PR-4): el webhook de WhatsApp resuelve
     # número→organización por external_account_id (unique GLOBAL) — es el

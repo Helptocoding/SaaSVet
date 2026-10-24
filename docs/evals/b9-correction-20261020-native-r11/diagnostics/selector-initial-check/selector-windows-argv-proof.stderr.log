@@ -1,0 +1,15 @@
+C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\b9-correction-20261020-native-r11\diagnostics\verify_selector.cjs:12
+const requireProof = (ok, message) => { if (!ok) throw new Error(message); };
+                                                 ^
+
+Error: Prior inventory includes another file or actual test outcome
+    at requireProof (C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\b9-correction-20261020-native-r11\diagnostics\verify_selector.cjs:12:56)
+    at Object.<anonymous> (C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\b9-correction-20261020-native-r11\diagnostics\verify_selector.cjs:72:5)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49
+
+Node.js v20.20.2

@@ -1,0 +1,55 @@
+{
+  "label": "full-general",
+  "state": "PASS",
+  "tests": 3213,
+  "skips": [
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int21Tests.test_21_05_bis_new_pet_existing_owner",
+      "reason": "INT-21-bis (mascota nueva de cliente existente) sin tool en PR-17a; el alta reusa create-with-patient \u2014 pendiente de PR futuro."
+    },
+    {
+      "id": "apps.analytics.tests.test_snapshot_v1.VisibilityPolicyFutureProofTests.test_visibility_excludes_voided_when_policy_is_excluding_voided",
+      "reason": "Placeholder for historical_excluding_voided policy (ADR required)"
+    },
+    {
+      "id": "apps.core.tests.test_audit_orphan_fks.AuditOrphanFksDanglingTests.test_dangling_fk_detected",
+      "reason": "Postgres FK constraint hard, dangling no creable v\u00eda SQL"
+    },
+    {
+      "id": "apps.agent.tests.test_d29_frontiers.PhysicalVerifierNegativeTests.test_base_prerequisite_cannot_be_removed",
+      "reason": "Requires the preserved physical receipts; never uses a replay fixture"
+    },
+    {
+      "id": "apps.agent.tests.test_d29_frontiers.PhysicalVerifierNegativeTests.test_common_calendar_change_fails_even_with_resealed_hash",
+      "reason": "Requires the preserved physical receipts; never uses a replay fixture"
+    },
+    {
+      "id": "apps.agent.tests.test_d29_frontiers.PhysicalVerifierNegativeTests.test_forecast_miss_cannot_be_renamed_claim_miss",
+      "reason": "Requires the preserved physical receipts; never uses a replay fixture"
+    },
+    {
+      "id": "apps.agent.tests.test_d29_frontiers.PhysicalVerifierNegativeTests.test_later_snapshot_cannot_replace_pre_query_causal_witness",
+      "reason": "Requires the preserved physical receipts; never uses a replay fixture"
+    },
+    {
+      "id": "apps.agent.tests.test_d29_frontiers.PhysicalVerifierNegativeTests.test_missing_accepted_input_cannot_disappear_at_drain",
+      "reason": "Requires the preserved physical receipts; never uses a replay fixture"
+    },
+    {
+      "id": "apps.agent.tests.test_d29_frontiers.PhysicalVerifierNegativeTests.test_missing_coexisting_conversation_fails_even_with_resealed_hash",
+      "reason": "Requires the preserved physical receipts; never uses a replay fixture"
+    },
+    {
+      "id": "apps.agent.tests.test_d29_frontiers.PhysicalVerifierNegativeTests.test_model_pass_cannot_override_unobserved_frontier",
+      "reason": "Requires the preserved physical receipts; never uses a replay fixture"
+    },
+    {
+      "id": "apps.agent.tests.test_d29_frontiers.PhysicalVerifierNegativeTests.test_synthetic_provenance_cannot_accredit",
+      "reason": "Requires the preserved physical receipts; never uses a replay fixture"
+    },
+    {
+      "id": "apps.agent.tests.test_d29_frontiers.PhysicalVerifierNegativeTests.test_zero_ready_queue_does_not_erase_unfinished_work",
+      "reason": "Requires the preserved physical receipts; never uses a replay fixture"
+    }
+  ]
+}

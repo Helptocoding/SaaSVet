@@ -1,0 +1,27 @@
+{
+  "state": "PENDING_ENVIRONMENT_DISK",
+  "raw_stop_preserved": true,
+  "cause": "Frozen monitor observed /mnt/c free space below the original 1 GiB reserve",
+  "product_failure_attributed": false,
+  "space_drop_cause_established": false,
+  "reserve_bytes": 1073741824,
+  "first_breach_utc": "2026-10-12T05:46:01Z",
+  "minimum_backing_disk_available_bytes": 908460032,
+  "disk_after_block_bytes": 4069318656,
+  "later_recovery_does_not_revalidate_block": true,
+  "memory_reserve_exhausted": false,
+  "clock_incident": false,
+  "awake_request_active_through_block": true,
+  "termination": "SIGTERM of owned process group followed by SIGKILL after the original 10-second grace; exit -9",
+  "formal_reruns": 0,
+  "final_runner_receipt_available": false,
+  "partial_journal_records_ok": 53,
+  "partial_records_are_not_a_directed_gate_pass": true,
+  "evidence": [
+    "STOP.json",
+    "monitor-directed.json",
+    "blocks/directed.command.json",
+    "blocks/directed.results.passed.jsonl",
+    "disk-after-stop.json"
+  ]
+}

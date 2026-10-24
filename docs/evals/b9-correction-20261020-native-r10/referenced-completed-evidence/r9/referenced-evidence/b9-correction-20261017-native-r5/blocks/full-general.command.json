@@ -1,0 +1,70 @@
+{
+  "label": "full-general",
+  "candidate_sha": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\python\\python.exe",
+    "-B",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r5\\recorded_suite.py",
+    "full-general",
+    "test_b9i_full_general"
+  ],
+  "cwd": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\src\\backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "host": {
+      "utc": "2026-10-17T17:27:06Z",
+      "utc_epoch_seconds": 1792258026.8415568,
+      "physical_total": 17031217152,
+      "physical_available": 6481891328,
+      "page_available": 11228798976,
+      "disk_available": 12818206720,
+      "platform": "Windows native"
+    },
+    "ready": true
+  },
+  "pid": 14540,
+  "wrapper_pid": 14540,
+  "owned_tree_termination": {
+    "argv": [
+      "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+      "proxy",
+      "taskkill.exe",
+      "/PID",
+      "14540",
+      "/T",
+      "/F"
+    ],
+    "exit_code": 0,
+    "wrapper_pid": 14540,
+    "foreign_processes_targeted": false
+  },
+  "exit_code": 1,
+  "seconds": 18183.943867600006,
+  "invalidating_incident": "Owned awake request unavailable: RuntimeError: Awake heartbeat stale or clock mismatch",
+  "resources_after": {
+    "host": {
+      "utc": "2026-10-17T22:30:10Z",
+      "utc_epoch_seconds": 1792276210.7645097,
+      "physical_total": 17031217152,
+      "physical_available": 4993843200,
+      "page_available": 9691656192,
+      "disk_available": 2636357632,
+      "platform": "Windows native"
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-17T22:30:10Z",
+        "utc_epoch_seconds": 1792276210.5318723,
+        "pid": 19404,
+        "thread_id": 14912,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.23781943321228027
+    }
+  }
+}

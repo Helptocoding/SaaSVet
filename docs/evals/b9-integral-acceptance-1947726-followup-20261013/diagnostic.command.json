@@ -1,0 +1,68 @@
+{
+  "state": "COMPLETED",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "test_invocations": 1,
+  "argv": [
+    "/home/lap/b9i-diagnostic-1947726-20261013-d1/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-diagnostic-1947726-20261013-d1/venv/bin/python",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-followup-20261013/diagnostic_suite.py"
+  ],
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-14T04:50:17Z",
+      "physical_available": 7639289856,
+      "physical_total": 8252514304,
+      "disk_available": 10733850624,
+      "linux_virtual_disk_available": 1018196312064
+    },
+    "host": {
+      "utc": "2026-10-14T04:50:17Z",
+      "physical_total": 17031217152,
+      "physical_available": 5283291136,
+      "page_available": 12054265856,
+      "utc_epoch_seconds": 1791953417.0379117,
+      "observer_pid": 21224
+    },
+    "awake": {
+      "utc": "2026-10-14T04:50:17Z",
+      "utc_epoch_seconds": 1791953417.0459685,
+      "pid": 20524,
+      "thread_id": 18044,
+      "api_previous_state": "0x80000001"
+    },
+    "host_age": 0.8111681938171387,
+    "awake_age": 0.8031132221221924
+  },
+  "purpose": "Diagnostic only; not integral acceptance",
+  "exit_code": 1,
+  "seconds": 192.960063123,
+  "invalidating_incident": null,
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-14T04:53:30Z",
+      "physical_available": 7621455872,
+      "physical_total": 8252514304,
+      "disk_available": 10403831808,
+      "linux_virtual_disk_available": 1018173796352
+    },
+    "host": {
+      "utc": "2026-10-14T04:53:30Z",
+      "physical_total": 17031217152,
+      "physical_available": 4147761152,
+      "page_available": 10692857856,
+      "utc_epoch_seconds": 1791953610.186229,
+      "observer_pid": 21224
+    },
+    "awake": {
+      "utc": "2026-10-14T04:53:30Z",
+      "utc_epoch_seconds": 1791953610.7030466,
+      "pid": 20524,
+      "thread_id": 18044,
+      "api_previous_state": "0x80000001"
+    },
+    "host_age": 0.6722080707550049,
+    "awake_age": 0.15539264678955078
+  }
+}

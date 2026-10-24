@@ -1,0 +1,59 @@
+{
+  "status": "PASS",
+  "composite_manifest": "manifest.json",
+  "backend_unique_pass": 20,
+  "frontend_unique_pass": 25,
+  "source_sha256": {
+    "backend/apps/agent/inbox_assignment.py": "362c89af8b04b94051f06c32dea50ab1de7ae5582b2a5599d7212b0310d49c2a",
+    "backend/apps/agent/views.py": "3140e51e1d11f6c76631fe0c5f555a7f4951dd3b6e368af4a5d98ca2f1111a66",
+    "backend/apps/agent/urls.py": "88d18c3e2779351be9720752cb40fe345fe33e2769722ec923cf6847598db164",
+    "backend/apps/agent/tests/test_inbox_assignment.py": "65d1d514809c8dcfc1f0ee75808fb3050ed58bd3aa1c87c52ee9fe9b88700c4e",
+    "frontend/src/api/inbox.js": "61b0761621f515f94c71fee81672db39b5d7b691a8af46a6d25562841682d3f0",
+    "frontend/src/pages/inbox/index.jsx": "5c774634ab90e1638e290827bf591c55e031b7260859d955c987f8c6eb52e851",
+    "frontend/src/pages/inbox/inbox.module.css": "5fd427bb9cd74c451eb76e03e3aa831a70d2fdd60fb0fea1abba25364243c9da",
+    "frontend/src/pages/inbox/ThreadAssignment.jsx": "5333a2d86d483dee3ddcdcf45a719c613e9e9066cea3a27ead5573d773b7575d",
+    "frontend/src/pages/inbox/ThreadAssignment.test.jsx": "b9695fb1707e4c8df2ef147423d0b6589a497f5ddff6f3bed22a7a3328f59fa4",
+    "frontend/src/pages/inbox/index.assignment.test.jsx": "38a0bf3e3270af70b608c81ee737e9b76bc397ee7c7a86cdce99a6074f9b918a",
+    "docs/CIERRE-INBOX-WHATSAPP.md": "24609078f387651fb100641395a8d199f699f81fcc0a5b10ba86825a2a28b34d",
+    "docs/plan-implementacion-whatsapp-inbox-2026-08-22.md": "09d4e3a7b4dedf84e8cfe61acfdd2c0a5570b052b92abe163bd4e96ecd69e899",
+    "docs/modules/agent.md": "9cb1e4d4791bfadd9322bce8b97613d264dce97962bf64a4abf1eeb2f6e9150d",
+    "docs/modules/frontend.md": "ea8098e886b27ee5db9823e463cfe0c2659cee354e59cecf88ef647faca69490",
+    "CHANGELOG.md": "ba955c19eb6300e905fa30b2963fb21ea29c8e38157fc63124ef3ef68f705341"
+  },
+  "whitespace_only_after_test": [
+    {
+      "path": "frontend/src/pages/inbox/inbox.module.css",
+      "change": "Removed one empty line at EOF after diff check"
+    }
+  ],
+  "diff_check": {
+    "command": [
+      "rtk",
+      "proxy",
+      "git",
+      "diff",
+      "--check",
+      "--",
+      "backend/apps/agent/inbox_assignment.py",
+      "backend/apps/agent/views.py",
+      "backend/apps/agent/urls.py",
+      "backend/apps/agent/tests/test_inbox_assignment.py",
+      "frontend/src/api/inbox.js",
+      "frontend/src/pages/inbox/index.jsx",
+      "frontend/src/pages/inbox/inbox.module.css",
+      "frontend/src/pages/inbox/ThreadAssignment.jsx",
+      "frontend/src/pages/inbox/ThreadAssignment.test.jsx",
+      "frontend/src/pages/inbox/index.assignment.test.jsx",
+      "docs/CIERRE-INBOX-WHATSAPP.md",
+      "docs/plan-implementacion-whatsapp-inbox-2026-08-22.md",
+      "docs/modules/agent.md",
+      "docs/modules/frontend.md",
+      "CHANGELOG.md"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "warning: in the working copy of 'backend/apps/agent/urls.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'backend/apps/agent/views.py', LF will be replaced by CRLF the next time Git touches it\n"
+  },
+  "working_database_migrated": false,
+  "real_reception_meta": "POSTPONED_PENDING"
+}

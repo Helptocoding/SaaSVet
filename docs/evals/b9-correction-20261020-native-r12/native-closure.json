@@ -1,0 +1,59 @@
+{
+  "state": "PASS",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "acceptance_result": "FAIL",
+  "host_clock_configuration_changed": false,
+  "W32Time_changed": false,
+  "global_power_policy_changed": false,
+  "foreign_processes_terminated": false,
+  "owned_workspace_removed": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6",
+  "owned_helpers_exited": true,
+  "auxiliary_exit_codes": {
+    "awake": 0,
+    "observer": 0,
+    "cleanup": 0
+  },
+  "api_restoration_scope": "CURRENT_R12_REQUEST_ONLY",
+  "historical_r6_r7_API_restoration_claimed": false,
+  "accepted_historical_evidence_limitation": true,
+  "application_PASS_cases_rerun": 0,
+  "profiles_executed": 0,
+  "postgresql": {
+    "state": "STOPPED",
+    "postmaster_pid": 10152,
+    "wrapper_pid": 25204,
+    "wrapper_exit_observed": true,
+    "wrapper_exit_code": null,
+    "port": 35490,
+    "port_closed": true,
+    "postmaster_pid_file_absent": true
+  },
+  "postgresql_log_evidence": {
+    "current": {
+      "path": "postgresql-start-1.log",
+      "postmaster_pid": 10152,
+      "wrapper_pid": 25204,
+      "sha256": "5ea223130eed0c1aa8b7912870babed982a25331177eb53adb517ca590847906",
+      "bytes": 2635,
+      "stable_after_owned_process_exit": true
+    },
+    "legacy": {
+      "original_path": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\postgresql.log",
+      "preserved_as": "postgresql-final.log",
+      "sha256_before_cleanup": "4baf3e1f3081d37ecad2b421e7992fe5e763cccaa9e98b219ca7af1c3bac8448",
+      "sha256_preserved": "4baf3e1f3081d37ecad2b421e7992fe5e763cccaa9e98b219ca7af1c3bac8448",
+      "is_current_run_log": false
+    }
+  },
+  "receipt_sha256": {
+    "cleanup.json": "5f597af417bbea8f0b178786942dc833a5b1bf5391a61a5435c78019f61a34e0",
+    "invocation-cleanup.json": "13b827af9d0b81d2ccf8ffb99e52a51210edd5c32184c417986a4ac9afaf692e",
+    "postgresql-wrapper-closure.json": "5865574cca78b8f11bf0a03b58bb92605c8408b5add95cd48abe6f125f0c9898",
+    "awake-request/closure.json": "6a07d27bc5c82cd4b3d50e87089a3e7c3153ad45cf97954d545a694eeb41fa9e",
+    "resource-observer-closure.json": "83a3520fe2c39f94587f352e2e5f2c9110751a2fb8bc7b0626a75ec8e07247a9",
+    "integrity-after-security.json": "323e6faf3ed7671ea8bf8fb53d69734dd6a7141b88c1911f6ebf19fd08529598",
+    "dependency-check-after-security.json": "c86332026978d78f25744ddacdb2ac38e30c77c1cc3955f4f511274eb479e350",
+    "seal-check-after-security.json": "71f4717c48de7d4dad0d312be382aab95540a775ce96acfba7385bfa47c89690"
+  },
+  "activation": "PENDING_ACTIVATION_REQUIREMENTS"
+}

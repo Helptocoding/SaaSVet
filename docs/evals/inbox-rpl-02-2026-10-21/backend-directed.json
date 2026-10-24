@@ -1,0 +1,22 @@
+{
+  "kind": "backend",
+  "labels": [
+    "apps.channels.tests.test_replies_webhook",
+    "apps.channels.tests.test_webhook.WebhookSignatureTests",
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_original_text_and_context_id_survive_persistence",
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_button_and_list_keep_distinct_ids_kinds_and_visible_titles",
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_legacy_metadata_is_diagnostic_not_runtime_evidence",
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_exact_emitted_reference_is_available_without_granting_authority",
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_referenced_inbound_is_preserved",
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_foreign_organization_account_and_contact_cannot_resolve_reference",
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_unemitted_or_later_reference_is_not_resolved",
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_foreign_target_rejected_by_service_and_normal_save",
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_hidden_and_discarded_target_remains_valid_history",
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_same_thread_across_closed_and_current_episodes"
+  ],
+  "working_database_migrated": false,
+  "test_database": "test_inbox_rpl02_63f25fee476b",
+  "test_database_remains": false,
+  "exit_code": 1,
+  "elapsed_s": 188.72566830000142
+}

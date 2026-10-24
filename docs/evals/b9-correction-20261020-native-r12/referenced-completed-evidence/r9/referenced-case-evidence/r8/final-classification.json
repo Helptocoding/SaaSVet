@@ -1,0 +1,10 @@
+{
+  "decision": "FAIL",
+  "cause": "apps.core.tests.test_tenant_scoping_audit.TenantScopingAuditTests.test_no_unbaselined_objects_access_without_for_organization: applicable static ratchet found unbaselined ('agent','services.py','TurnWork','filter'); valid complete execution; does not by itself demonstrate a runtime tenant leak.",
+  "date_local": "2026-10-20",
+  "timezone": "America/Mexico_City",
+  "accepted_historical_evidence_limitation": true,
+  "evidence": "diagnostics/completed-prefix-validation.json",
+  "no_automatic_correction_or_rerun": true,
+  "remaining_original_stages": "NOT_EXECUTED"
+}

@@ -1,0 +1,127 @@
+{
+  "state": "PASS_AS_SAMPLED",
+  "commands": {
+    "b0": {
+      "utc_epoch_start": 1792027639.2561705,
+      "utc_epoch_end": 1792027833.1508608,
+      "host_samples": 194,
+      "minimum_host_available_bytes": 3478605824,
+      "host_samples_below_execution_reserve": 0,
+      "minimum_controller_cached_host_bytes": 3511877632,
+      "minimum_guest_available_bytes": 7342129152,
+      "minimum_backing_disk_available_bytes": 2173374464,
+      "maximum_absolute_clock_skew_seconds": 2.5550025384291075e-06
+    },
+    "b3": {
+      "utc_epoch_start": 1792027849.2374158,
+      "utc_epoch_end": 1792028256.9172018,
+      "host_samples": 407,
+      "minimum_host_available_bytes": 3564625920,
+      "host_samples_below_execution_reserve": 0,
+      "minimum_controller_cached_host_bytes": 3581677568,
+      "minimum_guest_available_bytes": 7234064384,
+      "minimum_backing_disk_available_bytes": 2168573952,
+      "maximum_absolute_clock_skew_seconds": 1.0745939107437152e-06
+    },
+    "b4": {
+      "utc_epoch_start": 1792028272.0009665,
+      "utc_epoch_end": 1792029674.9138129,
+      "host_samples": 1398,
+      "minimum_host_available_bytes": 2659635200,
+      "host_samples_below_execution_reserve": 0,
+      "minimum_controller_cached_host_bytes": 2659635200,
+      "minimum_guest_available_bytes": 7234674688,
+      "minimum_backing_disk_available_bytes": 2158747648,
+      "maximum_absolute_clock_skew_seconds": 3.292118890385609e-05
+    },
+    "b5": {
+      "utc_epoch_start": 1792029695.0351133,
+      "utc_epoch_end": 1792030211.7005117,
+      "host_samples": 515,
+      "minimum_host_available_bytes": 2309709824,
+      "host_samples_below_execution_reserve": 0,
+      "minimum_controller_cached_host_bytes": 2410246144,
+      "minimum_guest_available_bytes": 7135907840,
+      "minimum_backing_disk_available_bytes": 2124738560,
+      "maximum_absolute_clock_skew_seconds": 1.491649618401425e-05
+    },
+    "billing-schema": {
+      "utc_epoch_start": 1792027617.1082,
+      "utc_epoch_end": 1792027623.153915,
+      "host_samples": 7,
+      "minimum_host_available_bytes": 4000178176,
+      "host_samples_below_execution_reserve": 0,
+      "minimum_controller_cached_host_bytes": 4077830144,
+      "minimum_guest_available_bytes": 7440932864,
+      "minimum_backing_disk_available_bytes": 2273869824,
+      "maximum_absolute_clock_skew_seconds": 9.48944034462329e-07
+    },
+    "directed": {
+      "utc_epoch_start": 1792026264.3529167,
+      "utc_epoch_end": 1792027393.2032943,
+      "host_samples": 1125,
+      "minimum_host_available_bytes": 3954806784,
+      "host_samples_below_execution_reserve": 0,
+      "minimum_controller_cached_host_bytes": 3954806784,
+      "minimum_guest_available_bytes": 7232712704,
+      "minimum_backing_disk_available_bytes": 2199654400,
+      "maximum_absolute_clock_skew_seconds": 9.532664921607648e-05
+    },
+    "django-check": {
+      "utc_epoch_start": 1792027409.2934837,
+      "utc_epoch_end": 1792027415.3191984,
+      "host_samples": 7,
+      "minimum_host_available_bytes": 3668938752,
+      "host_samples_below_execution_reserve": 0,
+      "minimum_controller_cached_host_bytes": 3713236992,
+      "minimum_guest_available_bytes": 7448977408,
+      "minimum_backing_disk_available_bytes": 2284326912,
+      "maximum_absolute_clock_skew_seconds": 1.0599883353279438e-06
+    },
+    "full": {
+      "utc_epoch_start": 1792030225.8260128,
+      "utc_epoch_end": 1792038945.6843631,
+      "host_samples": 8677,
+      "minimum_host_available_bytes": 2451697664,
+      "host_samples_below_execution_reserve": 0,
+      "minimum_controller_cached_host_bytes": 2451697664,
+      "minimum_guest_available_bytes": 7060746240,
+      "minimum_backing_disk_available_bytes": 2040823808,
+      "maximum_absolute_clock_skew_seconds": 0.0007780745181662496
+    },
+    "migrate": {
+      "utc_epoch_start": 1792027447.449846,
+      "utc_epoch_end": 1792027603.0629997,
+      "host_samples": 156,
+      "minimum_host_available_bytes": 3597279232,
+      "host_samples_below_execution_reserve": 0,
+      "minimum_controller_cached_host_bytes": 3612438528,
+      "minimum_guest_available_bytes": 7362035712,
+      "minimum_backing_disk_available_bytes": 2175275008,
+      "maximum_absolute_clock_skew_seconds": 2.269844344482408e-06
+    },
+    "migration-drift": {
+      "utc_epoch_start": 1792027429.367626,
+      "utc_epoch_end": 1792027434.3847556,
+      "host_samples": 6,
+      "minimum_host_available_bytes": 3827105792,
+      "host_samples_below_execution_reserve": 0,
+      "minimum_controller_cached_host_bytes": 3877806080,
+      "minimum_guest_available_bytes": 7440908288,
+      "minimum_backing_disk_available_bytes": 2281971712,
+      "maximum_absolute_clock_skew_seconds": 2.322960881429026e-07
+    }
+  },
+  "execution_reserve_violations": {},
+  "observation_frequency_seconds": 1,
+  "memory_reserve_bytes": 2147483648,
+  "disk_reserve_bytes": 1073741824,
+  "clock_limit_seconds": 1,
+  "observed_complete_prefix_bytes": 2641739,
+  "observed_complete_prefix_sha256": "1a12723f94aa8d4505f49b5cdb765f942689de713a64af61df4e659bb122b167",
+  "pre_execution_low_samples": 54,
+  "pre_execution_minimum_host_bytes": 1189212160,
+  "post_execution_low_samples": 6,
+  "post_execution_minimum_host_bytes": 2063908864,
+  "limits": "Sampled execution intervals only; preparatory/post-execution lows disclosed separately; no continuous millisecond guarantee"
+}

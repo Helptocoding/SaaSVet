@@ -1,0 +1,11 @@
+{
+  "state": "FAIL",
+  "phase": "profile-base",
+  "cause": "Original applicable profile gate violated",
+  "no_rerun": true,
+  "gates": {
+    "healthy_claim_p95_le_10": false,
+    "safety_dispatch_p95_le_5": true,
+    "outbox_dispatch_p95_le_5": true
+  }
+}

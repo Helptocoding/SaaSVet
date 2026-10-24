@@ -106,6 +106,7 @@ class Message(OrganizationalModel):
     doc de arquitectura).
     """
 
+    track_updated_at = True
     DIRECTION_IN = 'in'
     DIRECTION_OUT = 'out'
     DIRECTION_CHOICES = (
@@ -151,6 +152,7 @@ class Message(OrganizationalModel):
         ('document', 'Documento'),
         ('location', 'Ubicación'),
         ('sticker', 'Sticker'),
+        ('video', 'Video'),
         ('button_reply', 'Respuesta de botón'),
         ('other', 'Otro'),
     )
@@ -226,6 +228,12 @@ class Message(OrganizationalModel):
         max_length=64, null=True, blank=True,
     )
     body = models.TextField(blank=True, default='')
+    # Cita entre episodios del mismo hilo: PROTECT preserva su destino frente a
+    # borrados físicos. El índice explícito evita duplicar el automático de FK.
+    reply_to = models.ForeignKey(
+        'self', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='direct_replies', db_index=False,
+    )
     # wamid (inbound: llega en el webhook; outbound: lo asigna el proveedor
     # al enviar). Nullable — el unique parcial exige not-null + direction in.
     external_message_id = models.CharField(
@@ -319,6 +327,7 @@ class Message(OrganizationalModel):
             ),
         ]
         indexes = [
+            models.Index(fields=['reply_to'], name='message_reply_target'),
             models.Index(fields=['direction', 'status', 'next_attempt_at'], name='message_send_ready'),
             models.Index(fields=['send_lease_until'], condition=models.Q(status='sending'),
                          name='message_send_expiry'),
@@ -335,5 +344,97 @@ class Message(OrganizationalModel):
             models.Index(fields=['conversation', 'semantic_type', 'created_at']),
         ]
 
+    def clean(self):
+        super().clean()
+        if self.reply_to_id is not None:
+            from .replies import resolve_reply_target
+            resolve_reply_target(organization_id=self.organization_id,
+                channel_account_id=self.channel_account_id, contact_id=self.contact_id,
+                target_id=self.reply_to_id)
+
     def __str__(self):
         return f"Message<{self.direction} {self.status} conv={self.conversation_id}>"
+
+
+class MessageMedia(PublicIdMixin, OrganizationalModel):
+    """Private incoming binary; expired rows remain as readable tombstones."""
+    from .media_storage import media_storage, media_upload_path
+
+    track_updated_at = True
+    STATUS_CHOICES = [(value, value) for value in ('pending', 'downloading', 'ready', 'failed', 'expired')]
+    message = models.OneToOneField(Message, on_delete=models.PROTECT, related_name='media')
+    channel_account = models.ForeignKey(ChannelAccount, on_delete=models.PROTECT, related_name='media')
+    provider_media_id = models.CharField(max_length=128)
+    mime_type = models.CharField(max_length=100, blank=True, default='')
+    file_size = models.PositiveBigIntegerField(null=True, blank=True)
+    filename = models.CharField(max_length=255, blank=True, default='')
+    sha256 = models.CharField(max_length=64, blank=True, default='')
+    expected_sha256 = models.CharField(max_length=64, blank=True, default='')
+    file = models.FileField(upload_to=media_upload_path, storage=media_storage, max_length=500, blank=True)
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
+    error = models.CharField(max_length=200, blank=True, default='')
+    attempts = models.PositiveSmallIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    worker_token = models.UUIDField(null=True, blank=True)
+    lease_until = models.DateTimeField(null=True, blank=True)
+    persisted_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    expired_at = models.DateTimeField(null=True, blank=True)
+    last_checked_at = models.DateTimeField(null=True, blank=True)
+    purge_verified_at = models.DateTimeField(null=True, blank=True)
+    duration_ms = models.PositiveIntegerField(null=True, blank=True)
+    width = models.PositiveIntegerField(null=True, blank=True)
+    height = models.PositiveIntegerField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['channel_account', 'provider_media_id'],
+                condition=~models.Q(provider_media_id=''), name='media_provider_per_account'),
+            models.CheckConstraint(condition=~models.Q(status='downloading') | models.Q(
+                worker_token__isnull=False, lease_until__isnull=False), name='media_download_claim'),
+            models.CheckConstraint(condition=~models.Q(status='ready') | (models.Q(
+                persisted_at__isnull=False, expires_at__isnull=False, file_size__isnull=False)
+                & ~models.Q(file='') & ~models.Q(sha256='')), name='media_ready_evidence'),
+            models.CheckConstraint(condition=~models.Q(status='expired') | models.Q(expired_at__isnull=False),
+                name='media_expiry_evidence'),
+        ]
+        indexes = [models.Index(fields=['organization', 'status'], name='media_org_status'),
+            models.Index(fields=['status', 'next_attempt_at'], name='media_download_ready'),
+            models.Index(fields=['expires_at'], name='media_expiry_due')]
+
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        from .media_storage import safe_filename
+        if self.message_id:
+            message = self.message
+            if (message.organization_id != self.organization_id
+                    or message.channel_account_id != self.channel_account_id or message.direction != 'in'):
+                raise ValidationError('La media debe pertenecer al mensaje entrante y clínica de su cuenta.')
+        if self.channel_account_id and self.channel_account.organization_id != self.organization_id:
+            raise ValidationError('La cuenta de media debe pertenecer a la misma clínica.')
+        self.filename = safe_filename(self.filename) if self.filename else ''
+
+
+class MediaPurgeIncident(PublicIdMixin, OrganizationalModel):
+    """Durable purge failures and deadlines; resolution needs operator evidence."""
+    media = models.OneToOneField(MessageMedia, on_delete=models.PROTECT, related_name='purge_incident')
+    opened_at = models.DateTimeField()
+    deadline_at = models.DateTimeField()
+    first_failed_at = models.DateTimeField(null=True, blank=True)
+    last_failed_at = models.DateTimeField(null=True, blank=True)
+    failure_count = models.PositiveIntegerField(default=0)
+    escalated_at = models.DateTimeField(null=True, blank=True)
+    breached_at = models.DateTimeField(null=True, blank=True)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    acknowledged_by = models.CharField(max_length=100, blank=True, default='')
+    closed_at = models.DateTimeField(null=True, blank=True)
+    resolution_ref = models.CharField(max_length=200, blank=True, default='')
+    notification_receipts = models.JSONField(default=dict, blank=True)
+    notification_pending = models.BooleanField(default=True)
+    notice_next_at = models.DateTimeField(null=True, blank=True)
+    notice_token = models.UUIDField(null=True, blank=True)
+    notice_lease_until = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['closed_at', 'deadline_at'], name='media_incident_due')]

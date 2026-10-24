@@ -1,0 +1,114 @@
+{
+  "state": "PASS",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "source_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+  "source_campaign": "b9-correction-20261020-native-r9",
+  "backend_tests": 3331,
+  "backend_PASS": 3319,
+  "backend_SKIP": 12,
+  "frontend_build": "REFERENCED_PASS",
+  "historical_reference_blocks": 13,
+  "manifest": "completed-reference-manifest.json",
+  "manifest_sha256": "97486ac37e4b03d23d2ee442151e0d585ca07a780dd81434695364cb8a873cce",
+  "completed_prefix_proof_sha256": "575339d8ca2f810039c48fe15db3a7c345189ed617f31988f03a4a993caa5449",
+  "reference_files": 743,
+  "source_commands": {
+    "full-general-remainder": {
+      "state": "PASS",
+      "command": "blocks/full-general-remainder.command.json",
+      "monitor_samples": 17,
+      "min_ram_bytes": 4047691776,
+      "min_disk_bytes": 9691054080,
+      "max_clock_skew_seconds": 0.0004951769678882556
+    },
+    "full-general-assemble": {
+      "state": "PASS",
+      "command": "blocks/full-general-assemble.command.json",
+      "monitor_samples": 6,
+      "min_ram_bytes": 4256468992,
+      "min_disk_bytes": 8652517376,
+      "max_clock_skew_seconds": 0.00011307738350296859
+    },
+    "frontend-build": {
+      "state": "PASS",
+      "command": "blocks/frontend-build.command.json",
+      "monitor_samples": 20,
+      "min_ram_bytes": 3256393728,
+      "min_disk_bytes": 8624758784,
+      "max_clock_skew_seconds": 0.0004195268811599817
+    }
+  },
+  "accepted_historical_evidence_limitation": true,
+  "continuous_campaign_claimed": false,
+  "application_tests_executed": false,
+  "current_backend_tests_executed": 0,
+  "case_summary": {
+    "state": "PASS",
+    "candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+    "source_candidate_tree": "5e11236daabf4ef70ea9d0f08fee52aed5c30ff2",
+    "retained_ids": 3212,
+    "retained_PASS": 3200,
+    "retained_SKIP": 12,
+    "new_selected_ids": 1,
+    "previous_accepted_cases": 3212,
+    "prior_pass": 3200,
+    "prior_skips": 12,
+    "current_cases": 1,
+    "historical_failed_attempts": 3,
+    "result_general": 3213,
+    "corrected_failed_case_ids": [
+      "apps.core.tests.test_tenant_scoping_audit.TenantScopingAuditTests.test_no_unbaselined_objects_access_without_for_organization"
+    ],
+    "snapshot_corrected_case_ids": [
+      "apps.agent.tests.test_contracts.CommitmentContractTests.test_fields_match_snapshot",
+      "apps.agent.tests.test_contracts.ToolOutcomeContractTests.test_fields_match_snapshot"
+    ],
+    "retained_sources": {
+      "r6": {
+        "tests": 2485,
+        "PASS": 2483,
+        "SKIP": 2
+      },
+      "r7": {
+        "tests": 405,
+        "PASS": 405,
+        "SKIP": 0,
+        "source_journal_observations": 407,
+        "excluded_historical_FAIL": 2
+      },
+      "r8": {
+        "tests": 322,
+        "PASS": 312,
+        "SKIP": 10,
+        "source_journal_observations": 323,
+        "excluded_historical_FAIL": 1
+      }
+    },
+    "original_invocation_exits": {
+      "r6": "UNKNOWN",
+      "r7": "UNKNOWN",
+      "r8": 1
+    },
+    "historical_disk_and_monotonic_evidence_verified": false,
+    "accepted_historical_evidence_limitation": true,
+    "manifest": "case-resumption-manifest.json",
+    "validation": "case-resumption-validation.json",
+    "authorization": "baseline-resumption-authorization.json",
+    "manifest_sha256": "85f01293e758e3f47023a7a042d9f1a14e5821d1a5b6497bd6ac5404e99ca21a"
+  },
+  "inputs": {
+    "state": "PASS",
+    "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+    "source_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+    "candidate_files": 3332,
+    "allowed_path": "frontend/src/pages/inbox/index.test.jsx",
+    "unchanged_source_blobs": 3331,
+    "exact_two_setup_calls_inverse_verified": true,
+    "backend_only": false,
+    "backend_results_reused": true,
+    "frontend_build_result_reused": true,
+    "current_backend_test_runs": 0,
+    "application_tests_executed": false,
+    "accepted_historical_evidence_limitation": true
+  }
+}

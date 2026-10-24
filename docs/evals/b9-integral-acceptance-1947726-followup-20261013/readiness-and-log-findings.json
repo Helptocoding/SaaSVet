@@ -1,0 +1,731 @@
+{
+  "observed_utc": "2026-10-14T02:09:39.885218+00:00",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "mode": "READ_ONLY_FOLLOWUP_NO_TESTS",
+  "C_free_bytes": 9261281280,
+  "initial_host_measurement": {
+    "disk_free_GiB": 8.64,
+    "RAM_available_GiB": 6.65,
+    "utc": "2026-10-14T02:06:50.798063+00:00"
+  },
+  "source_log": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-integral-acceptance-1947726-wsl-20261012-r9\\blocks\\full.command.log",
+  "source_log_sha256": "893f72bb7002b5bdea8f1f2bead2d502eae5c122269c9bfab36ee108a45baf3f",
+  "test_sources": {
+    "backend/apps/agent/tests/test_regression_f2.py": {
+      "candidate_blob_sha256": "85d85094e1302acf92ee3f26b6b43c92c638cfb7df3da913768ce29bd26983dd",
+      "checkout_CRLF_normalized_equal": true
+    },
+    "backend/apps/agent/tests/test_regression_suite.py": {
+      "candidate_blob_sha256": "60c22a60132bdb3ce314ec0ea0db20f7eb7d4272160f19d6d79a1777bac86939",
+      "checkout_CRLF_normalized_equal": true
+    },
+    "backend/apps/agent/tests/harness.py": {
+      "candidate_blob_sha256": "dd9d4199b35cdbbaa744034ad3caea9dd9185531e3128f19698a92eff723f35c",
+      "checkout_CRLF_normalized_equal": true
+    }
+  },
+  "failed_tests": [
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_01_offer_then_create",
+      "outcome": "FAIL",
+      "log_lines": [
+        7229,
+        7239
+      ],
+      "events": [
+        {
+          "line": 7229,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:27Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7230,
+          "event": "AGENT_B6_MATTER_STARTED",
+          "ts": "2026-10-13T06:02:27Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7231,
+          "event": "AGENT_B6_BINDING_CHANGED",
+          "ts": "2026-10-13T06:02:27Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7232,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:27Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7233,
+          "event": "AGENT_B6_STALE_SLOT_REJECTED",
+          "ts": "2026-10-13T06:02:27Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7234,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:27Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7235,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:28Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7236,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:28Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7237,
+          "event": "AGENT_TOOL_RESULT_ERROR",
+          "ts": "2026-10-13T06:02:28Z",
+          "tool_name": "create_appointment",
+          "error_kind": "validation_error"
+        },
+        {
+          "line": 7238,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:28Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_02_all_slots_direct_to_confirm",
+      "outcome": "FAIL",
+      "log_lines": [
+        7240,
+        7246
+      ],
+      "events": [
+        {
+          "line": 7240,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:28Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7241,
+          "event": "AGENT_B6_MATTER_STARTED",
+          "ts": "2026-10-13T06:02:28Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7242,
+          "event": "AGENT_B6_BINDING_CHANGED",
+          "ts": "2026-10-13T06:02:28Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7243,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:29Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7244,
+          "event": "AGENT_TOOL_RESULT_ERROR",
+          "ts": "2026-10-13T06:02:29Z",
+          "tool_name": "create_appointment",
+          "error_kind": "validation_error"
+        },
+        {
+          "line": 7245,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:29Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_03_b5_race_slot_taken",
+      "outcome": "FAIL",
+      "log_lines": [
+        7247,
+        7255
+      ],
+      "events": [
+        {
+          "line": 7247,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:29Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7248,
+          "event": "AGENT_B6_MATTER_STARTED",
+          "ts": "2026-10-13T06:02:29Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7249,
+          "event": "AGENT_B6_BINDING_CHANGED",
+          "ts": "2026-10-13T06:02:29Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7250,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:29Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7251,
+          "event": "AGENT_TOOL_RESULT_ERROR",
+          "ts": "2026-10-13T06:02:29Z",
+          "tool_name": "create_appointment",
+          "error_kind": "validation_error"
+        },
+        {
+          "line": 7252,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:29Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7253,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:30Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7254,
+          "event": "AGENT_ORPHAN_AFFIRMATIVE",
+          "ts": "2026-10-13T06:02:30Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_04_modification_makes_new_pending",
+      "outcome": "FAIL",
+      "log_lines": [
+        7256,
+        7268
+      ],
+      "events": [
+        {
+          "line": 7256,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:30Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7257,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:30Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7258,
+          "event": "AGENT_GOAL_OPENED",
+          "ts": "2026-10-13T06:02:30Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7259,
+          "event": "RBAC_ALLOWED_DB",
+          "ts": "2026-10-13T06:02:30Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7260,
+          "event": "RBAC_ALLOWED_DB",
+          "ts": "2026-10-13T06:02:30Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7261,
+          "event": "RBAC_ALLOWED_DB",
+          "ts": "2026-10-13T06:02:30Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7262,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:31Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7263,
+          "event": "AGENT_B6_BINDING_CHANGED",
+          "ts": "2026-10-13T06:02:31Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7264,
+          "event": "AGENT_B6_INVALIDATION_COUNT",
+          "ts": "2026-10-13T06:02:31Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7265,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:31Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7266,
+          "event": "AGENT_TOOL_RESULT_ERROR",
+          "ts": "2026-10-13T06:02:31Z",
+          "tool_name": "create_appointment",
+          "error_kind": "validation_error"
+        },
+        {
+          "line": 7267,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:31Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_06_expired_confirmation_never_executes",
+      "outcome": "FAIL",
+      "log_lines": [
+        7276,
+        7287
+      ],
+      "events": [
+        {
+          "line": 7277,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:32Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7278,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:32Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7279,
+          "event": "AGENT_GOAL_OPENED",
+          "ts": "2026-10-13T06:02:32Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7280,
+          "event": "RBAC_ALLOWED_DB",
+          "ts": "2026-10-13T06:02:32Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7281,
+          "event": "RBAC_ALLOWED_DB",
+          "ts": "2026-10-13T06:02:32Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7282,
+          "event": "RBAC_ALLOWED_DB",
+          "ts": "2026-10-13T06:02:32Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7283,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:32Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7284,
+          "event": "AGENT_B6_BINDING_CHANGED",
+          "ts": "2026-10-13T06:02:32Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7285,
+          "event": "AGENT_B6_INVALIDATION_COUNT",
+          "ts": "2026-10-13T06:02:32Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7286,
+          "event": "AGENT_ORPHAN_AFFIRMATIVE",
+          "ts": "2026-10-13T06:02:32Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_09_b6_fixed_vet_used",
+      "outcome": "ERROR",
+      "log_lines": [
+        7299,
+        7309
+      ],
+      "events": [
+        {
+          "line": 7299,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:33Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7300,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:34Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7301,
+          "event": "AGENT_GOAL_OPENED",
+          "ts": "2026-10-13T06:02:34Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7302,
+          "event": "RBAC_ALLOWED_DB",
+          "ts": "2026-10-13T06:02:34Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7303,
+          "event": "RBAC_ALLOWED_DB",
+          "ts": "2026-10-13T06:02:34Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7304,
+          "event": "RBAC_ALLOWED_DB",
+          "ts": "2026-10-13T06:02:34Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7305,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:34Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7306,
+          "event": "AGENT_B6_BINDING_CHANGED",
+          "ts": "2026-10-13T06:02:34Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7307,
+          "event": "AGENT_B6_INVALIDATION_COUNT",
+          "ts": "2026-10-13T06:02:34Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7308,
+          "event": "AGENT_ORPHAN_AFFIRMATIVE",
+          "ts": "2026-10-13T06:02:34Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int23Tests.test_23_01_cancel_happy_with_retention",
+      "outcome": "FAIL",
+      "log_lines": [
+        7378,
+        7385
+      ],
+      "events": [
+        {
+          "line": 7378,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:50Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7379,
+          "event": "AGENT_B6_MATTER_STARTED",
+          "ts": "2026-10-13T06:02:50Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7380,
+          "event": "AGENT_B6_BINDING_CHANGED",
+          "ts": "2026-10-13T06:02:50Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7381,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:50Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7382,
+          "event": "AGENT_TOOL_RESULT_ERROR",
+          "ts": "2026-10-13T06:02:50Z",
+          "tool_name": "cancel_appointment",
+          "error_kind": "validation_error"
+        },
+        {
+          "line": 7383,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:50Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7384,
+          "event": "AGENT_GOAL_CLOSED",
+          "ts": "2026-10-13T06:02:51Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int23Tests.test_23_02_cancel_requires_paraphrase",
+      "outcome": "FAIL",
+      "log_lines": [
+        7386,
+        7393
+      ],
+      "events": [
+        {
+          "line": 7386,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:51Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7387,
+          "event": "AGENT_B6_MATTER_STARTED",
+          "ts": "2026-10-13T06:02:51Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7388,
+          "event": "AGENT_B6_BINDING_CHANGED",
+          "ts": "2026-10-13T06:02:51Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7389,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:51Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7390,
+          "event": "AGENT_TOOL_RESULT_ERROR",
+          "ts": "2026-10-13T06:02:51Z",
+          "tool_name": "cancel_appointment",
+          "error_kind": "validation_error"
+        },
+        {
+          "line": 7391,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:02:51Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7392,
+          "event": "AGENT_GOAL_CLOSED",
+          "ts": "2026-10-13T06:02:51Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int24Tests.test_24_01_reschedule_happy",
+      "outcome": "FAIL",
+      "log_lines": [
+        7420,
+        7424
+      ],
+      "events": [
+        {
+          "line": 7420,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:56Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7421,
+          "event": "AGENT_B6_MATTER_STARTED",
+          "ts": "2026-10-13T06:02:56Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7422,
+          "event": "AGENT_B6_BINDING_UNRESOLVED",
+          "ts": "2026-10-13T06:02:56Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7423,
+          "event": "AGENT_B6_CLARIFICATION_REQUIRED",
+          "ts": "2026-10-13T06:02:56Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int24Tests.test_24_04_reschedule_race_slot_taken",
+      "outcome": "FAIL",
+      "log_lines": [
+        7435,
+        7441
+      ],
+      "events": [
+        {
+          "line": 7435,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:57Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7436,
+          "event": "AGENT_B6_MATTER_STARTED",
+          "ts": "2026-10-13T06:02:57Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7437,
+          "event": "AGENT_B6_BINDING_UNRESOLVED",
+          "ts": "2026-10-13T06:02:57Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7438,
+          "event": "AGENT_B6_CLARIFICATION_REQUIRED",
+          "ts": "2026-10-13T06:02:57Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7439,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:02:58Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7440,
+          "event": "AGENT_ORPHAN_AFFIRMATIVE",
+          "ts": "2026-10-13T06:02:58Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    },
+    {
+      "id": "apps.agent.tests.test_regression_suite.ReadFlowTests.test_int11_price_flow",
+      "outcome": "FAIL",
+      "log_lines": [
+        7469,
+        7473
+      ],
+      "events": [
+        {
+          "line": 7469,
+          "event": "AGENT_SAFETY_ASSESSMENT",
+          "ts": "2026-10-13T06:03:07Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7470,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:03:07Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7471,
+          "event": "RBAC_ALLOWED_DB",
+          "ts": "2026-10-13T06:03:07Z",
+          "tool_name": null,
+          "error_kind": null
+        },
+        {
+          "line": 7472,
+          "event": "llm_usage_unavailable",
+          "ts": "2026-10-13T06:03:07Z",
+          "tool_name": null,
+          "error_kind": null
+        }
+      ]
+    }
+  ],
+  "first_disk_breach_utc": "2026-10-13T07:23:17Z",
+  "inference": "Timestamped events in failing-test log sections precede the recorded disk breach by roughly 80 minutes. Exact assertion tracebacks are unavailable; root causes remain unclassified. Extra free disk alone does not establish a passing suite.",
+  "new_test_runs": 0,
+  "product_or_harness_changes": false
+}

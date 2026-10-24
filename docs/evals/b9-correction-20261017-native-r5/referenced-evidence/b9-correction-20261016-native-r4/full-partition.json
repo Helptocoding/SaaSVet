@@ -1,0 +1,49 @@
+{
+  "state": "PASS",
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "groups": [
+    {
+      "label": "full-b8b",
+      "family": "b8b",
+      "database": "test_b8b_b9i_full",
+      "count": 21,
+      "selection_sha256": "16030a19b0a939f03922c9f5208ddac9431c0c35842ab239c9395e13480fac7c"
+    },
+    {
+      "label": "full-b8c",
+      "family": "b8c",
+      "database": "test_b8c_b9i_full",
+      "count": 41,
+      "selection_sha256": "34f8deea830621f65b6fcaa79ec88ffbb85ea27f5ba45ce427f8af709e0c6d14"
+    },
+    {
+      "label": "full-b8d",
+      "family": "b8d",
+      "database": "test_b8d_b9i_full",
+      "count": 27,
+      "selection_sha256": "4ac66de8ff77d48da56717727268db908d07c409021731c0df733f92e31b86b3"
+    },
+    {
+      "label": "full-b8e",
+      "family": "b8e",
+      "database": "test_b8e_b9i_full",
+      "count": 29,
+      "selection_sha256": "e56945dc07506f2be6599764a306435134c454e06e335bde08f6cf3ff36c4076"
+    },
+    {
+      "label": "full-general",
+      "family": "general",
+      "database": "test_b9i_full_general",
+      "count": 3213,
+      "selection_sha256": "ad18a91c5142ca90094f7c6cc06690bef2782c5528ffa2d418d6b4be3f984ef3"
+    }
+  ],
+  "total_ids": 3331,
+  "duplicate_ids": 0,
+  "missing_ids": [],
+  "full_selection_sha256": "3aa55ce8470fd29ff9688df5f94fc49b57d0429ab76d8595379df0755a81a6c6",
+  "native_runner": "RecordedFullRunner -> DiscoverRunner",
+  "sequential_groups": true,
+  "internal_process_concurrency_unchanged": true,
+  "application_tests_executed": false
+}

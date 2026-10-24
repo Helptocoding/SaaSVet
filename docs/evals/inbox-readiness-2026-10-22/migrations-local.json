@@ -1,0 +1,197 @@
+{
+  "state": "PASS",
+  "database": "veterinaria_saas",
+  "host": "localhost",
+  "server_version_num": "180003",
+  "database_bytes": 33658559,
+  "plan": [
+    [
+      "agent",
+      "0022_conversation_ownership_epoch_turnwork"
+    ],
+    [
+      "agent",
+      "0023_humanhandoff_acknowledged_at_and_more"
+    ],
+    [
+      "agent",
+      "0024_matter_binding_b6"
+    ],
+    [
+      "agent",
+      "0025_conversation_operation_b7a"
+    ],
+    [
+      "agent",
+      "0026_b7b_consent_evidence"
+    ],
+    [
+      "agent",
+      "0027_attendance_consent_policy"
+    ],
+    [
+      "agent",
+      "0028_b9_operational_budget"
+    ],
+    [
+      "agent",
+      "0029_inbox_read_state"
+    ],
+    [
+      "channels",
+      "0011_message_origin_epoch_message_output_ordinal_and_more"
+    ],
+    [
+      "channels",
+      "0012_b3_scope_and_membership"
+    ],
+    [
+      "channels",
+      "0013_b4_durable_sender"
+    ],
+    [
+      "channels",
+      "0014_alter_message_semantic_type"
+    ],
+    [
+      "channels",
+      "0015_b7b_receipt_guard"
+    ],
+    [
+      "channels",
+      "0016_message_reply_to"
+    ],
+    [
+      "channels",
+      "0017_message_media"
+    ]
+  ],
+  "existing_message_count": 0,
+  "required_prerequisites": [
+    [
+      "agent",
+      "0022_conversation_ownership_epoch_turnwork"
+    ],
+    [
+      "agent",
+      "0023_humanhandoff_acknowledged_at_and_more"
+    ],
+    [
+      "agent",
+      "0024_matter_binding_b6"
+    ],
+    [
+      "agent",
+      "0025_conversation_operation_b7a"
+    ],
+    [
+      "agent",
+      "0026_b7b_consent_evidence"
+    ],
+    [
+      "agent",
+      "0027_attendance_consent_policy"
+    ],
+    [
+      "agent",
+      "0028_b9_operational_budget"
+    ],
+    [
+      "channels",
+      "0011_message_origin_epoch_message_output_ordinal_and_more"
+    ],
+    [
+      "channels",
+      "0012_b3_scope_and_membership"
+    ],
+    [
+      "channels",
+      "0013_b4_durable_sender"
+    ],
+    [
+      "channels",
+      "0014_alter_message_semantic_type"
+    ],
+    [
+      "channels",
+      "0015_b7b_receipt_guard"
+    ]
+  ],
+  "production_touched": false,
+  "preview_database_touched": false,
+  "media_enabled": false,
+  "started_utc": "2026-10-23T02:45:49Z",
+  "backup": {
+    "path": "docs/evals/inbox-readiness-2026-10-22/runtime/local-before.dump",
+    "bytes": 1375618,
+    "sha256": "2d92b16466b9497ff2292ac9276dc04fb73d8ad5624e83609742baa4a562b1bb",
+    "pg_restore_list_exit_code": 0,
+    "ignored_by_git": true
+  },
+  "applied": [
+    [
+      "agent",
+      "0022_conversation_ownership_epoch_turnwork"
+    ],
+    [
+      "agent",
+      "0023_humanhandoff_acknowledged_at_and_more"
+    ],
+    [
+      "agent",
+      "0024_matter_binding_b6"
+    ],
+    [
+      "agent",
+      "0025_conversation_operation_b7a"
+    ],
+    [
+      "agent",
+      "0026_b7b_consent_evidence"
+    ],
+    [
+      "agent",
+      "0027_attendance_consent_policy"
+    ],
+    [
+      "agent",
+      "0028_b9_operational_budget"
+    ],
+    [
+      "agent",
+      "0029_inbox_read_state"
+    ],
+    [
+      "channels",
+      "0011_message_origin_epoch_message_output_ordinal_and_more"
+    ],
+    [
+      "channels",
+      "0012_b3_scope_and_membership"
+    ],
+    [
+      "channels",
+      "0013_b4_durable_sender"
+    ],
+    [
+      "channels",
+      "0014_alter_message_semantic_type"
+    ],
+    [
+      "channels",
+      "0015_b7b_receipt_guard"
+    ],
+    [
+      "channels",
+      "0016_message_reply_to"
+    ],
+    [
+      "channels",
+      "0017_message_media"
+    ]
+  ],
+  "messages_after": 0,
+  "media_rows": 0,
+  "read_state_rows": 0,
+  "finished_utc": "2026-10-23T02:46:39Z"
+}

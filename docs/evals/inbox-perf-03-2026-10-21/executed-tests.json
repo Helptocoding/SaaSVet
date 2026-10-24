@@ -1,0 +1,1165 @@
+{
+  "backend": [
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_caller_transaction_is_rejected",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_claim_wrong_account_or_org_is_denied",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_constraints_reject_claimless_sending_and_timestampless_uncertainty",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_epoch_change_without_discard_is_checked_at_admission",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_expired_lease_can_record_late_acceptance_with_same_token",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_finalization_scope_cannot_be_forged",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_first_message_survives_second_finalize_failure",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_http_runs_outside_transaction",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_invalid_accepted_result_is_uncertain",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_invalid_token_cannot_finalize_external_result",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_known_retry_has_backoff_new_token_and_limit",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_legacy_pending_without_epoch_is_discarded",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_legacy_retryable_exception_is_uncertain",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_meta_failure_matrix_through_real_sender",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_nonpending_states_are_never_selected",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_own_03_takeover_before_claim",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_partial_safe_id_survives_uncertainty_for_later_webhook",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_pending_with_prior_external_evidence_is_quarantined",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_real_db_error_in_finalize_preserves_durable_sending",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_new_message_with_actor_reason_and_idempotency",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_rejects_agent_and_other_org",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_retryable_flag_without_approved_rejection_code_does_not_retry",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_01_individual_durable_claim_and_single_admission",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_01_claim_crash_never_admitted_and_no_replay",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_02_takeover_after_claim_before_http",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_03_post_acceptance_db_failure_is_uncertain_no_retry",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_08_takeover_during_http_records_acceptance",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_09_takeover_during_http_records_uncertainty",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_snapshot_makes_uncertainty_visible_without_pii",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_takeover_during_http_rejection_is_failed_not_retry",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_window_closed_after_claim_blocks_admission",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_correct_wamid_wrong_org_cannot_mutate",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_duplicate_provider_id_is_ambiguous_not_first_match",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_failed_delivery_never_erases_acceptance_or_read",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_legacy_sent_keeps_unknown_acceptance_timestamp",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_03_monotonic_sent_delivered_read_and_duplicate_timestamps",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_10_webhook_reconciles_uncertain_preserves_history",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_11_read_before_delivered_never_degrades",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_uncertain_without_persisted_id_stays_unmatched",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_unknown_status_unknown_id_and_wrong_account_do_nothing",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_cannot_resurrect_pending_or_discarded",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_wins_race_with_uncertain_finalize",
+    "apps.agent.tests.test_inbox_read_projection.InboxReadProjectionTests.test_historical_page_has_no_visible_current_inbound_to_mark",
+    "apps.agent.tests.test_inbox_read_projection.InboxReadProjectionTests.test_opening_projection_excludes_closed_history_discarded_and_outbound",
+    "apps.agent.tests.test_inbox_read_projection.InboxReadProjectionTests.test_projection_is_personal_and_removes_boundary_after_read",
+    "apps.agent.tests.test_inbox_read_projection.InboxReadProjectionTests.test_total_is_all_threads_even_with_one_row_page_or_empty_offset",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_another_conversation_or_account_is_404_even_with_original_key",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_changed_epoch_or_legacy_epoch_never_renews_authority",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_closed_session_is_not_reopened",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_corrupt_cross_account_scope_is_404",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_different_key_is_rejected_and_cannot_edit_body",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_double_retry_real_connections_performs_one_transition",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_failed_with_any_acceptance_or_uncertainty_evidence_is_unchanged",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_foreign_organization_is_404",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_inbound_failed_is_rejected",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_known_rejection_is_dispatched_by_existing_sender_once_with_new_token",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_late_receipt_reconciles_failed_and_cannot_be_reset",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_nonfailed_including_uncertain_never_requeues",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_other_staff_requeues_same_row_preserving_payload_author_key_and_claim",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_paused_account_is_not_queued",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_sender_rechecks_window_between_retry_and_dispatch",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_view_only_service_account_and_anonymous_are_denied",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_window_closed_or_unknown_returns_call_without_changes",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_without_original_key_reuses_same_message",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_bounded_preview_preserves_text_caption_and_empty_media_labels",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_burst_larger_than_latest_page_has_no_gap",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_cache_loss_requests_recovery_and_stores_no_pii",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_cache_outage_full_response_remains_available",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_central_tracking_covers_save_atomic_all_objects_and_bulk_update",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_claim_close_and_renewal_are_metadata_changes_even_without_messages",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_delta_is_read_only_and_unauthorized_service_cannot_use_it",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_existing_status_failure_and_body_writes_advance_updated_at",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_history_extension_reconciles_rows_removed_while_before_was_in_flight",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_history_floor_is_signed_for_the_user_and_thread",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_invalid_expired_cross_user_org_resource_page_and_filters_are_400",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_lease_expiry_is_detected_without_a_write",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_list_delta_returns_upserts_removals_and_preserves_filter",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_metadata_preview_never_reads_corrupt_foreign_message",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_new_and_modified_messages_are_merged_with_equal_updated_at",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_owner_and_handoff_changes_are_detected_without_touching_conversation",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_query_plan_and_payload_size_for_large_thread",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_read_state_is_per_user_and_metadata_only",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_removed_first_message_does_not_break_cursor_floor",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_replay_does_not_consume_changes_and_late_commits_with_old_time_are_found",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_scroll_back_expands_range_and_preserves_old_message_updates",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_signed_floor_survives_physical_removal_and_cache_recovery",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_since_cannot_be_combined_with_history_cursors_or_foreign_floor",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_stable_delta_does_not_select_message_bodies",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_stable_transcript_transfers_no_bodies_metadata_or_new_cursor",
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_two_status_transitions_on_same_id_and_timestamp_are_not_lost",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_archived_thread_has_no_current_conversation",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_authentication_is_required",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_before_and_around_are_exclusive_even_with_empty_values",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_exact_window_boundaries_have_no_false_continuation",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_first_message",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_hidden_target_is_marked_without_exposing_hidden_neighbors",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_last_message",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_malformed_around_is_400",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_middle_crosses_sessions",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_missing_target_is_404",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_near_end",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_near_start_in_closed_history",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_only_message_in_thread_has_no_continuation",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_other_contact_or_account_is_404",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_other_organization_target_is_404_even_for_hidden_target",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_outbound_evidence_preserves_status_identity_and_acceptance",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_regular_payload_and_current_metadata_remain_compatible",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_timestamp_order_takes_precedence_over_id",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_timestamp_ties_use_id_as_tiebreaker",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_user_without_inbox_permission_is_denied",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_view_permission_without_send_is_enough",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_window_queries_and_materialization_are_bounded",
+    "apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_250_threads_are_reachable_in_stable_urgent_first_pages",
+    "apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_archived_flag_is_kept_on_later_pages",
+    "apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_exact_page_boundary_has_no_phantom_next_page",
+    "apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_invalid_offsets_return_400",
+    "apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_offset_does_not_bypass_authentication_or_tenant_scope",
+    "apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_offset_past_the_end_returns_an_empty_final_page",
+    "apps.agent.tests.test_inbox_thread_pagination.ThreadPaginationTests.test_same_contact_on_another_account_is_a_distinct_thread",
+    "apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_characterization_payload_matches_frozen_baseline",
+    "apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_closed_history_is_counted_without_materializing_each_episode",
+    "apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_first_page_is_applied_after_urgent_ordering",
+    "apps.agent.tests.test_inbox_thread_performance.ThreadPerformanceTests.test_query_count_is_constant_with_thirty_more_threads"
+  ],
+  "frontend": [
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "WA-CTX-01 \u2014 getThreadContext es una lectura sin cuerpo editable ni necesidad de signal"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "WA-CTX-01 \u2014 getThreadContext usa ambos UUIDs del hilo y permite cancelar la petici\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "WA-RETRY-01 \u2014 retryInboxMessage conserva la misma fila cuando el mensaje no tiene key"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "WA-RETRY-01 \u2014 retryInboxMessage reutiliza UUID, id original y key sin transmitir un cuerpo editable"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "WA-UNR-02 \u2014 markThreadRead permite cancelar la lectura al cambiar de hilo o perder atenci\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "WA-UNR-02 \u2014 markThreadRead usa los UUIDs del hilo y transmite solo el id de mensaje"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "getThreadMessages \u2014 WA-HIST-01 conserva la llamada de carga inicial sin opciones adicionales"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "getThreadMessages \u2014 WA-HIST-01 transporta el cursor y permite cancelar la p\u00e1gina anterior"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "sendInboxMessage env\u00eda la key en X-Idempotency-Key cuando se proporciona"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "sendInboxMessage mantiene compatible la llamada sin key durante la integraci\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/api/inbox.test.js",
+      "name": "sendInboxMessage propaga AbortSignal sin perder la key de idempotencia"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/hooks/usePollingWhenVisible.test.jsx",
+      "name": "WA-VIS-01 \u2014 polling visible StrictMode mantiene un \u00fanico intervalo activo tras el montaje doble"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/hooks/usePollingWhenVisible.test.jsx",
+      "name": "WA-VIS-01 \u2014 polling visible al cambiar destino oculto usa s\u00f3lo el nuevo callback al volver"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/hooks/usePollingWhenVisible.test.jsx",
+      "name": "WA-VIS-01 \u2014 polling visible carga al montar y conserva la cadencia con una sola carga inicial"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/hooks/usePollingWhenVisible.test.jsx",
+      "name": "WA-VIS-01 \u2014 polling visible deshabilitar y desmontar retiran intervalos y listeners"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/hooks/usePollingWhenVisible.test.jsx",
+      "name": "WA-VIS-01 \u2014 polling visible detiene al ocultar y refresca inmediatamente una sola vez al volver"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/hooks/usePollingWhenVisible.test.jsx",
+      "name": "WA-VIS-01 \u2014 polling visible no consulta ni arma intervalos si monta oculto"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/hooks/usePollingWhenVisible.test.jsx",
+      "name": "WA-VIS-01 \u2014 polling visible protege un tick si hidden cambia antes de recibir visibilitychange"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n combina por hilo compuesto, retira expl\u00edcitos y aplica orden del servidor"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n conserva metadatos al recibir s\u00f3lo ticks y aplica null al archivar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n cursor inv\u00e1lido hace una sola recuperaci\u00f3n completa"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n delta corrupto recupera full y los errores normales conservan su significado"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n distingue dos cuentas del mismo contacto y no duplica un replay"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un delta incompleto sin perder la p\u00e1gina ({\"order\":[\"ana:main\",\"ana:main\"]})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un delta incompleto sin perder la p\u00e1gina ({\"order\":[\"ana:main\",\"foreign:main\"]})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un delta incompleto sin perder la p\u00e1gina ({\"order\":[\"ana:main\"]})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un delta incompleto sin perder la p\u00e1gina ({\"removals\":{}})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un delta incompleto sin perder la p\u00e1gina ({\"sync_cursor\":null})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un delta incompleto sin perder la p\u00e1gina ({\"upserts\":[{\"contact_public_id\":\"ana\",\"channel_account_public_id\":\"main\"},{\"contact_public_id\":\"ana\",\"channel_account_public_id\":\"main\"}]})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un delta incompleto sin perder la p\u00e1gina ({\"upserts\":[{\"contact_public_id\":\"ana\",\"channel_account_public_id\":\"main\"}],\"removals\":[\"ana:main\"]})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un delta incompleto sin perder la p\u00e1gina ({\"upserts\":[{\"contact_public_id\":\"cora\",\"channel_account_public_id\":\"main\"}]})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un delta incompleto sin perder la p\u00e1gina ({\"upserts\":[{}]})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un delta incompleto sin perder la p\u00e1gina ({\"upserts\":null})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un transcript inconsistente ({\"messages\":[{\"id\":\"7\"}]})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un transcript inconsistente ({\"messages\":[{\"id\":7},{\"id\":7}]})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un transcript inconsistente ({\"messages\":[{\"id\":7}],\"removals\":[7]})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un transcript inconsistente ({\"messages\":null})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un transcript inconsistente ({\"metadata\":null})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/inboxSync.test.js",
+      "name": "WA-PERF-03 \u2014 merge y recuperaci\u00f3n rechaza un transcript inconsistente ({\"removals\":null})"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox VET con view y retrieve abre contexto aunque no pueda enviar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox cambiar de hilo aborta e ignora un contexto antiguo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox carga s\u00f3lo al abrir y llega al expediente correcto en dos clics desde el chat"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox cerrar y reabrir consulta el contexto vigente y no revive una respuesta abortada"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox con cliente sin mascotas ni citas muestra los estados vac\u00edos"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox desmontar cancela la petici\u00f3n pendiente"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox el panel conserva borrador e historial y se pliega con estado accesible"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox el poll de mensajes no vuelve a cargar contexto y una revocaci\u00f3n lo retira"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox elige UUIDs de mascotas hom\u00f3nimas sin navegar por nombre ni por PK"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox los nombres HTML se presentan como texto sin insertar elementos ejecutables"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox muestra carga propia y aborta si se cierra antes de recibir"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox sin permiso de consulta de mascota no ofrece abrir expediente"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox sin v\u00ednculo no inventa cliente, mascotas ni expediente"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox un error reintenta s\u00f3lo el contexto sin borrar transcript ni borrador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.context.test.jsx",
+      "name": "WA-CTX-01 \u2014 contexto del cliente en Inbox un hilo archivado conserva el panel pero no el composer"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor bloquea doble clic hasta recibir respuesta"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor cambio de hilo aborta e ignora respuesta tard\u00eda sin tocar el borrador nuevo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor desmontar aborta la solicitud"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor el servidor puede detectar ventana cerrada y conservar mensaje y opci\u00f3n de llamada"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor fallo HTTP conserva el mensaje y permite otro intento expl\u00edcito"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor muestra llamada desde el fallo de ventana meta_131047"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor muestra llamada desde el fallo de ventana session_window_closed"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor muestra llamada desde el fallo de ventana ventana de sesi\u00f3n de 24h cerrada"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintentar para delivered"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintentar para discarded"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintentar para pending"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintentar para read"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintentar para sending"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintentar para sent"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintentar para uncertain"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintento de FAILED con evidencia acceptance_known"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintento de FAILED con evidencia delivered_at"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintento de FAILED con evidencia provider_accepted_at"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintento de FAILED con evidencia read_at"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintento de FAILED con evidencia uncertain_at"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor no ofrece reintento sin send ni para una sesi\u00f3n hist\u00f3rica"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor reintenta la fila original de otra autora sin duplicados ni p\u00e9rdida del borrador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor un GET anterior al acuse del retry no revive FAILED"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor un acuse READ recibido por poll gana al PENDING tard\u00edo del POST"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.retry.test.jsx",
+      "name": "WA-RETRY-01 \u2014 fallo conocido del servidor una fila de otra sesi\u00f3n no usa el UUID vigente como sustituto"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox actualiza una fila y a\u00f1ade una nueva sin duplicar ni perder el borrador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox ampliar el rango retira una fila hist\u00f3rica que desapareci\u00f3 mientras cargaba"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox cambiar de hilo aborta un delta viejo y no conserva su cursor"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox cambiar filtro aborta lista y empieza con un cursor propio"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox conserva el floor opaco del servidor al ampliar historial y reconcilia su rango"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox cursor rechazado recupera el rango cargado una sola vez"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox desmontar cancela ambos recursos"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox mantiene una sola petici\u00f3n de lista en vuelo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox mantiene una sola petici\u00f3n de transcript en vuelo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox metadatos de archivo retiran composer y conservan historia"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox oculto no inicia polls y al volver conserva cursores delta"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox publica juntas las p\u00e1ginas con movimientos y sin duplicar un hilo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox retira IDs expl\u00edcitos sin borrar otros mensajes"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox tras cargar usa since en lista y transcript sin volver a descargar mensajes"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox un delta de lista incompleto recupera full sin publicar el estado parcial"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.sync.test.jsx",
+      "name": "WA-PERF-03 \u2014 sincronizaci\u00f3n en Inbox un fallo HTTP conserva el cursor y reintenta delta en el siguiente poll"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "B5 handoff evidence allows the current human owner to explicitly acknowledge a new queued case"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "B5 handoff evidence does not call discarded guidance pending delivery"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "B5 handoff evidence keeps uncertain guidance visible and preserves multiple open legacy cases"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "B5 handoff evidence labels explicit acknowledgement without claiming clinical attention"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "B5 handoff evidence shows a durable queue without inventing notification or acknowledgement"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador A\u2192B\u2192A conserva visible el 201 aunque el GET de regreso est\u00e9 vac\u00edo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador actualiza todos los divisores con una sola referencia al cruzar medianoche"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador aplica el cap global de 20 intentos entre sesiones"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador conserva el borrador al volver a clicar el mismo hilo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador conserva el optimista reintentable ante un 5xx"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador conserva la key incierta al navegar B y volver a A con el mismo texto"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador deduplica un polling concurrente exclusivamente por client_message_id"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador descarta el texto de Ana al cambiar al hilo de Beto"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador dos env\u00edos consecutivos por Enter reciben keys distintas"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador elimina el optimista ante 400 y muestra el error del servidor"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador env\u00eda al sessionId vigente con una key de idempotencia no vac\u00eda"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador integra recibos de entrega solo en mensajes salientes del transcript"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador mantiene la hora del mensaje hist\u00f3rico bajo el divisor Ayer"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador no ejecuta continuaciones del POST despu\u00e9s de desmontar el Inbox"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador no reinstala ni borra el hilo nuevo si el POST anterior termina tarde"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador oculta failed-local cuando el hilo regresa con otra sesi\u00f3n activa"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador pinta el env\u00edo antes del POST y reconcilia el 201 sin duplicar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador regenera la key cuando cambia el texto despu\u00e9s de un error"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador renderiza un divisor por d\u00eda local de la organizaci\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador reutiliza la key si se reintenta el mismo texto tras un error de red"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "Inbox \u2014 aislamiento del borrador un \u00e9xito antiguo A\u2192B\u2192A no borra un draft nuevo aunque tenga el mismo texto"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-AGT-01 \u2014 turno del asistente active: explica el turno y habilita Tomar y acusar recibo al terminar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-AGT-01 \u2014 turno del asistente human_active: explica el turno y habilita Liberar al terminar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-AGT-01 \u2014 turno del asistente muestra el indicador sin conceder permiso para tomar o liberar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-AGT-01 \u2014 turno del asistente no hereda el indicador de otro hilo ni de la fila antigua"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-AGT-01 \u2014 turno del asistente un hilo archivado no muestra turno ni acciones aunque la lista est\u00e9 desactualizada"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-CMP-01 \u2014 altura y contador del composer crece al pegar 2000 caracteres, limita la altura y encoge al borrar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-CMP-01 \u2014 altura y contador del composer descarta texto y contador al cambiar de cliente"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-CMP-01 \u2014 altura y contador del composer muestra el contador despu\u00e9s de 3600 y conserva el l\u00edmite de 4000"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-CMP-01 \u2014 altura y contador del composer reinicia altura y contador al enviar sin esperar el POST"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-CPY-01 \u2014 copiar y abrir enlaces copia el cuerpo original completo, sin horas ni autor, y confirma el \u00e9xito"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-CPY-01 \u2014 copiar y abrir enlaces copia tel\u00e9fono y ofrece tel: tambi\u00e9n con hilo archivado=false"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-CPY-01 \u2014 copiar y abrir enlaces copia tel\u00e9fono y ofrece tel: tambi\u00e9n con hilo archivado=true"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-CPY-01 \u2014 copiar y abrir enlaces maneja clipboard no disponible sin anunciar una copia falsa"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-CPY-01 \u2014 copiar y abrir enlaces muestra un error recuperable cuando el navegador rechaza la copia"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-CPY-01 \u2014 copiar y abrir enlaces renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-GRP-01 \u2014 r\u00e1fagas en el transcript agrupa por autor sin ocultar mensajes, horas ni estados de entrega"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-GRP-01 \u2014 r\u00e1fagas en el transcript corta la r\u00e1faga en medianoche de la cl\u00ednica aunque s\u00f3lo pase un minuto"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-GTF-01 \u2014 navegaci\u00f3n al final cambiar de hilo no conserva el bot\u00f3n del historial anterior"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-GTF-01 \u2014 navegaci\u00f3n al final permite recorrer un hilo archivado sin habilitar el env\u00edo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-01 \u2014 historial en Inbox carga al subir, deduplica 51 mensajes y conserva la posici\u00f3n sin saltar al fondo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-01 \u2014 historial en Inbox el poll conserva p\u00e1ginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-01 \u2014 historial en Inbox ignora failure antiguo al cambiar de hilo y aborta su petici\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-01 \u2014 historial en Inbox ignora success antiguo al cambiar de hilo y aborta su petici\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-01 \u2014 historial en Inbox la p\u00e1gina anterior no sustituye la sesi\u00f3n vigente renovada por el poll"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-01 \u2014 historial en Inbox los hilos archivados permiten cargar anteriores sin ofrecer env\u00edo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-01 \u2014 historial en Inbox un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-02 \u2014 historial de tres meses una llegada de hoy conserva la lectura de julio aunque cree un divisor de d\u00eda"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-02 \u2014 llegadas en Inbox al volver de pesta\u00f1a oculta conserva la lectura y cuenta s\u00f3lo llegadas posteriores"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-02 \u2014 llegadas en Inbox bajar manualmente hasta el fondo retira el contador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-02 \u2014 llegadas en Inbox cambiar de hilo no conserva el contador del anterior"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-02 \u2014 llegadas en Inbox un mensaje nuevo pegado al fondo sigue visible sin contador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-HIST-02 \u2014 llegadas en Inbox una r\u00e1faga muestra cinco nuevos sin mover la lectura y click vuelve al fondo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-LDE-01 \u2014 carga y reconexi\u00f3n Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-LDE-01 \u2014 carga y reconexi\u00f3n Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-LDE-01 \u2014 carga y reconexi\u00f3n distingue carga inicial de lista y mensajes de un panel sin selecci\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-LDE-01 \u2014 carga y reconexi\u00f3n distingue el fallo inicial de lista vac\u00eda y permite reintentar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-LDE-01 \u2014 carga y reconexi\u00f3n explica el fallo inicial de transcript y reintenta la misma conversaci\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-LDE-01 \u2014 carga y reconexi\u00f3n ignora failure tard\u00edo de lista tras cambiar de filtro"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-LDE-01 \u2014 carga y reconexi\u00f3n ignora success tard\u00edo de lista tras cambiar de filtro"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-LDE-01 \u2014 carga y reconexi\u00f3n recupera ambos paneles autom\u00e1ticamente cuando vuelve la API"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-LDE-01 \u2014 carga y reconexi\u00f3n un fallo tard\u00edo del hilo anterior no contamina la racha del nuevo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones bloquea el doble clic y el poll mientras carga otra p\u00e1gina"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones conserva las filas ante un error de carga y reintenta el mismo desplazamiento"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones deduplica por contacto y cuenta sin ocultar otra cuenta del mismo contacto"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones ignora una carga tard\u00eda con error despu\u00e9s de cambiar de filtro"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones ignora una carga tard\u00eda con \u00e9xito despu\u00e9s de cambiar de filtro"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones no contin\u00faa un refresco de varias p\u00e1ginas despu\u00e9s de desmontar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones no inicia otra p\u00e1gina del poll al ocultarse y refresca todas al volver"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones no ofrece un cursor inv\u00e1lido -1"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones no ofrece un cursor inv\u00e1lido 0"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones no ofrece un cursor inv\u00e1lido 100"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones no ofrece un cursor inv\u00e1lido null"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones permite alcanzar 250 conversaciones en tres p\u00e1ginas y anuncia las restantes"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones reduce las p\u00e1ginas a refrescar cuando la lista se agota antes"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones refresca todas las p\u00e1ginas cargadas y conserva selecci\u00f3n y borrador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones un refresco parcial fallido retiene todas las filas y muestra reconexi\u00f3n tras dos fallos"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-PERF-02 \u2014 paginaci\u00f3n de conversaciones una respuesta de poll anterior no borra una p\u00e1gina reci\u00e9n a\u00f1adida"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-TAB-01 \u2014 lista real del Inbox refleja el \u00faltimo poll sin solicitar datos adicionales y restaura al salir"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-VER-01 \u2014 verificaci\u00f3n en lista y cabecera muestra la verificaci\u00f3n del contacto incluso en un hilo archivado"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-VER-01 \u2014 verificaci\u00f3n en lista y cabecera representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-VER-01 \u2014 verificaci\u00f3n en lista y cabecera representa phone_match en ambos paneles sin habilitar acciones de identidad"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-VER-01 \u2014 verificaci\u00f3n en lista y cabecera representa staff_verified en ambos paneles sin habilitar acciones de identidad"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-VER-01 \u2014 verificaci\u00f3n en lista y cabecera representa unknown en ambos paneles sin habilitar acciones de identidad"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-VER-01 \u2014 verificaci\u00f3n en lista y cabecera retira el distintivo cuando el siguiente poll informa unknown"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-VIS-01 \u2014 polling del Inbox cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tard\u00eda"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-VIS-01 \u2014 polling del Inbox pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.test.jsx",
+      "name": "WA-VIS-01 \u2014 polling del Inbox si inicia oculto no consulta la lista y usa el filtro vigente al volver"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.unread.test.jsx",
+      "name": "WA-UNR-02 \u2014 contador y divisor en Inbox cambiar de hilo durante debounce solo marca el nuevo destino"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.unread.test.jsx",
+      "name": "WA-UNR-02 \u2014 contador y divisor en Inbox el error se reintenta en el pr\u00f3ximo poll sin toast ni desaparici\u00f3n anticipada"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.unread.test.jsx",
+      "name": "WA-UNR-02 \u2014 contador y divisor en Inbox la p\u00e9rdida de visibilidad durante debounce conserva contador y divisor"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.unread.test.jsx",
+      "name": "WA-UNR-02 \u2014 contador y divisor en Inbox llegada \u2192 contador sube \u2192 apertura \u2192 divisor \u2192 lectura \u2192 contador baja"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.unread.test.jsx",
+      "name": "WA-UNR-02 \u2014 contador y divisor en Inbox muestra total de todas las p\u00e1ginas y contadores por hilo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.unread.test.jsx",
+      "name": "WA-UNR-02 \u2014 contador y divisor en Inbox no marca al abrir sin foco aunque se pueda ver el historial"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.unread.test.jsx",
+      "name": "WA-UNR-02 \u2014 contador y divisor en Inbox sit\u00faa el divisor antes del primer nuevo y lo quita al confirmar, con view solamente"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.unread.test.jsx",
+      "name": "WA-UNR-02 \u2014 contador y divisor en Inbox un GET de lista iniciado antes del POST no revive el contador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox bloquea en el l\u00edmite entre ticks, conserva borrador y no env\u00eda por Enter"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox desmontar cancela los timers de reloj, vencimiento y polling"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox el aviso aparece al pasar de 12 h al intervalo de advertencia"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox el estado cerrado y el borrador no se trasladan al cambiar a otro hilo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox el false del servidor bloquea aunque el reloj local vea un vencimiento futuro"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox el guard de Enter comprueba el reloj aunque a\u00fan no haya corrido el timer"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox metadatos incompletos o inv\u00e1lidos impiden enviar: { session_window_open: true, session_window_expires_at: 'invalid' }"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox metadatos incompletos o inv\u00e1lidos impiden enviar: { session_window_open: true, session_window_expires_at: null }"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox metadatos incompletos o inv\u00e1lidos impiden enviar: {}"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox muestra 7 h 12 min y actualiza a 7 h 11 min sin borrar el borrador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox sin \u00faltimo entrante la ventana cerrada tiene explicaci\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox un GET tard\u00edo del hilo anterior no cierra el composer nuevo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox un hilo archivado no muestra composer ni ventana"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox un nuevo inbound proyectado por poll reabre y conserva el borrador anterior"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox un payload que llega ya expirado se cierra antes del siguiente minuto"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox una ventana de m\u00e1s de 12 h permite enviar sin banda innecesaria"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox view sin send no muestra controles de env\u00edo ni aviso de composer"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/index.window.test.jsx",
+      "name": "WA-WIN-01 \u2014 ventana preventiva en Inbox volver de pesta\u00f1a oculta corrige el reloj de inmediato y refresca la sesi\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial a 500 mensajes cambia a carga manual sin descartar mensajes"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial ancla la posici\u00f3n que la persona tiene al terminar la petici\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial desmontar aborta la petici\u00f3n y no aplica su resultado"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial detiene un cursor sin progreso con p\u00e1gina [ { id: 2, body: 'Mensaje 2', \u2026(1) } ]"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial detiene un cursor sin progreso con p\u00e1gina []"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial fusiona p\u00e1ginas solapadas sin sustituir estados m\u00e1s recientes del poll"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial ignora dos disparos mientras existe una carga y permite seguir con el siguiente cursor"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial no inicia carga autom\u00e1tica con la pesta\u00f1a oculta"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial ordena empates por ID num\u00e9rico y no deduplica mensajes por texto"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial recorre 10 mensajes con p\u00e1ginas de 50 y cursores correctos"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial recorre 500 mensajes con p\u00e1ginas de 50 y cursores correctos"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial recorre 51 mensajes con p\u00e1ginas de 50 y cursores correctos"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial reset aborta y descarta failure antiguo, incluso A\u2192B\u2192A"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial reset aborta y descarta success antiguo, incluso A\u2192B\u2192A"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-01 \u2014 estado acumulativo del historial un cursor rechazado conserva mensajes, posici\u00f3n y cursor y exige reintento expl\u00edcito"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas a 0 px del fondo respeta el l\u00edmite inclusivo de 80"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas a 80 px del fondo respeta el l\u00edmite inclusivo de 80"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas a 81 px del fondo respeta el l\u00edmite inclusivo de 80"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas actualizar recibos o recibir IDs anteriores no incrementa el contador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas bajar manualmente al fondo limpia el contador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas click vuelve al fondo con scroll suave, conserva foco y limpia el contador"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas conserva scrollTop al recibir cinco mensajes arriba y no vuelve a contarlos"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas el scrollback no suma nuevos ni borra el contador pendiente"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas inicializa al fondo sin contar los mensajes ya cargados"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas poll y p\u00e1gina anterior en el mismo render preservan el ancla sin sumar la altura de llegadas al fondo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas reset borra contador e identidades vistas y la selecci\u00f3n nueva comienza sin avisos"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas retira del contador un optimista descartado sin contar mensajes de otra sesi\u00f3n"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadHistory.test.jsx",
+      "name": "WA-HIST-02 \u2014 lectura y llegadas nuevas un optimista y su confirmaci\u00f3n cuentan una sola vez por client_message_id"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real A\u2192B\u2192A ignora un acuse tard\u00edo de la primera apertura"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real blur antes del plazo cancela la lectura"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real cambiar de cuenta cancela el debounce del hilo anterior"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real comprueba foco de nuevo al vencer, aunque no llegue el evento"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real desmontar aborta el POST y no publica su respuesta"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real el fallo espera al siguiente poll para reintentar"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real espera 1,5 s y confirma el \u00faltimo inbound mostrado"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real no inventa lectura ni divisor sin destino v\u00e1lido {\"conversation\":null}"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real no inventa lectura ni divisor sin destino v\u00e1lido {\"latest_visible_inbound_id\":null,\"first_unread_message_id\":null}"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real no inventa lectura ni divisor sin destino v\u00e1lido {\"unread_count\":0,\"first_unread_message_id\":null}"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real no marca con visibilityState=hidden"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real no marca con visibilityState=prerender"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real no marca sin foco, y recuperar foco inicia un debounce completo"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real no solapa POSTs y conserva llegadas posteriores al id confirmado"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real un poll id\u00e9ntico no posterga el plazo ni duplica un POST confirmado"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real una r\u00e1faga nueva reinicia el plazo y usa el \u00faltimo id"
+    },
+    {
+      "file": "C:/Users/LAP/Desktop/VeterinariaSaaS/frontend/src/pages/inbox/useThreadRead.test.jsx",
+      "name": "WA-UNR-02 \u2014 lectura con atenci\u00f3n real visibilitychange antes del plazo cancela la lectura"
+    }
+  ]
+}

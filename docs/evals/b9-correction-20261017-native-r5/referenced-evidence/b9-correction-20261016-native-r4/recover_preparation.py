@@ -1,0 +1,94 @@
+"""Complete interrupted, unsealed native preparation; never run application tests."""
+import json
+from pathlib import Path
+import shutil
+import socket
+import subprocess
+import time
+from native_support import EVIDENCE, WORK, TREE, PYTHON, PG, DATA, PORT, SHA, RTK, GIB, save, resources, environment, run, command, integrity
+
+
+def main():
+    for name in ('evaluation-seal.json', 'invocation-formal.json', 'native-preflight.json',
+                 'environment-ready.json', 'recovered-stage-validation.json'):
+        assert not (EVIDENCE / name).exists(), name
+    assert json.loads((EVIDENCE / 'preparation-incident-stage.json').read_text())['tests_executed'] is False
+    assert json.loads((EVIDENCE / 'audit-tool-install.command.json').read_text())['exit_code'] == 2
+    assert WORK.resolve() == Path('C:/Users/LAP/AppData/Local/Temp/b9-native-20261016-r4')
+    assert not WORK.is_symlink() and not WORK.is_junction()
+    assert PORT == 35488
+    observation = resources()
+    assert observation['physical_available'] >= 2 * GIB and observation['disk_available'] >= GIB
+    integrity('before-preparation-recovery')
+    history = json.loads((EVIDENCE / 'security-history.json').read_text())
+    head = run('git', 'rev-parse', 'HEAD').decode().strip()
+    refs = sorted(run('git', 'for-each-ref', '--format=%(refname) %(objectname)').decode().splitlines())
+    assert head == history['head'] and refs == history['refs']
+    assert run('git', 'rev-parse', '--is-shallow-repository').strip() == b'false'
+    save('security-history-current-boot.json', {'state': 'PASS', 'head': head,
+        'refs': refs, 'full_history': True, 'original_receipt_preserved': True,
+        'application_tests_executed': False})
+    with socket.socket() as sock:
+        sock.bind(('127.0.0.1', PORT))
+    assert not (WORK / 'postgresql-restart.log').exists()
+    shutil.copy2(WORK / 'postgresql.log', EVIDENCE / 'postgresql-before-preparation-restart.log')
+    argv = [str(RTK), 'proxy', str(PG / 'postgres.exe'), '-D', str(DATA)]
+    with (WORK / 'postgresql-restart.log').open('wb') as log:
+        server = subprocess.Popen(argv, cwd=WORK, env=environment(), stdin=subprocess.DEVNULL,
+            stdout=log, stderr=subprocess.STDOUT, close_fds=True,
+            creationflags=subprocess.CREATE_NO_WINDOW)
+    save('postgresql-preparation-restart.json', {'state': 'STARTING', 'argv': argv,
+        'wrapper_pid': server.pid, 'port': PORT, 'data_directory': str(DATA),
+        'log_path': str(WORK / 'postgresql-restart.log'), 'application_tests_executed': False})
+    import psycopg
+    started = time.monotonic()
+    while True:
+        if server.poll() is not None:
+            raise RuntimeError('Private PostgreSQL restart failed; preserve its new log')
+        try:
+            conn = psycopg.connect(host='127.0.0.1', port=PORT, user='b9e',
+                dbname='postgres', autocommit=True, connect_timeout=2)
+            break
+        except psycopg.OperationalError:
+            if time.monotonic() - started > 60:
+                raise
+            time.sleep(.5)
+    with conn:
+        values = conn.execute("SELECT current_setting('data_directory'),current_setting('port'),current_setting('fsync'),current_setting('synchronous_commit'),current_setting('full_page_writes')").fetchone()
+        assert Path(values[0]).resolve() == DATA.resolve() and values[1] == str(PORT)
+        assert values[2:] == ('on', 'on', 'on')
+        names = [row[0] for row in conn.execute("SELECT datname FROM pg_database WHERE NOT datistemplate ORDER BY datname")]
+        assert names == ['postgres', 'test_b9i_control']
+        assert not conn.execute('SELECT gid FROM pg_prepared_xacts').fetchall()
+    save('postgresql-preparation-restart.json', {'state': 'PASS', 'argv': argv,
+        'wrapper_pid': server.pid, 'postmaster_pid': int((DATA / 'postmaster.pid').read_text().splitlines()[0]),
+        'port': PORT, 'data_directory': str(DATA), 'durability': values,
+        'databases': names, 'log_path': str(WORK / 'postgresql-restart.log'),
+        'application_tests_executed': False})
+    command('clock-after-restart', [PYTHON, '-B', EVIDENCE / 'clock_probe.py'])
+    observation = resources()
+    assert observation['physical_available'] >= 2 * GIB and observation['disk_available'] >= GIB
+    command('audit-tool-install-after-restart', [WORK / 'audit-venv/Scripts/python.exe',
+        '-m', 'pip', 'install', '--no-cache-dir', 'pip-audit'])
+    command('audit-tool-dependency-check', [WORK / 'audit-venv/Scripts/python.exe', '-m', 'pip', 'check'])
+    save('audit-toolchain.json', json.loads(run(WORK / 'audit-venv/Scripts/python.exe', '-m', 'pip', 'list', '--format=json')))
+    command('interpreters', [PYTHON, '-B', EVIDENCE / 'interpreter_preflight.py'], cwd=TREE / 'backend')
+    integrity('ready-after-preparation-recovery')
+    save('recovered-stage-validation.json', {'state': 'PASS', 'prior_stage_receipts_preserved': True,
+        'original_capture_final_exit_unavailable': True, 'candidate_sources_unchanged': True,
+        'private_database_restart': 'postgresql-preparation-restart.json',
+        'current_boot_clock_observation': 'clock-recovery-preflight.json',
+        'audit_tool_dependency_check': 'PASS', 'application_tests_executed': False,
+        'formal_controller_invocations': 0, 'resources': resources()})
+    save('native-preflight.json', {'state': 'PASS', 'python_and_base_private': True,
+        'frontend_install': 'PASS', 'postgresql_private_durable': True,
+        'full_partition_total': 3331, 'wsl_invoked': False, 'application_tests_executed': False,
+        'preparation_recovery': 'recovered-stage-validation.json', 'resources': resources()})
+    save('environment-ready.json', {'state': 'READY_FOR_SEAL', 'candidate_sha': SHA,
+        'platform': 'Windows native', 'wsl_invoked': False, 'application_tests_executed': False,
+        'preparation_recovery': 'recovered-stage-validation.json'})
+    print('NATIVE_PREPARATION_RECOVERY_PASS', flush=True)
+
+
+if __name__ == '__main__':
+    main()

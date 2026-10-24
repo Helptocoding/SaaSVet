@@ -1,0 +1,131 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ❯ src/pages/inbox/index.test.jsx (93 tests | 1 failed | 52 skipped) 50313ms
+     ↓ does not call discarded guidance pending delivery
+     ↓ allows the current human owner to explicitly acknowledge a new queued case
+     ↓ shows a durable queue without inventing notification or acknowledgement
+     ↓ labels explicit acknowledgement without claiming clinical attention
+     ↓ keeps uncertain guidance visible and preserves multiple open legacy cases
+     ↓ cambiar de hilo no conserva el botón del historial anterior
+     ↓ permite recorrer un hilo archivado sin habilitar el envío
+     ↓ active: explica el turno y habilita Tomar y acusar recibo al terminar
+     ↓ human_active: explica el turno y habilita Liberar al terminar
+     ↓ muestra el indicador sin conceder permiso para tomar o liberar
+     ↓ no hereda el indicador de otro hilo ni de la fila antigua
+     ↓ un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada
+     ↓ distingue carga inicial de lista y mensajes de un panel sin selección
+     ↓ distingue el fallo inicial de lista vacía y permite reintentar
+     ↓ explica el fallo inicial de transcript y reintenta la misma conversación
+     ↓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar
+     ↓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar
+     ↓ recupera ambos paneles automáticamente cuando vuelve la API
+     ↓ un fallo tardío del hilo anterior no contamina la racha del nuevo
+     ↓ ignora success tardío de lista tras cambiar de filtro
+     ↓ ignora failure tardío de lista tras cambiar de filtro
+     ↓ representa staff_verified en ambos paneles sin habilitar acciones de identidad
+     ↓ representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad
+     ↓ representa phone_match en ambos paneles sin habilitar acciones de identidad
+     ↓ representa unknown en ambos paneles sin habilitar acciones de identidad
+     ↓ muestra la verificación del contacto incluso en un hilo archivado
+     ↓ retira el distintivo cuando el siguiente poll informa unknown
+     ✓ pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias  1106ms
+     ✓ cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía  426ms
+     ✓ si inicia oculto no consulta la lista y usa el filtro vigente al volver 134ms
+     ↓ refleja el último poll sin solicitar datos adicionales y restaura al salir
+     ↓ copia el cuerpo original completo, sin horas ni autor, y confirma el éxito
+     ↓ muestra un error recuperable cuando el navegador rechaza la copia
+     ↓ maneja clipboard no disponible sin anunciar una copia falsa
+     ↓ copia teléfono y ofrece tel: también con hilo archivado=false
+     ↓ copia teléfono y ofrece tel: también con hilo archivado=true
+     ↓ renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders
+     ↓ agrupa por autor sin ocultar mensajes, horas ni estados de entrega
+     ↓ corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto
+     ✓ crece al pegar 2000 caracteres, limita la altura y encoge al borrar  413ms
+     ✓ muestra el contador después de 3600 y conserva el límite de 4000  591ms
+     ✓ reinicia altura y contador al enviar sin esperar el POST  484ms
+     ✓ descarta texto y contador al cambiar de cliente  514ms
+     ✓ descarta el texto de Ana al cambiar al hilo de Beto  1174ms
+     ✓ conserva el borrador al volver a clicar el mismo hilo  756ms
+     ✓ envía al sessionId vigente con una key de idempotencia no vacía  1095ms
+     ✓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde  1996ms
+     ✓ reutiliza la key si se reintenta el mismo texto tras un error de red  2408ms
+     ✓ conserva la key incierta al navegar B y volver a A con el mismo texto  1935ms
+     ✓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto  947ms
+     ✓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío  2184ms
+     ✓ regenera la key cuando cambia el texto después de un error  1881ms
+     ✓ pinta el envío antes del POST y reconcilia el 201 sin duplicar  1215ms
+     ✓ elimina el optimista ante 400 y muestra el error del servidor  1106ms
+     ✓ conserva el optimista reintentable ante un 5xx  1097ms
+     ✓ deduplica un polling concurrente exclusivamente por client_message_id  945ms
+     ✓ dos envíos consecutivos por Enter reciben keys distintas  1477ms
+     ✓ no ejecuta continuaciones del POST después de desmontar el Inbox  1191ms
+     × aplica el cap global de 20 intentos entre sesiones 5310ms
+     ✓ oculta failed-local cuando el hilo regresa con otra sesión activa  1780ms
+     ✓ renderiza un divisor por día local de la organización 196ms
+     ✓ mantiene la hora del mensaje histórico bajo el divisor Ayer 232ms
+     ✓ integra recibos de entrega solo en mensajes salientes del transcript 220ms
+     ✓ actualiza todos los divisores con una sola referencia al cruzar medianoche  347ms
+     ↓ permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes
+     ↓ deduplica por contacto y cuenta sin ocultar otra cuenta del mismo contacto
+     ↓ refresca todas las páginas cargadas y conserva selección y borrador
+     ↓ bloquea el doble clic y el poll mientras carga otra página
+     ↓ una respuesta de poll anterior no borra una página recién añadida
+     ↓ conserva las filas ante un error de carga y reintenta el mismo desplazamiento
+     ↓ un refresco parcial fallido retiene todas las filas y muestra reconexión tras dos fallos
+     ↓ ignora una carga tardía con éxito después de cambiar de filtro
+     ↓ ignora una carga tardía con error después de cambiar de filtro
+     ↓ no inicia otra página del poll al ocultarse y refresca todas al volver
+     ↓ no continúa un refresco de varias páginas después de desmontar
+     ↓ reduce las páginas a refrescar cuando la lista se agota antes
+     ↓ no ofrece un cursor inválido 0
+     ↓ no ofrece un cursor inválido -1
+     ↓ no ofrece un cursor inválido 100
+     ↓ no ofrece un cursor inválido null
+     ✓ carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo  1698ms
+     ✓ el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor  3590ms
+     ✓ un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador  1419ms
+     ✓ la página anterior no sustituye la sesión vigente renovada por el poll  794ms
+     ✓ ignora success antiguo al cambiar de hilo y aborta su petición  488ms
+     ✓ ignora failure antiguo al cambiar de hilo y aborta su petición  522ms
+     ✓ los hilos archivados permiten cargar anteriores sin ofrecer envío  409ms
+     ✓ una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo  1834ms
+     ✓ un mensaje nuevo pegado al fondo sigue visible sin contador  1083ms
+     ✓ bajar manualmente hasta el fondo retira el contador  1407ms
+     ✓ cambiar de hilo no conserva el contador del anterior  1509ms
+     ✓ al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores  1089ms
+     ✓ una llegada de hoy conserva la lectura de julio aunque cree un divisor de día  1296ms
+ ✓ src/pages/inbox/index.window.test.jsx (18 tests) 4884ms
+     ✓ una ventana de más de 12 h permite enviar sin banda innecesaria  1263ms
+     ✓ bloquea en el límite entre ticks, conserva borrador y no envía por Enter  590ms
+ ✓ src/pages/inbox/index.retry.test.jsx (25 tests) 7022ms
+     ✓ reintenta la fila original de otra autora sin duplicados ni pérdida del borrador  1470ms
+     ✓ bloquea doble clic hasta recibir respuesta  364ms
+     ✓ muestra llamada desde el fallo de ventana session_window_closed  333ms
+     ✓ fallo HTTP conserva el mensaje y permite otro intento explícito  300ms
+     ✓ no ofrece reintento de FAILED con evidencia acceptance_known  347ms
+     ✓ cambio de hilo aborta e ignora respuesta tardía sin tocar el borrador nuevo  331ms
+     ✓ un acuse READ recibido por poll gana al PENDING tardío del POST  326ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > aplica el cap global de 20 intentos entre sesiones
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/pages/inbox/index.test.jsx:1143:5
+    1141|     });
+    1142|
+    1143|     it("aplica el cap global de 20 intentos entre sesiones", async () …
+       |     ^
+    1144|         inboxApi.sendInboxMessage.mockRejectedValue(new Error("offline…
+    1145|         const user = userEvent.setup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 83 passed | 52 skipped (136)
+   Start at  15:47:14
+   Duration  106.20s (transform 2.53s, setup 2.60s, import 8.41s, tests 62.22s, environment 21.07s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-win-01-2026-10-21/vitest.json

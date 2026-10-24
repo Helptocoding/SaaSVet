@@ -1,0 +1,30 @@
+{
+  "utc_observed": "2026-10-16T23:55:05Z",
+  "phase": "CLEANUP_AFTER_ENVIRONMENTAL_STOP",
+  "formal_completed_before_followup_interruption": true,
+  "automatic_review_event": "One read-only tracking request exceeded review deadline; the one allowed retry succeeded. No safety rejection reason was given.",
+  "observer_closed_state": {
+    "state": "PASS",
+    "pid": 24468,
+    "samples": 7076,
+    "seconds": 63470.0,
+    "explicit_stop_requested": false
+  },
+  "awake_closed_state": {
+    "state": "PASS_API_REQUEST_AND_RESTORATION",
+    "seconds": 63467.329,
+    "pid": 8804,
+    "thread_state_before_release": "0x80000001",
+    "restored_thread_state": "0x80000000",
+    "matches_original_thread_state": true,
+    "error": null,
+    "application_tests_executed": false,
+    "heartbeat_samples": 7101,
+    "explicit_stop_requested": false,
+    "sleep_prevention_over_15_minutes_validated": false,
+    "global_power_policy_changed": false
+  },
+  "attribution_limit": "Long elapsed time and low heartbeat sample count are retained; sleep, clock adjustment, device unavailability and approval latency causes are not asserted.",
+  "formal_rerun": false,
+  "host_clock_or_power_policy_modified": false
+}

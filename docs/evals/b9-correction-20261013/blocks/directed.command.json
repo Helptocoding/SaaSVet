@@ -1,0 +1,74 @@
+{
+  "label": "directed",
+  "candidate_sha": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "argv": [
+    "/home/lap/b9i-correction-20261013/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-correction-20261013/venv/bin/python",
+    "-B",
+    "-m",
+    "apps.agent.tests.run_b9a_acceptance",
+    "--suite",
+    "targeted",
+    "--database",
+    "test_b8b_b9i_directed",
+    "--ids-file",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261013/directed-selected.json",
+    "--output",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261013/blocks/directed"
+  ],
+  "cwd": "/home/lap/b9i-correction-20261013/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-14T05:50:56Z",
+      "physical_available": 7533449216,
+      "physical_total": 8252518400,
+      "disk_available": 7826583552,
+      "linux_virtual_disk_available": 1017019887616
+    },
+    "host": {
+      "utc": "2026-10-14T05:50:56Z",
+      "physical_total": 17031217152,
+      "physical_available": 4606189568,
+      "page_available": 10165977088,
+      "utc_epoch_seconds": 1791957056.7670953,
+      "observer_pid": 23380
+    },
+    "ready": true
+  },
+  "pid": 1415,
+  "exit_code": 0,
+  "seconds": 1113.3536210089997,
+  "invalidating_incident": null,
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-14T06:09:30Z",
+      "physical_available": 7521468416,
+      "physical_total": 8252518400,
+      "disk_available": 7762243584,
+      "linux_virtual_disk_available": 1017000271872
+    },
+    "host": {
+      "utc": "2026-10-14T06:09:29Z",
+      "physical_total": 17031217152,
+      "physical_available": 4431286272,
+      "page_available": 9844166656,
+      "utc_epoch_seconds": 1791958169.902132,
+      "observer_pid": 23380
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-14T06:09:29Z",
+        "utc_epoch_seconds": 1791958169.8892884,
+        "pid": 16012,
+        "thread_id": 25728,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.3569607734680176
+    }
+  }
+}

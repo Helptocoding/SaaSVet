@@ -1,0 +1,13 @@
+{
+  "phase": "PREPARATION_ONLY",
+  "tests_executed": false,
+  "cause": "RTK proxy buffers interactive cat-file output; byte verification changed to Git blob SHA-1 calculation",
+  "owned_processes_stopped": [
+    30892,
+    33872,
+    34876,
+    29308
+  ],
+  "candidate_sources_modified": false,
+  "export_issue": "Git archive applied host autocrlf; rebuild export with core.autocrlf=false and core.eol=lf before sealing or tests"
+}

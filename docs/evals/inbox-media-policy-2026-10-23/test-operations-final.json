@@ -1,0 +1,17 @@
+{
+  "kind": "test",
+  "labels": [
+    "apps.channels.tests.test_media_restore_drill",
+    "apps.channels.tests.test_media_integration.MediaEntrypointTests.test_nightly_job_is_bounded_and_disabled_is_inert",
+    "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_absent_recipient_is_visible_nonblocking_debt_and_sends_nothing",
+    "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_failed_batch_does_not_starve_later_rows_or_exit_success",
+    "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_capacity_limit_reports_remaining_due_instead_of_silent_success",
+    "apps.channels.tests.test_media_retention_policy.RetentionPolicyTests.test_escalation_queued_during_delivery_is_not_lost_by_older_claim"
+  ],
+  "ordinary_database_migrated": false,
+  "provider_network": false,
+  "test_database": "test_inbox_policy_9c12227e66b4",
+  "test_database_remains": false,
+  "exit_code": 0,
+  "elapsed_s": 330.651
+}

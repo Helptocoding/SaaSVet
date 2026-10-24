@@ -1,0 +1,272 @@
+{
+  "schema": 1,
+  "private_runtime_excluded": true,
+  "previous_artifacts_verified": 102,
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "67d5b18afb0d8d42be3ce98a1170e2c6d4f25ea3de3baa82f550229fc1b6d298",
+      "bytes": 7889
+    },
+    {
+      "path": "backend/.dockerignore",
+      "sha256": "2890c45e2509fde798f0a07b7cde8532da0a891b82f789e0d136a243ed62c20a",
+      "bytes": 910
+    },
+    {
+      "path": "backend/.env.example",
+      "sha256": "12b32458165c4798f272028779daf25ea23a67b32738fabc8e5d47b5237a2b66",
+      "bytes": 1819
+    },
+    {
+      "path": "backend/apps/agent/inbox_media.py",
+      "sha256": "45daae2d21911e8e1688f180c8cfd5d326c745e3e931a1e90e2875d42dd94766",
+      "bytes": 3451
+    },
+    {
+      "path": "backend/apps/channels/management/commands/inbox_media_ops.py",
+      "sha256": "7e4858a189b68712e5b766b0ef36d75d5c3bd749ce542c20eff4f51a95786733",
+      "bytes": 7113
+    },
+    {
+      "path": "backend/apps/channels/management/commands/maintain_inbox_media.py",
+      "sha256": "20d12d0027a31f7b13dddcf73f0dc2345ee23b9cd7246d7d1098bd0778b24287",
+      "bytes": 2318
+    },
+    {
+      "path": "backend/apps/channels/media_clock.py",
+      "sha256": "6c8e53e1f65f3d361129ae85a204de6b60bda1d5bde6e0057a31258d4b6d6c27",
+      "bytes": 423
+    },
+    {
+      "path": "backend/apps/channels/media_incidents.py",
+      "sha256": "064fda12aae26fb98f6905a8854b28c82c8b4ba56cfbe1e91da6640fc8b3d624",
+      "bytes": 8593
+    },
+    {
+      "path": "backend/apps/channels/media_revocations.py",
+      "sha256": "1182422b8b23ab77f1752c7c3459d5e88dbdb09975adc4599b7a205a08980151",
+      "bytes": 5526
+    },
+    {
+      "path": "backend/apps/channels/media_storage.py",
+      "sha256": "3aea8d48b4f1b34551315750949320c58957bcc2bec0466fad037baaf57cfb2e",
+      "bytes": 7174
+    },
+    {
+      "path": "backend/apps/channels/media_worker.py",
+      "sha256": "49f0789693443118c82719c098ddbee8e282e468cae5f588273e7f3a590727b1",
+      "bytes": 13017
+    },
+    {
+      "path": "backend/apps/channels/migrations/0018_media_retention_policy.py",
+      "sha256": "e305e41ce6b83dbebfc7212aa7653a27f1e490258e478ffef0bb9fa3421b3ba9",
+      "bytes": 3318
+    },
+    {
+      "path": "backend/apps/channels/models.py",
+      "sha256": "16d2c8181cbd5f2704c065d6b76401a4953c663bacd2b94760cb8af0ecc7bc60",
+      "bytes": 22496
+    },
+    {
+      "path": "backend/apps/channels/tests/test_media_integration.py",
+      "sha256": "4e9b17b83d6c11ab6d1f53569401a1e7287cda2833585e50e236b126f20b145f",
+      "bytes": 4739
+    },
+    {
+      "path": "backend/apps/channels/tests/test_media_pipeline.py",
+      "sha256": "9e1d517cd630b6f4a7a1a5a9d26519cc3b212383ed9b89e7140cbc93cdb60837",
+      "bytes": 23842
+    },
+    {
+      "path": "backend/apps/channels/tests/test_media_restore_drill.py",
+      "sha256": "07b630d0fff563e13b477b077a90c2a78f3aafe2265f8545627d20b57b0f370f",
+      "bytes": 5453
+    },
+    {
+      "path": "backend/apps/channels/tests/test_media_retention_policy.py",
+      "sha256": "6abb8f749922e022987d575589ad6d824537b87af5f646d2b130a26707a6d5fe",
+      "bytes": 16467
+    },
+    {
+      "path": "backend/config/settings.py",
+      "sha256": "46640e8ce87c0be7726ff73cfd3502e71a683ec21506c96e15c8b3117ee256cd",
+      "bytes": 34040
+    },
+    {
+      "path": "docs/CIERRE-INBOX-WHATSAPP.md",
+      "sha256": "9b41e62b2735ac724be65fd152fc93c0ea48c57e09a8d9e67f0c004e1d388460",
+      "bytes": 37877
+    },
+    {
+      "path": "docs/compliance/arco.md",
+      "sha256": "df2cdebc68f9293d318d6ebc53820e38cf2b5072cf4cfcecb174c089752df9f9",
+      "bytes": 13100
+    },
+    {
+      "path": "docs/compliance/cierre-b2-whatsapp-2026-10-22.md",
+      "sha256": "dfb33801bb662f2a5a6fb252b13834c5884a643abfb1838194bceb29e55e45ee",
+      "bytes": 13316
+    },
+    {
+      "path": "docs/compliance/inbox-privacy-review-2026-10-23/aviso-de-privacidad.astro",
+      "sha256": "63820f7d33c8d751cc24ecee589a3d1e759284efa157797c56574bf8e2e64eb6",
+      "bytes": 20246
+    },
+    {
+      "path": "docs/compliance/inbox-privacy-review-2026-10-23/aviso-de-privacidad.patch",
+      "sha256": "d7d71928454940c49ad6f8b9ba996ebb5def7a3d44492c9b9f178ae5122c8773",
+      "bytes": 4379
+    },
+    {
+      "path": "docs/compliance/inbox-privacy-review-2026-10-23/README.md",
+      "sha256": "2ec56756b7eb110157c968d6d7ac9b1fd1cfff88dc13da94a146e8804e48bc90",
+      "bytes": 1015
+    },
+    {
+      "path": "docs/decisions/2026-10-22-inbox-media-retention-policy.md",
+      "sha256": "accf4940b12ff71e1161c06a7ae39b7c1c86d6f2bb82967ee8aeaee6b85da70f",
+      "bytes": 14759
+    },
+    {
+      "path": "docs/decisions/2026-10-23-inbox-media-alert-ops-deferred.md",
+      "sha256": "b9910fb664ccfb1dc8f431f288a00ba0f02710ad5f7bd5a7c16838242a071261",
+      "bytes": 923
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/build_landing.py",
+      "sha256": "ae54eec75f84c75ddf5928499a375e3120f97c5c13b32554c2ab0189d2360220",
+      "bytes": 2825
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/check-final.json",
+      "sha256": "ade8b2ba6af996782c0f4b6c8ae7c2b2195585f88370c0bfb7766a9d4c39c832",
+      "bytes": 152
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/check-final.log",
+      "sha256": "83e965fb2084698f4abcfe46458af51aadf4ffa739d8e32cdf83632e7f2dd576",
+      "bytes": 70
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/finalize.py",
+      "sha256": "5f1a3bc147596eb616fc7be23421ca8df895d06142f7fc8f6c0433cb64c9fdeb",
+      "bytes": 8490
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/landing-build.json",
+      "sha256": "dcddecf63da7df6cc08fd233168b43a0b18b9a1a9cf693224ec0be119bc7df55",
+      "bytes": 1440
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/landing-build.log",
+      "sha256": "3b3465978fd405030324ef79900bd02fb369038eb1c0105108a3436d9e4c484e",
+      "bytes": 6666
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/migrate_local.py",
+      "sha256": "194a7ec726507ca7609f346d82dc56b0f486efa350c70071e98746b52d5e2a7d",
+      "bytes": 3988
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/migration-initial.json",
+      "sha256": "190be488065ca08241d95c7107d57b3692ff721ff86a1712b40303fc6b8962d1",
+      "bytes": 157
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/migration-initial.log",
+      "sha256": "43953d5d746b99852f1bd2bd708e874d5f7d1d3367635b04c9e102ab989a3ed7",
+      "bytes": 185
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/migration-local-before.json",
+      "sha256": "d09ca6857a3cb8d26e8ec2784243eb07b9cf1a50cc75e96cded478561af1cdfe",
+      "bytes": 581
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/migration-local.json",
+      "sha256": "09c0ff8e18ac0028b36bf986113b83a3f3b88e70162a68a0c1527eb1fbd91b22",
+      "bytes": 708
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/preparation.json",
+      "sha256": "3ac4dbf69b73512f280310564343791d223fecf1e70a89f1c8a4c5031ada98a6",
+      "bytes": 550
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/prepare_packet.py",
+      "sha256": "4bd5fdf9f3f55ce600ad2902016e652b41c644fce55ff8a7b37aa1d6189d3104",
+      "bytes": 12565
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/README.md",
+      "sha256": "e0145471807dee384ff004e7089efda11984155fe0a86db79650defecfd0b407",
+      "bytes": 2247
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/restore-drill.json",
+      "sha256": "7e57d20fa500d8200e943c34a007a0105e005fbc57e3cb39c5e04aebff182909",
+      "bytes": 409
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/run_checks.py",
+      "sha256": "8d8d9e0205e93e77d4e4f14f35e6149966198ed5dafb4cc6c32739a606578dde",
+      "bytes": 3352
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/summary.json",
+      "sha256": "b2c8a4f73bc1160af7221c9aeca89f5d9d8ad15c6020e6dc4d7c89427acd943e",
+      "bytes": 1085
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/sync_status.py",
+      "sha256": "980fc69d94bfb449f9f0b84aff4520d11f6e008d027c7f5e8b662e53afe87afb",
+      "bytes": 4071
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/test-cases.json",
+      "sha256": "69409e0a55484c7a81be9268f503ec1e66d81d59305365d42a7e2cc238812573",
+      "bytes": 9643
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/test-operations-final.json",
+      "sha256": "143a43116b3fe418575df89380c8dd10ddbfb53b45c58f6e2e985eda9a7d7d89",
+      "bytes": 991
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/test-operations-final.log",
+      "sha256": "e9737a556a20daf49ff12b707d79b75012dcf0e84367808434e304977e7da2bb",
+      "bytes": 21411
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/test-policy-first.json",
+      "sha256": "1920ba04fdb3fabcad4d3ae111459bee4274cfbcc8c8f251cae94b099359f231",
+      "bytes": 541
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/test-policy-first.log",
+      "sha256": "61b2dca6fc0431c60eb6dc6c31d95517f4c2962cec38b058459acdf4d61db246",
+      "bytes": 42113
+    },
+    {
+      "path": "docs/evals/inbox-media-policy-2026-10-23/update_runbooks.py",
+      "sha256": "c38411189af07a2a907629cb8461a1889e3d51c38770d4a23f5cdaeb6e488fd5",
+      "bytes": 10011
+    },
+    {
+      "path": "docs/runbooks/inbox-media.md",
+      "sha256": "55ff109e387bb67bff9247d12dc26bb7c6b5b37538051ff413ab4aa44f755c17",
+      "bytes": 17123
+    },
+    {
+      "path": "docs/runbooks/RUNBOOK-RESTORE.md",
+      "sha256": "7f4cf029502e9d141fe5837b2721b89449b4e5b6e2c92afef34f0b2b2d429ef5",
+      "bytes": 13519
+    },
+    {
+      "path": "scripts/crontab.example",
+      "sha256": "3a7b5158d70d244c168aeeb74c0ff7c5fe66103fb3e819ee65a2c5dcec7e962c",
+      "bytes": 8825
+    }
+  ]
+}

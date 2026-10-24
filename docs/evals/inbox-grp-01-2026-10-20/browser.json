@@ -1,0 +1,46 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "gap": 2,
+      "width": 246.015625,
+      "fits": true,
+      "messages_preserved": 7,
+      "groups": 5
+    },
+    {
+      "viewport": "mobile",
+      "gap": 2,
+      "width": 244.625,
+      "fits": true,
+      "messages_preserved": 7,
+      "groups": 5
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    }
+  ],
+  "page_errors": [],
+  "temporary_server_listening": false
+}

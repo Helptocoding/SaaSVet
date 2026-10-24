@@ -1,0 +1,87 @@
+{
+  "decision": "PENDING",
+  "cause": "La reserva de disco C: cayó por debajo de 1 GiB durante la preparación de B0. El controlador detuvo únicamente su árbol propio antes de registrar resultados por ID de ese bloque. Cinco gates previos están PASS y el corpus dirigido conserva 87/87 PASS. Las regresiones restantes, full, frontend, seguridad y PROFILE quedan sin ejecutar; no se acredita fallo funcional del producto. Windows registró suspensión por Battery y un intervalo posterior de casi ocho horas en el seguimiento; no se atribuye ese intervalo a ejecución continuada de B0 ni se identifica el consumidor de disco.",
+  "date_local": "2026-10-17",
+  "classified_utc": "2026-10-17T15:45:31Z",
+  "classification": "ENVIRONMENT_DISK_RESERVE_EXHAUSTED",
+  "phase": "b0",
+  "evidence": [
+    "STOP.json",
+    "blocks/b0.command.json",
+    "monitor-b0.json",
+    "invocation-formal.json",
+    "diagnostics/power-and-followup-incident.json"
+  ],
+  "formal_invocations": 1,
+  "formal_reruns": 0,
+  "completed_gates": {
+    "billing-schema": "PASS",
+    "directed": "PASS",
+    "django-check": "PASS",
+    "migrate": "PASS",
+    "migration-drift": "PASS"
+  },
+  "completed_directed": {
+    "tests": 87,
+    "PASS": 87,
+    "FAIL": 0,
+    "ERROR": 0,
+    "SKIP": 0
+  },
+  "interrupted_suite": {
+    "selected_ids": 17,
+    "observed_unique_ids": 0,
+    "outcomes": {},
+    "missing_ids": [
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_direct_pending_commit_is_contained",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_emergency_copy_uses_only_configured_phone",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_failure_after_persistence_leaves_pending_event",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_forced_dispatch_cannot_invoke_any_write_handler",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_forced_planner_write_is_handed_off",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_legacy_pending_cannot_authorize_any_reply",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_llm_timeout_yields_honest_fallback",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_pending_events_and_queued_outbound_do_not_mean_delivery",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_personal_read_needs_current_identity",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_public_read_and_explicit_human_remain_available",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_read_result_does_not_prove_write_or_price",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_registry_covers_every_current_write",
+      "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_unsafe_output_corpus_is_replaced_without_retry",
+      "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_alert_acceptance_failure_and_no_free_text_export",
+      "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_controlled_provider_failure_boundaries",
+      "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_failed_empty_skipped_or_expected_failure_cannot_pass_gate",
+      "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_fixture_is_required_and_complete"
+    ],
+    "complete_gate": false
+  },
+  "full": {
+    "observed_unique_ids": 0,
+    "selected_ids": 3331,
+    "complete_gate": false,
+    "groups_executed": 0
+  },
+  "resource_evidence": {
+    "disk_reserve_bytes": 1073741824,
+    "ram_reserve_bytes": 2147483648,
+    "disk_bytes_after_stop": 268410880,
+    "minimum_ram_bytes_during_commands": 6270443520,
+    "minimum_disk_bytes_during_commands": 268369920,
+    "maximum_clock_skew_seconds_during_commands": 0.0014758676911696966,
+    "monitor_receipts": [
+      "monitor-b0.json",
+      "monitor-billing-schema.json",
+      "monitor-directed.json",
+      "monitor-django-check.json",
+      "monitor-migrate.json",
+      "monitor-migration-drift.json"
+    ]
+  },
+  "preparation_memory_error_established": true,
+  "preparation_recovered_before_formal_seal": true,
+  "preparation_recovery": "recovered-stage-validation.json",
+  "formal_oom_established": false,
+  "product_failure_established": false,
+  "disk_consumer_attributed": false,
+  "wsl_invoked": false,
+  "read_only_status_monitors_exited": true,
+  "later_blocks_executed": false
+}

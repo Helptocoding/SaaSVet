@@ -1,0 +1,12 @@
+--- native-r7/run_campaign.py
++++ native/run_campaign.py
+@@ -91,7 +91,8 @@
+     required_names=[
+         'case-resumption-authorization.json','case-resumption-manifest.json','case-resumption-validation.json',
+         'RESUMPTION-PROPOSAL.md','prepared-runtime-references.json','runtime-handoff-supplement.json',
+-        'formal-preparation-resumption.json','preparation-history-manifest.json','preparation-native-closure.json',
++        'snapshot-resumption-authorization.json','snapshot-equivalence.json','case-resumption-inputs.json',
++        'snapshot-correction.diff','resumption.json',
+         'authorization.json','candidate.json','correction.diff','resource-policy.json',
+         'scope-manifest.json','PLAN.md','assembly.json','candidate-sources.json',
+         'toolchain.json','python-environment.json','dependency-files.json','interpreter-preflight.json',

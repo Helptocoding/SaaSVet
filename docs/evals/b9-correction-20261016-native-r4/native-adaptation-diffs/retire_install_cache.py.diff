@@ -1,0 +1,11 @@
+--- native-r3/retire_install_cache.py
++++ native/retire_install_cache.py
+@@ -9,7 +9,7 @@
+     assert not (EVIDENCE / 'evaluation-seal.json').exists()
+     assert not (EVIDENCE / 'install-cache-retirement.json').exists()
+     assert json.loads((EVIDENCE / 'frontend-layout.json').read_text())['state'] == 'PASS'
+-    expected = Path('C:/Users/LAP/AppData/Local/Temp/b9-native-20261016-r3')
++    expected = Path('C:/Users/LAP/AppData/Local/Temp/b9-native-20261016-r4')
+     assert WORK.resolve() == expected and not WORK.is_symlink() and not WORK.is_junction()
+     roots = [WORK / 'pnpm-store', WORK / 'downloads']
+     resolved = []

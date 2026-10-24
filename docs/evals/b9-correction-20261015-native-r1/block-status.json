@@ -1,0 +1,119 @@
+{
+  "directed": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "django-check": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "migration-drift": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "migrate": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "billing-schema": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "b0": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "b3": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "b4": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "b5": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8b": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8c": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8d": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8e": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-general": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0,
+    "logical_aggregate": true,
+    "groups": [
+      "full-b8b",
+      "full-b8c",
+      "full-b8d",
+      "full-b8e",
+      "full-general"
+    ],
+    "seconds": 0
+  },
+  "frontend-build": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "frontend-test": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "frontend-lint": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "frontend-smoke-urls": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "security": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "pip-audit": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "pnpm-audit": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-base": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-blocked_llm": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-meta_slow": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-duplicate": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-saturation": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "state": "USER_AMENDED_BEFORE_SEAL",
+  "instruction": "procede con lo disponible actual, no puedo liberar mas aun",
+  "prior_host_and_guest_admission_bytes": 5368709120,
+  "host_and_guest_admission_floor_bytes": 2147483648,
+  "host_and_guest_execution_reserve_bytes": 2147483648,
+  "suite_memory_estimate_bytes_not_guaranteed": 3221225472,
+  "backing_disk_reserve_bytes": 1073741824,
+  "clock_discontinuity_limit_seconds": 1,
+  "suites_sequential": true,
+  "internal_test_concurrency_unchanged": true,
+  "oom_or_reserve_exhaustion_action": "Stop PENDING, no retry",
+  "interpretation": "Results belong to this explicitly amended resource condition. Do not claim the original 5 GiB prerequisite was satisfied when it was not.",
+  "product_gates_fixtures_load_timings_changed": false,
+  "resumption_instruction": "prosige",
+  "host_measurement": "Same GlobalMemoryStatusEx API; persistent private Windows Python observer, 1-second samples; fail closed if latest sample is older than 10 seconds",
+  "host_awake_assurance": "Bounded own-thread request, live heartbeat checked before and during formal blocks",
+  "native_auxiliary_lifetime_amendment": {
+    "awake_maximum_seconds": 43200,
+    "observer_maximum_seconds": 46800,
+    "before_formal_seal": true,
+    "adaptive_renewal": false,
+    "reference": "operational-lifetime-amendment.json"
+  }
+}

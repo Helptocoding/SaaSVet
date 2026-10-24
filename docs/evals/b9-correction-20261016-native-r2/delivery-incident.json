@@ -1,0 +1,25 @@
+{
+  "state": "RESOLVED_EVIDENCE_FORMAT_ONLY",
+  "initial_command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "initial_delivery_process_exit_code": 1,
+  "raw_git_exit_code_not_retained": true,
+  "cause": "Literal new blank line at EOF in cleanup_native.py.diff, line 19",
+  "preserved_diff_sha256": "bcdc8f1ed5e890dc410a4200981f1c0e582949619b08146fe8f2c23fcbf145e0",
+  "preserved_sealed_cleanup_source_sha256": "373e8149e8f2bce0df983658e33e40ea29aa68f5aade9b9137b7f3ff59e58481",
+  "original_archive_sha256": "66b03db27d93338e123f07807e1ec9aed4987cd14082b20e7fc12003d446b4d4",
+  "frozen_evaluator_source_modified": false,
+  "original_package_rewritten": false,
+  "format_exception_exact_path": "docs/evals/b9-correction-20261016-native-r2/native-adaptation-diffs/cleanup_native.py.diff",
+  "format_exception_rule": "docs/evals/b9-correction-20261016-native-r2/native-adaptation-diffs/cleanup_native.py.diff whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol",
+  "application_tests_guards_assertions_or_gates_changed": false,
+  "formal_campaign_restarted": false,
+  "supplemental_delivery_metadata_outside_original_archive": [
+    "delivery-incident.json",
+    "diagnostics/finish_delivery.py"
+  ]
+}

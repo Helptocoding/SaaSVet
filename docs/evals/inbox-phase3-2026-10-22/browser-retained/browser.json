@@ -1,0 +1,49 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "bearer_on_every_file": true,
+      "typed_preview": true,
+      "caption_and_quote": true,
+      "lightbox_escape_focus": true,
+      "manual_audio": true,
+      "video_not_autoloaded": true,
+      "document_download": true,
+      "pending_failed_expired": true,
+      "http410_once": true,
+      "explicit_retry": true,
+      "horizontal_overflow": false,
+      "file_requests": {
+        "gone": 1,
+        "retry": 2,
+        "photo": 1,
+        "audio": 1,
+        "document": 1
+      }
+    },
+    {
+      "viewport": "mobile",
+      "bearer_on_every_file": true,
+      "typed_preview": true,
+      "caption_and_quote": true,
+      "lightbox_escape_focus": true,
+      "manual_audio": true,
+      "video_not_autoloaded": true,
+      "document_download": true,
+      "pending_failed_expired": true,
+      "http410_once": true,
+      "explicit_retry": true,
+      "horizontal_overflow": false,
+      "file_requests": {
+        "gone": 1,
+        "retry": 2,
+        "photo": 1,
+        "audio": 1,
+        "document": 1
+      }
+    }
+  ],
+  "page_errors": []
+}

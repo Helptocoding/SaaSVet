@@ -1,0 +1,19 @@
+{
+  "state": "HARNESS_ONLY_REPAIR_APPROVED",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "source_candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "source_campaign": "b9-correction-20261020-native-r10",
+  "no_application_source_or_fixture_change": true,
+  "original_case_authorization": "frontend-resumption-authorization.json",
+  "user_answer": "Sí, ajustar ese armado y continuar sin repetir PASS",
+  "application_test_cases_executed_in_r10": 0,
+  "previous_PASS_cases_rerun": false,
+  "exact_one_case_discovery_required": true,
+  "reason": "Windows pnpm lifecycle serialization doubled backslashes introduced before spaces by re.escape; anchored literal has no JS regular-expression metacharacters.",
+  "selector_only_delta": "Replace re.escape(TARGET_NAME) with TARGET_NAME after rejecting regexp metacharacters.",
+  "formal_execution_limit": "One first actual execution of the authorized corrected case, followed by original remaining stages.",
+  "eight_assertions_5000ms_timeout_guards_workloads_unchanged": true,
+  "original_stop_and_zero_case_receipts_preserved": true,
+  "continuous_campaign_claimed": false,
+  "historical_evidence_limitation_accepted": true
+}

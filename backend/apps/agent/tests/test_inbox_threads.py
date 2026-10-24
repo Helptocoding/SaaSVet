@@ -7,6 +7,7 @@ conversaciones de un mismo usuario». La conversación sigue siendo el episodio
 fila por `(contacto, cuenta)`.
 """
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.urls import reverse
 from django.utils import timezone
@@ -70,7 +71,53 @@ class ThreadsTestCase(APITestCase):
     def _threads(self, **params):
         response = self.client.get(reverse('inbox-threads'), params)
         self.assertEqual(response.status_code, 200)
-        return response.data
+        return response.data['results']
+
+
+class AgentProcessingTests(ThreadsTestCase):
+    """WA-AGT-01: proyección del turno en lista y transcript, sin timestamp."""
+
+    def test_active_expired_missing_and_exact_boundary(self):
+        current = self._session()
+        now = timezone.now()
+        for until, expected in [
+            (now + timedelta(seconds=60), True),
+            (now - timedelta(seconds=1), False),
+            (None, False),
+            (now, False),
+        ]:
+            with self.subTest(until=until), patch('apps.agent.serializers.timezone.now', return_value=now):
+                Conversation.objects.filter(pk=current.pk).update(processing_until=until)
+                row = self._threads()[0]
+                response = self.client.get(reverse('inbox-thread-messages', args=[
+                    str(self.contact.public_id), str(self.channel.public_id)]))
+                self.assertEqual(response.status_code, 200)
+                conversation = response.data['conversation']
+                self.assertIs(row['agent_processing'], expected)
+                self.assertIs(conversation['agent_processing'], expected)
+                self.assertNotIn('processing_until', row)
+                self.assertNotIn('processing_until', conversation)
+                self.assertNotIn('processing_until', response.data)
+
+    def test_archived_projection_never_claims_an_active_turn(self):
+        current = self._session(state=Conversation.STATE_CLOSED, closed=timezone.now())
+        Conversation.objects.filter(pk=current.pk).update(
+            processing_until=timezone.now() + timedelta(minutes=5))
+        row = self._threads(archived='1')[0]
+        self.assertIs(row['agent_processing'], False)
+        response = self.client.get(reverse('inbox-thread-messages', args=[
+            str(self.contact.public_id), str(self.channel.public_id)]))
+        self.assertIsNone(response.data['conversation'])
+        self.assertNotIn('processing_until', row)
+
+    def test_new_session_does_not_inherit_old_projection(self):
+        old = self._session(state=Conversation.STATE_CLOSED, closed=timezone.now())
+        Conversation.objects.filter(pk=old.pk).update(
+            processing_until=timezone.now() + timedelta(minutes=5))
+        current = self._session()
+        row = self._threads()[0]
+        self.assertEqual(row['conversation_public_id'], str(current.public_id))
+        self.assertIs(row['agent_processing'], False)
 
 
 class GroupingTests(ThreadsTestCase):

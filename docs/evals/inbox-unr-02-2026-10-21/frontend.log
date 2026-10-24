@@ -1,0 +1,57 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/api/inbox.test.js (7 tests | 3 skipped) 56ms
+ ✓ src/pages/inbox/useThreadRead.test.jsx (17 tests) 278ms
+ ✓ src/pages/inbox/useThreadHistory.test.jsx (28 tests) 632ms
+ ✓ src/pages/inbox/ThreadViewport.test.jsx (13 tests) 1845ms
+     ✓ a scrollTop=0 sólo pide anteriores bajo 160 px  683ms
+ ✓ src/pages/inbox/index.unread.test.jsx (8 tests) 3302ms
+     ✓ muestra total de todas las páginas y contadores por hilo  1269ms
+     ✓ sitúa el divisor antes del primer nuevo y lo quita al confirmar, con view solamente  589ms
+     ✓ cambiar de hilo durante debounce solo marca el nuevo destino  381ms
+ ✓ src/pages/inbox/index.test.jsx (93 tests | 38 skipped) 42961ms
+     ✓ cambiar de hilo no conserva el botón del historial anterior  2125ms
+     ✓ permite recorrer un hilo archivado sin habilitar el envío  322ms
+     ✓ active: explica el turno y habilita Tomar y acusar recibo al terminar  613ms
+     ✓ human_active: explica el turno y habilita Liberar al terminar  414ms
+     ✓ no hereda el indicador de otro hilo ni de la fila antigua  550ms
+     ✓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  1229ms
+     ✓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  1052ms
+     ✓ un fallo tardío del hilo anterior no contamina la racha del nuevo  314ms
+     ✓ descarta el texto de Ana al cambiar al hilo de Beto  1000ms
+     ✓ conserva el borrador al volver a clicar el mismo hilo  621ms
+     ✓ envía al sessionId vigente con una key de idempotencia no vacía  845ms
+     ✓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde  1776ms
+     ✓ reutiliza la key si se reintenta el mismo texto tras un error de red  2265ms
+     ✓ conserva la key incierta al navegar B y volver a A con el mismo texto  1678ms
+     ✓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto  715ms
+     ✓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío  1610ms
+     ✓ regenera la key cuando cambia el texto después de un error  1198ms
+     ✓ pinta el envío antes del POST y reconcilia el 201 sin duplicar  648ms
+     ✓ elimina el optimista ante 400 y muestra el error del servidor  654ms
+     ✓ conserva el optimista reintentable ante un 5xx  629ms
+     ✓ deduplica un polling concurrente exclusivamente por client_message_id  685ms
+     ✓ dos envíos consecutivos por Enter reciben keys distintas  1074ms
+     ✓ no ejecuta continuaciones del POST después de desmontar el Inbox  713ms
+     ✓ aplica el cap global de 20 intentos entre sesiones  4842ms
+     ✓ oculta failed-local cuando el hilo regresa con otra sesión activa  1146ms
+     ✓ carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo  974ms
+     ✓ el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor  2099ms
+     ✓ un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador  764ms
+     ✓ la página anterior no sustituye la sesión vigente renovada por el poll  428ms
+     ✓ ignora success antiguo al cambiar de hilo y aborta su petición  390ms
+     ✓ ignora failure antiguo al cambiar de hilo y aborta su petición  419ms
+     ✓ una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo  1146ms
+     ✓ un mensaje nuevo pegado al fondo sigue visible sin contador  837ms
+     ✓ bajar manualmente hasta el fondo retira el contador  1097ms
+     ✓ cambiar de hilo no conserva el contador del anterior  917ms
+     ✓ al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores  903ms
+     ✓ una llegada de hoy conserva la lectura de julio aunque cree un divisor de día  788ms
+
+ Test Files  6 passed (6)
+      Tests  125 passed | 41 skipped (166)
+   Start at  12:24:23
+   Duration  96.02s (transform 13.44s, setup 17.06s, import 30.88s, tests 49.07s, environment 125.53s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-unr-02-2026-10-21/vitest.json

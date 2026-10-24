@@ -1,0 +1,118 @@
+{
+  "state": "PASS",
+  "utc": "2026-10-20T06:17:08Z",
+  "original_function_AST_identical": {
+    "run_campaign.py:execute": true,
+    "run_campaign.py:check_suite": true,
+    "run_campaign.py:budget": true,
+    "run_campaign.py:gate": true,
+    "run_campaign.py:create_db": true,
+    "full_partition.py:build_partition": true,
+    "full_partition.py:projected_groups": true,
+    "full_partition.py:validate_partition": true
+  },
+  "source_syntax_and_whitespace": "PASS",
+  "application_tests_executed": false,
+  "candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+  "scope": "Static preservation of eight r5 functions; authorized fixture equivalence and aggregate provenance are documented separately; no application code is imported or executed",
+  "helpers_sha256": {
+    "apply_baseline_correction.py": "ea8009ea50407d920546ab0c895a89fd1a43d9ed7d4a52e99917b859dbc7ca04",
+    "awake_guard.py": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+    "awake_status.py": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+    "bootstrap_resumption.py": "377e451007913d869156b64bf238b30d003f896d79b144196fc09b2d9d4c0a68",
+    "capture_native.py": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+    "case_resumption.py": "0a6670e466a93f134e618da13e12adfbf8ee6f2fa2f8bc8355eef3271d8d3cde",
+    "cleanup_native.py": "ea0c2e948005882299b688c837eb9953b714acd529c198f8322dfa979931b318",
+    "clock_probe.py": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+    "composite_evidence.py": "d66fb58e5cb3d76e02fdf50e47911e50f370b63141b60fef5ab3b82d9afa41c7",
+    "deliver_native.py": "6a32648ccbbf96271f9315ae318e08b46e39b33b21980f886a2bfc37f72af46e",
+    "diagnostics/close_acceptance.py": "b566e40a3a2f624147d7e2e5d285990bae2ae8ebbce394d8acec1cdb12559786",
+    "diagnostics/verify_preserved_contract.py": "bfa67e27c620083b137bff0a165cecaa92f6a0375ebb881398ddf4fe047c507f",
+    "finalize_preflight.py": "be3e6b61593e6a9ba886aeb8442c2cb696ee4c2e82d65ebf233413b0aad72019",
+    "full_partition.py": "b1c7f6b6f238bdc017244250ce31aae2576747d5a13a6f7f125153bd8dbec747",
+    "handoff_runtime.py": "50832c516f85cc5c37d34c55de10d8201526e4fd6fc52b49d7e503686accdb93",
+    "host_observer.py": "aeba1a4994af3bdd8c0a3fa6fead4bfe8a178f8be8634eb909c43fa941deb388",
+    "host_resources.py": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+    "launch_native.py": "3308360a29816d10841f3f9994d3c963736f58daaaa018aecf84731955cd36e2",
+    "native_support.py": "93c8122512fbc3cdaeb427eb67b051a4be9f847527c668cf30f2fb71e2af9822",
+    "prepare_continuation.py": "267bb25a0fdef3c2b6ae431dc432cd0b52f36e241411d4b227331fb6e4e72169",
+    "recorded_suite.py": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+    "restore_native.py": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+    "retire_previous_cluster.py": "e4e8ebeb17aea508e61b11cbc07a1c94a64f6d8d8de0c9f72bc492e6a4864685",
+    "run_campaign.py": "d89126ac0274c7a07f752f86032fb4af4db155a389bec074aa864adab26e57e2",
+    "run_remainder.py": "ab2b25d10fcbc6b56f3cc6d8c112a0f1a70c6d5104de0a3ce316256ba1a052ef",
+    "scan_security.py": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2"
+  },
+  "baseline_campaign": "b9-correction-20261017-native-r5",
+  "function_AST_sha256": {
+    "run_campaign.py:execute": {
+      "current": "bde31a1ac1b9c4f17b7d8d50d4d5088391561f1dfda7cb7ed58b1527e56dcf3a",
+      "prior_r5": "bde31a1ac1b9c4f17b7d8d50d4d5088391561f1dfda7cb7ed58b1527e56dcf3a"
+    },
+    "run_campaign.py:check_suite": {
+      "current": "44bf4fb06af59579039769a7dfed38702704443d938773afc92698a84c0443ec",
+      "prior_r5": "44bf4fb06af59579039769a7dfed38702704443d938773afc92698a84c0443ec"
+    },
+    "run_campaign.py:budget": {
+      "current": "c9248ceae26063a3a9263c809cfce4737c401d7d2057899fe7455c67a2529794",
+      "prior_r5": "c9248ceae26063a3a9263c809cfce4737c401d7d2057899fe7455c67a2529794"
+    },
+    "run_campaign.py:gate": {
+      "current": "7da42b82549f594de3647d86cffc0ff139413c54ab2b7bd499e34006cb9717b9",
+      "prior_r5": "7da42b82549f594de3647d86cffc0ff139413c54ab2b7bd499e34006cb9717b9"
+    },
+    "run_campaign.py:create_db": {
+      "current": "cbbabb1e0d1e35b366ab3a879de24b1cb60cc0301c7f82061452ddb999f842ff",
+      "prior_r5": "cbbabb1e0d1e35b366ab3a879de24b1cb60cc0301c7f82061452ddb999f842ff"
+    },
+    "full_partition.py:build_partition": {
+      "current": "784088ba99170723e8a1d86cd78c75d97df7087e81b9bf2ce244e6ca8069b61c",
+      "prior_r5": "784088ba99170723e8a1d86cd78c75d97df7087e81b9bf2ce244e6ca8069b61c"
+    },
+    "full_partition.py:projected_groups": {
+      "current": "82d47ffbc5bc67b84d4c0eccb117e0fd682ffc7509cf95ec68551e1fb7721328",
+      "prior_r5": "82d47ffbc5bc67b84d4c0eccb117e0fd682ffc7509cf95ec68551e1fb7721328"
+    },
+    "full_partition.py:validate_partition": {
+      "current": "50aee508295c980297367d48006aa4ab67e3b4161984443ceb1182a6b47de235",
+      "prior_r5": "50aee508295c980297367d48006aa4ab67e3b4161984443ceb1182a6b47de235"
+    }
+  },
+  "compiled_sources": [
+    "apply_baseline_correction.py",
+    "awake_guard.py",
+    "awake_status.py",
+    "bootstrap_resumption.py",
+    "capture_native.py",
+    "case_resumption.py",
+    "cleanup_native.py",
+    "clock_probe.py",
+    "composite_evidence.py",
+    "deliver_native.py",
+    "diagnostics/close_acceptance.py",
+    "diagnostics/verify_preserved_contract.py",
+    "finalize_preflight.py",
+    "full_partition.py",
+    "handoff_runtime.py",
+    "host_observer.py",
+    "host_resources.py",
+    "launch_native.py",
+    "native_support.py",
+    "prepare_continuation.py",
+    "recorded_suite.py",
+    "restore_native.py",
+    "retire_previous_cluster.py",
+    "run_campaign.py",
+    "run_remainder.py",
+    "scan_security.py"
+  ],
+  "static_issues": [],
+  "source_changes_during_verification": [],
+  "candidate_input_sha256": "16b1342f22ab582c5a9d22b186f03f9f712e3a867ad49a1dd205791e793a05c3",
+  "finalize_preflight_metadata": {
+    "formal_application_tests_executed_field_present": true,
+    "preserved_contract_receipt_reference_present": false
+  },
+  "services_started": false,
+  "application_modules_imported": false
+}

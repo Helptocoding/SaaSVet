@@ -193,6 +193,271 @@ el cuerpo HTTP completo. Para depurar usar siempre `console.error(apiError(err))
 
 Frontend debe distinguir por `code` field, no por status code. El handler `apiError` ya extrae `message` correctamente. Para mostrar acción específica (e.g. "este registro tiene 5 mascotas asociadas"), parsear `protected_count` y `protected_sample`.
 
+### WhatsApp Inbox: media entrante privada (MED-01..05 / RPL-07, 22-10)
+
+`Message.media` añade UUID, status, MIME, tamaño, filename, expires_at y dimensiones/
+duración opcionales. No expone keys ni IDs de Meta. `getInboxMedia` usa el cliente
+autenticado con responseType blob y AbortSignal. `useMediaUrl` comparte URLs por
+usuario/clínica/UUID con refcount, abort y revoke; respuestas tardías no cambian
+el hilo actual. Los deltas detectan cambios de media sin tocar el Message.
+
+`MediaBubble` carga imagen/sticker al aproximarse al viewport, abre lightbox
+nativo con Escape y retorno de foco, y conserva su blob durante la interacción.
+Audio/video/documento e imágenes grandes requieren clic y muestran peso; sin
+autoplay. Descarga documental por blob, caption una vez, y estados de recepción,
+fallo, retry explícito y expiración 410 sin bucle. La lista usa tipo/filename para
+archivos sin caption. No cambia composer ni autorización de envío.
+
+170 pruebas PostgreSQL y 257 frontend únicas PASS en evidencia compuesta; build, lint y Chromium
+escritorio/móvil PASS. [Expediente](../evals/inbox-phase3-2026-10-22/README.md).
+Native replies conectadas al proveedor tras admisión B4; Meta/recepción reales
+siguen aplazados. M2/M3/M4 pendientes de aplicar a base habitual/preview y media
+apagada por defecto; ver [runbook](../runbooks/inbox-media.md).
+
+### WhatsApp Inbox: citas y salto al original (WA-RPL-06 + WA-RPL-04)
+
+`ReplyQuote` representa un nivel de cita dentro de mensajes entrantes y salientes,
+con autor existente, extracto, tipo/icono de media y «Mensaje no enviado» para
+failed/discarded. Una referencia null o inválida no genera bloque. El contenido
+se interpreta como texto; el respaldo no inventa un archivo ni su contenido.
+El botón admite teclado/táctil y solo se deshabilita mientras busca ese destino.
+Leer una cita requiere view; no concede permisos de envío y funciona en archivo.
+
+`useThreadHistory.jumpToMessage` usa el PK, independiente de client_message_id:
+si está cargado no pide HTTP; si falta consulta exclusivamente `around`, fusiona
+por ID y conserva estados ya recibidos y la cadena before. El floor firmado solo
+se amplía hacia atrás; una página intermedia no lo adelanta. El siguiente delta
+reconcilia el intervalo ampliado según el contrato de PERF-03, sin cambiar la API.
+
+El efecto de layout comparte la autoridad de scroll con HIST-02: la intención
+explícita centra/enfoca el original y resalta dos segundos, con movimiento reducido
+respetado. No cuenta la ventana histórica como llegada ni consume avisos reales.
+Durante el resaltado no dispara scrollback automático ni pierde un destino oculto
+revelado por around solo porque no figure en el rango operacional. Una retirada
+explícita sigue ganando. Ir al final cancela la búsqueda/resaltado y recupera su
+propia intención.
+
+Un salto aborta el GET corriente previo y pausa nuevos polls del transcript mientras
+busca, conservando el cursor. No aplica metadatos de sesión de la página around.
+Salto posterior, cambio de hilo y unmount abortan/invalidan respuestas antiguas;
+404 o fallo mantienen mensajes y borrador y permiten pulsar de nuevo para reintentar.
+
+[Evidencia RPL-06/04](../evals/inbox-rpl-06-04-2026-10-22/README.md): 128 pruebas
+frontend únicas PASS (45 nuevas, 83 afectadas), build, lint y Chromium escritorio/
+móvil con API sintética PASS. Conjunto mínimo inseparable: sin el bloque pulsable
+de RPL-04 el salto de RPL-06 quedaría sin interacción en la pantalla.
+Corte histórico RPL-06/04: sin cambios backend/M2/M3 en ese corte. RPL-07
+y MED se completaron después, según la sección anterior; Meta real sigue aplazada.
+
+### WhatsApp Inbox: composer de respuesta citada (WA-RPL-05)
+
+La acción «Responder» acompaña a «Copiar» en el contexto de cada burbuja:
+aparece con hover/foco y permanece accesible en táctil. Solo con permiso send y
+sesión vigente; una ventana cerrada o un ID temporal deshabilitan seleccionarla.
+Un mensaje confirmado con PK permite responder aunque conserve client_message_id.
+
+`replyTarget` mantiene una única cita, con autor y extracto de hasta 80 puntos
+Unicode. Se muestra sobre el campo, en una línea con elipsis, sin interpretar HTML.
+Elegir otra sustituye la anterior y enfoca el composer sin borrar su texto.
+Escape o × cancelan conservando borrador; cambiar de persona/cuenta o episodio
+retira la cita. Un poll del mismo episodio o pulsar la fila ya elegida la conservan.
+
+Al enviar, cada intento captura su `replyToId` y el optimista conserva `reply_to`.
+Texto y chip se limpian inmediatamente; los reintentos mantienen ID y key propios
+sin consumir una cita nueva ni una respuesta tardía limpiar el hilo siguiente.
+Enter envía; Shift+Enter y composición IME no envían. Continúan los guards de
+ventana y los AbortSignal existentes.
+
+El adaptador amplía las opciones actuales:
+`sendInboxMessage(sessionId, body, key, {signal, replyToId})`. Conserva compatible
+el cuarto argumento de cancelación; agrega `reply_to_id` al cuerpo solo si hay
+cita. La validación definitiva sigue en la API de RPL-03. RPL-07 ya conecta
+el contexto nativo Meta, conservando los guards B4; falta validación real.
+
+[Evidencia RPL-05](../evals/inbox-rpl-05-2026-10-21/README.md): 61 pruebas frontend
+únicas PASS (27 nuevas, 34 afectadas), build, lint y Chromium escritorio/móvil PASS
+con API sintética. Un fixture corrigió su reloj y se repitió solo ese caso; recibos
+originales conservados. Citas en burbujas y jump quedan para RPL-04/06, respectivamente.
+
+### WhatsApp Inbox: asignar a compañeros (WA-ASN-01)
+
+La cabecera muestra «Asignar a…» con `agentinbox.claim` en una sesión abierta.
+`ThreadAssignment` consulta el directorio solo al abrir; ofrece selección, confirmación,
+cancelación, carga, vacío y reintento de error. Reabrir revalida la lista y limpia la
+selección. El selector móvil permanece dentro de pantalla y tiene controles de 44 px.
+
+Al confirmar se envía el UUID del objetivo contra el episodio vigente. Comparte el
+guard de Tomar/Liberar para impedir acciones simultáneas; deshabilita durante turno
+activo o petición. Refresca lista/transcript al completar y conserva el borrador.
+El error mantiene la elección para corregir/reintentar. Cambiar de hilo o sesión,
+o salir del Inbox, descarta respuestas tardías; cerrar/cambiar cancela el GET del
+directorio. Un POST ya recibido puede haber aplicado la asignación aunque su vista
+se haya cerrado: no se afirma cancelación de esa escritura.
+
+Asignar no acusa recibo de un handoff ni manda push. El responsable aparece en
+«Atiende»; otros empleados reciben el cambio por su polling habitual.
+[Contrato API](agent.md) y [evidencia ASN-01](../evals/inbox-asn-01-2026-10-21/README.md).
+
+### WhatsApp Inbox: búsqueda de contactos (WA-SRCH-01)
+
+Input de tipo search sobre la lista, con etiqueta «Buscar conversaciones»,
+consulta de nombre/teléfono/cliente en servidor y mínimo dos caracteres tras
+recortar espacios. Espera 250 ms desde la última modificación; la limpieza con
+Escape o «Limpiar búsqueda» es inmediata y conserva segmentos y foco.
+Ctrl/Cmd+K enfoca y selecciona el texto; el listener y el debounce se eliminan
+al desmontar el Inbox. No captura Escape fuera del buscador.
+
+Cambiar la consulta efectiva reutiliza el reinicio de FIL-01: aborta el GET,
+invalida respuestas anteriores, limpia páginas/cursores y vuelve al inicio.
+Paginación, reintento y polls llevan `q` junto con los segmentos. Visibilidad
+oculta sigue pausando GETs y al volver se consulta el último texto. El chat y el
+borrador permanecen abiertos aunque su contacto deje de aparecer en la lista.
+«Sin coincidencias» sugiere otro nombre/teléfono o ampliar filtros.
+El panel de lista móvil admite el buscador sin ocultar los controles de filtro.
+[Contrato API](agent.md) y [evidencia SRCH-01](../evals/inbox-srch-01-2026-10-21/README.md).
+
+### WhatsApp Inbox: segmentos de lista (WA-FIL-01)
+
+Chips «Sin atender», «Esperando cliente», «Urgentes» y «Míos» sobre la lista,
+con `aria-pressed`, foco visible y objetivo táctil de 44 px. Los estados de
+atención son excluyentes y pulsar el activo lo desactiva; urgencia y responsable
+se combinan con AND y conservan la opción Activas/Archivadas.
+
+Los filtros se envían al servidor en todos los GET, incluidas páginas y polls.
+No se filtran localmente los resultados. Cambiar un segmento aborta el GET previo,
+invalida su revisión, vacía páginas/cursores y carga desde offset cero. Las
+respuestas tardías no repueblan el segmento nuevo; cada página conserva su cursor.
+Se mantienen el chat abierto, su historial y borrador. «Sin coincidencias» indica
+que se pueden desactivar filtros; un error permite reintentar con los mismos
+parámetros. El total de no leídos no se interpreta como tamaño del segmento.
+[Contrato API](agent.md) y [evidencia FIL-01](../evals/inbox-fil-01-2026-10-21/README.md).
+
+### WhatsApp Inbox: polling incremental (WA-PERF-03)
+
+Tras el GET inicial, la lista guarda un cursor y su página por offset. Refresca
+con `since`, combina upserts/retiradas por contacto+cuenta y aplica el orden del
+servidor. Publica juntas todas las páginas cargadas; mover un hilo entre páginas
+no lo borra ni duplica. Paginación, total unread y estados vacíos conservan su
+contrato. «Cargar más» aborta un poll de fondo pendiente antes de cargar la página.
+
+El transcript usa un cursor propio y combina cambios por ID en el historial
+acumulado. Conserva metadatos cuando el delta no los modifica; aplica null al
+archivar. `useThreadHistory` mantiene el límite opaco `sync_floor` del servidor
+y lo amplía al cargar anteriores. `range_ids` reconcilia retiradas al ampliar el
+rango; las retiradas explícitas tampoco reviven por una respuesta histórica tardía.
+El mecanismo de ancla de HIST-02 conserva lectura, contador nuevo y borrador.
+
+Cada recurso tiene una sola petición activa. Cambio de hilo/filtro o desmontaje
+aborta e invalida continuaciones. Pestaña oculta pausa los polls; al volver intenta
+delta con su cursor vigente. Se mantienen las cadencias de 20 s/10 s y el reloj
+visible de WIN-01. La lectura UNR-02 sigue requiriendo foco y visibilidad.
+
+`invalid_sync_cursor` o un delta inconsistente provoca un único GET completo de
+recuperación. El transcript conserva su rango firmado y reconcilia el full con
+`reset_range`, sin perder mensajes entre el rango anterior y una ráfaga nueva.
+Errores HTTP ordinarios mantienen datos/cursor y reintentan en el siguiente poll
+con los avisos existentes; no añaden un bucle de recuperaciones.
+
+El backend puede devolver full con cursor null si no dispone de caché. El cliente
+conserva esa recuperación compatible y vuelve al delta al recibir un cursor.
+[Contrato técnico](../decisions/2026-10-21-p60-perf03-cursors.md) y
+[pruebas/Chromium PERF-03](../evals/inbox-perf-03-2026-10-21/README.md).
+
+### WhatsApp Inbox: contexto del cliente (WA-CTX-01)
+
+`ThreadContextPanel` añade un panel plegable bajo la cabecera, también en hilos
+archivados y para usuarios con view sin send. Solo consulta `/context/` al abrir
+o reintentar: carga y error propios, sin bloquear transcript ni borrador. Cerrar,
+cambiar de hilo o desmontar aborta e ignora respuestas tardías. Cambios de los
+metadatos de identidad recibidos por el poll reinician el panel; un poll normal
+no vuelve a consultar su contexto. Reabrir obtiene datos nuevos.
+
+Muestra nombre/teléfono del cliente vinculado, mascotas con especie y fecha/estado
+de última cita, además de estados vacíos explícitos. La fecha es un calendario
+local ya decidido por backend: no se desplaza al día anterior por la zona del
+navegador. Los nombres se renderizan como texto React y el teléfono usa `tel:`
+solo cuando es válido.
+
+«Abrir expediente» requiere `patient.retrieve` y navega con el UUID de esa mascota
+a la ruta existente `/pets/:id`, que conserva sus propios permisos. Desde un chat
+abierto son dos clics: desplegar contexto y elegir mascota; homónimos conservan
+UUID distintos. El panel tiene scroll propio y no carga historia clínica al Inbox.
+[Pruebas y Chromium CTX-01](../evals/inbox-ctx-01-2026-10-21/README.md).
+
+### WhatsApp Inbox: ventana preventiva (WA-WIN-01)
+
+El composer usa `conversation.session_window_open` y
+`conversation.session_window_expires_at` del transcript vigente. Con menos de
+12 h muestra «Respondes dentro de la ventana de 24 h · cierra en 7 h 12 min»;
+desde 12 h no añade banda. Calcula duración desde el timestamp absoluto y
+redondea minutos hacia arriba, sin depender de la zona horaria del navegador.
+
+El reloj visible compartido se actualiza cada minuto y al volver a la pestaña.
+Un timeout de vencimiento cierra la UI entre esos ticks. Si llega un payload ya
+vencido, lo corrige de inmediato. Un false del servidor prevalece incluso si el
+reloj local indica un vencimiento futuro. Faltan datos/fecha válida → composer
+bloqueado con explicación; no inventa una ventana abierta.
+
+Al cerrar, deshabilita textarea y Enviar, conserva borrador y ofrece esperar un
+nuevo mensaje del cliente o llamar con tel: válido. El handler de clic/Enter
+revalida el reloj para cubrir timers demorados por suspensión. El sender conserva
+la validación final de autoridad y ventana; la UI no garantiza admisión de un envío
+que expire mientras está en cola. La renovación por poll habilita la respuesta
+con el mismo borrador. Archivado o usuario sin send: no muestra composer ni banda.
+Se conserva la cancelación de respuestas de otro hilo y los replays idempotentes.
+
+[Pruebas y Chromium WIN-01](../evals/inbox-win-01-2026-10-21/README.md).
+
+### WhatsApp Inbox: reintento de fallos conocidos (WA-RETRY-01)
+
+Las burbujas salientes FAILED de la sesión vigente ofrecen «Reintentar» a quien
+tenga `agentinbox.send`. Usan el UUID del episodio del mensaje y su ID original;
+no sustituyen un episodio histórico por el vigente. El POST conserva la clave
+original si existe y no envía texto editable. UNCERTAIN y evidencia de aceptación,
+entrega o lectura no ofrecen esta acción. El servidor vuelve a validar su autoridad.
+
+La acción muestra «Reintentando…» y bloquea doble clic. Su confirmación actualiza
+la misma burbuja sin borrar el borrador ni duplicarla. Un poll con avance de entrega
+gana a un PENDING tardío; GETs anteriores al acuse del retry quedan invalidados.
+Cambiar de hilo o desmontar aborta la petición e ignora continuaciones tardías.
+Un aborto no revoca una transición que el servidor ya haya confirmado.
+
+Fallo de ventana conocido o 400 `window_closed` muestra «Ventana de WhatsApp
+cerrada — llámala al {teléfono}» con enlace tel: cuando el número es válido.
+Otros errores conservan el mensaje y permiten un nuevo clic explícito. La acción
+`failed-local` conserva su flujo idempotente previo. La banda/countdown general
+de ventana queda implementada en WA-WIN-01, descrita arriba.
+[Pruebas y Chromium RETRY-01](../evals/inbox-retry-01-2026-10-21/README.md).
+
+### WhatsApp Inbox: lectura del staff (WA-UNR-02)
+
+La fila muestra `unread_count`; Activas muestra `unread_total` del servidor,
+incluidos hilos fuera de las páginas cargadas. Un cero no se sustituye por el
+antiguo indicador binario. Si una respuesta legacy no tiene el campo numérico,
+la fila conserva el punto previo.
+
+El transcript usa el marcador y los destinos de lectura proyectados por el
+backend para la página vigente. «Mensajes nuevos» aparece antes del primer
+entrante nuevo mostrado, sin marcar sesiones históricas. Desaparece tras un
+POST confirmado o al recibir un marcador más reciente. La inserción y retirada
+capturan el ancla de HIST-02 y participan en su efecto único de scroll.
+
+`useThreadRead` espera 1,5 s desde el último destino recibido. Solo envía con
+`document.visibilityState === 'visible'` y `document.hasFocus()`, comprobados
+también al vencer el timer. Blur, ocultación, cambio de hilo o desmontaje cancelan
+el debounce y abortan la petición en vuelo. Una respuesta vieja de A→B→A no
+publica estado en la nueva apertura. Un aborto no revoca una escritura que el
+servidor ya haya confirmado. Solo hay un POST en vuelo y no se repite un id confirmado.
+
+Usa `agentinbox.view`: no exige send ni claim. Los errores se reintentan
+silenciosamente en el siguiente poll del transcript, sin toast ni bucle inmediato.
+Un acuse invalida GETs anteriores y refresca las páginas de lista ya cargadas
+para que una respuesta antigua no reviva el contador. La lectura propia no
+equivale al estado READ de entrega de WhatsApp.
+
+[Pruebas y Chromium](../evals/inbox-unr-02-2026-10-21/README.md).
+La integración usa M3 de UNR-01; este corte no la aplica a la base de trabajo.
+
 ### WhatsApp Inbox: tiempo, entrega y envío optimista (ADR p60)
 
 El Inbox usa la zona horaria de la organización publicada por `/me/` como
@@ -231,6 +496,133 @@ Pruebas dirigidas: `src/pages/inbox/index.test.jsx`,
 `DeliveryTicks`. La representación de estados está implementada; el gate E2E
 de ticks reales contra el sandbox de Meta continúa pendiente y no debe
 declararse cerrado solo con pruebas unitarias.
+
+El composer (WA-CMP-01) ajusta su altura al contenido entre 40 y 120 px; por
+encima mantiene scroll interno. Conserva el límite de 4000 caracteres y muestra
+el contador sólo al superar 3600, con advertencia desde 3800. La altura también
+se recalcula al vaciarse por envío o cambio de hilo, sin cambiar la correlación
+ni la idempotencia del envío. Evidencia dirigida en
+[`inbox-cmp-01-2026-10-20`](../evals/inbox-cmp-01-2026-10-20/README.md).
+
+WA-PERF-02 consume `{results, has_more, next_offset}` y permite cargar más de
+100 hilos mediante «Cargar más», con cantidad cargada y aviso explícito.
+Deduplica por contacto/cuenta y conserva el orden entregado por la API.
+El refresco vuelve a consultar todas las páginas cargadas y las aplica juntas;
+un fallo parcial retiene las filas y el borrador. La carga adicional tiene
+error/reintento persistente y bloqueo de doble clic. Cambiar de filtro reinicia
+el desplazamiento e invalida peticiones anteriores; ocultar/desmontar evita
+continuaciones del refresco. El título sigue contando sólo hilos cargados.
+[Evidencia dirigida PERF-02](../evals/inbox-perf-02-2026-10-21/README.md).
+
+WA-GRP-01 agrupa visualmente mensajes consecutivos del mismo autor con separación
+inferior a cinco minutos, siempre dentro de cada día de la clínica. Los entrantes
+pertenecen al contacto del hilo; los salientes distinguen agente, sistema y cada
+empleado por `human_author_public_id`. Sin UUID humano, incluido el optimista antes
+de confirmación, se mantiene una burbuja separada. Ningún mensaje pierde cuerpo,
+hora, estado o reintento; esta agrupación nunca deduplica ni altera los datos.
+[Evidencia dirigida GRP-01](../evals/inbox-grp-01-2026-10-20/README.md).
+
+WA-CPY-01 añade copia del cuerpo original y del teléfono mediante Clipboard API
+con toast de éxito/error. La acción de mensaje aparece con hover/foco y siempre
+en táctil; el teléfono incluye `tel:` y puede recuperarse de la fila seleccionada
+si el hilo está archivado. `MessageBody` usa `tokenizeMessageUrls` para convertir
+sólo HTTP/HTTPS válidos en nodos React con `target="_blank"` y
+`rel="noopener noreferrer"`, manteniendo HTML literal y puntuación exterior.
+No usa HTML del proveedor ni altera el cuerpo copiado o enviado.
+[Evidencia dirigida CPY-01](../evals/inbox-cpy-01-2026-10-20/README.md).
+
+WA-TAB-01 usa `useInboxTitle`: al ocultar o desenfocar, el título muestra el
+número de hilos con `has_unanswered` del último poll. Se restaura al recuperar
+foco/visibilidad, cuando no quedan pendientes y al desmontar. No agrega requests,
+sonidos ni notificaciones; el conteo sigue siendo de hilos sin responder, no
+unread por empleado (UNR-01/02 pendiente).
+[Evidencia dirigida TAB-01](../evals/inbox-tab-01-2026-10-20/README.md).
+
+WA-VIS-01 comparte `hooks/usePollingWhenVisible` entre lista (20 s) y transcript
+(10 s). Ocultar detiene intervalos; volver refresca ambos inmediatamente. No
+consulta al montar oculto, usa el filtro/hilo vigente al regresar y retira sus
+listeners al salir. Un GET iniciado visible puede terminar oculto; no se inician
+nuevos polls. El callback conserva su manejo de respuestas y errores. Métricas de
+carga única, acciones explícitas y reloj de fechas mantienen sus contratos.
+[Evidencia dirigida VIS-01](../evals/inbox-vis-01-2026-10-21/README.md).
+
+WA-VER-01 muestra `ContactVerificationBadge` en lista y cabecera a partir de
+`contact_verification`: staff/chat confirmado → «Verificado»; phone_match →
+«Teléfono coincide» con explicación de que aún no verifica identidad; unknown o
+valor desconocido → sin badge. Funciona sin sesión activa y refleja la retirada
+del nivel en polls posteriores. Es informativo; no concede permisos ni sustituye
+los guards de identidad del backend.
+[Evidencia dirigida VER-01](../evals/inbox-ver-01-2026-10-21/README.md).
+
+WA-LDE-01 distingue carga inicial, vacío y error en ambos paneles. Tras dos
+fallos consecutivos muestra «Sin conexión — reintentando…» con reintento manual;
+el polling vigente permite recuperar automáticamente y reinicia el contador al
+éxito. Conserva lista, historial y borrador durante fallos. El reintento manual
+queda deshabilitado mientras está pendiente. Respuestas tardías de otra selección
+o filtro se descartan. `InboxLoadState` reutiliza `EmptyState` con semántica de
+alerta y skeleton local; no cambia contratos API.
+[Evidencia dirigida LDE-01](../evals/inbox-lde-01-2026-10-21/README.md).
+
+WA-AGT-01 muestra «El asistente está respondiendo…» cuando la conversación del
+transcript tiene `agent_processing === true`. Deshabilita Tomar/Acusar recibo y
+Liberar con explicación; el siguiente poll exitoso los habilita al terminar.
+No hereda el estado de la fila de lista, conserva permisos y no interpreta el
+chip como bloqueo de servidor. Es una proyección con la cadencia actual de 10 s.
+[Evidencia dirigida AGT-01](../evals/inbox-agt-01-2026-10-21/README.md).
+
+WA-GTF-01 encapsula el área de lectura en `ThreadViewport`: botón «Ir al final»
+si la distancia al fondo supera 200 px; scroll exclusivo del panel y foco
+conservado en el historial, sin mover la página. Disponible en hilos archivados;
+el estado se reinicia al cambiar de hilo. En móvil el viewport se acota a 58vh
+(mínimo 340 px) para permitir scroll interno. HIST-02 centraliza el anclaje de
+anteriores y llegadas nuevas y reutiliza el control para mostrar su contador.
+[Evidencia dirigida GTF-01](../evals/inbox-gtf-01-2026-10-21/README.md).
+
+WA-HIST-01 separa metadatos y mensajes servidor en `useThreadHistory`. Carga
+páginas mediante `next_before` al llegar a menos de 160 px del inicio, fusiona
+por ID y ordena por fecha/ID, conservando páginas previas durante el poll.
+Al insertar anteriores captura la posición actual y compensa el aumento de
+altura antes de pintar; el cursor de lectura no se adelanta con el poll.
+No sustituye metadatos vigentes por los de una respuesta histórica.
+
+Muestra carga local, error persistente y reintento del mismo cursor. Cambiar de
+hilo o desmontar aborta la petición; una revisión descarta resultados antiguos,
+incluido A→B→A. Desde 500 mensajes deja de cargar automáticamente y exige
+«Cargar anteriores»; la carga manual conserva los mensajes ya leídos. Página
+vacía o cursor repetido detienen la paginación. Al agotarla muestra «Inicio del
+historial disponible», referido a los datos conservados por el sistema.
+`getThreadMessages` admite `{signal}` como cuarto argumento opcional.
+[Evidencia dirigida HIST-01](../evals/inbox-hist-01-2026-10-21/README.md).
+WA-HIST-02 centraliza el scroll en un único layout effect de `useThreadHistory`.
+Captura posición y ancla visible antes de actualizar mensajes servidor u
+optimistas. A 80 px o menos del fondo sigue la llegada; leyendo arriba conserva
+el ancla, incluso al coincidir poll y scrollback, y muestra «N mensajes nuevos».
+La pill tiene anuncio accesible, retorna suavemente al fondo y conserva el
+foco en el historial. Bajar manualmente al umbral de fondo limpia el contador.
+
+El contador sólo incorpora identidades nuevas posteriores a la carga inicial:
+ignora históricos y cambios de estado; reconcilia un optimista y su confirmación
+por `client_message_id`. Al cambiar de hilo reinicia su estado. Es local a la
+lectura actual; no sustituye UNR por empleado ni el polling incremental PERF-03.
+[Evidencia dirigida HIST-02](../evals/inbox-hist-02-2026-10-21/README.md).
+
+WA-PERF-02 consume `{results, has_more, next_offset}` y permite cargar más de
+100 hilos mediante «Cargar más», con cantidad cargada y aviso explícito.
+Deduplica por contacto/cuenta y conserva el orden entregado por la API.
+El refresco vuelve a consultar todas las páginas cargadas y las aplica juntas;
+un fallo parcial retiene las filas y el borrador. La carga adicional tiene
+error/reintento persistente y bloqueo de doble clic. Cambiar de filtro reinicia
+el desplazamiento e invalida peticiones anteriores; ocultar/desmontar evita
+continuaciones del refresco. El título sigue contando sólo hilos cargados.
+[Evidencia dirigida PERF-02](../evals/inbox-perf-02-2026-10-21/README.md).
+
+WA-GRP-01 agrupa visualmente mensajes consecutivos del mismo autor con separación
+inferior a cinco minutos, siempre dentro de cada día de la clínica. Los entrantes
+pertenecen al contacto del hilo; los salientes distinguen agente, sistema y cada
+empleado por `human_author_public_id`. Sin UUID humano, incluido el optimista antes
+de confirmación, se mantiene una burbuja separada. Ningún mensaje pierde cuerpo,
+hora, estado o reintento; esta agrupación nunca deduplica ni altera los datos.
+[Evidencia dirigida GRP-01](../evals/inbox-grp-01-2026-10-20/README.md).
 
 ### Manejo centralizado de errores de formularios
 

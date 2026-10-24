@@ -1,0 +1,78 @@
+{
+  "passed": 18,
+  "cases": {
+    "WA-CPY-01 — copiar y abrir enlaces copia teléfono y ofrece tel: también con hilo archivado=false": {
+      "status": "passed",
+      "source": "vitest-attempt1.json"
+    },
+    "WA-CPY-01 — copiar y abrir enlaces copia teléfono y ofrece tel: también con hilo archivado=true": {
+      "status": "passed",
+      "source": "vitest-attempt1.json"
+    },
+    "WA-CPY-01 — texto y URLs conserva texto vacío, saltos y espacios sin enlaces": {
+      "status": "passed",
+      "source": "vitest-attempt1.json"
+    },
+    "WA-CPY-01 — texto y URLs reconoce HTTP/HTTPS, queries y varios enlaces sin perder texto": {
+      "status": "passed",
+      "source": "vitest-attempt1.json"
+    },
+    "WA-CPY-01 — texto y URLs separa puntuación de la prosa y conserva paréntesis propios de la URL": {
+      "status": "passed",
+      "source": "vitest-attempt1.json"
+    },
+    "WA-CPY-01 — texto y URLs deja esquemas peligrosos, URLs inválidas y HTML como texto": {
+      "status": "passed",
+      "source": "vitest-attempt1.json"
+    },
+    "WA-CPY-01 — texto y URLs no incorpora comillas ni etiquetas en un enlace y conserva todo el cuerpo": {
+      "status": "passed",
+      "source": "vitest-attempt1.json"
+    },
+    "WA-CPY-01 — texto y URLs normaliza sólo caracteres de formato de teléfono": {
+      "status": "passed",
+      "source": "vitest-attempt1.json"
+    },
+    "WA-CPY-01 — copiar y abrir enlaces copia el cuerpo original completo, sin horas ni autor, y confirma el éxito": {
+      "status": "passed",
+      "source": "vitest.json"
+    },
+    "WA-CPY-01 — copiar y abrir enlaces muestra un error recuperable cuando el navegador rechaza la copia": {
+      "status": "passed",
+      "source": "vitest.json"
+    },
+    "WA-CPY-01 — copiar y abrir enlaces maneja clipboard no disponible sin anunciar una copia falsa": {
+      "status": "passed",
+      "source": "vitest.json"
+    },
+    "WA-CPY-01 — copiar y abrir enlaces renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders": {
+      "status": "passed",
+      "source": "vitest.json"
+    },
+    "WA-GRP-01 — ráfagas en el transcript agrupa por autor sin ocultar mensajes, horas ni estados de entrega": {
+      "status": "passed",
+      "source": "vitest.json"
+    },
+    "WA-GRP-01 — ráfagas en el transcript corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto": {
+      "status": "passed",
+      "source": "vitest.json"
+    },
+    "Inbox — aislamiento del borrador pinta el envío antes del POST y reconcilia el 201 sin duplicar": {
+      "status": "passed",
+      "source": "vitest.json"
+    },
+    "Inbox — aislamiento del borrador conserva el optimista reintentable ante un 5xx": {
+      "status": "passed",
+      "source": "vitest.json"
+    },
+    "Inbox — aislamiento del borrador oculta failed-local cuando el hilo regresa con otra sesión activa": {
+      "status": "passed",
+      "source": "vitest.json"
+    },
+    "Inbox — aislamiento del borrador integra recibos de entrega solo en mensajes salientes del transcript": {
+      "status": "passed",
+      "source": "vitest.json"
+    }
+  },
+  "note": "8 PASS conservados + 10 fallos corregidos. No es una suite continua ni se oculta el primer fallo."
+}

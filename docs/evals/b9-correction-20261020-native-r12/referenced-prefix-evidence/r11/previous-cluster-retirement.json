@@ -1,0 +1,207 @@
+{
+  "state": "PASS",
+  "mode": "ALREADY_STOPPED_VERIFIED_ABSENT",
+  "previous_campaign": "b9-correction-20261020-native-r10",
+  "workspace": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6",
+  "data_directory": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pgdata",
+  "port": 35490,
+  "port_closed": true,
+  "postmaster_pid_file_absent": true,
+  "previous_wrapper_pid": 27224,
+  "previous_postmaster_pid": 27812,
+  "owned_processes_currently_absent": true,
+  "verified_owned_processes_exited": false,
+  "owned_process_exit_observed": false,
+  "clean_shutdown_observed": false,
+  "previous_exit_code": null,
+  "stop_command_executed": false,
+  "process_absence_before": {
+    "observed_epoch_seconds": 1792540974.5557256,
+    "previous_wrapper_pid": 27224,
+    "previous_postmaster_pid": 27812,
+    "previous_pids_absent": true,
+    "matching_postgresql_image_present": null,
+    "global_postgresql_image_absence_claimed": false,
+    "unknown_other_postgresql_images": [
+      {
+        "pid": 7768,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8388,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8556,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8564,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8572,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8580,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8588,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 9528,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 9536,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 9556,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      }
+    ],
+    "other_postgresql_images": [],
+    "owned_status_receipt": "previous-cluster-owned-status.json",
+    "owned_status_receipt_sha256": "e1eb637951a31db44ead8fb5284e453c1b79e0d827f30c29bebdfa68ddcc1ecd",
+    "owned_pg_ctl_status_exit_code": 3
+  },
+  "process_absence_after": {
+    "observed_epoch_seconds": 1792540981.2127657,
+    "previous_wrapper_pid": 27224,
+    "previous_postmaster_pid": 27812,
+    "previous_pids_absent": true,
+    "matching_postgresql_image_present": null,
+    "global_postgresql_image_absence_claimed": false,
+    "unknown_other_postgresql_images": [
+      {
+        "pid": 7768,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8388,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8556,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8564,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8572,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8580,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 8588,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 9528,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 9536,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      },
+      {
+        "pid": 9556,
+        "image_name": "postgres.exe",
+        "query_error": 5,
+        "image_path": null,
+        "ownership": "UNKNOWN_OTHER_PID"
+      }
+    ],
+    "other_postgresql_images": [],
+    "owned_status_receipt": "previous-cluster-owned-status.json",
+    "owned_status_receipt_sha256": "e1eb637951a31db44ead8fb5284e453c1b79e0d827f30c29bebdfa68ddcc1ecd",
+    "owned_pg_ctl_status_exit_code": 3
+  },
+  "previous_log": {
+    "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r10\\postgresql-start-1.log",
+    "bytes": 751,
+    "sha256": "d0c191881cd4e29955286c8b26b02a6a5e2b8c65b59701b737e1eac0eea24cb9",
+    "stable_across_read_interval": true,
+    "read_interval_seconds": 0.25
+  },
+  "preserved_stale_pidfile": {
+    "path": "previous-cluster-stale-postmaster.pid",
+    "bytes": 105,
+    "sha256": "483e9ed5d3acb71e3adc70517533cb8a4e5b8de63e90e9f3bba7ef4ff41f29fc"
+  },
+  "only_verified_stale_pidfile_removed": true,
+  "previous_start_receipt_sha256": "a47a9b215ef61fe1d4ed21c2c6b6529b9fba1edc8f61bcc9008b1399d827db78",
+  "previous_preflight_sha256": "f1a123b0647483940ca4e1dda2a586f1c139013ee19d751232f5907b938d2b53",
+  "application_tests_executed": false,
+  "runtime_reinstalled": false,
+  "databases_dropped": [],
+  "workspace_removed": false,
+  "foreign_processes_terminated": false,
+  "old_final_logs_stable_before_prior_evidence_snapshot": true
+}

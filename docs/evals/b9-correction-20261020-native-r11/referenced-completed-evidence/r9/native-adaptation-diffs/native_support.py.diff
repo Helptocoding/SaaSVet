@@ -1,0 +1,11 @@
+--- native-r8/native_support.py
++++ native/native_support.py
+@@ -19,7 +19,7 @@
+ PNPM = WORK / 'pnpm/package/bin/pnpm.cjs'
+ DATA = WORK / 'pgdata'
+ PORT = 35490
+-SHA = '5e11236daabf4ef70ea9d0f08fee52aed5c30ff2'
++SHA = 'b271e314817da51e99811cb18921fd7c9f59e58a'
+ RTK = Path('C:/Users/LAP/.local/bin/rtk.exe')
+ GIB = 1024 ** 3
+ 

@@ -1,0 +1,189 @@
+{
+  "status": "PASS",
+  "scope": "WA-RPL-02 signed inbound citations",
+  "unique_pass": 40,
+  "new_cases": 21,
+  "affected_cases": 19,
+  "results": {
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_ambiguous_provider_id_is_not_guessed": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_discarded_failed_and_unemitted_targets_are_citations": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_duplicate_preserves_first_citation_and_has_no_second_effect": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_foreign_organization_never_resolves_target": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_hidden_historical_target_can_be_cited": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_invalid_signature_cannot_even_resolve_citation": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_malformed_or_absent_context_is_not_coerced_to_a_reference": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_media_reference_needs_no_binary_pipeline": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_other_account_never_resolves_target": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_other_contact_in_same_account_keeps_inbound_without_citation": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_oversized_reference_does_not_truncate_into_a_valid_target": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_reference_across_episodes_of_same_thread": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_reference_to_an_inbound_is_also_valid": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_second_message_in_batch_can_cite_first_inbound": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_service_optional_reply_argument_accepts_same_thread_target": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_service_revalidates_current_target_scope": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_signed_inbound_persists_outbound_citation_and_original_event_id": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_target_removed_between_lookup_and_ingest_does_not_drop_inbound": {
+      "status": "passed",
+      "receipt": "backend-target-removal.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_unknown_target_redelivery_does_not_backfill_or_repeat_warning": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookTests.test_unknown_target_warns_without_pii_and_keeps_inbound": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.WebhookSignatureTests.test_bad_signature_rejected_nothing_persisted": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.WebhookSignatureTests.test_duplicate_delivery_is_deduped": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.WebhookSignatureTests.test_late_sent_ack_does_not_degrade_read": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.WebhookSignatureTests.test_missing_signature_rejected_nothing_persisted": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.WebhookSignatureTests.test_routing_by_receiving_number_is_org_exact": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.WebhookSignatureTests.test_status_update_marks_outbound_delivered": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.WebhookSignatureTests.test_unconfigured_secret_fails_closed": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.WebhookSignatureTests.test_unknown_phone_number_id_acks_without_persisting": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.WebhookSignatureTests.test_valid_signature_ingests_message": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_original_text_and_context_id_survive_persistence": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_button_and_list_keep_distinct_ids_kinds_and_visible_titles": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_legacy_metadata_is_diagnostic_not_runtime_evidence": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_exact_emitted_reference_is_available_without_granting_authority": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_referenced_inbound_is_preserved": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_foreign_organization_account_and_contact_cannot_resolve_reference": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_webhook.B1ChannelEventTests.test_unemitted_or_later_reference_is_not_resolved": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_foreign_target_rejected_by_service_and_normal_save": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_hidden_and_discarded_target_remains_valid_history": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_same_thread_across_closed_and_current_episodes": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    },
+    "apps.channels.tests.test_replies_webhook.ReplyWebhookRaceTests.test_two_concurrent_deliveries_persist_citation_once": {
+      "status": "passed",
+      "receipt": "backend-directed.json"
+    }
+  },
+  "source_sha256": {
+    "backend/apps/channels/replies.py": "3ba1cbccf0ea5b02d0dc73d73cea1865b26411bcdbe690cf0325758287ff6d5e",
+    "backend/apps/channels/views.py": "d705052ef229d2314fb2f5b81840f9e0549729660e737401bf1d8e30bb4f4269",
+    "backend/apps/agent/services.py": "e8e4049d61aa816fe681188354bae1713aab911f5d948f4aaae1b2ea1eda630c",
+    "backend/apps/channels/tests/test_replies_webhook.py": "c2ae8736f16cd8e52aa1164842677a527c01c3d8400a3bfb025a2ff7f99879f4",
+    "docs/CIERRE-INBOX-WHATSAPP.md": "769f3fbc32958b0796a93f014e1dcbc9bde106f793afc60b73481e8da3ba37a8",
+    "docs/plan-implementacion-whatsapp-inbox-2026-08-22.md": "0a0358e80181163516017b86b995146ae7872ec7d4522a69c2ac266292ebc8b3",
+    "docs/modules/agent.md": "d666351699a4b6a3b20ef52c51e4be57ed2d960bf596f01a238df38b47adae27",
+    "CHANGELOG.md": "d8e70e66ab62a25e890cb816c27ddd4cf4a1e2efec887d798b19e29ff674e15a"
+  },
+  "drift": "drift-final.json",
+  "working_database_migrated": false,
+  "new_migrations": false,
+  "real_meta": "POSTPONED_PENDING",
+  "next_task": "WA-RPL-03",
+  "diff_check": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "warning: in the working copy of 'backend/apps/agent/services.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'backend/apps/channels/views.py', LF will be replaced by CRLF the next time Git touches it\n"
+  }
+}

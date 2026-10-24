@@ -1,0 +1,49 @@
+{
+  "state": "PASS",
+  "platform": "Windows native",
+  "wsl_invoked": false,
+  "host_clock_configuration_changed": false,
+  "W32Time_changed": false,
+  "global_power_policy_changed": false,
+  "display_policy_changed": false,
+  "owned_helpers_exited": true,
+  "private_postgresql_stopped": true,
+  "owned_workspace_removed": true,
+  "application_tests_executed": true,
+  "formal_controller_invocations": 1,
+  "formal_reruns": 0,
+  "closure_receipt_sha256": {
+    "cleanup.json": "c5864e712200ce8b0e63a61dbe77460d96cf82c5c94079d68c869c153966eb09",
+    "resource-observer-closure.json": "165012d36da8a6ad28546faf4d71d8a924bc0bf2727aef440aa81001094d63d0",
+    "awake-request/closure.json": "d6ccbf0293b05e8abc7061a2dd0d039486313f54f5d9ed8f1808133abb91f6ed"
+  },
+  "helper_stop_method": "Awake request ended at its original bounded lifetime and restored its own thread state; observer explicitly stopped after cleanup PASS. No adaptive auxiliary renewal.",
+  "auxiliary_exit_codes": {
+    "awake": 0,
+    "observer": 0
+  },
+  "awake_explicit_stop_in_original_closure": false,
+  "observer_explicit_stop_in_original_closure": true,
+  "port_closed_rechecked": true,
+  "general_formal_invalidating_incident": "Owned awake request unavailable: RuntimeError: Awake heartbeat stale or clock mismatch",
+  "continuous_awake_execution_proven": false,
+  "product_failure_established": false,
+  "resources": {
+    "utc": "2026-10-18T05:09:29Z",
+    "utc_epoch_seconds": 1792300169.3995125,
+    "physical_total": 17031217152,
+    "physical_available": 5606821888,
+    "page_available": 10493661184,
+    "disk_available": 12210503680,
+    "platform": "Windows native"
+  },
+  "current_power_status": {
+    "ACLineStatus": 0,
+    "BatteryFlag": 0,
+    "BatteryLifePercent": 60,
+    "SystemStatusFlag": 0,
+    "BatteryLifeTime": 1647,
+    "BatteryFullLifeTime": 4294967295
+  },
+  "utc": "2026-10-18T05:09:29Z"
+}

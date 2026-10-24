@@ -1,0 +1,17 @@
+{
+  "kind": "backend",
+  "labels": [
+    "apps.agent.tests.test_inbox_media.InboxMediaTests",
+    "apps.channels.tests.test_media_pipeline.MediaModelTests.test_provider_id_is_unique_per_account_not_globally",
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_missing_object_is_error_without_fabricated_expiration",
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_purge_retry_denies_immediately_and_preserves_caption",
+    "apps.channels.tests.test_media_pipeline.MediaWorkerTests.test_reconcile_storage_outage_preserves_ready_and_recovers",
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_cross_contact_reference_corruption_never_reaches_meta",
+    "apps.agent.tests.test_inbox_media.NativeReplyTests.test_explicit_provider_rejection_remains_failed"
+  ],
+  "working_database_migrated": false,
+  "test_database": "test_inbox_phase3_619cafc4d359",
+  "test_database_remains": false,
+  "exit_code": 1,
+  "elapsed_s": 400.9669946000213
+}

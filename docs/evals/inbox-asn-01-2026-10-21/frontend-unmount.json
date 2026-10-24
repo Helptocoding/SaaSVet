@@ -1,0 +1,24 @@
+{
+  "kind": "frontend",
+  "labels": [
+    "src/pages/inbox/index.assignment.test.jsx",
+    "--testNamePattern=salir del inbox"
+  ],
+  "working_database_migrated": false,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.assignment.test.jsx",
+    "--testNamePattern=salir del inbox",
+    "--fileParallelism=false",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-asn-01-2026-10-21\\vitest-unmount.json"
+  ],
+  "sentry_upload_disabled": true,
+  "exit_code": 0,
+  "elapsed_s": 28.647565499995835
+}

@@ -1,0 +1,20 @@
+--- native-r1/cleanup_native.py
++++ native/cleanup_native.py
+@@ -9,7 +9,7 @@
+ import sys
+ from native_support import EVIDENCE, REPO, WORK, TREE, DATA, PG, PORT, save, integrity, command, resources
+ 
+-EXPECTED_WORK=Path('C:/Users/LAP/AppData/Local/Temp/b9-native-20261015-r1')
++EXPECTED_WORK=Path('C:/Users/LAP/AppData/Local/Temp/b9-native-20261016-r2')
+ 
+ 
+ def read(name):
+@@ -27,7 +27,7 @@
+     executable=Path(sys.executable).resolve()
+     assert not executable.is_relative_to(resolved), 'Cleanup interpreter must be outside the owned workspace'
+     assert not PG.resolve().is_relative_to(resolved), 'Shared PostgreSQL binaries must be preserved'
+-    assert PORT==35485
++    assert PORT==35486
+     return resolved,executable
+ 
+ 

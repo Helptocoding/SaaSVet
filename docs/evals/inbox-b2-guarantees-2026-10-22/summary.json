@@ -1,0 +1,43 @@
+{
+  "state": "REVIEW_COMPLETE_EXTERNAL_GATES_PENDING",
+  "b9_latency": {
+    "state": "ACCEPTED_DEBT_NON_BLOCKING",
+    "observed_p95_seconds": 11.57264,
+    "original_target_seconds": 10,
+    "original_FAIL_preserved": true,
+    "current_B9_runs": 0
+  },
+  "checklist": {
+    "complete": 0,
+    "total": 6
+  },
+  "declared_country": "United States",
+  "actual_media_bucket_region_proven": false,
+  "landing_env_relevant_key_names": {
+    ".env": [],
+    ".env.example": []
+  },
+  "prior_phase3_sources_checked": 16,
+  "prior_phase3_mismatches": [],
+  "new_product_test_runs": 0,
+  "landing_build": {
+    "state": "PASS",
+    "pages": 18,
+    "source_repo_modified": false,
+    "published": false
+  },
+  "historical_public_outputs_checked": 94,
+  "historical_output_mismatches": [],
+  "git_exclusions_verified": [
+    "docs/evals/inbox-b2-guarantees-2026-10-22/runtime/opaque.bin",
+    "backend/private-media/opaque.bin",
+    "backend/saaslyvet-inbox-media-spool/wa-opaque.spool"
+  ],
+  "docker_private_directories_excluded": true,
+  "real_B2_tests": false,
+  "restore_media_drill": false,
+  "legal_version_promoted": false,
+  "production_activated": false,
+  "commits_created": 0,
+  "pushes_performed": 0
+}

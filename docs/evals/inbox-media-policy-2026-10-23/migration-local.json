@@ -1,0 +1,27 @@
+{
+  "state": "PASS",
+  "target": [
+    [
+      "channels",
+      "0018_media_retention_policy"
+    ]
+  ],
+  "local_database": "veterinaria_saas",
+  "server_version_num": "180003",
+  "production_touched": false,
+  "preview_touched": false,
+  "messages_before": 0,
+  "media_before": 0,
+  "backup": {
+    "path": "docs/evals/inbox-media-policy-2026-10-23/runtime/local-before-0018.dump",
+    "bytes": 1452527,
+    "sha256": "f2c3d47e27453bf0212c94c9ec336ba17493ba562c52de008547f35ee8feea28",
+    "ignored_by_git": true,
+    "restore_list_exit": 0
+  },
+  "incidents_after": 0,
+  "messages_unchanged": true,
+  "media_unchanged": true,
+  "django_check": "PASS",
+  "flags_enabled": false
+}

@@ -1,0 +1,16 @@
+{
+  "state": "PASS",
+  "candidate_sha": "68dffd746793700071f577a58528b0f9636930db",
+  "historical_candidate": "08310461337a284386299ec47c54125f2139bf7f",
+  "identical_git_sources": [
+    "backend/apps/agent/tests/b9e_profile.py",
+    "backend/apps/agent/tests/b9a_harness.py",
+    "backend/apps/agent/tests/test_b9a_e2e.py"
+  ],
+  "warmup_seconds": 30,
+  "measurement_seconds": 300,
+  "drain_seconds": 20,
+  "smoke": false,
+  "actual_read_llm_calls": 2,
+  "no_workload_or_gate_changes": true
+}

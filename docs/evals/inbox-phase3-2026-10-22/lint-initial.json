@@ -1,0 +1,22 @@
+{
+  "kind": "lint",
+  "labels": [
+    "src/api/inbox.js",
+    "src/pages/inbox/index.jsx",
+    "src/pages/inbox/MediaBubble.jsx",
+    "src/pages/inbox/useMediaUrl.js"
+  ],
+  "working_database_migrated": false,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "src/api/inbox.js",
+    "src/pages/inbox/index.jsx",
+    "src/pages/inbox/MediaBubble.jsx",
+    "src/pages/inbox/useMediaUrl.js"
+  ],
+  "exit_code": 1,
+  "elapsed_s": 55.38572489999933
+}

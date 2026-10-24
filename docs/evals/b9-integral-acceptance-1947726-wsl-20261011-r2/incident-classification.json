@@ -1,0 +1,22 @@
+{
+  "decision": "PENDING",
+  "classification": "ENVIRONMENT_CLOCK_DISCONTINUITY",
+  "phase": "directed / Django test database migrations",
+  "formal_attempts": 1,
+  "monitor_samples": 27,
+  "wall_minus_monotonic_seconds_at_stop": 1.7235978910841823,
+  "frozen_discontinuity_limit_seconds": 1,
+  "elapsed_monotonic_seconds_at_detection": 45.196189039000046,
+  "child_exit_code": -15,
+  "exit_code_meaning": "Controller terminated its owned process group after invalidating clock incident",
+  "completed_test_ids": 0,
+  "test_result_receipt": "ABSENT; test database initialization interrupted before test assertions",
+  "product_failure_attributed": false,
+  "underlying_clock_adjustment_cause": "NOT_DETERMINED; observed discrepancy alone does not identify the system component responsible",
+  "evidence": ["STOP.json", "monitor-directed.json", "blocks/directed.command.json", "blocks/directed.log", "blocks/directed.results.passed.jsonl", "invocation-formal.json", "integrity-after-directed.json", "seal-check-after-directed.json"],
+  "remaining_blocks": "NOT_EXECUTED",
+  "profile_variants_executed": 0,
+  "formal_retry": false,
+  "W32Time_or_host_clock_configuration_changed": false,
+  "product_locks_fixtures_workload_or_gates_changed": false
+}

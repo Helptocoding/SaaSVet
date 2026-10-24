@@ -1,0 +1,20 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/index.test.jsx (57 tests | 39 skipped) 11382ms
+     ✓ distingue carga inicial de lista y mensajes de un panel sin selección  893ms
+     ✓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  1006ms
+     ✓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  996ms
+     ✓ un fallo tardío del hilo anterior no contamina la racha del nuevo  339ms
+     ✓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde  1807ms
+     ✓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto  750ms
+     ✓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío  2145ms
+     ✓ deduplica un polling concurrente exclusivamente por client_message_id  787ms
+     ✓ no ejecuta continuaciones del POST después de desmontar el Inbox  1043ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed | 39 skipped (57)
+   Start at  08:19:02
+   Duration  33.89s (transform 1.50s, setup 1.47s, import 3.43s, tests 11.38s, environment 11.65s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-lde-01-2026-10-21/vitest.json

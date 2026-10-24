@@ -1,0 +1,17 @@
+{
+  "used_in_r8_formal_execution": true,
+  "API": "SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)",
+  "API_request_and_restoration": "PASS",
+  "all_formal_samples_active_confirmed": true,
+  "clock_discontinuity_observed_in_r8": false,
+  "maximum_lifetime_seconds": 21600,
+  "global_power_policy_changed": false,
+  "W32Time_changed": false,
+  "prior_suspension_reason_now_confirmed": "System Idle in rendered Kernel-Power 42 messages for r6 and r7",
+  "new_diagnostic_source": "preseal-sleep-event-messages.json",
+  "prior_reports_rewritten": false,
+  "new_blocker": "Backing disk reserve exhausted; source of transient free-space drop not established",
+  "next_campaign_requirement": "A new explicit decision and backing volume that maintains at least 1 GiB free throughout execution; keep existing awake, clock and memory guards",
+  "automatic_retry_permitted": false,
+  "documentation": "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setthreadexecutionstate"
+}

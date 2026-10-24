@@ -1,0 +1,74 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "clipboard_observation": {
+    "actual": "Ver https://example.org/cita?x=1&y=2\r\n<img src=x onerror=alert(1)>",
+    "expected": "Ver https://example.org/cita?x=1&y=2\n<img src=x onerror=alert(1)>"
+  },
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "touch": false,
+      "clipboard_body": "exact native line-ending match",
+      "clipboard_phone": "exact match",
+      "groups": 5,
+      "safe_link": true,
+      "html_remains_text": true,
+      "horizontal_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "touch": true,
+      "clipboard_body": "exact native line-ending match",
+      "clipboard_phone": "exact match",
+      "groups": 5,
+      "safe_link": true,
+      "html_remains_text": true,
+      "horizontal_overflow": false
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    },
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    }
+  ],
+  "page_errors": [],
+  "temporary_server_listening": false
+}

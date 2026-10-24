@@ -1,0 +1,11 @@
+{
+  "phase": "BEFORE_FORMAL_SEAL",
+  "initial_invocation": "invocation-frontend.json",
+  "original_output": "invocation-frontend.log",
+  "cause": "NameError: name 'fetch' is not defined",
+  "correction": "Import the existing preparation fetch function; no candidate/dependency/lock change",
+  "frontend_dependency_installer_started": false,
+  "application_tests_executed": false,
+  "formal_campaign_invocations": 0,
+  "continuation_receipt": "invocation-frontend-continue.json"
+}

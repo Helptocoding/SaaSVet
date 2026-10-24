@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "src/pages/inbox/ThreadViewport.test.jsx",
+    "--testNamePattern=WA-GTF-01|WA-GRP-01|WA-CMP-01|WA-LDE-01",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-gtf-01-2026-10-21\\vitest.json"
+  ],
+  "scope": "New GTF-01 and directly affected message grouping, composer and loading cases only"
+}

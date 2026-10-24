@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/messageGroups.test.js",
+    "src/pages/inbox/index.test.jsx",
+    "--testNamePattern=WA-GRP-01|pinta el env\u00edo|deduplica un polling|integra recibos|renderiza un divisor|mantiene la hora|actualiza todos|conserva el optimista|dos env\u00edos|oculta failed-local",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-grp-01-2026-10-20\\vitest.json"
+  ],
+  "scope": "New grouping tests and directly affected render/optimistic regressions only"
+}

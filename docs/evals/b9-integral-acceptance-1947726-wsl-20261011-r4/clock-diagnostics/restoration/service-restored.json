@@ -1,0 +1,16 @@
+{
+  "state": "PASS",
+  "status": {
+    "argv": [
+      "systemctl",
+      "show",
+      "systemd-timesyncd.service",
+      "--property=ActiveState,SubState,UnitFileState,MainPID"
+    ],
+    "exit_code": 0,
+    "output": "MainPID=1295\nActiveState=active\nSubState=running\nUnitFileState=enabled\n"
+  },
+  "active_matches_original": true,
+  "enabled_matches_original": true,
+  "windows_W32Time_untouched": true
+}

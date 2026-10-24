@@ -1,0 +1,55 @@
+{
+  "state": "PASS",
+  "candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+  "source_candidate_tree": "5e11236daabf4ef70ea9d0f08fee52aed5c30ff2",
+  "retained_ids": 3212,
+  "retained_PASS": 3200,
+  "retained_SKIP": 12,
+  "new_selected_ids": 1,
+  "previous_accepted_cases": 3212,
+  "prior_pass": 3200,
+  "prior_skips": 12,
+  "current_cases": 1,
+  "historical_failed_attempts": 3,
+  "result_general": 3213,
+  "corrected_failed_case_ids": [
+    "apps.core.tests.test_tenant_scoping_audit.TenantScopingAuditTests.test_no_unbaselined_objects_access_without_for_organization"
+  ],
+  "snapshot_corrected_case_ids": [
+    "apps.agent.tests.test_contracts.CommitmentContractTests.test_fields_match_snapshot",
+    "apps.agent.tests.test_contracts.ToolOutcomeContractTests.test_fields_match_snapshot"
+  ],
+  "retained_sources": {
+    "r6": {
+      "tests": 2485,
+      "PASS": 2483,
+      "SKIP": 2
+    },
+    "r7": {
+      "tests": 405,
+      "PASS": 405,
+      "SKIP": 0,
+      "source_journal_observations": 407,
+      "excluded_historical_FAIL": 2
+    },
+    "r8": {
+      "tests": 322,
+      "PASS": 312,
+      "SKIP": 10,
+      "source_journal_observations": 323,
+      "excluded_historical_FAIL": 1
+    }
+  },
+  "original_invocation_exits": {
+    "r6": "UNKNOWN",
+    "r7": "UNKNOWN",
+    "r8": 1
+  },
+  "historical_disk_and_monotonic_evidence_verified": false,
+  "accepted_historical_evidence_limitation": true,
+  "manifest": "case-resumption-manifest.json",
+  "validation": "case-resumption-validation.json",
+  "authorization": "baseline-resumption-authorization.json",
+  "manifest_sha256": "85f01293e758e3f47023a7a042d9f1a14e5821d1a5b6497bd6ac5404e99ca21a",
+  "full_group_pass": false
+}

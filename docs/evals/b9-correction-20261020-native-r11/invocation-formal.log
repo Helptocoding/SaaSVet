@@ -1,0 +1,23 @@
+PREFLIGHT_PASS
+BLOCK_REFERENCED directed
+BLOCK_REFERENCED django-check
+BLOCK_REFERENCED migration-drift
+BLOCK_REFERENCED migrate
+BLOCK_REFERENCED billing-schema
+BLOCK_REFERENCED b0
+BLOCK_REFERENCED b3
+BLOCK_REFERENCED b4
+BLOCK_REFERENCED b5
+BLOCK_REFERENCED full
+BLOCK_REFERENCED frontend-build
+BLOCK_START frontend-test-remainder
+BLOCK_END frontend-test-remainder exit=0
+BLOCK_START frontend-test-assemble
+BLOCK_END frontend-test-assemble exit=0
+BLOCK_START frontend-lint
+BLOCK_END frontend-lint exit=1
+BLOCK_START frontend-smoke-urls
+BLOCK_END frontend-smoke-urls exit=0
+BLOCK_START security
+BLOCK_END security exit=2
+{"campaign": "PENDING_CLASSIFICATION", "phase": "security", "cause": "Gitleaks nonzero; distinguish findings from scanner error"}

@@ -1,0 +1,22 @@
+{
+  "utc": "2026-10-14T04:50:02Z",
+  "argv": [
+    "rtk",
+    "proxy",
+    "wsl.exe",
+    "-d",
+    "Ubuntu-24.04",
+    "--exec",
+    "/home/lap/b9i-diagnostic-1947726-20261013-d1/tools/rtk",
+    "proxy",
+    "systemctl",
+    "show",
+    "systemd-timesyncd.service",
+    "--property=ActiveState,SubState,UnitFileState,MainPID"
+  ],
+  "exit_code": 0,
+  "stdout": "MainPID=166\nActiveState=active\nSubState=running\nUnitFileState=enabled\n",
+  "stderr": "",
+  "configuration_changed": false,
+  "Windows_W32Time_changed": false
+}

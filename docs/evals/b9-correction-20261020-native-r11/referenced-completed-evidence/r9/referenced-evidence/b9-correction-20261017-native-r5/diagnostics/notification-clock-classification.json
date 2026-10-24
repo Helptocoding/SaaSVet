@@ -1,0 +1,1098 @@
+{
+  "state": "PROPOSAL_ONLY_NOT_APPLIED",
+  "classification": "HARNESS_FIXTURE_TIME_DEPENDENCE",
+  "observed_outcome": "ERROR",
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "test_id": "apps.notifications.tests.test_notifications.DerivedFeedTests.test_upcoming_window",
+  "error_utc": "2026-10-17T18:46:03Z",
+  "error_row_sha256": "d2976cb20a9b8bca5be2eb1bee2ff08f218e9a6e8159242b8d6e5675d11c9f9a",
+  "error_row": {
+    "id": "apps.notifications.tests.test_notifications.DerivedFeedTests.test_upcoming_window",
+    "outcome": "ERROR",
+    "reason": null,
+    "utc": "2026-10-17T18:46:03Z",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\python\\Lib\\unittest\\case.py\", line 58, in testPartExecutor\n    yield\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\python\\Lib\\unittest\\case.py\", line 651, in run\n    self._callTestMethod(testMethod)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\python\\Lib\\unittest\\case.py\", line 606, in _callTestMethod\n    if method() is not None:\n       ~~~~~~^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\src\\backend\\apps\\notifications\\tests\\test_notifications.py\", line 181, in test_upcoming_window\n    self._make_appointment(now + timedelta(hours=5))\n    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\src\\backend\\apps\\notifications\\tests\\test_notifications.py\", line 171, in _make_appointment\n    return Appointment.objects.create(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        organization=self.org, pet=pet, veterinarian=vet or self.vet,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<2 lines>...\n        reason='Control', status=status,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\python\\Lib\\site-packages\\django\\db\\models\\manager.py\", line 87, in manager_method\n    return getattr(self.get_queryset(), name)(*args, **kwargs)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\python\\Lib\\site-packages\\django\\db\\models\\query.py\", line 669, in create\n    obj.save(force_insert=True, using=self.db)\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\src\\backend\\apps\\appointments\\models.py\", line 112, in save\n    return super().save(*args, **kwargs)\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\src\\backend\\apps\\core\\models.py\", line 179, in save\n    self.full_clean()\n    ~~~~~~~~~~~~~~~^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\python\\Lib\\site-packages\\django\\db\\models\\base.py\", line 1712, in full_clean\n    raise ValidationError(errors)\ndjango.core.exceptions.ValidationError: {'__all__': ['No se cumple la restricción \"appointment_end_after_start\".']}\n"
+  },
+  "observed_cause": "The relative +5h appointment crosses midnight after its 30-minute duration; legacy time fields violate appointment_end_after_start during fixture creation, before the feed request.",
+  "product_failure_established": false,
+  "formal_environment_resource_failure_established_for_this_error": false,
+  "exact_fixture_now_not_logged": true,
+  "arithmetic_demonstration": {
+    "example_now_utc": "2026-10-17T18:46:00+00:00",
+    "plus_5h_start_utc": "2026-10-17T23:46:00+00:00",
+    "plus_30m_end_utc": "2026-10-18T00:16:00+00:00",
+    "legacy_start_time": "23:46:00+00:00",
+    "legacy_end_time": "00:16:00+00:00",
+    "end_time_greater_than_start_time": false,
+    "daily_failure_window_for_plus_5h_fixture_utc": "18:30 <= now < 19:00; start falls in 23:30..23:59 and a 30-minute end wraps to the next day",
+    "note": "Arithmetic example is consistent with the recorded 18:46 ERROR; it is not a claim that the exact captured now was logged."
+  },
+  "proposal": {
+    "target": "backend/apps/notifications/tests/test_notifications.py",
+    "original_sha256": "1c1bbded0782ac4cbfc671cefdfee27365571c05c6172a67b5804002b681838f",
+    "proposed_sha256": "b386adb26db5ee4ee5e6cffa1367ad13dbbed891e5e4f14d7ffd21bd3f23b118",
+    "patch_file": "diagnostics/notification-clock-proposal.patch",
+    "patch_sha256": "e17f24b962a1f5ce288c8932a1b5eed8a9e81efa4da6f7dd7b91ea8a476c36b8",
+    "format": "Zero-context unified diff, preserving zero trailing whitespace; future application requires git apply --unidiff-zero after checking original_sha256.",
+    "mechanism": "Standard-library unittest.mock.patch on django.utils.timezone.now for this test method only.",
+    "fixed_now_utc": "2026-10-17T12:00:00+00:00",
+    "fixed_far_start_utc": "2026-10-17T17:00:00+00:00",
+    "fixed_far_end_utc": "2026-10-17T17:30:00+00:00",
+    "fixed_far_legacy_constraint_valid": true,
+    "dependency_added": false,
+    "freezegun_required": false,
+    "all_test_ids_unchanged": true,
+    "test_body_ast_identical": true,
+    "relative_offsets_preserved": [
+      "+10 minutes",
+      "+5 hours",
+      "+30-minute appointment duration"
+    ],
+    "assertions_preserved": [
+      "HTTP status 200",
+      "an upcoming key exists",
+      "no delayed key exists"
+    ],
+    "production_constraint_changed": false,
+    "production_sources_changed": false,
+    "scope": "Only imports, a decorator and its injected unused mock parameter change in test_upcoming_window."
+  },
+  "clock_resolution": {
+    "test_import": "from django.utils import timezone (test_notifications.py:6)",
+    "feed_import": "from django.utils import timezone (views.py:2)",
+    "builder_import": "from django.utils import timezone (builders.py:3)",
+    "services_import": "from django.utils import timezone (services.py:6)",
+    "route": "urls.py:3,6 imports notification_feed and routes the feed endpoint",
+    "feed_path": "views.py:71 reads timezone.now(); :73 passes now explicitly to build_appointment_derived; builders.py:30 also uses timezone.now() when no now is supplied.",
+    "why_patch_is_shared": "All these imports hold the same django.utils.timezone module object. Patching its now attribute covers fixture creation and the synchronous APIClient request, even though modules were already imported.",
+    "validation_path": "Appointment.save -> OrganizationalModel.save -> full_clean; the comparison constraint reads end_time and start_time. It remains active under the patch and receives valid fixture values.",
+    "other_related_lookups": "services.py uses the same module attribute for occurred_at/seen_at; those lookups are covered if invoked during this test.",
+    "scope_limits": "No system clock, PostgreSQL server clock or production code is changed. No claim is made that previously bound callable defaults are replaced; they are not used to calculate this fixture interval or this feed window.",
+    "cleanup": "patch decorator restores the original function on normal return or any test exception."
+  },
+  "sources": {
+    "backend/apps/notifications/tests/test_notifications.py": {
+      "sha256": "1c1bbded0782ac4cbfc671cefdfee27365571c05c6172a67b5804002b681838f",
+      "matches_sealed_candidate_manifest": true,
+      "lines": [
+        {
+          "line": 1,
+          "text": "from datetime import timedelta"
+        },
+        {
+          "line": 2,
+          "text": "from decimal import Decimal"
+        },
+        {
+          "line": 3,
+          "text": ""
+        },
+        {
+          "line": 4,
+          "text": "from django.core.exceptions import ValidationError"
+        },
+        {
+          "line": 5,
+          "text": "from django.test import TestCase"
+        },
+        {
+          "line": 6,
+          "text": "from django.utils import timezone"
+        },
+        {
+          "line": 7,
+          "text": "from rest_framework.test import APIClient"
+        },
+        {
+          "line": 8,
+          "text": ""
+        },
+        {
+          "line": 9,
+          "text": "from apps.core.models import Permission, Role, UserRole"
+        },
+        {
+          "line": 10,
+          "text": "from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS"
+        },
+        {
+          "line": 11,
+          "text": "from apps.inventory.models import Presentation, Product"
+        },
+        {
+          "line": 12,
+          "text": "from apps.notifications.models import Notification, NotificationReceipt"
+        },
+        {
+          "line": 13,
+          "text": "from apps.notifications.services import handle_cash_difference, handle_stock_transition"
+        },
+        {
+          "line": 14,
+          "text": "from apps.organizations.models import Organization"
+        },
+        {
+          "line": 15,
+          "text": "from apps.users.models import User"
+        },
+        {
+          "line": 16,
+          "text": ""
+        },
+        {
+          "line": 157,
+          "text": "    def _make_appointment(self, start, status='scheduled', vet=None):"
+        },
+        {
+          "line": 158,
+          "text": "        from apps.appointments.models import Appointment"
+        },
+        {
+          "line": 159,
+          "text": "        from apps.patients.models import Owner, Pet"
+        },
+        {
+          "line": 160,
+          "text": "        from apps.users.models import User"
+        },
+        {
+          "line": 161,
+          "text": "        if vet is None:"
+        },
+        {
+          "line": 162,
+          "text": "            type(self)._vet_seq += 1"
+        },
+        {
+          "line": 163,
+          "text": "            vet = User.objects.create_user("
+        },
+        {
+          "line": 164,
+          "text": "                username=f'vet_feed_{type(self)._vet_seq}', password='pass1234!',"
+        },
+        {
+          "line": 165,
+          "text": "                organization=self.org, role='VET',"
+        },
+        {
+          "line": 166,
+          "text": "            )"
+        },
+        {
+          "line": 167,
+          "text": "        owner = Owner.objects.create("
+        },
+        {
+          "line": 168,
+          "text": "            name='Ana López', phone='5512345678', organization=self.org,"
+        },
+        {
+          "line": 169,
+          "text": "        )"
+        },
+        {
+          "line": 170,
+          "text": "        pet = Pet.objects.create(name='Kira', species='dog', owner=owner, organization=self.org)"
+        },
+        {
+          "line": 171,
+          "text": "        return Appointment.objects.create("
+        },
+        {
+          "line": 172,
+          "text": "            organization=self.org, pet=pet, veterinarian=vet or self.vet,"
+        },
+        {
+          "line": 173,
+          "text": "            date=start.date(), start_time=start.timetz(), end_time=(start + timedelta(minutes=30)).timetz(),"
+        },
+        {
+          "line": 174,
+          "text": "            start_datetime=start, end_datetime=start + timedelta(minutes=30),"
+        },
+        {
+          "line": 175,
+          "text": "            reason='Control', status=status,"
+        },
+        {
+          "line": 176,
+          "text": "        )"
+        },
+        {
+          "line": 177,
+          "text": ""
+        },
+        {
+          "line": 178,
+          "text": "    def test_upcoming_window(self):"
+        },
+        {
+          "line": 179,
+          "text": "        now = timezone.now()"
+        },
+        {
+          "line": 180,
+          "text": "        self._make_appointment(now + timedelta(minutes=10))"
+        },
+        {
+          "line": 181,
+          "text": "        self._make_appointment(now + timedelta(hours=5))"
+        },
+        {
+          "line": 182,
+          "text": "        response = self.client.get('/api/v1/notifications/feed/?limit=20')"
+        },
+        {
+          "line": 183,
+          "text": "        self.assertEqual(response.status_code, 200)"
+        },
+        {
+          "line": 184,
+          "text": "        keys = [i['key'] for i in response.data['items']]"
+        },
+        {
+          "line": 185,
+          "text": "        self.assertTrue(any('upcoming' in k for k in keys))"
+        },
+        {
+          "line": 186,
+          "text": "        self.assertFalse(any('delayed' in k for k in keys))"
+        }
+      ]
+    },
+    "backend/apps/notifications/urls.py": {
+      "sha256": "91a13db5a168d517224ffcf20bbe44c7021d718c6e124651f33d2510cf69954a",
+      "matches_sealed_candidate_manifest": true,
+      "lines": [
+        {
+          "line": 1,
+          "text": "from django.urls import path"
+        },
+        {
+          "line": 2,
+          "text": ""
+        },
+        {
+          "line": 3,
+          "text": "from .views import notification_feed, notification_seen, notification_seen_all"
+        },
+        {
+          "line": 4,
+          "text": ""
+        },
+        {
+          "line": 5,
+          "text": "urlpatterns = ["
+        },
+        {
+          "line": 6,
+          "text": "    path('v1/notifications/feed/', notification_feed),"
+        },
+        {
+          "line": 7,
+          "text": "    path('v1/notifications/<str:key>/seen/', notification_seen),"
+        },
+        {
+          "line": 8,
+          "text": "    path('v1/notifications/seen-all/', notification_seen_all),"
+        }
+      ]
+    },
+    "backend/apps/notifications/views.py": {
+      "sha256": "a76601f9c1aeb1aa0aa59fb7fa172720e4c2be9dd79efc55b29c34e335d3cf28",
+      "matches_sealed_candidate_manifest": true,
+      "lines": [
+        {
+          "line": 1,
+          "text": "from django.core.exceptions import ValidationError"
+        },
+        {
+          "line": 2,
+          "text": "from django.utils import timezone"
+        },
+        {
+          "line": 3,
+          "text": "from rest_framework.decorators import api_view, permission_classes"
+        },
+        {
+          "line": 4,
+          "text": "from rest_framework.response import Response"
+        },
+        {
+          "line": 5,
+          "text": ""
+        },
+        {
+          "line": 6,
+          "text": "from apps.core.permissions import make_permission"
+        },
+        {
+          "line": 7,
+          "text": "from .builders import build_appointment_derived"
+        },
+        {
+          "line": 8,
+          "text": "from .models import Notification, NotificationReceipt"
+        },
+        {
+          "line": 9,
+          "text": "from .policies import FEED_DEFAULT_LIMIT, FEED_MAX_LIMIT, TYPE_PRIORITY"
+        },
+        {
+          "line": 10,
+          "text": "from .serializers import FeedItemSerializer"
+        },
+        {
+          "line": 11,
+          "text": "from .services import mark_all_seen, mark_seen"
+        },
+        {
+          "line": 12,
+          "text": ""
+        },
+        {
+          "line": 13,
+          "text": ""
+        },
+        {
+          "line": 14,
+          "text": "def _serialize_persisted(org, user):"
+        },
+        {
+          "line": 15,
+          "text": "    notifs = list("
+        },
+        {
+          "line": 16,
+          "text": "        Notification.objects.for_organization(org)"
+        },
+        {
+          "line": 17,
+          "text": "        .filter(receipts__user=user)"
+        },
+        {
+          "line": 18,
+          "text": "        .select_related()"
+        },
+        {
+          "line": 59,
+          "text": "@api_view(['GET'])"
+        },
+        {
+          "line": 60,
+          "text": "@permission_classes([make_permission(\"notification.list\")])"
+        },
+        {
+          "line": 61,
+          "text": "def notification_feed(request):"
+        },
+        {
+          "line": 62,
+          "text": "    user = request.user"
+        },
+        {
+          "line": 63,
+          "text": "    org = user.organization"
+        },
+        {
+          "line": 64,
+          "text": "    if org is None:"
+        },
+        {
+          "line": 65,
+          "text": "        return Response({'code': 'no_organization', 'message': 'Sin organización.'}, status=403)"
+        },
+        {
+          "line": 66,
+          "text": "    try:"
+        },
+        {
+          "line": 67,
+          "text": "        limit = int(request.query_params.get('limit', FEED_DEFAULT_LIMIT))"
+        },
+        {
+          "line": 68,
+          "text": "    except (TypeError, ValueError):"
+        },
+        {
+          "line": 69,
+          "text": "        limit = FEED_DEFAULT_LIMIT"
+        },
+        {
+          "line": 70,
+          "text": "    limit = max(1, min(limit, FEED_MAX_LIMIT))"
+        },
+        {
+          "line": 71,
+          "text": "    now = timezone.now()"
+        },
+        {
+          "line": 72,
+          "text": "    persisted = _serialize_persisted(org, user)"
+        },
+        {
+          "line": 73,
+          "text": "    derived = build_appointment_derived(org, user, now=now)"
+        },
+        {
+          "line": 74,
+          "text": "    unseen_count = Notification.objects.for_organization(org).filter("
+        },
+        {
+          "line": 75,
+          "text": "        receipts__user=user, receipts__seen_at__isnull=True,"
+        },
+        {
+          "line": 76,
+          "text": "    ).distinct().count() + sum(1 for item in derived if not item['seen'])"
+        },
+        {
+          "line": 77,
+          "text": "    merged = persisted + derived"
+        },
+        {
+          "line": 78,
+          "text": "    for item in merged:"
+        },
+        {
+          "line": 79,
+          "text": "        occurred = item['occurred_at']"
+        },
+        {
+          "line": 80,
+          "text": "        delta = (now - occurred).total_seconds() / 60 if occurred else 0"
+        }
+      ]
+    },
+    "backend/apps/notifications/builders.py": {
+      "sha256": "e50c6ebb986d06a6af518f7f3ffa5c3852fe99439aec0fe8cdde827a1d4443d6",
+      "matches_sealed_candidate_manifest": true,
+      "lines": [
+        {
+          "line": 1,
+          "text": "from datetime import timedelta, timezone as dt_timezone"
+        },
+        {
+          "line": 2,
+          "text": ""
+        },
+        {
+          "line": 3,
+          "text": "from django.utils import timezone"
+        },
+        {
+          "line": 4,
+          "text": ""
+        },
+        {
+          "line": 5,
+          "text": "from apps.core.permissions import user_has_permission"
+        },
+        {
+          "line": 6,
+          "text": "from .models import NotificationReceipt"
+        },
+        {
+          "line": 7,
+          "text": "from .policies import APPOINTMENT_DELAYED_MINUTES, APPOINTMENT_UPCOMING_MINUTES"
+        },
+        {
+          "line": 8,
+          "text": ""
+        },
+        {
+          "line": 9,
+          "text": ""
+        },
+        {
+          "line": 10,
+          "text": "def _utc_iso(dt):"
+        },
+        {
+          "line": 11,
+          "text": "    return dt.astimezone(dt_timezone.utc).isoformat()"
+        },
+        {
+          "line": 12,
+          "text": ""
+        },
+        {
+          "line": 13,
+          "text": ""
+        },
+        {
+          "line": 14,
+          "text": "def _can_see_appointment(user, appointment):"
+        },
+        {
+          "line": 15,
+          "text": "    if getattr(appointment, 'veterinarian_id', None) == getattr(user, 'pk', None):"
+        },
+        {
+          "line": 16,
+          "text": "        return True"
+        },
+        {
+          "line": 29,
+          "text": "def build_appointment_derived(org, user, now=None):"
+        },
+        {
+          "line": 30,
+          "text": "    now = now or timezone.now()"
+        },
+        {
+          "line": 31,
+          "text": "    upcoming_before = now + timedelta(minutes=APPOINTMENT_UPCOMING_MINUTES)"
+        },
+        {
+          "line": 32,
+          "text": "    delayed_after = now - timedelta(minutes=APPOINTMENT_DELAYED_MINUTES)"
+        },
+        {
+          "line": 33,
+          "text": "    from apps.appointments.models import Appointment"
+        },
+        {
+          "line": 34,
+          "text": "    qs = ("
+        },
+        {
+          "line": 35,
+          "text": "        Appointment.objects.for_organization(org)"
+        },
+        {
+          "line": 36,
+          "text": "        .filter(status__in=('scheduled', 'confirmed'))"
+        },
+        {
+          "line": 37,
+          "text": "        .filter(start_datetime__isnull=False)"
+        },
+        {
+          "line": 38,
+          "text": "        .filter(start_datetime__lte=upcoming_before)"
+        },
+        {
+          "line": 39,
+          "text": "        .select_related('pet', 'veterinarian')"
+        },
+        {
+          "line": 40,
+          "text": "        .order_by('start_datetime')[:100]"
+        },
+        {
+          "line": 41,
+          "text": "    )"
+        },
+        {
+          "line": 42,
+          "text": "    items = []"
+        },
+        {
+          "line": 43,
+          "text": "    for appt in qs:"
+        },
+        {
+          "line": 44,
+          "text": "        start = appt.start_datetime"
+        },
+        {
+          "line": 45,
+          "text": "        if start is None:"
+        },
+        {
+          "line": 46,
+          "text": "            continue"
+        },
+        {
+          "line": 47,
+          "text": "        if not _can_see_appointment(user, appt):"
+        },
+        {
+          "line": 48,
+          "text": "            continue"
+        },
+        {
+          "line": 49,
+          "text": "        if start > now:"
+        },
+        {
+          "line": 50,
+          "text": "            if start > upcoming_before:"
+        },
+        {
+          "line": 51,
+          "text": "                continue"
+        },
+        {
+          "line": 52,
+          "text": "            ntype = 'appointment_upcoming'"
+        },
+        {
+          "line": 53,
+          "text": "        else:"
+        },
+        {
+          "line": 54,
+          "text": "            if start > delayed_after:"
+        },
+        {
+          "line": 55,
+          "text": "                continue"
+        },
+        {
+          "line": 56,
+          "text": "            if start < now - timedelta(hours=24):"
+        },
+        {
+          "line": 57,
+          "text": "                continue"
+        },
+        {
+          "line": 58,
+          "text": "            ntype = 'appointment_delayed'"
+        },
+        {
+          "line": 59,
+          "text": "        key = f\"appt:{appt.public_id}:{ntype.split('_')[1]}:{_utc_iso(start)}\""
+        }
+      ]
+    },
+    "backend/apps/notifications/services.py": {
+      "sha256": "9d70ec47b687d26dc9ccd486444fea85707f00dad2138c271813606ab2b3b75d",
+      "matches_sealed_candidate_manifest": true,
+      "lines": [
+        {
+          "line": 1,
+          "text": "import logging"
+        },
+        {
+          "line": 2,
+          "text": "from decimal import Decimal"
+        },
+        {
+          "line": 3,
+          "text": ""
+        },
+        {
+          "line": 4,
+          "text": "from django.core.exceptions import ValidationError"
+        },
+        {
+          "line": 5,
+          "text": "from django.db import transaction"
+        },
+        {
+          "line": 6,
+          "text": "from django.utils import timezone"
+        },
+        {
+          "line": 7,
+          "text": ""
+        },
+        {
+          "line": 8,
+          "text": "from apps.core.permissions import user_has_permission"
+        },
+        {
+          "line": 9,
+          "text": "from .models import Notification, NotificationReceipt"
+        },
+        {
+          "line": 10,
+          "text": "from .policies import CASH_DIFFERENCE_NOTIFICATION_THRESHOLD"
+        },
+        {
+          "line": 11,
+          "text": ""
+        },
+        {
+          "line": 12,
+          "text": "logger = logging.getLogger(__name__)"
+        },
+        {
+          "line": 13,
+          "text": ""
+        },
+        {
+          "line": 14,
+          "text": ""
+        },
+        {
+          "line": 15,
+          "text": "def on_commit_best_effort(fn):"
+        },
+        {
+          "line": 16,
+          "text": "    def wrapper():"
+        },
+        {
+          "line": 17,
+          "text": "        try:"
+        },
+        {
+          "line": 130,
+          "text": "        return True"
+        },
+        {
+          "line": 131,
+          "text": ""
+        },
+        {
+          "line": 132,
+          "text": "    # Appointment notifications are derived, so validate against the same"
+        },
+        {
+          "line": 133,
+          "text": "    # builder used by the feed before creating a sparse receipt."
+        },
+        {
+          "line": 134,
+          "text": "    from .builders import build_appointment_derived"
+        },
+        {
+          "line": 135,
+          "text": "    return any("
+        },
+        {
+          "line": 136,
+          "text": "        item['key'] == key"
+        },
+        {
+          "line": 137,
+          "text": "        for item in build_appointment_derived(organization, user)"
+        },
+        {
+          "line": 138,
+          "text": "    )"
+        },
+        {
+          "line": 139,
+          "text": ""
+        },
+        {
+          "line": 140,
+          "text": ""
+        },
+        {
+          "line": 141,
+          "text": "def mark_seen(organization, user, key):"
+        },
+        {
+          "line": 142,
+          "text": "    if not _key_is_visible(organization, user, key):"
+        },
+        {
+          "line": 143,
+          "text": "        raise ValidationError('La notificación no existe o no es visible.')"
+        },
+        {
+          "line": 144,
+          "text": "    try:"
+        },
+        {
+          "line": 145,
+          "text": "        receipt = NotificationReceipt.objects.for_organization(organization).get("
+        },
+        {
+          "line": 146,
+          "text": "            notification_key=key, user=user,"
+        },
+        {
+          "line": 147,
+          "text": "        )"
+        },
+        {
+          "line": 148,
+          "text": "        if receipt.seen_at is None:"
+        },
+        {
+          "line": 149,
+          "text": "            receipt.seen_at = timezone.now()"
+        },
+        {
+          "line": 150,
+          "text": "            receipt.full_clean()"
+        },
+        {
+          "line": 151,
+          "text": "            receipt.save(update_fields=['seen_at', 'updated_at'])"
+        },
+        {
+          "line": 152,
+          "text": "        return receipt, False"
+        },
+        {
+          "line": 153,
+          "text": "    except NotificationReceipt.DoesNotExist:"
+        },
+        {
+          "line": 154,
+          "text": "        receipt = NotificationReceipt("
+        },
+        {
+          "line": 155,
+          "text": "            organization=organization, notification=None,"
+        },
+        {
+          "line": 156,
+          "text": "            notification_key=key, user=user, seen_at=timezone.now(),"
+        },
+        {
+          "line": 157,
+          "text": "        )"
+        },
+        {
+          "line": 158,
+          "text": "        receipt.full_clean()"
+        }
+      ]
+    },
+    "backend/apps/appointments/models.py": {
+      "sha256": "5de443541601446fa3ae29a9f16eeaeddf18d2387ea4a567ba2b3540f80da63f",
+      "matches_sealed_candidate_manifest": true,
+      "lines": [
+        {
+          "line": 91,
+          "text": "    def clean(self):"
+        },
+        {
+          "line": 92,
+          "text": "        org = self.organization_id"
+        },
+        {
+          "line": 93,
+          "text": "        if org and self.pet_id and self.pet.organization_id != org:"
+        },
+        {
+          "line": 94,
+          "text": "            raise ValidationError(\"La mascota no pertenece a la misma organizacion que la cita.\")"
+        },
+        {
+          "line": 95,
+          "text": "        if org and self.veterinarian_id and self.veterinarian.organization_id != org:"
+        },
+        {
+          "line": 96,
+          "text": "            raise ValidationError(\"El veterinario no pertenece a la misma organizacion que la cita.\")"
+        },
+        {
+          "line": 97,
+          "text": "        if self.source_operation_id:"
+        },
+        {
+          "line": 98,
+          "text": "            operation = self.source_operation"
+        },
+        {
+          "line": 99,
+          "text": "            if (operation.organization_id != org or operation.pet_id != self.pet_id"
+        },
+        {
+          "line": 100,
+          "text": "                    or operation.operation_kind != 'CREATE_APPOINTMENT'"
+        },
+        {
+          "line": 101,
+          "text": "                    or operation.parameters_digest != self.source_parameters_digest):"
+        },
+        {
+          "line": 102,
+          "text": "                raise ValidationError('La procedencia de la cita no coincide con su operación.')"
+        },
+        {
+          "line": 103,
+          "text": "        elif self.source_parameters_digest:"
+        },
+        {
+          "line": 104,
+          "text": "            raise ValidationError('El digest exige una operación de origen.')"
+        },
+        {
+          "line": 105,
+          "text": ""
+        },
+        {
+          "line": 106,
+          "text": "    def save(self, *args, **kwargs):"
+        },
+        {
+          "line": 107,
+          "text": "        if self.pk:"
+        },
+        {
+          "line": 108,
+          "text": "            previous = type(self).all_objects.filter(pk=self.pk).values_list("
+        },
+        {
+          "line": 109,
+          "text": "                'source_operation_id', 'source_parameters_digest').first()"
+        },
+        {
+          "line": 110,
+          "text": "            if previous and previous != (self.source_operation_id, self.source_parameters_digest):"
+        },
+        {
+          "line": 111,
+          "text": "                raise ValidationError('La procedencia de una cita es inmutable.')"
+        },
+        {
+          "line": 112,
+          "text": "        return super().save(*args, **kwargs)"
+        },
+        {
+          "line": 138,
+          "text": "        constraints = ["
+        },
+        {
+          "line": 139,
+          "text": "            models.CheckConstraint("
+        },
+        {
+          "line": 140,
+          "text": "                condition=models.Q(end_time__gt=models.F('start_time')),"
+        },
+        {
+          "line": 141,
+          "text": "                name=\"appointment_end_after_start\","
+        },
+        {
+          "line": 142,
+          "text": "            ),"
+        }
+      ]
+    },
+    "backend/apps/core/models.py": {
+      "sha256": "0bbf5db7cc7e8df4189eaa559ae95f5502044f9b7c97378453d7f6a377efd237",
+      "matches_sealed_candidate_manifest": true,
+      "lines": [
+        {
+          "line": 168,
+          "text": "    def save(self, *args, validate=True, **kwargs):"
+        },
+        {
+          "line": 169,
+          "text": "        # 1. Auditoría primero — para que clean() pueda validar created_by si lo necesita"
+        },
+        {
+          "line": 170,
+          "text": "        user = get_current_user()"
+        },
+        {
+          "line": 171,
+          "text": "        if user:"
+        },
+        {
+          "line": 172,
+          "text": "            if not self.pk:"
+        },
+        {
+          "line": 173,
+          "text": "                self.created_by = user"
+        },
+        {
+          "line": 174,
+          "text": "            self.updated_by = user"
+        },
+        {
+          "line": 175,
+          "text": ""
+        },
+        {
+          "line": 176,
+          "text": "        # 2. Validaciones centralizadas (clean + field validation)"
+        },
+        {
+          "line": 177,
+          "text": "        if validate:"
+        },
+        {
+          "line": 178,
+          "text": "            try:"
+        },
+        {
+          "line": 179,
+          "text": "                self.full_clean()"
+        },
+        {
+          "line": 180,
+          "text": "            except Exception as exc:"
+        },
+        {
+          "line": 181,
+          "text": "                org_id = getattr(self, 'organization_id', None)"
+        },
+        {
+          "line": 182,
+          "text": "                user_id = getattr(get_current_user(), 'pk', None)"
+        },
+        {
+          "line": 183,
+          "text": "                logger.warning("
+        },
+        {
+          "line": 184,
+          "text": "                    \"Validación fallida | model=%s pk=%s organization_id=%s user_id=%s | %s\","
+        },
+        {
+          "line": 185,
+          "text": "                    self.__class__.__name__, self.pk, org_id, user_id, exc,"
+        }
+      ]
+    },
+    "backend/config/settings.py": {
+      "sha256": "57bebdeb9a77928e5055057558dc3e605edac2274cbc3817d452520984b25413",
+      "matches_sealed_candidate_manifest": true,
+      "lines": [
+        {
+          "line": 520,
+          "text": "TIME_ZONE = 'UTC'"
+        },
+        {
+          "line": 521,
+          "text": ""
+        },
+        {
+          "line": 522,
+          "text": "USE_I18N = True"
+        },
+        {
+          "line": 523,
+          "text": ""
+        },
+        {
+          "line": 524,
+          "text": "USE_TZ = True"
+        }
+      ]
+    }
+  },
+  "verification": {
+    "syntax_compile": "PASS",
+    "test_body_ast_equality": "PASS",
+    "all_test_method_ids_equality": "PASS",
+    "proposed_source_trailing_whitespace": 0,
+    "patch_trailing_whitespace": 0,
+    "arithmetic_only": true,
+    "application_tests_executed": false,
+    "services_started": false,
+    "candidate_modified": false,
+    "sealed_helpers_modified": false
+  },
+  "gate_policy": {
+    "current_error_remains_recorded": true,
+    "current_full_general_not_pass": true,
+    "gate_not_relaxed": true,
+    "skip_not_added": true,
+    "rerun_not_performed": true
+  },
+  "next_candidate_policy": {
+    "authorization_required_before_applying_fixture_correction": true,
+    "candidate_sha_will_change": true,
+    "existing_reuse_same_sha_contract_does_not_automatically_allow_new_candidate": true,
+    "scoped_reuse_requires_explicit_new_authorization_and_input_dependency_validation": true,
+    "full_general_requires_fresh_validation_under_the_authorized_corrected_candidate": true
+  },
+  "created_utc": "2026-10-17T18:50:40Z"
+}

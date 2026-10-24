@@ -1,0 +1,198 @@
+2026-10-19 22:31:26.810 CST [22828] LOG:  starting PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit
+2026-10-19 22:31:26.813 CST [22828] LOG:  listening on IPv4 address "127.0.0.1", port 35490
+2026-10-19 22:31:27.479 CST [13216] LOG:  database system was interrupted; last known up at 2026-10-19 21:52:37 CST
+2026-10-19 22:31:27.591 CST [7464] FATAL:  the database system is starting up
+2026-10-19 22:31:28.229 CST [23144] FATAL:  the database system is starting up
+2026-10-19 22:31:28.977 CST [2900] FATAL:  the database system is starting up
+2026-10-19 22:31:29.623 CST [12712] FATAL:  the database system is starting up
+2026-10-19 22:31:30.339 CST [13780] FATAL:  the database system is starting up
+2026-10-19 22:31:30.998 CST [13824] FATAL:  the database system is starting up
+2026-10-19 22:31:31.681 CST [6948] FATAL:  the database system is starting up
+2026-10-19 22:31:32.349 CST [23504] FATAL:  the database system is starting up
+2026-10-19 22:31:32.999 CST [22192] FATAL:  the database system is starting up
+2026-10-19 22:31:33.736 CST [17956] FATAL:  the database system is starting up
+2026-10-19 22:31:34.443 CST [20352] FATAL:  the database system is starting up
+2026-10-19 22:31:35.224 CST [11904] FATAL:  the database system is starting up
+2026-10-19 22:31:36.075 CST [14584] FATAL:  the database system is starting up
+2026-10-19 22:31:36.944 CST [17776] FATAL:  the database system is starting up
+2026-10-19 22:31:37.506 CST [13216] LOG:  syncing data directory (fsync), elapsed time: 10.02 s, current path: ./base/4/3467
+2026-10-19 22:31:37.645 CST [6052] FATAL:  the database system is starting up
+2026-10-19 22:31:38.484 CST [22640] FATAL:  the database system is starting up
+2026-10-19 22:31:39.196 CST [15108] FATAL:  the database system is starting up
+2026-10-19 22:31:39.978 CST [21500] FATAL:  the database system is starting up
+2026-10-19 22:31:40.650 CST [23228] FATAL:  the database system is starting up
+2026-10-19 22:31:41.413 CST [19968] FATAL:  the database system is starting up
+2026-10-19 22:31:42.194 CST [13204] FATAL:  the database system is starting up
+2026-10-19 22:31:42.930 CST [23228] FATAL:  the database system is starting up
+2026-10-19 22:31:43.666 CST [17696] FATAL:  the database system is starting up
+2026-10-19 22:31:44.382 CST [3620] FATAL:  the database system is starting up
+2026-10-19 22:31:45.158 CST [20424] FATAL:  the database system is starting up
+2026-10-19 22:31:45.804 CST [21392] FATAL:  the database system is starting up
+2026-10-19 22:31:46.500 CST [21228] FATAL:  the database system is starting up
+2026-10-19 22:31:47.185 CST [7532] FATAL:  the database system is starting up
+2026-10-19 22:31:47.500 CST [13216] LOG:  syncing data directory (fsync), elapsed time: 20.01 s, current path: ./global/6100
+2026-10-19 22:31:47.843 CST [13216] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-10-19 22:31:47.881 CST [13216] LOG:  redo starts at 0/224BCA08
+2026-10-19 22:31:47.881 CST [13216] LOG:  invalid record length at 0/224BCAF0: expected at least 24, got 0
+2026-10-19 22:31:47.881 CST [13216] LOG:  redo done at 0/224BCAB8 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-10-19 22:31:47.943 CST [21756] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-10-19 22:31:47.963 CST [11932] FATAL:  the database system is starting up
+2026-10-19 22:31:48.016 CST [21756] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.009 s, sync=0.021 s, total=0.085 s; sync files=3, longest=0.010 s, average=0.007 s; distance=0 kB, estimate=0 kB; lsn=0/224BCAF0, redo lsn=0/224BCAF0
+2026-10-19 22:31:48.616 CST [22828] LOG:  database system is ready to accept connections
+2026-10-19 22:46:47.257 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 22:48:49.153 CST [3308] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 22:48:49.202 CST [3308] LOG:  skipping analyze of "organizations_organizationschedule" --- lock not available
+2026-10-19 22:48:49.279 CST [3308] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 22:48:49.279 CST [3308] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 22:48:49.279 CST [3308] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 22:48:49.279 CST [3308] LOG:  skipping analyze of "channels_message" --- lock not available
+2026-10-19 22:49:56.357 CST [21756] LOG:  checkpoint complete: wrote 1464 buffers (8.9%); 0 WAL file(s) added, 0 removed, 0 recycled; write=162.710 s, sync=26.070 s, total=189.100 s; sync files=3250, longest=0.295 s, average=0.009 s; distance=10758 kB, estimate=10758 kB; lsn=0/23497EF8, redo lsn=0/22F3E508
+2026-10-19 22:51:47.044 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 22:53:10.812 CST [21756] LOG:  checkpoint complete: wrote 332 buffers (2.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=52.043 s, sync=14.619 s, total=83.768 s; sync files=1921, longest=0.500 s, average=0.008 s; distance=7057 kB, estimate=10388 kB; lsn=0/23A97098, redo lsn=0/23622CE8
+2026-10-19 22:55:00.368 CST [17680] ERROR:  duplicate key value violates unique constraint "message_unique_idempotency_per_org"
+2026-10-19 22:55:00.368 CST [17680] DETAIL:  Key (organization_id, idempotency_key)=(1, real-concurrent-send) already exists.
+2026-10-19 22:55:00.368 CST [17680] STATEMENT:  INSERT INTO "channels_message" ("organization_id", "created_at", "updated_at", "created_by_id", "updated_by_id", "is_active", "channel_account_id", "conversation_id", "contact_id", "direction", "author_type", "human_author_id", "payload_type", "semantic_type", "operation_key", "idempotency_key", "body", "external_message_id", "raw_metadata", "status", "attempts", "next_attempt_at", "failure_reason", "send_token", "send_started_at", "send_lease_until", "send_admitted_at", "provider_accepted_at", "delivered_at", "read_at", "uncertain_at", "supersedes_message_id", "available_at", "process_attempts", "turn_work_id", "output_ordinal", "origin_epoch") VALUES (1, '2026-10-20 04:55:00.361040+00:00'::timestamptz, '2026-10-20 04:55:00.361060+00:00'::timestamptz, NULL, NULL, true, 1, 1, 1, 'out', 'human_staff', 2, 'text', '', '', 'real-concurrent-send', 'respuesta de race_sender_two', NULL, '{}'::jsonb, 'pending', 0, NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1) RETURNING "channels_message"."id"
+2026-10-19 22:55:49.316 CST [2568] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 22:55:49.410 CST [2568] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 22:55:49.410 CST [2568] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 22:55:49.411 CST [2568] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 22:56:20.268 CST [25124] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-19 22:56:20.269 CST [25124] LOG:  unexpected EOF on client connection with an open transaction
+2026-10-19 22:56:47.863 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 22:56:49.316 CST [14668] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 22:56:49.401 CST [14668] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 22:56:49.402 CST [14668] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 22:56:49.402 CST [14668] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 22:56:49.402 CST [14668] LOG:  skipping analyze of "channels_message" --- lock not available
+2026-10-19 22:57:10.119 CST [23740] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-19 22:57:10.119 CST [23740] LOG:  unexpected EOF on client connection with an open transaction
+2026-10-19 22:57:49.430 CST [18948] LOG:  skipping analyze of "organizations_organizationschedule" --- lock not available
+2026-10-19 22:57:49.430 CST [18948] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 22:57:49.556 CST [18948] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 22:57:49.556 CST [18948] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 22:57:49.556 CST [18948] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 22:57:49.556 CST [18948] LOG:  skipping analyze of "channels_message" --- lock not available
+2026-10-19 22:58:32.576 CST [26128] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-19 22:58:32.576 CST [26128] LOG:  unexpected EOF on client connection with an open transaction
+2026-10-19 22:58:38.522 CST [21756] LOG:  checkpoint complete: wrote 245 buffers (1.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=52.418 s, sync=45.930 s, total=110.659 s; sync files=4918, longest=0.461 s, average=0.010 s; distance=9007 kB, estimate=10250 kB; lsn=0/2410AB18, redo lsn=0/23EEEA00
+2026-10-19 22:59:46.599 CST [2852] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-19 23:01:47.077 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 23:02:48.659 CST [21756] LOG:  checkpoint complete: wrote 144 buffers (0.9%); 0 WAL file(s) added, 0 removed, 1 recycled; write=16.458 s, sync=33.079 s, total=61.582 s; sync files=3554, longest=0.311 s, average=0.010 s; distance=4946 kB, estimate=9720 kB; lsn=0/244D90B0, redo lsn=0/243C3590
+2026-10-19 23:06:47.578 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 23:08:25.966 CST [21756] LOG:  checkpoint complete: wrote 350 buffers (2.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=38.673 s, sync=27.148 s, total=98.389 s; sync files=5224, longest=0.083 s, average=0.006 s; distance=5689 kB, estimate=9316 kB; lsn=0/24ABA180, redo lsn=0/24951B80
+2026-10-19 23:09:00.066 CST [23028] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-19 23:09:00.066 CST [23028] LOG:  unexpected EOF on client connection with an open transaction
+2026-10-19 23:09:53.213 CST [4712] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-19 23:11:47.116 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 23:11:49.483 CST [24116] LOG:  skipping analyze of "agent_conversation" --- lock not available
+2026-10-19 23:11:49.483 CST [24116] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:11:49.588 CST [24116] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:11:49.588 CST [24116] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:11:49.588 CST [24116] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:12:49.732 CST [11392] LOG:  skipping analyze of "agent_conversation" --- lock not available
+2026-10-19 23:12:49.732 CST [11392] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:12:49.872 CST [11392] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:12:49.872 CST [11392] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:12:49.872 CST [11392] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:13:06.190 CST [21756] LOG:  checkpoint complete: wrote 169 buffers (1.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=37.176 s, sync=22.327 s, total=79.075 s; sync files=5057, longest=0.082 s, average=0.005 s; distance=5317 kB, estimate=8917 kB; lsn=0/25048E18, redo lsn=0/24E83290
+2026-10-19 23:13:49.593 CST [25768] LOG:  skipping analyze of "agent_conversation" --- lock not available
+2026-10-19 23:13:49.593 CST [25768] LOG:  skipping analyze of "organizations_organizationschedule" --- lock not available
+2026-10-19 23:13:49.593 CST [25768] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:13:49.715 CST [25768] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:13:49.715 CST [25768] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:13:49.715 CST [25768] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:14:49.591 CST [21404] LOG:  skipping analyze of "organizations_organizationschedule" --- lock not available
+2026-10-19 23:14:49.591 CST [21404] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:14:49.673 CST [21404] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:14:49.673 CST [21404] LOG:  skipping analyze of "patients_owner" --- lock not available
+2026-10-19 23:14:49.674 CST [21404] LOG:  skipping analyze of "agent_conversation" --- lock not available
+2026-10-19 23:14:49.674 CST [21404] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:14:49.674 CST [21404] LOG:  skipping analyze of "patients_pet" --- lock not available
+2026-10-19 23:14:49.674 CST [21404] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:14:49.674 CST [21404] LOG:  skipping analyze of "core_role" --- lock not available
+2026-10-19 23:16:47.486 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 23:16:49.538 CST [10856] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:16:49.538 CST [10856] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:16:49.705 CST [10856] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:16:49.705 CST [10856] LOG:  skipping analyze of "channels_message" --- lock not available
+2026-10-19 23:16:49.705 CST [10856] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:18:49.665 CST [23404] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:18:49.667 CST [23404] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:18:49.772 CST [23404] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:18:49.772 CST [23404] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:18:56.722 CST [21756] LOG:  checkpoint complete: wrote 152 buffers (0.9%); 0 WAL file(s) added, 0 removed, 1 recycled; write=19.831 s, sync=76.834 s, total=129.236 s; sync files=7427, longest=0.660 s, average=0.011 s; distance=8272 kB, estimate=8852 kB; lsn=0/2595C288, redo lsn=0/25697320
+2026-10-19 23:19:49.633 CST [16488] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:19:49.715 CST [16488] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:19:49.715 CST [16488] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:19:49.715 CST [16488] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:20:49.748 CST [21928] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:20:49.849 CST [21928] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:20:49.849 CST [21928] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:20:49.849 CST [21928] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:21:47.293 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 23:22:49.583 CST [24540] LOG:  skipping analyze of "organizations_organizationschedule" --- lock not available
+2026-10-19 23:22:49.583 CST [24540] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:22:49.665 CST [24540] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:22:49.665 CST [24540] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:22:49.665 CST [24540] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:24:11.531 CST [21756] LOG:  checkpoint complete: wrote 265 buffers (1.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=36.088 s, sync=87.832 s, total=144.239 s; sync files=8418, longest=0.179 s, average=0.011 s; distance=8382 kB, estimate=8805 kB; lsn=0/26204E98, redo lsn=0/25EC6D08
+2026-10-19 23:25:49.686 CST [21652] LOG:  skipping analyze of "appointments_appointment" --- lock not available
+2026-10-19 23:26:47.661 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 23:26:49.660 CST [26520] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:26:49.774 CST [26520] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:26:49.774 CST [26520] LOG:  skipping analyze of "appointments_appointment" --- lock not available
+2026-10-19 23:26:49.774 CST [26520] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:26:49.774 CST [26520] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:28:17.439 CST [21756] LOG:  checkpoint complete: wrote 216 buffers (1.3%); 0 WAL file(s) added, 0 removed, 1 recycled; write=39.063 s, sync=36.360 s, total=89.778 s; sync files=5748, longest=0.094 s, average=0.007 s; distance=7088 kB, estimate=8633 kB; lsn=0/26805E28, redo lsn=0/265B2D90
+2026-10-19 23:28:49.638 CST [6928] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:28:49.730 CST [6928] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:28:49.730 CST [6928] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:28:49.730 CST [6928] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:30:33.119 CST [24944] ERROR:  conflicting key value violates exclusion constraint "appointment_no_overlap_per_vet"
+2026-10-19 23:30:33.119 CST [24944] DETAIL:  Key (organization_id, veterinarian_id, tstzrange(start_datetime, end_datetime, '[)'::text))=(8, 23, ["2026-10-23 11:00:00+00","2026-10-23 11:30:00+00")) conflicts with existing key (organization_id, veterinarian_id, tstzrange(start_datetime, end_datetime, '[)'::text))=(8, 23, ["2026-10-23 11:00:00+00","2026-10-23 11:30:00+00")).
+2026-10-19 23:30:33.119 CST [24944] STATEMENT:  UPDATE "appointments_appointment" SET "veterinarian_id" = 23 WHERE ("appointments_appointment"."is_active" AND "appointments_appointment"."id" = 8)
+2026-10-19 23:31:27.463 CST [8528] ERROR:  duplicate key value violates unique constraint "billing_command_receipt_identity"
+2026-10-19 23:31:27.463 CST [8528] DETAIL:  Key (organization_id, command_kind, idempotency_key)=(1, pay_checkout, same-pay-key) already exists.
+2026-10-19 23:31:27.463 CST [8528] STATEMENT:  INSERT INTO "billing_commandreceipt" ("organization_id", "created_at", "updated_at", "created_by_id", "updated_by_id", "is_active", "receipt_uuid", "command_kind", "idempotency_key", "request_hash", "aggregate_type", "aggregate_public_id", "canonical_schema_version", "status", "response_data", "actor_id", "completed_at") VALUES (1, '2026-10-20 05:31:26.748088+00:00'::timestamptz, '2026-10-20 05:31:26.748111+00:00'::timestamptz, 1, NULL, true, 'b4bbf5490bb34f91a1410006faf327a8'::uuid, 'pay_checkout', 'same-pay-key', '7c1e4dcbcbcc20a40511d541ab0446b918964ed7a5a323f692288708f2f1262c', 'checkout', 'b533f944-011c-41ca-9c6c-9b2fe8a0895d', 1, 'processing', '{}'::jsonb, 1, NULL) RETURNING "billing_commandreceipt"."id"
+2026-10-19 23:31:47.643 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 23:33:23.136 CST [21756] LOG:  checkpoint complete: wrote 209 buffers (1.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=23.836 s, sync=38.978 s, total=95.493 s; sync files=8337, longest=0.116 s, average=0.005 s; distance=8436 kB, estimate=8614 kB; lsn=0/27077388, redo lsn=0/26DEFE40
+2026-10-19 23:36:21.356 CST [25940] ERROR:  update or delete on table "patients_owner" violates foreign key constraint "patients_pet_owner_id_cdd29f0e_fk_patients_owner_id" on table "patients_pet"
+2026-10-19 23:36:21.356 CST [25940] DETAIL:  Key (id)=(7) is still referenced from table "patients_pet".
+2026-10-19 23:36:21.356 CST [25940] STATEMENT:  DELETE FROM patients_owner WHERE id = 7
+2026-10-19 23:36:47.911 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 23:37:49.800 CST [328] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:37:49.800 CST [328] LOG:  skipping analyze of "core_role" --- lock not available
+2026-10-19 23:37:49.800 CST [328] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:37:49.800 CST [328] LOG:  skipping analyze of "patients_pet" --- lock not available
+2026-10-19 23:37:49.801 CST [328] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:37:49.801 CST [328] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:38:40.337 CST [21756] LOG:  checkpoint complete: wrote 446 buffers (2.7%); 0 WAL file(s) added, 0 removed, 1 recycled; write=52.161 s, sync=43.718 s, total=112.427 s; sync files=5793, longest=0.099 s, average=0.008 s; distance=6662 kB, estimate=8418 kB; lsn=0/2782A830, redo lsn=0/274719B0
+2026-10-19 23:38:49.955 CST [2780] LOG:  skipping analyze of "organizations_organizationschedule" --- lock not available
+2026-10-19 23:38:50.061 CST [2780] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:38:50.061 CST [2780] LOG:  skipping analyze of "patients_owner" --- lock not available
+2026-10-19 23:38:50.061 CST [2780] LOG:  skipping analyze of "core_role" --- lock not available
+2026-10-19 23:38:50.061 CST [2780] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:38:50.061 CST [2780] LOG:  skipping analyze of "patients_pet" --- lock not available
+2026-10-19 23:38:50.061 CST [2780] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:38:50.061 CST [2780] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:40:49.891 CST [27004] LOG:  skipping analyze of "auth_permission" --- lock not available
+2026-10-19 23:40:49.892 CST [27004] LOG:  skipping analyze of "django_content_type" --- lock not available
+2026-10-19 23:40:49.892 CST [27004] LOG:  skipping analyze of "core_permission" --- lock not available
+2026-10-19 23:40:49.892 CST [27004] LOG:  skipping analyze of "core_role_permissions" --- lock not available
+2026-10-19 23:41:36.501 CST [21756] LOG:  checkpoint starting: immediate force wait
+2026-10-19 23:41:36.615 CST [21756] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.017 s, sync=0.039 s, total=0.114 s; sync files=4, longest=0.011 s, average=0.010 s; distance=9910 kB, estimate=9910 kB; lsn=0/27E1F270, redo lsn=0/27E1F238
+2026-10-19 23:46:36.643 CST [21756] LOG:  checkpoint starting: time
+2026-10-19 23:46:36.896 CST [21756] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.117 s, sync=0.041 s, total=0.253 s; sync files=2, longest=0.028 s, average=0.020 s; distance=0 kB, estimate=8919 kB; lsn=0/27E1F420, redo lsn=0/27E1F3E8
+2026-10-20 00:13:26.419 CST [22828] LOG:  received fast shutdown request
+2026-10-20 00:13:26.436 CST [22828] LOG:  aborting any active transactions
+2026-10-20 00:13:26.479 CST [22828] LOG:  background worker "logical replication launcher" (PID 18692) exited with exit code 1
+2026-10-20 00:13:26.491 CST [21756] LOG:  shutting down
+2026-10-20 00:13:26.502 CST [21756] LOG:  checkpoint starting: shutdown immediate
+2026-10-20 00:13:26.544 CST [21756] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.002 s, sync=0.001 s, total=0.053 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=8027 kB; lsn=0/27E1F4D0, redo lsn=0/27E1F4D0
+2026-10-20 00:13:26.588 CST [22828] LOG:  database system is shut down

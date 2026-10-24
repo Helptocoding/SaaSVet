@@ -1,0 +1,71 @@
+{
+  "state": "CLOSED_WITH_PENDING_ITEMS",
+  "migrations": "PASS_LOCAL_ONLY",
+  "b2": "DEFERRED_BY_USER",
+  "privacy": "PREPARED_FOR_REVIEW_NOT_ACCEPTED",
+  "meta_reception": "EXCLUDED_BY_USER",
+  "security": "PASS_NEW_HISTORICAL_AND_CORRECTION_VERIFICATION",
+  "b9": "FAIL_BASE",
+  "activation": "NOT_EXECUTED",
+  "original_r12_fail_preserved": true,
+  "metrics": {
+    "healthy_claim": {
+      "count": 60,
+      "p95_seconds": 11.57264,
+      "max_seconds": 14.334091,
+      "missing": 0
+    },
+    "safety_dispatch": {
+      "count": 20,
+      "p95_seconds": 2.957768,
+      "max_seconds": 2.957768
+    },
+    "outbox_dispatch": {
+      "count": 137,
+      "p95_seconds": 2.560056,
+      "max_seconds": 6.811526,
+      "missing": 0
+    }
+  },
+  "b9_source_integrity": {
+    "state": "PASS",
+    "files": 15932,
+    "mismatches": []
+  },
+  "monitor": {
+    "samples": 350,
+    "min_ram_bytes": 2699538432,
+    "min_disk_bytes": 14333603840,
+    "max_wall_minus_monotonic_seconds": 0.0003095349238719791
+  },
+  "profiles": {
+    "base": "FAIL",
+    "blocked_llm": "NOT_EXECUTED",
+    "meta_slow": "NOT_EXECUTED",
+    "duplicate": "NOT_EXECUTED",
+    "saturation": "NOT_EXECUTED"
+  },
+  "original_evaluator_limitation": "Metrics aggregate healthy organizations; no per-organization SLO certification claimed",
+  "future_acceptance_requires_per_organization_reporting": true,
+  "acceptance_granted": false,
+  "product_root_cause_determined": false,
+  "cleanup": "PASS_PRIVATE_POSTGRESQL_STOPPED",
+  "dependency_audits": {
+    "classification": "ADVISORY",
+    "python_findings": 162,
+    "python_packages": 11,
+    "pnpm_summary": {
+      "low": 8,
+      "moderate": 39,
+      "high": 38,
+      "critical": 0
+    },
+    "remediation": "OPEN"
+  },
+  "formal_profile_runs": 1,
+  "formal_profile_retries": 0,
+  "automatic_new_campaigns": 0,
+  "deployment": false,
+  "commits_created": 0,
+  "pushes_performed": 0
+}

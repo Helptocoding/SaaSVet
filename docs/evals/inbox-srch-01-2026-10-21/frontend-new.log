@@ -1,0 +1,16 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/index.search.test.jsx (15 tests) 3616ms
+     ✓ ignora texto vacío o de un carácter sin hacer GET extra  679ms
+     ✓ espera exactamente 250 ms y envía el texto recortado al servidor  434ms
+     ✓ aborta la búsqueda anterior y descarta una respuesta tardía  353ms
+     ✓ reinicia páginas y cursor al buscar y los conserva en los siguientes polls  338ms
+     ✓ combina búsqueda, filtros AND y archivados  318ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  20:40:50
+   Duration  20.63s (transform 2.20s, setup 1.05s, import 4.03s, tests 3.62s, environment 8.48s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-srch-01-2026-10-21/vitest-new.json

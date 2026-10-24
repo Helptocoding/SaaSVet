@@ -1,0 +1,53 @@
+{
+  "state": "RECORDED",
+  "created_after_stop": true,
+  "read_only": true,
+  "configuration_changed": false,
+  "application_tests_executed": false,
+  "system_power_status_api_success": true,
+  "system_power_status": {
+    "ACLineStatus": 1,
+    "BatteryFlag": 9,
+    "BatteryLifePercent": 70,
+    "SystemStatusFlag": 0,
+    "BatteryLifeTime": 4294967295,
+    "BatteryFullLifeTime": 4294967295
+  },
+  "commands": {
+    "active_scheme": {
+      "args": [
+        "/getactivescheme"
+      ],
+      "exit_code": 0,
+      "stdout": "GUID de plan de energía: 381b4222-f694-41f0-9685-ff5bb260df2e  (Equilibrado)",
+      "stderr": ""
+    },
+    "sleep_policy": {
+      "args": [
+        "/query",
+        "SCHEME_CURRENT",
+        "SUB_SLEEP"
+      ],
+      "exit_code": 0,
+      "stdout": "GUID de plan de energía: 381b4222-f694-41f0-9685-ff5bb260df2e  (Equilibrado)\r\n  Alias de GUID: SCHEME_BALANCED\r\n  GUID de subgrupo: 238c9fa8-0aad-41ed-83f4-97be242c8f20  (Suspender)\r\n    Alias de GUID: SUB_SLEEP\r\n    GUID de configuración de energía: 29f6c1db-86da-48c5-9fdb-f2b67b1f44da  (Suspender tras)\r\n      Alias de GUID: STANDBYIDLE\r\n      Mínima configuración posible: 0x00000000\r\n      Máxima configuración posible: 0xffffffff\r\n      Incremento de configuración posible: 0x00000001\r\n      Unidades de configuración posibles: Segundos:\r\n    Índice de configuración de corriente alterna actual: 0x00000384\r\n    Índice de configuración de corriente continua actual: 0x00000258\r\n\r\n    GUID de configuración de energía: 94ac6d29-73ce-41a6-809f-6363ba21b47e  (Permitir suspensión híbrida)\r\n      Alias de GUID: HYBRIDSLEEP\r\n      Índice de configuración posible: 000\r\n      Nombre descriptivo de configuración posible: Desactivar\r\n      Índice de configuración posible: 001\r\n      Nombre descriptivo de configuración posible: Activar\r\n    Índice de configuración de corriente alterna actual: 0x00000000\r\n    Índice de configuración de corriente continua actual: 0x00000000\r\n\r\n    GUID de configuración de energía: 9d7815a6-7ee4-497e-8888-515a05f02364  (Hibernar tras)\r\n      Alias de GUID: HIBERNATEIDLE\r\n      Mínima configuración posible: 0x00000000\r\n      Máxima configuración posible: 0xffffffff\r\n      Incremento de configuración posible: 0x00000001\r\n      Unidades de configuración posibles: Segundos:\r\n    Índice de configuración de corriente alterna actual: 0x00002a30\r\n    Índice de configuración de corriente continua actual: 0x00002a30\r\n\r\n    GUID de configuración de energía: bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d  (Permitir temporizadores de reactivación)\r\n      Alias de GUID: RTCWAKE\r\n      Índice de configuración posible: 000\r\n      Nombre descriptivo de configuración posible: Deshabilitar\r\n      Índice de configuración posible: 001\r\n      Nombre descriptivo de configuración posible: Habilitar\r\n      Índice de configuración posible: 002\r\n      Nombre descriptivo de configuración posible: Solo temporizadores de reactivación importantes\r\n    Índice de configuración de corriente alterna actual: 0x00000002\r\n    Índice de configuración de corriente continua actual: 0x00000000\r\n\r\n",
+      "stderr": ""
+    },
+    "available_sleep_states": {
+      "args": [
+        "/a"
+      ],
+      "exit_code": 0,
+      "stdout": "Los siguientes estados de suspensión están disponibles en este sistema:\r\n    Modo de espera (S3)\r\n    Hibernar\r\n    Inicio rápido\r\n\r\nLos siguientes estados de suspensión no están disponibles en este sistema:\r\n    Modo de espera (S1)\r\n\tEl firmware del sistema no admite este estado de espera.\r\n\r\n    Modo de espera (S2)\r\n\tEl firmware del sistema no admite este estado de espera.\r\n\r\n    Modo de espera (inactivo de baja energía S0)\r\n\tEl firmware del sistema no admite este estado de espera.\r\n\r\n    Suspensión híbrida\r\n\tEl hipervisor no admite este estado de espera.\r\n\r\n",
+      "stderr": ""
+    },
+    "current_requests": {
+      "args": [
+        "/requests"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Este comando requiere privilegios de administrador y debe ejecutarse desde un símbolo del sistema con privilegios elevados.\r\n"
+    }
+  },
+  "causality_limit": "Current policy/status is a post-stop observation, not proof of which caller or action caused the sleep event"
+}

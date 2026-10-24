@@ -1,0 +1,23 @@
+{
+  "state": "ORIGINAL_FAIL_PRESERVED_PENDING_CORRECTED_EXECUTION",
+  "source_campaign": "b9-correction-20261019-native-r7",
+  "source_journal_sha256": "cb08107644c049b21695590a5700b8adfffc127ccdf9a6dcc2f2d8d67a27bb28",
+  "failed_cases": [
+    {
+      "id": "apps.agent.tests.test_contracts.CommitmentContractTests.test_fields_match_snapshot",
+      "outcome": "FAIL",
+      "reason": null,
+      "utc": "2026-10-20T03:37:45Z",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 58, in testPartExecutor\n    yield\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 651, in run\n    self._callTestMethod(testMethod)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 606, in _callTestMethod\n    if method() is not None:\n       ~~~~~~^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\backend\\apps\\agent\\tests\\test_contracts.py\", line 94, in test_fields_match_snapshot\n    self.assertEqual(fields, [\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^\n        'asked', 'attempts_failed', 'authorization_message', 'blocked_reason', 'closed_at',\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n        'working_state',\n        ^^^^^^^^^^^^^^^^\n    ])\n    ^^\nAssertionError: Lists differ: ['ask[46 chars]', 'binding_revision', 'blocked_reason', 'boun[337 chars]ate'] != ['ask[46 chars]', 'blocked_reason', 'closed_at', 'closed_reas[268 chars]ate']\n\nFirst differing element 3:\n'binding_revision'\n'blocked_reason'\n\nFirst list contains 4 additional elements.\nFirst extra element 25:\n'supplanted_by'\n\n  ['asked',\n   'attempts_failed',\n   'authorization_message',\n-  'binding_revision',\n   'blocked_reason',\n-  'bound_appointment',\n-  'bound_owner',\n-  'bound_pet',\n   'closed_at',\n   'closed_reason',\n   'conversation',\n   'created_at',\n   'created_by',\n   'id',\n   'is_active',\n   'last_progress_at',\n   'low_confidence',\n   'missing',\n   'name',\n   'operation_assessment',\n   'organization',\n   'return_to',\n   'slots',\n   'stall_turns',\n   'status',\n   'supplanted_by',\n   'updated_at',\n   'updated_by',\n   'working_state']\n"
+    },
+    {
+      "id": "apps.agent.tests.test_contracts.ToolOutcomeContractTests.test_fields_match_snapshot",
+      "outcome": "FAIL",
+      "reason": null,
+      "utc": "2026-10-20T03:37:45Z",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 58, in testPartExecutor\n    yield\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 651, in run\n    self._callTestMethod(testMethod)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\python\\Lib\\unittest\\case.py\", line 606, in _callTestMethod\n    if method() is not None:\n       ~~~~~~^^\n  File \"C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\backend\\apps\\agent\\tests\\test_contracts.py\", line 44, in test_fields_match_snapshot\n    self.assertEqual(fields, [\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^\n        'client_error', 'data', 'detail', 'ok', 'summary',\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ])\n    ^^\nAssertionError: Lists differ: ['client_error', 'completeness', 'cursor', 'data', 'detail'[148 chars]ted'] != ['client_error', 'data', 'detail', 'ok', 'summary']\n\nFirst differing element 1:\n'completeness'\n'data'\n\nFirst list contains 12 additional elements.\nFirst extra element 5:\n'effects'\n\n+ ['client_error', 'data', 'detail', 'ok', 'summary']\n- ['client_error',\n-  'completeness',\n-  'cursor',\n-  'data',\n-  'detail',\n-  'effects',\n-  'error_kind',\n-  'has_more',\n-  'kind',\n-  'observed_at',\n-  'operation_key',\n-  'origin',\n-  'partial_effects',\n-  'retryable',\n-  'scope',\n-  'summary',\n-  'validated']\n"
+    }
+  ],
+  "new_selected_contains_exactly_these_two_failed_ids": true,
+  "failed_cases_presented_as_reused_PASS": false
+}

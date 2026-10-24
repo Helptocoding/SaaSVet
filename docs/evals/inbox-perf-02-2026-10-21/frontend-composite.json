@@ -1,0 +1,155 @@
+{
+  "status": "PASS",
+  "unique_passes": 29,
+  "new_pagination_cases": 16,
+  "affected_regressions": 13,
+  "initial_failed_cases": 2,
+  "method": "27 initial PASS + repaired 250-row case + final scoped selector case; initial failure preserved",
+  "cases": [
+    {
+      "name": "WA-LDE-01 — carga y reconexión distingue carga inicial de lista y mensajes de un panel sin selección",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión distingue el fallo inicial de lista vacía y permite reintentar",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión explica el fallo inicial de transcript y reintenta la misma conversación",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión recupera ambos paneles automáticamente cuando vuelve la API",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión un fallo tardío del hilo anterior no contamina la racha del nuevo",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión ignora success tardío de lista tras cambiar de filtro",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-LDE-01 — carga y reconexión ignora failure tardío de lista tras cambiar de filtro",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-VIS-01 — polling del Inbox pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-VIS-01 — polling del Inbox cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-VIS-01 — polling del Inbox si inicia oculto no consulta la lista y usa el filtro vigente al volver",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-TAB-01 — lista real del Inbox refleja el último poll sin solicitar datos adicionales y restaura al salir",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones deduplica por contacto y cuenta sin ocultar otra cuenta del mismo contacto",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones refresca todas las páginas cargadas y conserva selección y borrador",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones bloquea el doble clic y el poll mientras carga otra página",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones una respuesta de poll anterior no borra una página recién añadida",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones conserva las filas ante un error de carga y reintenta el mismo desplazamiento",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones ignora una carga tardía con éxito después de cambiar de filtro",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones ignora una carga tardía con error después de cambiar de filtro",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones no inicia otra página del poll al ocultarse y refresca todas al volver",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones no continúa un refresco de varias páginas después de desmontar",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones reduce las páginas a refrescar cuando la lista se agota antes",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones no ofrece un cursor inválido 0",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones no ofrece un cursor inválido -1",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones no ofrece un cursor inválido 100",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones no ofrece un cursor inválido null",
+      "status": "PASS",
+      "receipt": "vitest-attempt1.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes",
+      "status": "PASS",
+      "receipt": "vitest-repaired.json"
+    },
+    {
+      "name": "WA-PERF-02 — paginación de conversaciones un refresco parcial fallido retiene todas las filas y muestra reconexión tras dos fallos",
+      "status": "PASS",
+      "receipt": "vitest-selector-final.json"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "blocks": {
+    "directed": {
+      "samples": 1170,
+      "minimum_host_available_bytes": 2338824192,
+      "minimum_guest_available_bytes": 7228485632,
+      "minimum_backing_disk_available_bytes": 4157947904,
+      "maximum_absolute_clock_skew_seconds": 4.025806435947743e-05
+    },
+    "django-check": {
+      "samples": 5,
+      "minimum_host_available_bytes": 3848204288,
+      "minimum_guest_available_bytes": 7446585344,
+      "minimum_backing_disk_available_bytes": 4158210048,
+      "maximum_absolute_clock_skew_seconds": 2.2481799533125013e-07
+    },
+    "migration-drift": {
+      "samples": 6,
+      "minimum_host_available_bytes": 5635051520,
+      "minimum_guest_available_bytes": 7442010112,
+      "minimum_backing_disk_available_bytes": 4158001152,
+      "maximum_absolute_clock_skew_seconds": 5.018250703869853e-07
+    },
+    "migrate": {
+      "samples": 48,
+      "minimum_host_available_bytes": 2796453888,
+      "minimum_guest_available_bytes": 7379013632,
+      "minimum_backing_disk_available_bytes": 4154306560,
+      "maximum_absolute_clock_skew_seconds": 391.4588610203798
+    }
+  },
+  "samples": 1229,
+  "memory_or_disk_reserve_exhausted": false,
+  "clock_incident_block": "migrate",
+  "observation_limit": "No host observations during suspension; retained cached sample is not a fresh measurement"
+}

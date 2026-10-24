@@ -94,3 +94,103 @@ frontend/standalone/
 /docs/evals/scheduling-driver-2026-10-05/
 /docs/evals/scheduling-preflight-2026-10-05/
 /docs/evals/b9-consolidation-2026-10-11/preservation-checkpoint.json*
+
+# B9 integral campaign: originals retained locally and delivered in verified ZIP parts.
+/docs/evals/b9-integral-acceptance-1947726/frontend-install.log
+/docs/evals/b9-integral-acceptance-1947726/gitleaks-version.log
+/docs/evals/b9-integral-acceptance-1947726/initdb.log
+/docs/evals/b9-integral-acceptance-1947726/pg-start.log
+/docs/evals/b9-integral-acceptance-1947726/pg-stop.log
+/docs/evals/b9-integral-acceptance-1947726/postgresql.log
+/docs/evals/b9-integral-acceptance-1947726/__pycache__/
+
+# Raw Linux campaign logs are conserved inside its evidence package.
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011/**/*.log
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011/__pycache__/
+
+# Raw Linux campaign logs are conserved inside its evidence package.
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r2/**/*.log
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r2/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r3/**/*.log
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r3/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r4/**/*.log
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r4/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r5/**/*.log
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r5/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r6/**/*.log
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r6/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r7/**/*.log
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r7/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r8/**/*.log
+docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r8/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-integral-acceptance-1947726-wsl-20261012-r9/**/*.log
+docs/evals/b9-integral-acceptance-1947726-wsl-20261012-r9/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-integral-acceptance-1947726-followup-20261013/**/*.log
+docs/evals/b9-integral-acceptance-1947726-followup-20261013/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-correction-20261013/**/*.log
+docs/evals/b9-correction-20261013/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-correction-20261014-r2/**/*.log
+docs/evals/b9-correction-20261014-r2/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-correction-20261014-r3/**/*.log
+docs/evals/b9-correction-20261014-r3/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-correction-20261014-r4/**/*.log
+docs/evals/b9-correction-20261014-r4/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-correction-20261015-native-r1/**/*.log
+docs/evals/b9-correction-20261015-native-r1/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-correction-20261016-native-r2/**/*.log
+docs/evals/b9-correction-20261016-native-r2/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-correction-20261016-native-r3/**/*.log
+docs/evals/b9-correction-20261016-native-r3/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-correction-20261016-native-r4/**/*.log
+docs/evals/b9-correction-20261016-native-r4/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-correction-20261017-native-r5/**/*.log
+docs/evals/b9-correction-20261017-native-r5/**/__pycache__/
+
+# Original logs are included in the independently verified evidence package.
+docs/evals/b9-correction-20261020-native-r12/**/*.log
+docs/evals/b9-correction-20261020-native-r12/**/__pycache__/
+# Private Inbox runtime; never version binary files or ephemeral spools.
+/backend/private-media/
+/docs/evals/inbox-phase3-2026-10-22/runtime/
+# Private local backups and transient readiness files; never publish these.
+/docs/evals/inbox-readiness-2026-10-22/runtime/
+/docs/evals/inbox-b2-guarantees-2026-10-22/runtime/
+**/saaslyvet-inbox-media-spool/
+
+# Retention policy evidence: private local runtime and independent deny ledger
+/docs/evals/inbox-media-policy-2026-10-23/runtime/
+**/inbox-media-revocations/

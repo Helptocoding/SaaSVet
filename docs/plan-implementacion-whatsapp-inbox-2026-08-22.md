@@ -2,6 +2,9 @@
 
 **Fecha**: 2026-08-22
 **Estado**: **APROBADO PARA IMPLEMENTACIÓN** — D-1..D-10 cerradas por el PO el 2026-08-22 y consolidadas en [ADR p60](decisions/2026-08-22-p60-whatsapp-inbox-decisions.md)
+
+**Seguimiento de cierre vigente:** [Guía para cerrar Inbox y agente WhatsApp](CIERRE-INBOX-WHATSAPP.md). Organiza el trabajo pendiente y conserva los requisitos y el Definition of Done de este plan; no modifica las evidencias históricas ni autoriza nuevas campañas B9 automáticamente.
+
 **Base**:
 - Auditoría integral: [`whatsapp-inbox-auditoria-2026-08-21.md`](whatsapp-inbox-auditoria-2026-08-21.md) (hallazgos con evidencia `archivo:línea`)
 - Código real verificado para este plan: `backend/apps/channels`, `backend/apps/agent`, `frontend/src/pages/inbox/`
@@ -258,6 +261,154 @@ Dependencias falsas **descartadas** deliberadamente:
 
 Regla anti-refactor: cada fase se implementa tocando lo mínimo indicado en sus tareas. La deuda técnica detectada y que NO bloquea features queda registrada en §10/Fase 5, no se mezcla con las PRs de features.
 
+### Seguimiento vigente — WA-CMP-01, WA-GRP-01, WA-CPY-01 y WA-TAB-01 (2026-10-20)
+
+- **WA-CMP-01 implementada y verificada localmente**: altura automática 40–120 px,
+  contador después de 3600/4000 y advertencia desde 3800. Borrado, envío y cambio
+  de hilo reajustan el campo; envío e idempotencia conservan su contrato.
+- [Evidencia dirigida](evals/inbox-cmp-01-2026-10-20/README.md): **30/30** casos de
+  Inbox (cuatro nuevos), build PASS y Chromium con fixtures en escritorio/móvil
+  PASS. Lint advisory conserva dos errores existentes en efectos de polling.
+- La [tabla de cierre](CIERRE-INBOX-WHATSAPP.md) contiene el estado actual de las
+  demás familias. Este corte no acredita acuses Meta, operación real, media ni
+  aceptación integral; el FAIL de seguridad r12 permanece vigente.
+- **WA-GRP-01 implementada y verificada localmente**: ráfagas del mismo autor
+  con intervalo inferior a cinco minutos, separadas al cambiar de día local.
+  Se preserva cada mensaje con su hora y estado. `human_author_public_id` de
+  sólo lectura evita agrupar empleados homónimos; sin identidad, no se agrupa.
+  [Evidencia GRP-01](evals/inbox-grp-01-2026-10-20/README.md): 19 casos frontend y
+  cuatro backend PASS, build y Chromium escritorio/móvil PASS. Dos errores lint
+  previos siguen advisory.
+- **WA-CPY-01 implementada y verificada localmente**: copia de mensaje/teléfono,
+  enlace telefónico y autolink seguro HTTP/HTTPS, con teclado y táctil. HTML
+  permanece literal. [Evidencia CPY-01](evals/inbox-cpy-01-2026-10-20/README.md):
+  18 casos únicos PASS (ocho conservados y diez corregidos), build y Chromium
+  escritorio/táctil PASS.
+- **WA-TAB-01 implementada y verificada localmente**: contador de hilos con
+  `has_unanswered` en segundo plano; título restaurado al foco o desmontaje.
+  [Evidencia TAB-01](evals/inbox-tab-01-2026-10-20/README.md): siete pruebas nuevas
+  y build PASS; sin errores lint nuevos.
+- **WA-VIS-01 implementada y verificada localmente (2026-10-21)**: pausa de lista
+  e hilo ocultos y refresh inmediato al volver, conservando filtro y selección.
+  [Evidencia VIS-01](evals/inbox-vis-01-2026-10-21/README.md): 17 pruebas, build y
+  lint PASS; Chromium con visibilidad controlada, cero polls ocultos durante 21 s.
+  El siguiente pendiente de ese corte era WA-VER-01.
+- **WA-VER-01 implementada y verificada localmente (2026-10-21)**: distintivo de
+  identidad en lista y cabecera, con explicación del nivel y actualización por poll.
+  [Evidencia VER-01](evals/inbox-ver-01-2026-10-21/README.md): 15 pruebas, build,
+  lint y Chromium escritorio/móvil PASS. El siguiente pendiente de ese corte era WA-LDE-01.
+- **WA-LDE-01 implementada y verificada localmente (2026-10-21)**: carga, error
+  y reconexión por panel, conservando datos y borrador durante fallos.
+  [Evidencia LDE-01](evals/inbox-lde-01-2026-10-21/README.md): 18 pruebas, build,
+  lint y Chromium escritorio/móvil PASS; caída simulada con recuperación automática.
+  El siguiente pendiente de ese corte era WA-AGT-01. Ensayo de backend real pendiente.
+- **WA-AGT-01 implementada y verificada localmente (2026-10-21)**: booleano
+  informativo de turno y chip que deshabilita Tomar/Liberar mientras esté activo.
+  [Evidencia AGT-01](evals/inbox-agt-01-2026-10-21/README.md): seis pruebas API
+  PostgreSQL y nueve frontend PASS, build, lint y Chromium escritorio/móvil PASS.
+  El siguiente pendiente de ese corte era WA-GTF-01.
+- **WA-GTF-01 implementada y verificada localmente (2026-10-21)**: botón de
+  retorno al fondo con teclado/puntero, foco conservado y scroll móvil acotado.
+  [Evidencia GTF-01](evals/inbox-gtf-01-2026-10-21/README.md): 25 pruebas, build,
+  lint y Chromium escritorio/móvil PASS. El siguiente pendiente de ese corte era WA-PERF-01.
+- **WA-PERF-01 implementada y verificada localmente (2026-10-21)**: consulta
+  agrupada y anotada en SQL, cap previo a materialización y payload conservado.
+  [Evidencia PERF-01](evals/inbox-perf-01-2026-10-21/README.md): 14 pruebas API
+  PostgreSQL PASS; 15/75 → 1/1 consultas para 7/37 hilos con autenticación de fixture.
+  El siguiente pendiente de ese corte era WA-PERF-02.
+- **WA-PERF-02 implementada y verificada localmente (2026-10-21)**: páginas de
+  100 hilos con aviso y carga adicional; refresco de todas las páginas cargadas,
+  deduplicación, errores recuperables y protección contra respuestas tardías.
+  [Evidencia](evals/inbox-perf-02-2026-10-21/README.md): 21 pruebas PostgreSQL y
+  29 casos frontend únicos PASS, build, lint y Chromium escritorio/móvil PASS.
+  El siguiente pendiente de ese corte era WA-HIST-01.
+- **WA-HIST-01 implementada y verificada localmente (2026-10-21)**: scrollback
+  con cursor, mensajes acumulados, anclaje de inserciones y carga manual desde
+  500 mensajes. [Evidencia](evals/inbox-hist-01-2026-10-21/README.md): 77 casos
+  frontend únicos PASS, build, lint y Chromium escritorio/móvil PASS; 200
+  mensajes accesibles sin duplicados y anclaje con variación inferior a 1 px.
+  El siguiente pendiente de ese corte era WA-HIST-02.
+- **WA-HIST-02 implementada y verificada localmente (2026-10-21)**: anclaje ante
+  llegadas nuevas, seguimiento al fondo y pill con contador deduplicado.
+  [Evidencia](evals/inbox-hist-02-2026-10-21/README.md): 96 pruebas frontend
+  únicas PASS, build, lint y Chromium escritorio/móvil PASS; lectura de julio
+  conservada al llegar mensajes de octubre, sin desplazamiento del ancla.
+
+- **WA-HIST-03 implementada y verificada localmente (2026-10-21)**: consulta
+  `around` con hasta 25 anteriores + destino + 24 siguientes, continuidad,
+  destino oculto marcado y aislamiento de hilo/organización. La página normal
+  y los metadatos de sesión vigente conservan su contrato.
+  [Evidencia](evals/inbox-hist-03-2026-10-21/README.md): 33 pruebas PostgreSQL
+  únicas PASS (22 nuevas, 11 afectadas); se conservan tres fallos iniciales del
+  harness/fixture, resueltos mediante repetición dirigida sin cambiar producto.
+
+- **WA-UNR-01 implementada y verificada localmente (2026-10-21)**: estado por
+  usuario/hilo, conteo de entrantes visibles solo del episodio vigente y POST
+  read idempotente/monótono con permiso view y upsert serializado.
+  [Evidencia](evals/inbox-unr-01-2026-10-21/README.md): 35 pruebas PostgreSQL
+  únicas PASS (24 nuevas, 11 afectadas), con dos carreras reales. Migración M3
+  aditiva y sin backfill, generada y probada solo en bases temporales.
+  Se conservan los fallos iniciales de formato de errores y clasificación SQL.
+
+- **WA-UNR-02 implementada y verificada localmente (2026-10-21)**: contador
+  por hilo y total de todas las páginas, divisor y marcado automático con foco,
+  visibilidad, debounce y cancelación. Reintento silencioso en el siguiente poll.
+  [Evidencia](evals/inbox-unr-02-2026-10-21/README.md): 125 pruebas frontend,
+  41 API, build, lint y Chromium escritorio/móvil PASS; dos empleados
+  independientes, ancla 0 px al retirar divisor. Proyecciones API aditivas;
+  no hay migración nueva y M3 no se aplicó a la base de trabajo.
+  WA-RETRY-01 se verifica en el corte siguiente; continúa pendiente WA-WIN-01.
+
+- **Corte WA-RETRY-01, 2026-10-21 — implementación local**: endpoint con permiso
+  send y reintento en burbuja, misma fila/cuerpo/autor/key y auditoría sin PII.
+  Revalida B4 y ventana sin renovar autoridad ni reenviar incertidumbre.
+  [Evidencia](evals/inbox-retry-01-2026-10-21/README.md): 29 pruebas API y 106 casos
+  frontend únicos PASS en evidencia compuesta, build, lint y Chromium escritorio/
+  móvil PASS. Una sola transición en carrera real y ancla 0 px. Sin migración
+  nueva, sin aplicar M3 ni acreditar Meta real. Siguiente de ese corte: WA-WIN-01.
+
+- **Corte WA-WIN-01, 2026-10-21 — implementación local**: proyección de ventana
+  en la sesión vigente, aviso bajo 12 h y bloqueo del composer al vencer.
+  Conserva borrador y habilita de nuevo tras la renovación por inbound/poll.
+  [Evidencia](evals/inbox-win-01-2026-10-21/README.md): 19 pruebas API y 84 casos
+  frontend únicos PASS en evidencia compuesta, build, lint y Chromium escritorio/
+  móvil PASS. B4 conserva la autoridad de dispatch. Sin migración nueva ni aplicar
+  M3 a la base de trabajo. Siguiente de ese corte: WA-CTX-01; aceptación Meta/operativa pendiente.
+
+- **Corte WA-CTX-01, 2026-10-21 — implementación local**: API y panel plegable
+  del cliente vinculado, mascotas y última cita anterior no clínica. Acceso al
+  expediente correcto en dos clics desde el chat abierto, con permisos y scope
+  por clínica. [Evidencia](evals/inbox-ctx-01-2026-10-21/README.md): 20 pruebas API
+  y 112 casos frontend únicos PASS en evidencia compuesta; build, lint y Chromium
+  escritorio/móvil PASS. Sin nueva migración ni aplicar M3. Siguiente de ese corte: WA-PERF-03;
+  la aceptación operativa/Meta real permanece pendiente.
+
+- **Corte WA-PERF-03, 2026-10-21 — implementación local**: cursores firmados por
+  usuario/consulta, deltas con retiradas y recuperación del rango leído. Una petición
+  activa por recurso, pausa por visibilidad y borrador/ancla conservados.
+  [Evidencia](evals/inbox-perf-03-2026-10-21/README.md): 123 pruebas API y 259 frontend
+  únicas PASS en evidencia compuesta; build, lint, drift y Chromium escritorio/móvil
+  PASS. JSON estable 52.002 → 303 bytes con 6.001 mensajes/50 cargados, índice
+  existente y sin nueva migración. [Detalle D-5](decisions/2026-10-21-p60-perf03-cursors.md).
+  M3, recepción/Meta y gates de seguridad siguen pendientes. Siguiente: WA-FIL-01.
+
+- **Corte WA-FIL-01, 2026-10-21 — implementación local**: cuatro segmentos
+  combinables con AND en servidor, antes de paginar y con cursor ligado al filtro.
+  Cambiar segmento cancela GETs anteriores y conserva chat/borrador.
+  [Evidencia](evals/inbox-fil-01-2026-10-21/README.md): 52 pruebas API y 119 frontend
+  únicas PASS, build, lint y Chromium escritorio/móvil PASS. Un selector del harness
+  corregido mediante repetición dirigida, conservando PASS válidos. Sin migración
+  nueva ni aplicar M3. Siguiente: WA-SRCH-01; aceptación operativa y gates siguen pendientes.
+
+- **Corte WA-SRCH-01, 2026-10-21 — implementación local**: búsqueda de contacto,
+  teléfono y cliente vinculado en servidor, combinada con segmentos y páginas.
+  Mínimo dos caracteres, debounce 250 ms, Ctrl/Cmd+K y Escape, con borrador y
+  protección de cursores conservados. [Evidencia](evals/inbox-srch-01-2026-10-21/README.md):
+  41 pruebas API y 134 frontend únicas PASS; build, lint y Chromium escritorio/móvil
+  PASS. EXPLAIN 17,869 ms en 1.004 hilos; navegador/API sintética bajo un segundo.
+  Error inicial de fixture conservado y corregido. Sin nueva migración ni aplicar
+  M3. Recepción/Meta pospuesta por el usuario, pendiente real. Siguiente: WA-ASN-01.
+
 ---
 
 ## 5. Backlog completo con especificaciones
@@ -386,7 +537,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado actual**: CSS fijo `min-height:40px; max-height:120px; resize:none` (`inbox.module.css:241-251`); tope 4000 silencioso (`maxLength`, `index.jsx:758`).
 - **Estado deseado**: auto-resize JS (`el.style.height='auto'; el.style.height=Math.min(el.scrollHeight, MAX)+'px'` en onChange), contador `1234/4000` que aparece >3600 chars y cambia a color advertencia cerca del tope.
 - **Tests**: render test — escribir texto largo ajusta altura; contador visible cerca del límite.
-- **Acceptance**: [ ] Pegar 2000 chars no rompe layout; contador aparece.
+- **Acceptance**: [x] Pegar 2000 chars no rompe layout; contador aparece al superar 3600, conforme al umbral especificado arriba. Ver [pruebas y capturas CMP-01](evals/inbox-cmp-01-2026-10-20/README.md).
 
 #### WA-CPY-01 — Copiar mensaje / copiar teléfono / URLs clickeables
 
@@ -396,7 +547,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado deseado**: hover sobre burbuja → acciones «Copiar» (navigator.clipboard + toast) ; header → botón «Copiar teléfono» y link `tel:` ; autolink de URLs en burbujas con `target="_blank" rel="noopener noreferrer"` (sanitizado: solo http/https).
 - **Seguridad**: autolink implementado sin `dangerouslySetInnerHTML` (tokenizar texto plano → nodos React); nunca ejecutar formato HTML del proveedor.
 - **Tests**: unit tokenizador URL; click-copiar llama clipboard y toast.
-- **Acceptance**: [ ] Pegar una URL en chat la hace clicable; copiar teléfono funciona.
+- **Acceptance**: [x] Pegar una URL en chat la hace clicable; copiar teléfono funciona. [Evidencia local CPY-01](evals/inbox-cpy-01-2026-10-20/README.md); no acredita gates Meta/operativos.
 
 #### WA-TAB-01 — Título de pestaña con pendientes
 
@@ -406,7 +557,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado deseado**: `(N) SaaslyVet` donde N = hilos con `has_unanswered` del último poll de lista (dato existente). Restaurar título al foco de la ventana. v1 deliberadamente SIN sonido ni Notification API (ver §11 D-9).
 - **Frontend**: efecto en `index.jsx` sobre `conversations` + listener `visibilitychange/focus`.
 - **Tests**: unit del cálculo N; efecto actualiza document.title (jsdom permite).
-- **Acceptance**: [ ] Con 3 hilos sin responder en segundo plano, la pestaña muestra `(3)`.
+- **Acceptance**: [x] Con 3 hilos sin responder en segundo plano, la pestaña muestra `(3)`. [Evidencia local TAB-01](evals/inbox-tab-01-2026-10-20/README.md).
 
 #### WA-VIS-01 — Pausar polling con pestaña oculta
 
@@ -415,7 +566,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado actual**: los polls siguen toda la noche con la pestaña en background (`index.jsx:281-293`).
 - **Estado deseado**: con `document.hidden`, limpiar intervals; al volver a ser visible, refresh inmediato de lista y thread y re-armar polling. Implementación: hook compartido `usePollingWhenVisible(fn, ms)` (patrón nuevo mínimo, sustituye los dos setInterval inline; se inspira en `hooks/useDashboardSummary.js`).
 - **Tests**: unit hook con mock de visibilitychange: oculto detiene, visible dispara fetch inmediato.
-- **Acceptance**: [ ] Cero requests de poll con pestaña oculta (verificable en Network).
+- **Acceptance**: [x] Cero requests de poll con pestaña oculta. [Evidencia local de red VIS-01](evals/inbox-vis-01-2026-10-21/README.md): frontend real, API sintética y visibilidad controlada.
 
 #### WA-VER-01 — Badge de verificación del contacto
 
@@ -424,7 +575,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado actual**: `contact_verification` viaja en threads/transcript (`views.py:907`) y solo condiciona el botón Reset; no se pinta.
 - **Estado deseado**: badge junto al nombre en header y fila de lista: `Verificado` (staff_verified/confirmed_in_chat, badge-success), `Teléfono coincide` (phone_match), nada para unknown; tooltip con significado.
 - **Tests**: render por nivel.
-- **Acceptance**: [ ] Recepción distingue de un vistazo número desconocido vs cliente verificado.
+- **Acceptance**: [x] La UI distingue número desconocido, coincidencia de teléfono e identidad verificada. [Evidencia local VER-01](evals/inbox-ver-01-2026-10-21/README.md); la aceptación con recepción real continúa en el DoD.
 
 #### WA-LDE-01 — Estados loading/error/reconexión en ambos paneles
 
@@ -434,6 +585,8 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado deseado**: skeleton simple en lista (clase `.skeleton-block` existente en dashboard como referencia); banner inline persistente «Sin conexión — reintentando…» cuando fallan ≥2 polls seguidos, con botón «Reintentar ahora»; error state con EmptyState variante error. Sin cambiar contratos de API.
 - **Tests**: mock de API que falla → banner visible; éxito posterior lo quita.
 - **Acceptance**: [ ] Matando el backend, la UI muestra estado explícito y se recupera sola al volver.
+  **Validación local PASS (21-10)** con peticiones abortadas y recuperación en
+  Chromium; se conserva pendiente el ensayo contra backend real.
 
 #### WA-AGT-01 — Indicador «el asistente está respondiendo»
 
@@ -443,7 +596,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado deseado**: `ThreadSerializer`/transcript añaden booleano computado `agent_processing = processing_until and processing_until > now` (no exponer el timestamp crudo). Chip en header: «El asistente está respondiendo…». El chip deshabilita visualmente Tomar/Liberar con tooltip explicativo.
 - **Backend**: `agent/serializers.py` (campo SerializerMethodField), sin migración.
 - **Tests**: API — conversación con lease vigente → true; expirada → false.
-- **Acceptance**: [ ] Durante un turno activo, la UI explica quién tiene el turno.
+- **Acceptance**: [x] Durante un turno activo, la UI explica quién tiene el turno. [Evidencia local AGT-01](evals/inbox-agt-01-2026-10-21/README.md). Proyección informativa; la autoridad sigue en TurnWork.
 
 #### WA-GTF-01 — Botón «ir al final»
 
@@ -453,7 +606,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado deseado**: pill flotante «↓ Ir al final» visible cuando `scrollTop` está lejos del fondo (>200 px). La versión completa con «N nuevos mensajes» llega con HIST-02.
 - **Nota**: este botón NO corrige aún el salto forzado (eso es HIST-02); solo da escape manual.
 - **Tests**: visibilidad según posición de scroll (mock scrollHeight/clientHeight).
-- **Acceptance**: [ ] Leyendo arriba, hay forma de volver abajo sin recargar.
+- **Acceptance**: [x] Leyendo arriba, hay forma de volver abajo sin recargar. [Evidencia local GTF-01](evals/inbox-gtf-01-2026-10-21/README.md); el anclaje completo sigue pendiente en HIST.
 
 ---
 
@@ -467,7 +620,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado deseado**: misma respuesta exacta (`ThreadSerializer[]`), con: (1) anotación del último mensaje visible por conversación vía `Subquery` (id, body recortado a preview, direction/status para `has_unanswered`), (2) handoff abierto vía `Subquery`/`FilteredRelation`, (3) agrupación por bucket sin cargar episodios cerrados innecesarios (limitar a sesiones relevantes). Prohibido cambiar el shape del serializer en esta tarea.
 - **Tests**: `assertNumQueries` acotado (≤ constante fija independiente del número de hilos) con ≥30 conversaciones seed; paridad de payload contra implementación anterior (test de caracterización previo: capturar respuesta JSON actual en fixture y comparar).
 - **Edge cases**: hilos solo archivados; empates de `last_activity_at`; contacto sin mensajes.
-- **Acceptance**: [ ] Payload idéntico al actual en suite de caracterización. [ ] Queries por request O(1) respecto a nº de hilos.
+- **Acceptance**: [x] Payload idéntico al actual en suite de caracterización. [x] Queries por request O(1) respecto a nº de hilos. [Evidencia local PERF-01](evals/inbox-perf-01-2026-10-21/README.md); esto no implica coste SQL ni latencia constantes.
 
 #### WA-PERF-02 — Paginación real de la lista + fin del cap silencioso
 
@@ -477,7 +630,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado deseado**: response `{results:[…], has_more:bool, next_offset}` con página de 100; frontend botón «Cargar más» (patrón append incremental existente en `EntitySearch.jsx:108-126` / `PetSidebar.jsx:88-98`). Mantener orden urgente→reciente dentro de la página.
 - **API**: GET `/api/inbox/threads/?archived=&offset=` — backward compatible (sin offset → primera página + has_more).
 - **Tests**: API 250 hilos → página 1 = 100 + has_more true; offset 200 → 50 + false; orden estable entre páginas.
-- **Acceptance**: [ ] Con >100 hilos todos son alcanzables y el aviso es explícito.
+- **Acceptance**: [x] Con >100 hilos todos son alcanzables y el aviso es explícito. [Evidencia local PERF-02](evals/inbox-perf-02-2026-10-21/README.md): 250 hilos en tres páginas, refresco acumulado y errores/reintentos verificados.
 
 #### WA-HIST-01 — Historial completo: scroll-back con `next_before`
 
@@ -497,7 +650,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Frontend**: refactor del estado del transcript en `index.jsx`: hoy `setThread(data)` reemplaza TODO el objeto cada 10 s — dividir en `threadMeta` (conversation/banners/next_before) y `messages[]` acumulativo.
 - **Tests**: Vitest: 10/51/500 mensajes (mocks) — páginas correctas, sin duplicados, posición preservada (assert sobre scrollTop relativo); cursor inválido (400) → banner error, estado intacto.
 - **Edge cases**: doble disparo del umbral en un frame (guard); cambio de hilo durante fetch en vuelo (abortar/aplicar solo si sigue seleccionado — comparar target); página que llega vacía pese a `next_before` (defensa: si 0 mensajes, poner next_before=null).
-- **Acceptance**: [ ] Hilo de 200 mensajes conservados: todo el historial disponible es legible, sin duplicados visibles, sin salto de posición al insertar. [ ] Al agotar el cursor la UI dice «Inicio del historial disponible» (no promete historial de WhatsApp).
+- **Acceptance**: [x] Hilo de 200 mensajes conservados: todo el historial disponible es legible, sin duplicados visibles, sin salto de posición al insertar. [x] Al agotar el cursor la UI dice «Inicio del historial disponible» (no promete historial de WhatsApp). [Evidencia local HIST-01](evals/inbox-hist-01-2026-10-21/README.md).
 
 #### WA-HIST-02 — Merge de nuevos mensajes + anclaje de scroll + pill «N nuevos»
 
@@ -511,7 +664,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
   4. Efecto único de scroll sustituye al `useEffect([length])` actual.
 - **Tests**: Vitest: mensaje nuevo leyendo arriba → scroll intacto + pill con N correcto; pegado al fondo → autoscroll; ráfaga de 5 → N=5; click pill → fondo y N=0.
 - **Edge cases**: usuario scrollea hacia abajo manualmente → pill se oculta cuando vuelve a bottom; mensajes históricos insertados por HIST-01 no cuentan como «nuevos» (solo llegadas posteriores a la carga inicial — comparar por id > maxId inicial).
-- **Acceptance**: [ ] Leyendo un mensaje de hace 3 meses, una llegada nueva NO mueve la vista y ofrece la pill.
+- **Acceptance**: [x] Leyendo un mensaje de hace 3 meses, una llegada nueva NO mueve la vista y ofrece la pill. [Evidencia local HIST-02](evals/inbox-hist-02-2026-10-21/README.md): julio→octubre verificado en Vitest y Chromium escritorio/móvil.
 
 #### WA-HIST-03 — Endpoint transcript con `around=<message_id>`
 
@@ -521,7 +674,9 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado deseado**: GET `/api/inbox/threads/{c}/{a}/messages/?around=<id>` devuelve la misma shape + `messages` = 25 anteriores + el mensaje (aunque hoy sea invisible por estado — incluirlo marcado) + 24 siguientes, ordenados cronológicos, con `has_older/has_newer`. Validar pertenencia al hilo/org; id inexistente o ajeno → 404 `{code:'not_found'}`. Mutuamente excluyente con `before` (400 si ambos).
 - **Backend**: `agent/views.py` thread_messages — extensión del queryset existente con `Q(id__lte=id) | Q(id__gte=id)` ventanas.
 - **Tests**: around centro/historia/inicio/fin; mensaje discarded incluido con su estado; cross-hilo → 404; tenant trap (otra org) → 404.
-- **Acceptance**: [ ] Página centrada correcta en los 5 puntos de corte probados.
+- **Acceptance**: [x] Página centrada correcta en los 5 puntos de corte probados.
+- **Ejecución (2026-10-21)**: implementada y verificada localmente; 33 casos
+  PostgreSQL únicos PASS. [Evidencia HIST-03](evals/inbox-hist-03-2026-10-21/README.md).
 
 #### WA-UNR-01 — Read-state real del staff (backend)
 
@@ -536,7 +691,11 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Permiso**: mismo `agentinbox.view` (leer estado propio no requiere claim).
 - **Tests**: upsert idempotente; unread decrece tras read; dos usuarios con estados independientes; mensaje nuevo post-read sube el contador; un mark-read anterior no revive unread; mensaje no inbound/invisible se rechaza; cross-tenant trap; límite: read de mensaje de otra sesión del hilo permitido (es el mismo contacto).
 - **Migración**: M3 (§7) additive; sin backfill (baseline implícita = todo el episodio vigente cuenta hasta primera lectura).
-- **Acceptance**: [ ] Dos recepcionistas ven contadores independientes y correctos.
+- **Acceptance**: [x] Dos recepcionistas ven contadores independientes y correctos.
+- **Ejecución backend (2026-10-21)**: modelo, API y conteos verificados localmente,
+  35 casos PostgreSQL únicos PASS y migración aditiva agent.0029 sin backfill.
+  La integración visual corresponde a UNR-02; la base de trabajo no se ha migrado.
+  [Evidencia UNR-01](evals/inbox-unr-01-2026-10-21/README.md).
 
 #### WA-UNR-02 — Contador en lista + divider «Mensajes nuevos» + mark-read
 
@@ -549,7 +708,11 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
   - Si la ventana está oculta NO marcar leído (coherente con VIS-01) — así el contador sobrevive a la pestaña en background.
 - **Tests**: abrir hilo dispara POST con id correcto; divider aparece/desaparece; pestaña oculta, ventana sin foco o pérdida durante debounce no marcan.
 - **Edge cases**: usuario sin permiso send igualmente marca leído (view basta); fallo del POST read → reintento silencioso en siguiente poll, sin toast ruidoso.
-- **Acceptance**: [ ] Flujo completo: llega mensaje → contador sube → abro → divider visible → marco leído → contador baja.
+- **Acceptance**: [x] Flujo completo: llega mensaje → contador sube → abro → divider visible → marco leído → contador baja.
+- **Ejecución (2026-10-21)**: 125 pruebas frontend y 41 API PASS, build/lint y
+  Chromium escritorio/móvil PASS. Foco/visibilidad controlados en el navegador;
+  independencia y persistencia reales cubiertas en PostgreSQL.
+  [Evidencia UNR-02](evals/inbox-unr-02-2026-10-21/README.md).
 
 #### WA-FIL-01 — Filtros segmentados server-side
 
@@ -558,7 +721,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado actual**: solo `archived`. La materia prima ya viaja y no se expone como filtro: `has_unanswered`, `handoff_priority`, `claimed_by`.
 - **Estado deseado**: GET `/api/inbox/threads/?unanswered=1&urgent=1&claimed=me|<user_public_id>` — filtros combinables AND, aplicados sobre la agrupación (un hilo entra si su episodio vigente cumple). Frontend: chips de segmento sobre la lista: «Sin atender» / «Esperando cliente» / «Urgentes» / «Míos». Todo server-side (decisión de la auditoría §10); el filtrado cliente queda solo para estados transitorios.
 - **Tests**: API cada filtro aislado y combinado; combinación con archived; sin resultados → 200 vacío.
-- **Acceptance**: [ ] Recepción puede responder «¿quién está esperando?» con un clic.
+- **Acceptance**: [x] Segmentos disponibles con un clic y filtrado en servidor, verificados localmente. [Evidencia FIL-01](evals/inbox-fil-01-2026-10-21/README.md): 52 pruebas API, 119 frontend únicas PASS y Chromium escritorio/móvil. El ensayo con recepción real sigue en el DoD global.
 
 #### WA-SRCH-01 — Búsqueda fase 1 (contactos)
 
@@ -568,7 +731,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Estado deseado**: GET `/api/inbox/threads/?q=<texto>` — case-insensitive `icontains` OR sobre: `contact_display_name`, `contact external_id/phone_normalized` (normalizar dígitos del query), `owner__name` del owner vinculado. Sin búsqueda de contenido en esta fase (eso es SRCH-02). Frontend: input arriba de la lista + atajo `Ctrl/Cmd+K`, debounce 250 ms, mínimo 2 chars; estado vacío con sugerencia; ESC limpia.
 - **Rendimiento**: 1 query con OR + select_related; índices existentes suficientes para volúmenes de clínica (<10k contactos); revisar plan EXPLAIN antes de merge.
 - **Tests**: match por nombre/teléfono parcial/dueño; sin match → vacío; q corta ignorada; tenant isolation (nombre igual en org B no aparece); inyección — parámetro tratado como valor, nunca SQL.
-- **Acceptance**: [ ] «¿Ya escribió la dueña de Luna?» se resuelve en <1 s.
+- **Acceptance**: [x] Búsqueda de contacto/cliente disponible; ensayo local Chromium con API sintética bajo 1 s (509/389 ms). [Evidencia SRCH-01](evals/inbox-srch-01-2026-10-21/README.md): 41 pruebas API y 134 frontend únicas PASS, EXPLAIN real de PostgreSQL. La validación con recepción y latencia integrada real sigue pendiente y se pospone por instrucción del usuario.
 
 #### WA-RETRY-01 — Reintento de mensajes fallidos
 
@@ -582,7 +745,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Política D-7**: cualquier usuario con `agentinbox.send` puede reintentar aunque el autor sea otro. Se reutiliza la misma fila/carga no editable y la misma idempotency key. Log estructurado sin body: organización, conversación, mensaje, actor del retry, autor original y resultado.
 - **Tests**: API feliz; actor distinto al autor original; contenido/idempotency intactos; ventana cerrada → 400 code correcto; mensaje no-failed → 400; cross-hilo/cross-org → 404; retry re-envía realmente (worker test); doble retry concurrente → una sola transición.
 - **Edge cases**: retry de un mensaje cuyo wamid ya llegó como sent (carrera acuse tardío) → `record_status_update` forward-only lo corrige solo.
-- **Acceptance**: [ ] Mensaje fallido por red vuelve a enviarse con un clic; fallido por ventana sugiere llamar.
+- **Acceptance**: [x] Mensaje con fallo conocido vuelve al sender con un clic; fallido por ventana sugiere llamar. Adaptación obligatoria al contrato B4 posterior: timeout/desconexión/aceptación ambigua permanecen UNCERTAIN, sin reintento por esta ruta. [Evidencia local](evals/inbox-retry-01-2026-10-21/README.md); envío del sender con proveedor simulado, no operación Meta real.
 
 #### WA-WIN-01 — Ventana de 24 h visible
 
@@ -593,7 +756,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Backend**: campos computados en serializer (sin migración).
 - **Tests**: API open/closed/expirando; render de countdown.
 - **Edge cases**: conversación archivada (current=null) → no aplica; reapertura por nuevo mensaje del cliente reinicia ventana (comportamiento existente).
-- **Acceptance**: [ ] Nadie descubre la ventana por un rebote.
+- **Acceptance**: [x] El composer informa el vencimiento y bloquea texto libre con ventana cerrada; validado localmente en API, UI y Chromium. La validación final del sender y la aceptación operativa real siguen aplicando. [Evidencia](evals/inbox-win-01-2026-10-21/README.md).
 
 #### WA-CTX-01 — Panel de contexto del cliente
 
@@ -606,7 +769,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
   - Frontend: panel lateral plegable (o drawer bajo el header) con esos datos + botón «Abrir expediente» (`navigate` a ruta existente de mascota/owner). Loading/error propios.
 - **Tests**: API con owner/mascotas/última cita; sin owner → `{owner:null}`; owner de otra org vía manipulación de IDs → 404; permisos VET (view sí) / AGENT (403).
 - **Decisión D-8 cerrada**: v1 expone owner, mascotas, última cita no clínica y enlace al expediente; NO trae historial clínico al Inbox. Una evolución futura podrá mostrar datos operativos vigentes (productos, servicios y precios) desde sus fuentes de verdad y con permisos explícitos, sin copiarlos al modelo del Inbox.
-- **Acceptance**: [ ] En ≤2 clics reception llega del chat al expediente correcto.
+- **Acceptance**: [x] En ≤2 clics desde el chat abierto se llega al expediente correcto; verificado localmente en Chromium escritorio y móvil con datos sintéticos. [Evidencia](evals/inbox-ctx-01-2026-10-21/README.md). La prueba real con recepción de §13 sigue pendiente.
 
 #### WA-PERF-03 — Polling incremental con cursor de cambios
 
@@ -619,7 +782,7 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Autoridad de cambios**: `updated_at` debe avanzar en todos los writes relevantes. Auditar `QuerySet.update()` —que omite `auto_now`— y escribir `updated_at=now` explícitamente o pasar por un servicio único. Añadir índices `(organization, updated_at, id)` si EXPLAIN demuestra que los heredados no alcanzan.
 - **Frontend**: merge por id/thread_key, dedupe, removals explícitos y preservación del scroll. Solo un poll en vuelo por recurso; cambio de hilo invalida la respuesta anterior. `visibilityState !== 'visible'` pausa/reduce y al volver intenta delta; cualquier inconsistencia cae a full refresh.
 - **Tests**: nuevo mensaje; status de mensaje existente; claim/assign/close; dos cambios con mismo timestamp; cursor inválido/cross-user/cross-org; delta durante scroll-back; cambio de hilo con fetch en vuelo; merge sin duplicados; fallback full; pestaña oculta no martilla red.
-- **Acceptance**: [ ] Tras estabilizar la UI, los polls normales transfieren solo cambios sin perder ticks, mensajes o removals. [ ] Polling completo queda como recuperación, no como camino frecuente.
+- **Acceptance**: [x] Tras estabilizar la UI, los polls normales transfieren solo cambios sin perder ticks, mensajes o removals. [x] Polling completo queda como recuperación, no como camino frecuente. Verificación local en PostgreSQL y Chromium escritorio/móvil, con recuperación explícita y retorno a delta. [Evidencia](evals/inbox-perf-03-2026-10-21/README.md); recepción y Meta reales siguen pendientes.
 
 #### WA-ASN-01 — Asignación explícita a colega
 
@@ -630,7 +793,12 @@ Formato por tarea: **ID — Nombre** · Prioridad · Tipo · Riesgo · Complejid
 - **Frontend**: selector «Asignar a…» en header (lista de usuarios con permiso send — requiere endpoint existente de usuarios o añadir `assignable_users` al thread context; verificar qué expone hoy `/api/users/`).
 - **Auditoría**: log estructurado sin PII con conversación, actor, asignado anterior, destino y timestamp.
 - **Tests**: assign feliz; usuario inactivo/sin permiso/cross-tenant → 400/404 según contrato; carrera assign vs claim concurrente → lock decide, sin corrupción; auditoría contiene actor/from/to.
-- **Acceptance**: [ ] Recepción puede derivar un caso a la veterinaria sin gritos.
+- **Acceptance local**: [x] Asignación a colega activa con permiso send DB, lock
+  compartido con claim, auditoría tras commit y selector con borrador conservado.
+  20 pruebas API PostgreSQL y 25 frontend únicas PASS, build/lint y navegador
+  escritorio/móvil PASS. [Evidencia ASN-01](evals/inbox-asn-01-2026-10-21/README.md).
+  **Aceptación operativa**: [ ] Recepción puede derivar un caso a la veterinaria
+  en la validación real, pospuesta por el usuario; no se inventa acuse ni push.
 
 ---
 
@@ -645,7 +813,12 @@ Requisito declarado por la auditoría (§8): replies es **cambio de modelo**, no
 - **Cambio**: `reply_to = models.ForeignKey('self', null=True, blank=True, on_delete=PROTECT, related_name='direct_replies')` en `channels/models.py` + Index `['reply_to']`. Elección PROTECT: los mensajes nunca se borran físicamente (estados soft), y una referencia rota sería peor que bloquear el borrado.
 - **Migración**: M2 (§7), additive, sin backfill.
 - **Tests**: modelo acepta null; FK protege; constraint org no aplica a self-FK (verificar con test de dos orgs que un reply cross-org se rechaza a nivel servicio, no DB).
-- **Acceptance**: [ ] `makemigrations --check` limpio; migración aplicable sin downtime.
+- **Acceptance local**: [x] `makemigrations --check --dry-run` limpio; M2 generada
+  y ensayada en PostgreSQL temporal, sin backfill y con writers previos/nuevos.
+  19 pruebas únicas PASS (14 nuevas, cinco afectadas), Django check PASS.
+  [Evidencia RPL-01](evals/inbox-rpl-01-2026-10-21/README.md).
+  **Aplicación real**: [ ] migración aplicable sin downtime en la release real;
+  M2 aún sin aplicar a las bases habitual/preview, sin despliegue ni activación.
 
 #### WA-RPL-02 — Webhook: parsear `context.id` y resolver referencia
 
@@ -656,7 +829,12 @@ Requisito declarado por la auditoría (§8): replies es **cambio de modelo**, no
 - **Nota**: `ingest_inbound_message` vive en `agent/services.py:324+`; mantener dedup wamid intacto (un webhook duplicado con context debe re-idempotir igual).
 - **Tests**: inbound citando out existente → reply_to seteado; citando wamid inexistente → null + warning; citando mensaje de otra cuenta/canal → null (resolver SIEMPRE scoped al channel_account); webhook duplicado → sin doble efecto.
 - **Edge cases**: reply a un mensaje discarded → referencia válida igualmente (el estado se muestra en UI como «no enviado»); reply a media aún sin pipeline → referencia válida, contenido pendiente de MED.
-- **Acceptance**: [ ] Cliente cita un mensaje nuestro → la relación queda persistida verificablemente.
+- **Acceptance local**: [x] Webhook firmado de cliente citando un mensaje nuestro
+  persiste `Message.reply_to`; 40 pruebas PostgreSQL únicas PASS (21 nuevas y 19
+  afectadas), drift/Django check PASS. Casos sin destino y dedup/carrera real
+  conservan el entrante y las garantías B1.
+  [Evidencia RPL-02](evals/inbox-rpl-02-2026-10-21/README.md).
+  **Meta real**: [ ] recepción de una cita real validada; pospuesta por el usuario.
 
 #### WA-RPL-03 — API: enviar con `reply_to_id` + exponer cita en serializer
 
@@ -667,16 +845,27 @@ Requisito declarado por la auditoría (§8): replies es **cambio de modelo**, no
   - `send_message`: si presente, validar que el Message exista en la MISMA org y mismo hilo `(contact, channel_account)` — query scoped; inválido → 400 `{code:'invalid_reply_target'}`. Setear `message.reply_to`.
   - `MessageSerializer` añade objeto anidado `reply_to: {id, author_type, human_author_name, payload_type, excerpt(80 chars de body), status}` calculado con select_related (evitar N+1: los mensajes de una página comparten pocos targets; usar prefetch puntual). Si el target existe pero su cuerpo está vacío/discarded → incluir `status` para que la UI diga «mensaje no enviado».
 - **Tests**: send con target válido → 201 con reply_to poblado; target de otro hilo → 400; target inexistente → 400; transcript serializa cita sin queries descontroladas (assertNumQueries acotado).
-- **Acceptance**: [ ] Roundtrip API completo: POST con reply_to_id → GET transcript devuelve la cita.
+- **Acceptance local**: [x] Roundtrip API completo: POST con reply_to_id → GET
+  transcript devuelve la cita. 42 pruebas PostgreSQL únicas PASS (25 nuevas, 17
+  afectadas), con idempotencia/race/retry, lecturas históricas y deltas sin N+1.
+  Drift/Django check y EXPLAIN con índice existente PASS.
+  [Evidencia RPL-03](evals/inbox-rpl-03-2026-10-21/README.md). No acredita aún
+  composer/burbujas ni cita nativa en el payload Meta; ver prerrequisito RPL-07.
 
 #### WA-RPL-05 — Composer de respuesta (seleccionar mensaje a citar)
 
 **P1 · Frontend · Riesgo Bajo · Complejidad M · Depende de: WA-RPL-03**
 
 - **Estado deseado**: hover sobre burbuja → menú contextual «Responder» (v1 solo responder + copiar de CPY-01). Al activar: chip sobre el composer con autor + extracto 1 línea + ✕; Escape o ✕ cancelan; Enter envía incluyendo `reply_to_id`. Solo un reply activo a la vez. Deshabilitar Responder sobre tmps propios optimistic.
-- **Frontend**: estado `replyTarget` en `index.jsx`; `sendInboxMessage(sessionId, body, key, replyToId)`.
+- **Frontend**: estado `replyTarget` en `index.jsx`;
+  `sendInboxMessage(sessionId, body, key, {signal, replyToId})`. El ID se integra en
+  las opciones existentes para conservar compatible la cancelación del cuarto argumento.
 - **Tests**: seleccionar → chip visible; cancelar limpia; envío incluye id; cambio de hilo cancela replyTarget (coherente con FIX-01).
-- **Acceptance**: [ ] Flujo hover→responder→enviar sin teclado ni ratón exóticos.
+- **Acceptance local**: [x] Flujo hover/foco/táctil → responder → enviar, con
+  cancelación y cita aislada por hilo. 61 pruebas frontend únicas PASS (27 nuevas,
+  34 afectadas), build, lint y Chromium escritorio/móvil PASS con API sintética.
+  [Evidencia RPL-05](evals/inbox-rpl-05-2026-10-21/README.md). No acredita todavía
+  citas en burbujas, salto al original ni payload nativo Meta.
 
 #### WA-RPL-04 — Cita en burbujas entrantes y salientes
 
@@ -684,7 +873,11 @@ Requisito declarado por la auditoría (§8): replies es **cambio de modelo**, no
 
 - **Estado deseado**: cualquier burbuja (in u out) con `reply_to` pinta dentro el bloque de cita (borde izquierdo, autor label existente, extracto, 📷 si payload_type≠text, «mensaje no enviado» si status∈{discarded,failed}).
 - **Tests**: render de cita de texto/media/no-disponible/inexistente (target null tras unresolved → NO pintar bloque).
-- **Acceptance**: [ ] El staff ve siempre QUÉ se estaba respondiendo.
+- **Acceptance local**: [x] Citas entrantes/salientes con autor, extracto, media,
+  estado no enviado y ausencia de bloque para target null. Integrada con RPL-06
+  como conjunto mínimo pulsable. 128 pruebas frontend únicas PASS (45 nuevas,
+  83 afectadas), build, lint y Chromium escritorio/móvil PASS con API sintética.
+  [Evidencia RPL-06/04](evals/inbox-rpl-06-04-2026-10-22/README.md).
 
 #### WA-RPL-06 — Jump-to-message con fetch `around`
 
@@ -696,11 +889,23 @@ Requisito declarado por la auditoría (§8): replies es **cambio de modelo**, no
   3. Ausente → GET `?around=<id>` → insertar página al array con merge/dedupe de HIST-01 → scroll + highlight. Preservar posición según reglas HIST-02 (la inserción es intencional: scroll dirigido, pill no interfiere).
   4. Target descartado/failed → highlight igual + la cita ya dice «no enviado»; nunca simular contenido.
 - **Tests**: caso cargado/ausente/descartado; merge no duplica solapamiento de páginas.
-- **Acceptance**: [ ] Click en cita antigua lleva al mensaje original aunque requiera cargar página histórica.
+- **Acceptance local**: [x] Click/teclado/táctil sobre cita carga el destino con
+  around si falta, fusiona sin duplicados y centra/enfoca/resalta dos segundos.
+  Conserva borrador, cadena before y floor ampliado; cancela búsquedas anteriores,
+  evita reemplazos tardíos del poll y respeta el estado descartado/fallido.
+  128 pruebas frontend únicas PASS, build, lint y Chromium escritorio/móvil PASS
+  en la [evidencia conjunta RPL-06/04](evals/inbox-rpl-06-04-2026-10-22/README.md).
+  No acredita todavía el contexto nativo del proveedor ni la matriz final RPL-07.
 
 #### WA-RPL-07 — Suite de edge cases de replies
 
 **P1 · Tests backend+frontend · Depende de: RPL-01..06**
+
+**Prerrequisito de implementación detectado el 21-10 al cerrar RPL-03:** el sender
+y el adaptador Meta actuales solo pasan `to`/`body`, sin contexto de cita. Conectar
+la referencia al payload del proveedor y probarla antes de acreditar esta matriz
+como end-to-end, sin cambiar guards de admisión/retry/uncertainty B4. Es trabajo de
+implementación pendiente, separado del gate Meta real pospuesto por el usuario.
 
 Matriz mínima (backend API tests + Vitest):
 1. Reply a mensaje cargado ✓ visible.
@@ -713,11 +918,15 @@ Matriz mínima (backend API tests + Vitest):
 8. Doble envío rápido del mismo reply con misma key → un solo mensaje.
 9. Webhook duplicado del inbound-reply → sin duplicar relación.
 
+**Acceptance local (22-10)**: [x] Contexto nativo tras admisión y matriz
+completa, conservando guards B4 y evidencias RPL-01..06. 170 pruebas PostgreSQL y 257 frontend únicas PASS.
+[Evidencia fase 3](evals/inbox-phase3-2026-10-22/README.md). Meta real aplazada.
+
 ---
 
 ### FASE 3B — Media entrante (pipeline completo)
 
-Estado de partida (verificado): el webhook guarda solo `{type,timestamp}` y descarta media-id/caption/filename/mime (`views.py:143-155`). **No existe stack de storage en todo el backend** (0 FileField/MEDIA_ROOT). Las URLs del Graph API expiran → bajar el binario es obligatorio, no opcional.
+Estado anterior a MED (histórico): el webhook guardaba solo `{type,timestamp}` y descarta media-id/caption/filename/mime (`views.py:143-155`). **No existe stack de storage en todo el backend** (0 FileField/MEDIA_ROOT). Las URLs del Graph API expiran → bajar el binario es obligatorio, no opcional.
 
 #### WA-MED-01 — Modelo `MessageMedia` + ADR de storage
 
@@ -745,7 +954,9 @@ Estado de partida (verificado): el webhook guarda solo `{type,timestamp}` y desc
 - **Tests**: constraints (dedup provider_media_id por cuenta), estados, clean
   org, cálculo de 180 días, idempotencia/reintento del reconciliador, drift
   fila↔objeto y dos ejecuciones concurrentes sin doble purga.
-- **Acceptance**: [ ] ADR p60 mergeado. [ ] Migración additive aplicable.
+- **Acceptance local**: [x] Storage conforme al ADR p60 aceptado. [x] M4
+aditiva generada y aplicada en PostgreSQL temporal. No aplicada a base habitual;
+privacidad/B2/lifecycle reales pendientes. [Evidencia](evals/inbox-phase3-2026-10-22/README.md).
 
 #### WA-MED-02 — Webhook: parsear media + caption
 
@@ -757,7 +968,9 @@ Estado de partida (verificado): el webhook guarda solo `{type,timestamp}` y desc
   - Mantener ACK <1 s: crear fila pending es O(1); la descarga NUNCA ocurre en el request (eso es MED-03).
   - `raw_metadata` conserva el payload crudo completo del mensaje (hoy recorta a `{type,timestamp}`) para auditoría/debug — respetando R15 en logs, no en DB (DB ya guarda bodies igualmente).
 - **Tests**: imagen con caption → body=caption + media pending con provider id; documento con filename; audio ogg; sticker; mensaje duplicado → NO crea segunda media (unique); webhook malformado sin media id → message normal type preserved, sin media row.
-- **Acceptance**: [ ] Un audio recibido hoy YA no es irrecuperable: existe fila con provider_media_id pendiente.
+- **Acceptance local**: [x] Los cinco tipos conservan referencia pending,
+caption y raw completo; dedup y carreras verificadas. Sin HTTP en webhook.
+[Evidencia](evals/inbox-phase3-2026-10-22/README.md).
 
 #### WA-MED-03 — Worker de descarga de media
 
@@ -771,7 +984,10 @@ Estado de partida (verificado): el webhook guarda solo `{type,timestamp}` y desc
   5. Media huérfana cuyo Message fue descartado → descarga igual (barato, mantiene historial íntegro).
 - **Riesgo controlado**: el HTTP largo vive en el worker (no en webhook ni web); batch pequeño evita saturación; SKIP LOCKED permite paralelizar futuros workers.
 - **Tests** (Graph API mockeada): feliz imagen/audio/pdf; URL expirada entre llamada 1 y 2 → reintento; 404/410 permanente → failed; tamaño > tope → failed con error claro; crash a mitad → estado consistente y scavenger limpia; éxito/fallo no dejan spool; dos workers concurrentes → SKIP LOCKED sin doble descarga.
-- **Acceptance**: [ ] Binario persistido en B2 y checksum verificado; cero persistencia canónica en VPS; fallos visibles con estado explícito.
+- **Acceptance local**: [x] Descarga/checksum, SDK B2 simulado, reintentos,
+leases, spool, purga de versiones y drift verificados. [ ] Persistencia y
+lifecycle en B2 real (gate previo a producción). Backend local solo dev/CI.
+[Evidencia](evals/inbox-phase3-2026-10-22/README.md).
 
 #### WA-MED-04 — Servido autenticado org-scoped
 
@@ -781,7 +997,9 @@ Estado de partida (verificado): el webhook guarda solo `{type,timestamp}` y desc
 - **Multi-tenancy explícito**: un usuario de org B que adivine el public_id de org A obtiene 404 (mismo gate `test_tenant_scoping_audit`). PublicIdMixin heredado.
 - **Performance**: FileResponse streaming Django v1 (volumen de clínica lo soporta); optimización X-Accel-Redirect/Alias de Caddy registrada como mejora posterior, no bloqueante.
 - **Tests**: feliz inline/attachment; expirada → 410 explícito; cross-org → 404; sin permiso view → 403; objeto ausente inesperadamente → 404 limpio + log ERROR; mime spoofing — se sirve el mime almacenado, no el del request.
-- **Acceptance**: [ ] Prueba manual de fuga cross-org falla; staff descarga su media correctamente.
+- **Acceptance local**: [x] Matriz API 403/404/409/410/503 y streaming
+autenticado, sin lectura cross-org ni URL pública. [ ] Prueba con staff y
+proveedor reales. [Evidencia](evals/inbox-phase3-2026-10-22/README.md).
 
 #### WA-MED-05 — Render de media en transcript y lista
 
@@ -795,7 +1013,10 @@ Estado de partida (verificado): el webhook guarda solo `{type,timestamp}` y desc
 - **Frontend**: componente `MediaBubble({message})`; helper `useMediaUrl(publicId)`; extender `last_message_preview` si el backend manda payload_type (ya viaja en MessageSerializer; ThreadSerializer preview viene de body — con MED-02 las captions llenan body, los archivos sin caption mostrarán vacío → frontend compone por payload_type del último mensaje: añadir `last_message_type` al ThreadSerializer en esta tarea, campo barato).
 - **Tests**: Vitest con mocks de blob: render tipos, error/retry, expirado sin retry, caption visible; lista con previews tipadas.
 - **Edge cases**: archivo enorme en móvil (indicar peso antes de bajar auto — imágenes sí autoplay-lazy, video/documento SOLO bajo clic, nunca auto-descarga pesada); sesión expirada a mitad de descarga → 401 handler global existente redirige.
-- **Acceptance**: [ ] Cliente manda foto de una herida → recepción la VE en ≤ un ciclo de poll tras descargar el worker.
+- **Acceptance local**: [x] Tipos/caption/previews, lightbox, carga manual
+y lifecycle de blobs verificados con Vitest y Chromium escritorio/móvil.
+[ ] Cliente real manda foto y recepción la ve tras el poll (validación pospuesta).
+[Evidencia](evals/inbox-phase3-2026-10-22/README.md).
 
 #### WA-MED-06 — Media saliente básica (imágenes/documentos) — OPCIONAL
 
@@ -1150,4 +1371,4 @@ Deliberadamente NO construiremos (coherente con auditoría §19):
 
 ---
 
-*Fin del plan. D-1..D-10 cerradas en ADR p60; Fase 0 cerrada y segundo corte de Fase 1 verificado el 2026-08-23. Siguiente paso recomendado según el plan: WA-CMP-01, manteniendo pendiente el gate E2E de WA-TCK-01 en sandbox Meta. No se marca WA-CMP-01 ni ninguna otra tarea adicional en este corte.*
+*Fin del plan. D-1..D-10 cerradas en ADR p60; Fase 0 cerrada y segundo corte de Fase 1 verificado el 2026-08-23. WA-CMP-01, WA-GRP-01, WA-CPY-01 y WA-TAB-01 verificadas localmente el 2026-10-20. WA-VIS-01, WA-VER-01, WA-LDE-01, WA-AGT-01, WA-GTF-01, WA-PERF-01, WA-PERF-02, WA-HIST-01, WA-HIST-02, WA-HIST-03, WA-UNR-01, WA-UNR-02, WA-RETRY-01, WA-WIN-01, WA-CTX-01, WA-PERF-03, WA-FIL-01 y WA-SRCH-01 verificadas localmente el 2026-10-21. Fase 3 obligatoria implementada y verificada localmente el 22-10 (RPL-07, MED-01..05); M2/M3/M4 sin aplicar a bases habitual/preview. MED-06 opcional y fase 5 siguen fuera de este cierre; gates reales y evidencia en la guía de cierre. El gate E2E de WA-TCK-01 en sandbox Meta sigue pendiente; recepción/Meta pospuesta por el usuario.*

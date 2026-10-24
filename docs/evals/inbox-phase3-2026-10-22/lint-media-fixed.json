@@ -1,0 +1,28 @@
+{
+  "kind": "lint",
+  "labels": [
+    "src/pages/inbox/MediaBubble.jsx",
+    "src/pages/inbox/useMediaUrl.js",
+    "src/pages/inbox/index.jsx",
+    "src/api/inbox.js",
+    "src/pages/inbox/MediaBubble.test.jsx",
+    "src/pages/inbox/index.replies.test.jsx",
+    "src/api/inbox.test.js"
+  ],
+  "working_database_migrated": false,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "src/pages/inbox/MediaBubble.jsx",
+    "src/pages/inbox/useMediaUrl.js",
+    "src/pages/inbox/index.jsx",
+    "src/api/inbox.js",
+    "src/pages/inbox/MediaBubble.test.jsx",
+    "src/pages/inbox/index.replies.test.jsx",
+    "src/api/inbox.test.js"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 21.293296799995005
+}

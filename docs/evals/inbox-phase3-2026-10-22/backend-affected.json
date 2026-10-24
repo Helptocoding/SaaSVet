@@ -1,0 +1,21 @@
+{
+  "kind": "backend",
+  "labels": [
+    "apps.agent.tests.test_inbox_replies",
+    "apps.channels.tests.test_replies_webhook",
+    "apps.channels.tests.test_providers",
+    "apps.channels.tests.test_b4_transport",
+    "apps.agent.tests.test_b4_command",
+    "apps.agent.tests.test_inbox_sync",
+    "apps.agent.tests.test_inbox_thread_performance",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_01_individual_durable_claim_and_single_admission",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_known_retry_has_backoff_new_token_and_limit",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_03_post_acceptance_db_failure_is_uncertain_no_retry",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_window_closed_after_claim_blocks_admission"
+  ],
+  "working_database_migrated": false,
+  "test_database": "test_inbox_phase3_58eaada3c7fe",
+  "test_database_remains": false,
+  "exit_code": 1,
+  "elapsed_s": 551.9695082000108
+}

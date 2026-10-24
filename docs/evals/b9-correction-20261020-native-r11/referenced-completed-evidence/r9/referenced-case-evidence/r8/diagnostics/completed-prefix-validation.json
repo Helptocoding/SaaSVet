@@ -1,0 +1,45 @@
+{
+  "state": "PASS_INTEGRITY_WITH_RECORDED_FAILURE",
+  "candidate_tree": "5e11236daabf4ef70ea9d0f08fee52aed5c30ff2",
+  "outcomes": {
+    "PASS": 312,
+    "SKIP": 10,
+    "FAIL": 1
+  },
+  "failed_ids": [
+    "apps.core.tests.test_tenant_scoping_audit.TenantScopingAuditTests.test_no_unbaselined_objects_access_without_for_organization"
+  ],
+  "suite_exit_code": 1,
+  "controller_exit_code": 2,
+  "invalidating_incident": null,
+  "sources": 3332,
+  "dependencies": 44636,
+  "sealed_files": 172,
+  "current_seal_mismatches": [],
+  "monitor": {
+    "samples": 3464,
+    "min_RAM_GiB": 3.0225257873535156,
+    "min_disk_GiB": 9.444133758544922,
+    "max_abs_clock_seconds": 0.3976748369414054
+  },
+  "historical_r6_limitation_unchanged": true,
+  "runtime_preserved_for_possible_authorized_continuation": true,
+  "files": {
+    "invocation-formal.json": "75c9681020870b347cdea8e557c64a886894142e344598c4d5bdafc72d76758e",
+    "STOP.json": "840f48fd7f8a74d37c6c4e6dc64dbad9beb45514d8e497d6aa79ac75ba0bc1fa",
+    "blocks/full-general-remainder.command.json": "11ffa976db58a67d298509167d868618ee40a0885e4e81c80bb5532cb3ca319c",
+    "blocks/full-general-remainder.results.json": "feef892f235d835f7481a5176c3a0a96de93929dcbbce35261081d87f0b78b78",
+    "blocks/full-general-remainder.ids.jsonl": "d78834345912c2093e88182542a271fd7ab1ee69022dd358b7685c3d81792b33",
+    "blocks/full-general-remainder.command.log": "f59269cd3b41847150e337709bad01d06296affc5e9a73d429d1e2cf5b6e9d68",
+    "monitor-full-general-remainder.json": "bc9c181869a5864d6fbe6e54aa06f75ec89f7425a67b6f42dc5b131a9a73d1f7",
+    "evaluation-seal.json": "b75b3e3a8bea5759d9d3cda363c031abad625a1e2abc46f6affe84604a6db7fd",
+    "awake-request/closure.json": "4c78bd59b70c8bd77059e3c38b775f8f4ed13b00a578b93e1004093593bf97a1",
+    "resource-observer-closure.json": "2cde2fcc3846c0c11a0496f4067f83437945c6fbfe1bfe7efc5410f8ae43e1b5",
+    "integrity-before-full-general-remainder.json": "323e6faf3ed7671ea8bf8fb53d69734dd6a7141b88c1911f6ebf19fd08529598",
+    "integrity-after-full-general-remainder.json": "323e6faf3ed7671ea8bf8fb53d69734dd6a7141b88c1911f6ebf19fd08529598",
+    "dependency-check-before-full-general-remainder.json": "c86332026978d78f25744ddacdb2ac38e30c77c1cc3955f4f511274eb479e350",
+    "dependency-check-after-full-general-remainder.json": "c86332026978d78f25744ddacdb2ac38e30c77c1cc3955f4f511274eb479e350",
+    "seal-check-before-full-general-remainder.json": "9d9190f1847b303bd0696d5151974f13b7b6df322394f5f4394ad38cfd737620",
+    "seal-check-after-full-general-remainder.json": "9d9190f1847b303bd0696d5151974f13b7b6df322394f5f4394ad38cfd737620"
+  }
+}

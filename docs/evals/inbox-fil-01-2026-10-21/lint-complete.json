@@ -1,0 +1,18 @@
+{
+  "kind": "lint",
+  "labels": [],
+  "working_database_migrated": false,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "src/pages/inbox/index.jsx",
+    "src/pages/inbox/index.filters.test.jsx",
+    "--format=json",
+    "--output-file=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-fil-01-2026-10-21\\lint-report-complete.json"
+  ],
+  "sentry_upload_disabled": true,
+  "exit_code": 0,
+  "elapsed_s": 8.107007400001748
+}

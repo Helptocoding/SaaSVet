@@ -80,6 +80,24 @@ WHATSAPP_API_BASE_URL = config(
 )
 # Deadman del worker (Healthchecks.io, patrón ADR p49). Vacío = sin ping.
 HEALTHCHECK_AGENT_SENDER_URL = config('HEALTHCHECK_AGENT_SENDER_URL', default='')
+# Inbox media: local private files only in development/CI. Production remains
+# disabled until the dedicated B2 and privacy/ARCO/DPA gates in ADR p60 are met.
+INBOX_MEDIA_ENABLED = config('INBOX_MEDIA_ENABLED', default=False, cast=bool)
+MEDIA_BACKEND = config('MEDIA_BACKEND', default='local')
+INBOX_MEDIA_ALLOW_LOCAL = config('INBOX_MEDIA_ALLOW_LOCAL', default=DEBUG, cast=bool)
+INBOX_MEDIA_PRODUCTION_APPROVED = config('INBOX_MEDIA_PRODUCTION_APPROVED', default=False, cast=bool)
+INBOX_MEDIA_ROOT = config('INBOX_MEDIA_ROOT', default=str(BASE_DIR / 'private-media'))
+INBOX_MEDIA_SPOOL_ROOT = config('INBOX_MEDIA_SPOOL_ROOT', default='')
+INBOX_MEDIA_ACCESS_HOLD = config('INBOX_MEDIA_ACCESS_HOLD', default=False, cast=bool)
+# Independent volume, never restored from the Postgres dump. Required for B2.
+INBOX_MEDIA_REVOCATION_ROOT = config('INBOX_MEDIA_REVOCATION_ROOT', default='')
+# No recipient/channel has been designated: accepted operational debt, not PASS.
+INBOX_MEDIA_OPS_OWNER = config('INBOX_MEDIA_OPS_OWNER', default='')
+MEDIA_B2_ENDPOINT_URL = config('MEDIA_B2_ENDPOINT_URL', default='')
+MEDIA_B2_REGION_NAME = config('MEDIA_B2_REGION_NAME', default='')
+MEDIA_B2_BUCKET = config('MEDIA_B2_BUCKET', default='')
+MEDIA_B2_ACCESS_KEY_ID = config('MEDIA_B2_ACCESS_KEY_ID', default='')
+MEDIA_B2_SECRET_ACCESS_KEY = config('MEDIA_B2_SECRET_ACCESS_KEY', default='')
 HEALTHCHECK_AGENT_WORKER_URL = config(
     'HEALTHCHECK_AGENT_WORKER_URL', default='',
 )
@@ -389,7 +407,7 @@ TEST_RUNNER = 'apps.core.test_runner.VetCareTestRunner'
 # Caches — Redis (P1-1, ADR p41)
 #
 # Redis exists here for exactly two reasons, and only these:
-#   1. Django cache backend → cross-worker dashboard summary cache.
+#   1. Django cache backend → reconstructible dashboard/Inbox projections.
 #   2. DRF throttle store    → login/brute-force counters shared across the N
 #      gunicorn workers. With the default LocMemCache each worker kept its own
 #      bucket, so a `5/15min` login limit became ~5×N before lockout, and a
@@ -397,8 +415,8 @@ TEST_RUNNER = 'apps.core.test_runner.VetCareTestRunner'
 #
 # Redis holds NOTHING authoritative: no JWT (stateless), no sessions (DB), no
 # idempotency keys (DB), no financial/clinical data. Everything in Redis is
-# reconstructible — a full Redis wipe loses at most a 30s dashboard cache plus
-# in-flight throttle counters.
+# reconstructible — a full Redis wipe loses dashboard summaries, disposable
+# Inbox fingerprint cursors (recovered by full GET), and in-flight throttle counters.
 #
 # Fail-open vs fail-closed (ADR p41):
 #   - `default`        IGNORE_EXCEPTIONS=True  → a Redis outage degrades

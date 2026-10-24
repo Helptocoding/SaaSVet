@@ -1,0 +1,443 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/messageText.test.js (6 tests) 18ms
+stderr | src/pages/inbox/index.test.jsx > WA-CPY-01 — copiar y abrir enlaces > copia el cuerpo original completo, sin horas ni autor, y confirma el éxito
+An error occurred in the <div> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-CPY-01 — copiar y abrir enlaces > muestra un error recuperable cuando el navegador rechaza la copia
+An error occurred in the <div> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-CPY-01 — copiar y abrir enlaces > maneja clipboard no disponible sin anunciar una copia falsa
+An error occurred in the <div> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-CPY-01 — copiar y abrir enlaces > renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders
+An error occurred in the <div> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-GRP-01 — ráfagas en el transcript > agrupa por autor sin ocultar mensajes, horas ni estados de entrega
+An error occurred in the <div> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > WA-GRP-01 — ráfagas en el transcript > corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto
+An error occurred in the <div> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > integra recibos de entrega solo en mensajes salientes del transcript
+An error occurred in the <div> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ ❯ src/pages/inbox/index.test.jsx (38 tests | 10 failed | 26 skipped) 10862ms
+     ↓ does not call discarded guidance pending delivery
+     ↓ allows the current human owner to explicitly acknowledge a new queued case
+     ↓ shows a durable queue without inventing notification or acknowledgement
+     ↓ labels explicit acknowledgement without claiming clinical attention
+     ↓ keeps uncertain guidance visible and preserves multiple open legacy cases
+     × copia el cuerpo original completo, sin horas ni autor, y confirma el éxito 1827ms
+     × muestra un error recuperable cuando el navegador rechaza la copia 1129ms
+     × maneja clipboard no disponible sin anunciar una copia falsa 1155ms
+     ✓ copia teléfono y ofrece tel: también con hilo archivado=false 211ms
+     ✓ copia teléfono y ofrece tel: también con hilo archivado=true 193ms
+     × renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders 1121ms
+     × agrupa por autor sin ocultar mensajes, horas ni estados de entrega 1139ms
+     × corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto 1090ms
+     ↓ crece al pegar 2000 caracteres, limita la altura y encoge al borrar
+     ↓ muestra el contador después de 3600 y conserva el límite de 4000
+     ↓ reinicia altura y contador al enviar sin esperar el POST
+     ↓ descarta texto y contador al cambiar de cliente
+     ↓ descarta el texto de Ana al cambiar al hilo de Beto
+     ↓ conserva el borrador al volver a clicar el mismo hilo
+     ↓ envía al sessionId vigente con una key de idempotencia no vacía
+     ↓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde
+     ↓ reutiliza la key si se reintenta el mismo texto tras un error de red
+     ↓ conserva la key incierta al navegar B y volver a A con el mismo texto
+     ↓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto
+     ↓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío
+     ↓ regenera la key cuando cambia el texto después de un error
+     × pinta el envío antes del POST y reconcilia el 201 sin duplicar 621ms
+     ↓ elimina el optimista ante 400 y muestra el error del servidor
+     × conserva el optimista reintentable ante un 5xx 550ms
+     ↓ deduplica un polling concurrente exclusivamente por client_message_id
+     ↓ dos envíos consecutivos por Enter reciben keys distintas
+     ↓ no ejecuta continuaciones del POST después de desmontar el Inbox
+     ↓ aplica el cap global de 20 intentos entre sesiones
+     × oculta failed-local cuando el hilo regresa con otra sesión activa 699ms
+     ↓ renderiza un divisor por día local de la organización
+     ↓ mantiene la hora del mensaje histórico bajo el divisor Ayer
+     × integra recibos de entrega solo en mensajes salientes del transcript 1115ms
+     ↓ actualiza todos los divisores con una sola referencia al cruzar medianoche
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-CPY-01 — copiar y abrir enlaces > copia el cuerpo original completo, sin horas ni autor, y confirma el éxito
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:158:18
+    156| const selectConversation = async (user, name) => {
+    157|     await user.click(await screen.findByRole("button", { name: new Reg…
+    158|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    159|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    160| };
+ ❯ src/pages/inbox/index.test.jsx:172:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-CPY-01 — copiar y abrir enlaces > muestra un error recuperable cuando el navegador rechaza la copia
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:158:18
+    156| const selectConversation = async (user, name) => {
+    157|     await user.click(await screen.findByRole("button", { name: new Reg…
+    158|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    159|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    160| };
+ ❯ src/pages/inbox/index.test.jsx:185:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-CPY-01 — copiar y abrir enlaces > maneja clipboard no disponible sin anunciar una copia falsa
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:158:18
+    156| const selectConversation = async (user, name) => {
+    157|     await user.click(await screen.findByRole("button", { name: new Reg…
+    158|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    159|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    160| };
+ ❯ src/pages/inbox/index.test.jsx:200:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-CPY-01 — copiar y abrir enlaces > renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:158:18
+    156| const selectConversation = async (user, name) => {
+    157|     await user.click(await screen.findByRole("button", { name: new Reg…
+    158|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    159|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    160| };
+ ❯ src/pages/inbox/index.test.jsx:236:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-GRP-01 — ráfagas en el transcript > agrupa por autor sin ocultar mensajes, horas ni estados de entrega
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:158:18
+    156| const selectConversation = async (user, name) => {
+    157|     await user.click(await screen.findByRole("button", { name: new Reg…
+    158|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    159|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    160| };
+ ❯ src/pages/inbox/index.test.jsx:261:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-GRP-01 — ráfagas en el transcript > corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:158:18
+    156| const selectConversation = async (user, name) => {
+    157|     await user.click(await screen.findByRole("button", { name: new Reg…
+    158|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    159|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    160| };
+ ❯ src/pages/inbox/index.test.jsx:284:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > pinta el envío antes del POST y reconcilia el 201 sin duplicar
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > conserva el optimista reintentable ante un 5xx
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > oculta failed-local cuando el hilo regresa con otra sesión activa
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `Inbox`.
+ ❯ createFiberFromTypeAndProps node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ createChild node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6338:26
+ ❯ reconcileChildrenArray node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6670:25
+ ❯ reconcileChildFibersImpl node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6993:30
+ ❯ node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:12049:13
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > integra recibos de entrega solo en mensajes salientes del transcript
+TestingLibraryElementError: Unable to find an element with the text: Ana, which matches selector 'strong'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectConversation src/pages/inbox/index.test.jsx:158:18
+    156| const selectConversation = async (user, name) => {
+    157|     await user.click(await screen.findByRole("button", { name: new Reg…
+    158|     await screen.findByText(name, { selector: "strong" });
+       |                  ^
+    159|     return screen.getByPlaceholderText("Escribe una respuesta…");
+    160| };
+ ❯ src/pages/inbox/index.test.jsx:902:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 7 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `Inbox`.
+ ❯ createFiberFromTypeAndProps node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ createChild node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6338:26
+ ❯ reconcileChildrenArray node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6670:25
+ ❯ reconcileChildFibersImpl node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6993:30
+ ❯ node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:12049:13
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "copia el cuerpo original completo, sin horas ni autor, y confirma el éxito". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `Inbox`.
+ ❯ createFiberFromTypeAndProps node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ createChild node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6338:26
+ ❯ reconcileChildrenArray node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6670:25
+ ❯ reconcileChildFibersImpl node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6993:30
+ ❯ node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:12049:13
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "muestra un error recuperable cuando el navegador rechaza la copia". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `Inbox`.
+ ❯ createFiberFromTypeAndProps node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ createChild node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6338:26
+ ❯ reconcileChildrenArray node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6670:25
+ ❯ reconcileChildFibersImpl node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6993:30
+ ❯ node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:12049:13
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "maneja clipboard no disponible sin anunciar una copia falsa". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `Inbox`.
+ ❯ createFiberFromTypeAndProps node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ createChild node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6338:26
+ ❯ reconcileChildrenArray node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6670:25
+ ❯ reconcileChildFibersImpl node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6993:30
+ ❯ node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:12049:13
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `Inbox`.
+ ❯ createFiberFromTypeAndProps node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ createChild node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6338:26
+ ❯ reconcileChildrenArray node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6670:25
+ ❯ reconcileChildFibersImpl node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6993:30
+ ❯ node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:12049:13
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "agrupa por autor sin ocultar mensajes, horas ni estados de entrega". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `Inbox`.
+ ❯ createFiberFromTypeAndProps node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ createChild node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6338:26
+ ❯ reconcileChildrenArray node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6670:25
+ ❯ reconcileChildFibersImpl node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6993:30
+ ❯ node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:12049:13
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `Inbox`.
+ ❯ createFiberFromTypeAndProps node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ createChild node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6338:26
+ ❯ reconcileChildrenArray node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6670:25
+ ❯ reconcileChildFibersImpl node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:6993:30
+ ❯ node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ beginWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:12049:13
+ ❯ runWithFiberInDEV node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/pages/inbox/index.test.jsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "integra recibos de entrega solo en mensajes salientes del transcript". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  10 failed | 8 passed | 26 skipped (44)
+     Errors  7 errors
+   Start at  23:18:18
+   Duration  23.38s (transform 1.12s, setup 1.40s, import 2.52s, tests 10.88s, environment 11.13s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-cpy-01-2026-10-20/vitest.json

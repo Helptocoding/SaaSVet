@@ -1,0 +1,23 @@
+{
+  "state": "PASS",
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-b8b-pg16-bin\\pgsql\\bin\\pg_ctl.exe",
+    "-D",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pgdata",
+    "stop",
+    "-m",
+    "fast",
+    "-w",
+    "-t",
+    "30"
+  ],
+  "exit_code": 0,
+  "postmaster_pid": 23088,
+  "port": 35490,
+  "port_free": true,
+  "same_cluster_preserved": true,
+  "candidate_and_dependencies_preserved": true,
+  "foreign_processes_targeted": false
+}

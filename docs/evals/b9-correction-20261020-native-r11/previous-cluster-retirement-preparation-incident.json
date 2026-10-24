@@ -1,0 +1,13 @@
+{
+  "state": "PREPARATION_ONLY_NO_TESTS",
+  "cause": "Previous r10 wrapper and postmaster already absent; stale pidfile remained after interruption",
+  "attempt": {
+    "exit_code": 1,
+    "error": "OSError [WinError 87] El parámetro no es correcto.",
+    "before_retirement_intent_or_stop_command": true
+  },
+  "previous_wrapper_pid": 27224,
+  "previous_postmaster_pid": 27812,
+  "clean_shutdown_or_exit_code_observed": false,
+  "next_action": "Verify current absence and preserve exact stale pidfile before removing only that lock; no foreign processes targeted."
+}

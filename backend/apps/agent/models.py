@@ -24,6 +24,50 @@ from .operation_model_contract import OperationManager
 from .capabilities import OPERATIONS
 
 
+class InboxReadState(OrganizationalModel):
+    """Lectura propia del staff por hilo, independiente del episodio (ADR p60 D-3)."""
+
+    track_updated_at = True
+
+    user = models.ForeignKey('users.User', on_delete=models.PROTECT, related_name='+')
+    contact = models.ForeignKey('agent.ContactIdentity', on_delete=models.PROTECT, related_name='+')
+    channel_account = models.ForeignKey(
+        'channels.ChannelAccount', on_delete=models.PROTECT, related_name='+',
+    )
+    last_read_message = models.ForeignKey(
+        'channels.Message', on_delete=models.SET_NULL, null=True, blank=True, related_name='+',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'user', 'contact', 'channel_account'],
+                name='inbox_read_state_unique_thread',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'user', 'updated_at'], name='inbox_read_user_updated_idx'),
+        ]
+
+    def clean(self):
+        super().clean()
+        if not self.organization_id:
+            return
+        errors = {}
+        for name in ('user', 'contact', 'channel_account', 'last_read_message'):
+            related = getattr(self, name) if getattr(self, name + '_id') else None
+            if related and related.organization_id != self.organization_id:
+                errors[name] = 'Debe pertenecer a la misma organización.'
+        if self.last_read_message_id:
+            message = self.last_read_message
+            if (message.contact_id != self.contact_id
+                    or message.channel_account_id != self.channel_account_id
+                    or message.direction != 'in'):
+                errors['last_read_message'] = 'Debe ser un entrante del mismo hilo.'
+        if errors:
+            raise ValidationError(errors)
+
+
 class ContactIdentity(PublicIdMixin, OrganizationalModel):
     """Quién habla por el canal, por organización — con nivel de confianza.
 
@@ -33,6 +77,7 @@ class ContactIdentity(PublicIdMixin, OrganizationalModel):
     Q5, México-only; el dominio NO migra a E.164).
     """
 
+    track_updated_at = True
     VERIFICATION_UNKNOWN = 'unknown'
     VERIFICATION_PHONE_MATCH = 'phone_match'
     VERIFICATION_CONFIRMED = 'confirmed_in_chat'
@@ -131,6 +176,7 @@ class Conversation(PublicIdMixin, OrganizationalModel):
     NUNCA fuente de verdad de negocio.
     """
 
+    track_updated_at = True
     STATE_ACTIVE = 'active'
     STATE_HANDOFF_PENDING = 'handoff_pending'
     STATE_HUMAN_ACTIVE = 'human_active'
@@ -765,6 +811,7 @@ class HumanHandoff(OrganizationalModel):
     escalado deja SU registro (métrica de tasa de handoff = gate F1).
     """
 
+    track_updated_at = True
     REASON_EXPLICIT = 'explicit_request'
     REASON_EMERGENCY = 'emergency'
     REASON_SAFETY = 'safety_urgent'

@@ -1,0 +1,31 @@
+{
+  "state": "PENDING_ENVIRONMENT_CLOCK",
+  "cause": "Host suspension and resume-clock adjustment coincide with a 391.458861-second civil-minus-monotonic discontinuity during checks migration",
+  "product_failure_attributed": false,
+  "raw_stop_preserved": true,
+  "clock_skew_seconds": 391.4588610203798,
+  "original_clock_limit_seconds": 1,
+  "windows_sleep_event_utc": "2026-10-12T04:51:58.2474581Z",
+  "windows_resume_clock_event_utc": "2026-10-12T04:58:29.5005220Z",
+  "windows_resume_clock_adjustment_ms": 389093,
+  "windows_sleep_and_resume_clock_events_confirmed": true,
+  "Power_Troubleshooter_sleep_wake_pair_available_in_query": false,
+  "memory_or_disk_reserve_exhausted": false,
+  "partial_migration_is_not_a_pass": true,
+  "termination": "Controller SIGTERM of its owned process group, exit -15",
+  "formal_reruns": 0,
+  "current_power_policy_post_stop": {
+    "AC_idle_sleep_seconds": 900,
+    "DC_idle_sleep_seconds": 600
+  },
+  "automatic_idle_sleep_proven_to_be_the_event_trigger": false,
+  "causality_limit": "Events confirm suspension and a resume-clock adjustment; current idle policy does not identify the exact sleep initiator",
+  "evidence": [
+    "STOP.json",
+    "monitor-migrate.json",
+    "blocks/migrate.command.json",
+    "windows-clock-power-events.json",
+    "power-policy-after-stop.json",
+    "resource-observer/samples.jsonl"
+  ]
+}

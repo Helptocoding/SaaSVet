@@ -1,0 +1,56 @@
+{
+  "label": "migrate",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261011-r6/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011-r6/venv/bin/python",
+    "-B",
+    "manage.py",
+    "migrate",
+    "--no-input"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261011-r6/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-12T03:58:00Z",
+      "physical_available": 7512756224,
+      "physical_total": 8252510208,
+      "disk_available": 4225679360,
+      "linux_virtual_disk_available": 1017006227456
+    },
+    "host": {
+      "utc": "2026-10-12T03:58:00Z",
+      "physical_total": 17031217152,
+      "physical_available": 5339115520,
+      "page_available": 7128502272,
+      "utc_epoch_seconds": 1791777480.527183,
+      "observer_pid": 45044
+    },
+    "ready": true
+  },
+  "pid": 1829,
+  "exit_code": -15,
+  "seconds": 85.00535965799986,
+  "invalidating_incident": "Clock discontinuity",
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-12T04:01:27Z",
+      "physical_available": 7515582464,
+      "physical_total": 8252510208,
+      "disk_available": 4221403136,
+      "linux_virtual_disk_available": 1016998572032
+    },
+    "host": {
+      "utc": "2026-10-12T04:01:27Z",
+      "physical_total": 17031217152,
+      "physical_available": 2142142464,
+      "page_available": 1565220864,
+      "utc_epoch_seconds": 1791777687.8006413,
+      "observer_pid": 45044
+    }
+  }
+}

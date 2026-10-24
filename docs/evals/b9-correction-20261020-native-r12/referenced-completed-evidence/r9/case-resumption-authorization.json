@@ -1,0 +1,19 @@
+{
+  "state": "USER_AUTHORIZED_BEFORE_FORMAL_SEAL",
+  "recorded_utc": "2026-10-20T00:21:55Z",
+  "user_reply": "Sí, continuar con esa limitación",
+  "question": "¿Autorizas la propuesta de continuar solo con los 728 casos pendientes y las etapas restantes, conservando los 2483 PASS, con una limitación explícita de cierre por el monitor histórico de disco/reloj perdido? Las nuevas ejecuciones mantendrán todos los guards; el informe no afirmará que ese registro ausente existe.",
+  "candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+  "proposal_sha256": "9df703fd10ed3b4006e1b4984810dffc8a668169d708a1d4efbda6390a8d63e2",
+  "prefix_validation_sha256": "51bed99c98bc8683f2764c841076f6ea47288fe339608fd122c4b405ba9e21db",
+  "accepted_historical_evidence_limitation": true,
+  "retained_pass": 2483,
+  "retained_expected_skips": 2,
+  "remaining": 728,
+  "source_invocation_exit_code": null,
+  "missing_historical_disk_clock_monitor_is_claimed": false,
+  "all_new_resource_clock_awake_guards_required": true,
+  "assertions_workload_gates_concurrency_changes": false,
+  "product_runtime_lock_changes": false,
+  "commits_push_deploy_activation_authorized": false
+}

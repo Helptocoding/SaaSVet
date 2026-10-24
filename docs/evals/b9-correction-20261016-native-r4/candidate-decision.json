@@ -1,0 +1,63 @@
+{
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "base_commit": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "decision": "PENDING",
+  "cause": "La reserva de disco C: cayó por debajo de 1 GiB durante la preparación de B0. El controlador detuvo únicamente su árbol propio antes de registrar resultados por ID de ese bloque. Cinco gates previos están PASS y el corpus dirigido conserva 87/87 PASS. Las regresiones restantes, full, frontend, seguridad y PROFILE quedan sin ejecutar; no se acredita fallo funcional del producto. Windows registró suspensión por Battery y un intervalo posterior de casi ocho horas en el seguimiento; no se atribuye ese intervalo a ejecución continuada de B0 ni se identifica el consumidor de disco.",
+  "R01_R15": {
+    "R01": "PENDING_INTEGRAL",
+    "R02": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "R03": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "R04": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "R05": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "R06": "PENDING_LOCAL_BLOCKING_CHECKS",
+    "R07": "PENDING_PROFILE_INCOMPLETE",
+    "R08": "DECISION_AND_LIMITS_DOCUMENTED",
+    "R09": "PENDING_TEMPORAL_COVERAGE; see profile-results-index.json",
+    "R10": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "R11": "PASS_SCHEMA_AND_DIRECTED_COST_SCOPE",
+    "R12": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "R13": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "R14": "EXACT_CORRECTED_TREE_AND_METHOD_DOCUMENTED",
+    "R15": "DECISION_AND_RECOVERY_DOCUMENTED; operational privacy separate"
+  },
+  "I01_I14": {
+    "I01": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I02": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I03": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I04": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I05": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I06": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I07": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I08": "PASS_DIRECTED_SCOPE; PENDING_FULL_TEMPORAL_SAFETY_COVERAGE",
+    "I09": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I10": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I11": "PASS_DIRECTED_SCOPE; PENDING_META_SLOW_TEMPORAL_COVERAGE",
+    "I12": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I13": "PASS_DIRECTED_SCOPE; integral decision PENDING",
+    "I14": "PASS_DIRECTED_SCOPE; integral decision PENDING"
+  },
+  "temporal_variant_states": {
+    "base": "NOT_EXECUTED",
+    "blocked_llm": "NOT_EXECUTED",
+    "meta_slow": "NOT_EXECUTED",
+    "duplicate": "NOT_EXECUTED",
+    "saturation": "NOT_EXECUTED"
+  },
+  "activation": "PENDING_ACTIVATION_REQUIREMENTS",
+  "R1-04": "PENDING_WITH_ACCEPTED_LIMITATION; zero new physical attempts",
+  "E_P_UX": "SEPARATE_UNCHANGED_SCOPES",
+  "operational_requirements": {
+    "R06_real_promotion_eval": "PENDING_SEPARATE",
+    "R13_release_readiness": "PENDING_SEPARATE",
+    "R15_P_A_P_B": "PENDING_SEPARATE"
+  },
+  "production_runtime_changed": false,
+  "locks_changed": false,
+  "test_changes": [
+    "backend/apps/agent/tests/test_regression_f2.py",
+    "backend/apps/agent/tests/test_regression_suite.py"
+  ],
+  "commits_created": 0,
+  "pushes_performed": 0,
+  "production_activation_or_deployment": false
+}

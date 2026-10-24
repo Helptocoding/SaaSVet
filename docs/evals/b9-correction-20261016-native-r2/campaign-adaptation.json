@@ -1,0 +1,185 @@
+{
+  "state": "PREPARED_BEFORE_FORMAL_SEAL",
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "application_tests_executed": false,
+  "wsl_invoked": false,
+  "candidate_sources_changed_by_adaptation": false,
+  "fixed_contract": "PLAN.md and full-partition-contract.json",
+  "full_inventory": 3331,
+  "full_groups": [
+    {
+      "label": "full-b8b",
+      "database": "test_b8b_b9i_full",
+      "count": 21
+    },
+    {
+      "label": "full-b8c",
+      "database": "test_b8c_b9i_full",
+      "count": 41
+    },
+    {
+      "label": "full-b8d",
+      "database": "test_b8d_b9i_full",
+      "count": 27
+    },
+    {
+      "label": "full-b8e",
+      "database": "test_b8e_b9i_full",
+      "count": 29
+    },
+    {
+      "label": "full-general",
+      "database": "test_b9i_full_general",
+      "count": 3213
+    }
+  ],
+  "preserved": [
+    "All test IDs, assertions, guards and internal concurrency",
+    "Sequential block order and original native test runners",
+    "PROFILE workload, 30/300/20 timings and applicable gates",
+    "Durable PostgreSQL settings and two-planner/one-sender architecture",
+    "One formal invocation per block and variant; no adaptive reruns",
+    "2 GiB host RAM, 1 GiB backing disk and 1 second clock limits"
+  ],
+  "native_adaptations": [
+    "Private verified CPython 3.13.2 copy, with only locked third-party packages",
+    "Private PostgreSQL 16.15 cluster on loopback port 35486",
+    "Private Node 20.20.2, pnpm 9.15.9 and Windows Gitleaks 8.18.4",
+    "Frozen frontend lockfile, hoisted layout, package copy import mode",
+    "Windows process ownership, resource API and local wall/monotonic observation",
+    "Owned bounded Windows sleep request; global power and clock policy unchanged",
+    "Native imports and UTF-8/LF receipts in evaluator helpers",
+    "Read-only original Git history plus separate corrected-test scope for security"
+  ],
+  "resumption_reference": "resumption.json",
+  "previous_native_preparation": "../b9-correction-20261015-native-r1/native-preflight.json",
+  "source_diffs": "native-adaptation-diffs",
+  "helper_sources": [
+    {
+      "path": "awake_guard.py",
+      "sha256": "64780ecc569c8839cd67dbfcb7ee2ce030589371a8c6691ad239e5e5ca2fde78",
+      "prior_sha256": "64780ecc569c8839cd67dbfcb7ee2ce030589371a8c6691ad239e5e5ca2fde78",
+      "changed": false
+    },
+    {
+      "path": "awake_status.py",
+      "sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+      "prior_sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+      "changed": false
+    },
+    {
+      "path": "bootstrap.py",
+      "sha256": "4dba34d2030e067dbe2fd1f5066066ecb8fb5e23bb5b0c4cb48244c1b5584488",
+      "prior_sha256": null,
+      "changed": true
+    },
+    {
+      "path": "capture_native.py",
+      "sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+      "prior_sha256": "b0982e2ec910796eb928faa8c94e0868f64bae957f1d5b475a8350f8c03382cd",
+      "changed": true
+    },
+    {
+      "path": "cleanup_native.py",
+      "sha256": "373e8149e8f2bce0df983658e33e40ea29aa68f5aade9b9137b7f3ff59e58481",
+      "prior_sha256": "7cfa4477de5d21d904b2f438da7e0cef27c9a175a26446e9b39fd58e2fdb4aa1",
+      "changed": true
+    },
+    {
+      "path": "clock_probe.py",
+      "sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+      "prior_sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+      "changed": false
+    },
+    {
+      "path": "deliver_native.py",
+      "sha256": "6a938f13ec75b86f94124b25ba03362a5926846874bc8fb239e52e75bb9a0850",
+      "prior_sha256": "34b150afc61c556e1e68cb547a5b99c5871827b7993ea99a7b3a6ef386b798f3",
+      "changed": true
+    },
+    {
+      "path": "discover_candidate.py",
+      "sha256": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b",
+      "prior_sha256": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b",
+      "changed": false
+    },
+    {
+      "path": "finalize_preflight.py",
+      "sha256": "21015062aba9ed84b47dacb45b36c0bcae4ba0b96596a63d794487d8d5f1cbf0",
+      "prior_sha256": "cbd76b7a9150f17fd2ce4e6281db6bd02e2149d428d348faec56a6622f0b21b0",
+      "changed": true
+    },
+    {
+      "path": "full_partition.py",
+      "sha256": "cb09cbe26bb77fec5a5e5e59cdc123901f0cc2d4e1ee82710c5f47e91449a028",
+      "prior_sha256": "cb09cbe26bb77fec5a5e5e59cdc123901f0cc2d4e1ee82710c5f47e91449a028",
+      "changed": false
+    },
+    {
+      "path": "host_observer.py",
+      "sha256": "0552f16181a28f06b9ceba3858468f88ce6b89e76167bf9d9d26cf1c4987ba56",
+      "prior_sha256": "0552f16181a28f06b9ceba3858468f88ce6b89e76167bf9d9d26cf1c4987ba56",
+      "changed": false
+    },
+    {
+      "path": "host_resources.py",
+      "sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "prior_sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "changed": false
+    },
+    {
+      "path": "interpreter_preflight.py",
+      "sha256": "efa52bc0b4990fe96ced7a147bd70aa5510376261b5d147994f997aeae77af23",
+      "prior_sha256": "69ced1753c4d82c1e47172af016903ceb00afede6fe026da1bb40c9c8f09f6ba",
+      "changed": true
+    },
+    {
+      "path": "launch_native.py",
+      "sha256": "b71af7038e3357b97d82b25a3424fa1a4fa911e202d6d50be62c1d6e4dca98de",
+      "prior_sha256": "a1b9ea1589f70dd58039bbd0a751613f404a47162941a18877b9f95e78c8f037",
+      "changed": true
+    },
+    {
+      "path": "native_support.py",
+      "sha256": "89a264a60228a93d5a7f96cf4ed1287e4e3cb2f38820d29aff1b34d0e385b17e",
+      "prior_sha256": "ed2283343741cccaa4473252d0a8bb3d104bd33b7230e1007a579768eab4723e",
+      "changed": true
+    },
+    {
+      "path": "prepare_native.py",
+      "sha256": "f0f4bc742d0a888419ba0f876aa1516859c0f4723b50ac272ad72bc1240ada8b",
+      "prior_sha256": "48270e741111c159e1299943753377db25cec5b68f739093787ed3e6fbfaa960",
+      "changed": true
+    },
+    {
+      "path": "recorded_suite.py",
+      "sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+      "prior_sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+      "changed": false
+    },
+    {
+      "path": "restore_native.py",
+      "sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "prior_sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "changed": false
+    },
+    {
+      "path": "retire_install_cache.py",
+      "sha256": "700c5910a80ba7274838dde723f0fd3b915854d5ec0c6c330e9d765dc85f167f",
+      "prior_sha256": "2760adda5e35a7ab87add1ff9ed5185c4389134b37ebefd6dbbf223ffb334802",
+      "changed": true
+    },
+    {
+      "path": "run_campaign.py",
+      "sha256": "7709ed90652ce2b1347a05bfcdd97da734798ea525095baca8d6a1f9bec80580",
+      "prior_sha256": "d5863f510a9a010cb7b92199c7545e31bfb8c10f26e6ea5e211a798799ce61e4",
+      "changed": true
+    },
+    {
+      "path": "scan_security.py",
+      "sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2",
+      "prior_sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2",
+      "changed": false
+    }
+  ]
+}

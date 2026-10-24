@@ -1,0 +1,384 @@
+{
+  "state": "EXACT_ONE_RUNTIME_IDENTITY_FROM_STATIC_COLLECTION",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "actual_tests_executed": 0,
+  "static_rows": [
+    {
+      "name": "B5 handoff evidence > does not call discarded guidance pending delivery",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 43,
+        "column": 4
+      }
+    },
+    {
+      "name": "B5 handoff evidence > allows the current human owner to explicitly acknowledge a new queued case",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 48,
+        "column": 4
+      }
+    },
+    {
+      "name": "B5 handoff evidence > shows a durable queue without inventing notification or acknowledgement",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 62,
+        "column": 4
+      }
+    },
+    {
+      "name": "B5 handoff evidence > labels explicit acknowledgement without claiming clinical attention",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 70,
+        "column": 4
+      }
+    },
+    {
+      "name": "B5 handoff evidence > keeps uncertain guidance visible and preserves multiple open legacy cases",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 75,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > descarta el texto de Ana al cambiar al hilo de Beto",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 163,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > conserva el borrador al volver a clicar el mismo hilo",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 176,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > envía al sessionId vigente con una key de idempotencia no vacía",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 188,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > no reinstala ni borra el hilo nuevo si el POST anterior termina tarde",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 218,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > reutiliza la key si se reintenta el mismo texto tras un error de red",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 258,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > conserva la key incierta al navegar B y volver a A con el mismo texto",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 287,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 311,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > A→B→A conserva visible el 201 aunque el GET de regreso esté vacío",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 346,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > regenera la key cuando cambia el texto después de un error",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 373,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > pinta el envío antes del POST y reconcilia el 201 sin duplicar",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 396,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > elimina el optimista ante 400 y muestra el error del servidor",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 422,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > conserva el optimista reintentable ante un 5xx",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 446,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > deduplica un polling concurrente exclusivamente por client_message_id",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 464,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > dos envíos consecutivos por Enter reciben keys distintas",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 502,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > no ejecuta continuaciones del POST después de desmontar el Inbox",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 520,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > aplica el cap global de 20 intentos entre sesiones",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 547,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > oculta failed-local cuando el hilo regresa con otra sesión activa",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 578,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > renderiza un divisor por día local de la organización",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 608,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > mantiene la hora del mensaje histórico bajo el divisor Ayer",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 640,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > integra recibos de entrega solo en mensajes salientes del transcript",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 664,
+        "column": 4
+      }
+    },
+    {
+      "name": "Inbox — aislamiento del borrador > actualiza todos los divisores con una sola referencia al cruzar medianoche",
+      "file": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx",
+      "location": {
+        "line": 697,
+        "column": 4
+      }
+    }
+  ],
+  "canonical_identities": [
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "B5 handoff evidence > does not call discarded guidance pending delivery",
+      "fullName": "B5 handoff evidence does not call discarded guidance pending delivery",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "B5 handoff evidence > allows the current human owner to explicitly acknowledge a new queued case",
+      "fullName": "B5 handoff evidence allows the current human owner to explicitly acknowledge a new queued case",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "B5 handoff evidence > shows a durable queue without inventing notification or acknowledgement",
+      "fullName": "B5 handoff evidence shows a durable queue without inventing notification or acknowledgement",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "B5 handoff evidence > labels explicit acknowledgement without claiming clinical attention",
+      "fullName": "B5 handoff evidence labels explicit acknowledgement without claiming clinical attention",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "B5 handoff evidence > keeps uncertain guidance visible and preserves multiple open legacy cases",
+      "fullName": "B5 handoff evidence keeps uncertain guidance visible and preserves multiple open legacy cases",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > descarta el texto de Ana al cambiar al hilo de Beto",
+      "fullName": "Inbox — aislamiento del borrador descarta el texto de Ana al cambiar al hilo de Beto",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > conserva el borrador al volver a clicar el mismo hilo",
+      "fullName": "Inbox — aislamiento del borrador conserva el borrador al volver a clicar el mismo hilo",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > envía al sessionId vigente con una key de idempotencia no vacía",
+      "fullName": "Inbox — aislamiento del borrador envía al sessionId vigente con una key de idempotencia no vacía",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > no reinstala ni borra el hilo nuevo si el POST anterior termina tarde",
+      "fullName": "Inbox — aislamiento del borrador no reinstala ni borra el hilo nuevo si el POST anterior termina tarde",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > reutiliza la key si se reintenta el mismo texto tras un error de red",
+      "fullName": "Inbox — aislamiento del borrador reutiliza la key si se reintenta el mismo texto tras un error de red",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > conserva la key incierta al navegar B y volver a A con el mismo texto",
+      "fullName": "Inbox — aislamiento del borrador conserva la key incierta al navegar B y volver a A con el mismo texto",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+      "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+      "selected_by_runtime_literal": true
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > A→B→A conserva visible el 201 aunque el GET de regreso esté vacío",
+      "fullName": "Inbox — aislamiento del borrador A→B→A conserva visible el 201 aunque el GET de regreso esté vacío",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > regenera la key cuando cambia el texto después de un error",
+      "fullName": "Inbox — aislamiento del borrador regenera la key cuando cambia el texto después de un error",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > pinta el envío antes del POST y reconcilia el 201 sin duplicar",
+      "fullName": "Inbox — aislamiento del borrador pinta el envío antes del POST y reconcilia el 201 sin duplicar",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > elimina el optimista ante 400 y muestra el error del servidor",
+      "fullName": "Inbox — aislamiento del borrador elimina el optimista ante 400 y muestra el error del servidor",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > conserva el optimista reintentable ante un 5xx",
+      "fullName": "Inbox — aislamiento del borrador conserva el optimista reintentable ante un 5xx",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > deduplica un polling concurrente exclusivamente por client_message_id",
+      "fullName": "Inbox — aislamiento del borrador deduplica un polling concurrente exclusivamente por client_message_id",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > dos envíos consecutivos por Enter reciben keys distintas",
+      "fullName": "Inbox — aislamiento del borrador dos envíos consecutivos por Enter reciben keys distintas",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > no ejecuta continuaciones del POST después de desmontar el Inbox",
+      "fullName": "Inbox — aislamiento del borrador no ejecuta continuaciones del POST después de desmontar el Inbox",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > aplica el cap global de 20 intentos entre sesiones",
+      "fullName": "Inbox — aislamiento del borrador aplica el cap global de 20 intentos entre sesiones",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > oculta failed-local cuando el hilo regresa con otra sesión activa",
+      "fullName": "Inbox — aislamiento del borrador oculta failed-local cuando el hilo regresa con otra sesión activa",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > renderiza un divisor por día local de la organización",
+      "fullName": "Inbox — aislamiento del borrador renderiza un divisor por día local de la organización",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > mantiene la hora del mensaje histórico bajo el divisor Ayer",
+      "fullName": "Inbox — aislamiento del borrador mantiene la hora del mensaje histórico bajo el divisor Ayer",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > integra recibos de entrega solo en mensajes salientes del transcript",
+      "fullName": "Inbox — aislamiento del borrador integra recibos de entrega solo en mensajes salientes del transcript",
+      "selected_by_runtime_literal": false
+    },
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > actualiza todos los divisores con una sola referencia al cruzar medianoche",
+      "fullName": "Inbox — aislamiento del borrador actualiza todos los divisores con una sola referencia al cruzar medianoche",
+      "selected_by_runtime_literal": false
+    }
+  ],
+  "selected": [
+    {
+      "file": "src/pages/inbox/index.test.jsx",
+      "static_display_name": "Inbox — aislamiento del borrador > un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+      "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+      "selected_by_runtime_literal": true
+    }
+  ],
+  "literal_pattern": "^Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto$",
+  "source": "selector-static-discovery.json",
+  "source_sha256": "84a41732b4a3b9a8bc6fef219a65896b929b01a708fd8aa1f5dc908f07d69e9e"
+}

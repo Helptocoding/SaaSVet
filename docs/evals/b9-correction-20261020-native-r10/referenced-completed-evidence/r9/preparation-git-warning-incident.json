@@ -1,0 +1,8 @@
+{
+  "phase": "candidate-only temporary Git index, before runtime change or tests",
+  "cause": "Git autocrlf warning retained on merged stderr was parsed as part of hash-object output; update-index rejected argument with exit129",
+  "product_source_changed": false,
+  "authorized_test_source_already_applied_and_staged": true,
+  "formal_tests_executed": false,
+  "resolution": "Validate exact corrected source and staged bytes; finish only candidate assembly with strict final-line 40-hex parsing; preserve original index-before receipt."
+}

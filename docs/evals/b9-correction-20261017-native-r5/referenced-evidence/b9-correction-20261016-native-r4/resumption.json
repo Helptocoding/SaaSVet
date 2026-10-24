@@ -1,0 +1,213 @@
+{
+  "state": "NEW_NATIVE_CAMPAIGN_PREPARATION",
+  "user": "rocede con lo que falte",
+  "date_local": "2026-10-16",
+  "previous_campaign": "b9-correction-20261016-native-r3",
+  "previous_decision": {
+    "decision": "PENDING",
+    "cause": "La RAM disponible cayó por debajo de la reserva de 2 GiB al iniciar full-b8d; el controlador detuvo su árbol propio antes de registrar resultados por ID de ese grupo. Los once bloques anteriores están PASS, incluidos B5 completo y los grupos full-b8b y full-b8c (62 IDs). La suite integral y los bloques posteriores siguen pendientes por interrupción ambiental; no se acredita fallo de producto ni OOM.",
+    "date_local": "2026-10-16",
+    "classified_utc": "2026-10-17T05:04:29Z",
+    "classification": "ENVIRONMENT_MEMORY_RESERVE_EXHAUSTED",
+    "phase": "full-b8d",
+    "evidence": [
+      "STOP.json",
+      "blocks/full-b8d.command.json",
+      "monitor-full-b8d.json",
+      "invocation-formal.json"
+    ],
+    "formal_invocations": 1,
+    "formal_reruns": 0,
+    "completed_gates": {
+      "b0": "PASS",
+      "b3": "PASS",
+      "b4": "PASS",
+      "b5": "PASS",
+      "billing-schema": "PASS",
+      "directed": "PASS",
+      "django-check": "PASS",
+      "full-b8b": "PASS",
+      "full-b8c": "PASS",
+      "migrate": "PASS",
+      "migration-drift": "PASS"
+    },
+    "full_completed_groups": {
+      "full-b8b": 21,
+      "full-b8c": 41
+    },
+    "full_observed_ids": 62,
+    "full_selected_ids": 3331,
+    "interrupted_group": {
+      "selected_ids": 27,
+      "observed_unique_ids": 0,
+      "outcomes": {},
+      "missing_ids": [
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_competing_cancel_appointment_reverse_False",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_competing_cancel_appointment_reverse_True",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_competing_confirm_attendance_reverse_False",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_competing_confirm_attendance_reverse_True",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_competing_reschedule_appointment_reverse_False",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_competing_reschedule_appointment_reverse_True",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_correction_effect_first_False",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_correction_effect_first_True",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_duplicate",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_evidence_db_error",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_human_confirmed_effect_first_False",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_human_confirmed_effect_first_True",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_human_in_progress_effect_first_False",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_human_in_progress_effect_first_True",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_identity_revocation_effect_first_False",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_identity_revocation_effect_first_True",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_kill_after_appointment",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_kill_after_commit_retry_confirmed",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_kill_after_commit_retry_done",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_kill_after_commit_retry_in_progress",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_kill_after_evidence",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_kill_after_mutation",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_kill_before_locks",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_revocation_effect_first_False",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_revocation_effect_first_True",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_takeover_effect_first_False",
+        "apps.agent.tests.test_b8d_processes.B8DProcessTests.test_takeover_effect_first_True"
+      ],
+      "complete_gate": false,
+      "journal_present": false
+    },
+    "resource_evidence": {
+      "ram_reserve_bytes": 2147483648,
+      "disk_reserve_bytes": 1073741824,
+      "ram_bytes_at_admission": 2205552640,
+      "ram_bytes_after_stop": 1874407424,
+      "minimum_ram_bytes_during_commands": 1994371072,
+      "minimum_disk_bytes_during_commands": 14616240128,
+      "maximum_clock_skew_seconds_during_commands": 0.006127979367192893
+    },
+    "product_failure_established": false,
+    "oom_established": false,
+    "memory_consumer_attributed": false,
+    "wsl_invoked": false,
+    "later_blocks_executed": false,
+    "read_only_status_monitor_exited": true
+  },
+  "prior_formal_results_transferred": false,
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "tests_or_product_changes_authorized": false,
+  "wsl_invoked": false,
+  "new_workspace": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261016-r4",
+  "private_postgresql_port": 35488,
+  "copied_helpers": [
+    {
+      "path": "awake_guard.py",
+      "prior_sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+      "sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049"
+    },
+    {
+      "path": "awake_status.py",
+      "prior_sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+      "sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1"
+    },
+    {
+      "path": "capture_native.py",
+      "prior_sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+      "sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d"
+    },
+    {
+      "path": "cleanup_native.py",
+      "prior_sha256": "d85b92917abc00f6cbca6e9dc547809d7c49283e752173e8297afe0b97f88f16",
+      "sha256": "5de1f60690cac49dcd36a7e79b72e8105e52dc9a499190f3b319d48eef39dc8c"
+    },
+    {
+      "path": "clock_probe.py",
+      "prior_sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+      "sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2"
+    },
+    {
+      "path": "deliver_native.py",
+      "prior_sha256": "b535c9f77fc991708bd5d83fd0a55513f46cd6be5f6dd4dcfd043ff5d77eb7c0",
+      "sha256": "112dbe71dc98f3da363da51f9eec0fb674f2c517460c8f47743c5198fa202cf4"
+    },
+    {
+      "path": "discover_candidate.py",
+      "prior_sha256": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b",
+      "sha256": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b"
+    },
+    {
+      "path": "finalize_preflight.py",
+      "prior_sha256": "84624ec04217bed441ce571754da0166286fd7030ec771bdca4bb99e28280f14",
+      "sha256": "e278b1b01e989948b59726cb77eda8eab47477ac0e91ce40a1f9dcc80a5b75a8"
+    },
+    {
+      "path": "full_partition.py",
+      "prior_sha256": "cb09cbe26bb77fec5a5e5e59cdc123901f0cc2d4e1ee82710c5f47e91449a028",
+      "sha256": "cb09cbe26bb77fec5a5e5e59cdc123901f0cc2d4e1ee82710c5f47e91449a028"
+    },
+    {
+      "path": "host_observer.py",
+      "prior_sha256": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b",
+      "sha256": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b"
+    },
+    {
+      "path": "host_resources.py",
+      "prior_sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083"
+    },
+    {
+      "path": "interpreter_preflight.py",
+      "prior_sha256": "13329fc7ac0011d0247d976fcaf2ccb72f104c5c7612a86d60b35eba0df24261",
+      "sha256": "bb42b5c4f3503a7bb62f69dbce1edc3944dfd26ee95ae05d7a599ae979a88b73"
+    },
+    {
+      "path": "launch_native.py",
+      "prior_sha256": "14ba2c288989f78d205a2d0cc4950f6041b5bae9ddc48e96fd59a6472a503a48",
+      "sha256": "c637f8f0bcac9c49eea8fe2ad5ec939f1ab0c180a8083aee57e151ab2f84c8b3"
+    },
+    {
+      "path": "native_support.py",
+      "prior_sha256": "b31d34cc8aaf85a4fda4f83696ea727f1fd32e2e49d1bd8b17c6fe5454d79d96",
+      "sha256": "82250c1bd2526d39c2398c31d950b667e62dd0c5376f4e57f6c118634c524057"
+    },
+    {
+      "path": "prepare_native.py",
+      "prior_sha256": "35153a89a3519941b7bb1f2759572086d370e50a0624b1b6c8b6881474abeea7",
+      "sha256": "9bd0eeb83109b0e57c725ce93e84fb9ec8a4f3e26f3ce34ea6e12879d5ba466b"
+    },
+    {
+      "path": "recorded_suite.py",
+      "prior_sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+      "sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2"
+    },
+    {
+      "path": "restore_native.py",
+      "prior_sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065"
+    },
+    {
+      "path": "retire_install_cache.py",
+      "prior_sha256": "0a99ed91a7de1b59dc044e232ee9c1ef10b47a087952ac2ffbba2e3ade558aaa",
+      "sha256": "23662653569f9c4eaf97152c8b62eb60f676f15f301bb6a93d0479e610bec9f2"
+    },
+    {
+      "path": "run_campaign.py",
+      "prior_sha256": "9c54633c224dff28571ffa77848afa34cc1341dd6e7542260b370de7d0af68f0",
+      "sha256": "9c54633c224dff28571ffa77848afa34cc1341dd6e7542260b370de7d0af68f0"
+    },
+    {
+      "path": "scan_security.py",
+      "prior_sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2",
+      "sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2"
+    },
+    {
+      "path": "diagnostics/close_acceptance.py",
+      "prior_sha256": "f8e97c2fb5b4e687b81ac30a5a3f3f19525057c99a820c4dd4f2847d400709cc",
+      "sha256": "4bbdcca511dd6c4abec32bc36c4e786aadabef9f142d83dc0bdb1da9d54d29eb"
+    }
+  ],
+  "adaptations": [
+    "New campaign identity, own workspace and private PostgreSQL port",
+    "Final native helpers from closed r3; original fixed contract templates from r4",
+    "No prior results, invocations, stops, incident receipts or control files copied",
+    "Same candidate, inventory, partitions, assertions, workloads and resource guards",
+    "Same bounded auxiliary lifetimes as the immediately preceding native campaign"
+  ],
+  "preseal_operational_amendment": "operational-lifetime-amendment.json"
+}

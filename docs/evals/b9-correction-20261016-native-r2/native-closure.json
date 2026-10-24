@@ -1,0 +1,32 @@
+{
+  "state": "PASS",
+  "platform": "Windows native",
+  "wsl_invoked": false,
+  "host_clock_configuration_changed": false,
+  "W32Time_changed": false,
+  "global_power_policy_changed": false,
+  "display_policy_changed": false,
+  "owned_helpers_exited": true,
+  "private_postgresql_stopped": true,
+  "owned_workspace_removed": true,
+  "application_tests_executed": true,
+  "formal_controller_invocations": 1,
+  "formal_reruns": 0,
+  "closure_receipt_sha256": {
+    "cleanup.json": "fc045197ef22aa42174a272229c0f8fa1c00bcd59a86d6fd364de955863c2e90",
+    "resource-observer-closure.json": "df75ac6151680e5553213aa2f36868c7c46a688283b78e304d168749da4fb214",
+    "awake-request/closure.json": "89b203807d6f1e208fda20ab01c6f139a4caeebdf8bc6e964287688821313f65"
+  },
+  "helper_stop_method": "Both bounded helpers completed normally at their lifetime checks after the long post-formal follow-up interval; no explicit stop file was used.",
+  "post_formal_followup_incident": "diagnostics/post-formal-followup-incident.json",
+  "port_closed_rechecked": true,
+  "resources": {
+    "utc": "2026-10-16T23:55:33Z",
+    "utc_epoch_seconds": 1792194933.9248343,
+    "physical_total": 17031217152,
+    "physical_available": 4633055232,
+    "page_available": 8273465344,
+    "disk_available": 4888223744,
+    "platform": "Windows native"
+  }
+}

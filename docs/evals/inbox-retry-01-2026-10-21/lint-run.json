@@ -1,0 +1,19 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "src/pages/inbox/index.jsx",
+    "src/pages/inbox/index.test.jsx",
+    "src/pages/inbox/index.unread.test.jsx",
+    "src/pages/inbox/index.retry.test.jsx",
+    "src/pages/inbox/FailedMessageRetry.jsx",
+    "src/api/inbox.js",
+    "src/api/inbox.test.js",
+    "--format=json",
+    "--output-file=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-retry-01-2026-10-21\\lint.json"
+  ],
+  "exit_code": 0,
+  "sentry_upload_disabled": true
+}

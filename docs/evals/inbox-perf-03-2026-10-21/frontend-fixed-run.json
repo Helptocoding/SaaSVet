@@ -1,0 +1,18 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "src/pages/inbox/index.sync.test.jsx",
+    "--testNamePattern",
+    "WA-PERF-03|WA-PERF-02|explica el fallo inicial|cadencias|cambia de hilo oculto|filtro vigente al volver|env\u00eda al sessionId",
+    "--fileParallelism=false",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-perf-03-2026-10-21\\vitest-fixed.json"
+  ],
+  "exit_code": 1
+}

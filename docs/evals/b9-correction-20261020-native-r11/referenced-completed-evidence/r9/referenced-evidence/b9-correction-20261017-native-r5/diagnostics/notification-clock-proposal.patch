@@ -1,0 +1,14 @@
+--- a/backend/apps/notifications/tests/test_notifications.py
++++ b/backend/apps/notifications/tests/test_notifications.py
+@@ -1 +1 @@
+-from datetime import timedelta
++from datetime import datetime, timedelta, timezone as dt_timezone
+@@ -2,0 +3 @@
++from unittest.mock import patch
+@@ -178 +179,5 @@
+-    def test_upcoming_window(self):
++    @patch(
++        'django.utils.timezone.now',
++        return_value=datetime(2026, 10, 17, 12, 0, tzinfo=dt_timezone.utc),
++    )
++    def test_upcoming_window(self, _now):

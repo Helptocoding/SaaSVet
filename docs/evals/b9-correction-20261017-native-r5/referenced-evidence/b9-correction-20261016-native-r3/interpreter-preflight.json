@@ -1,0 +1,488 @@
+{
+  "state": "PASS",
+  "interpreters": {
+    "primary": {
+      "state": "DEPENDENCY_PREFLIGHT_READY",
+      "executable": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\python.exe",
+      "base_executable": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\python.exe",
+      "prefix": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python",
+      "base_prefix": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python",
+      "python_version": "3.13.2 (tags/v3.13.2:4f8bb39, Feb  4 2025, 15:23:48) [MSC v.1942 64 bit (AMD64)]",
+      "site_packages": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages",
+      "django_file": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages\\django\\__init__.py",
+      "psycopg_file": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages\\psycopg\\__init__.py",
+      "durable_file": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\src\\backend\\apps\\agent\\durable.py",
+      "worker_file": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\src\\backend\\apps\\agent\\worker.py",
+      "database": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "test_b9i_control",
+        "HOST": "127.0.0.1",
+        "PORT": "35487"
+      },
+      "packages": [
+        {
+          "name": "asgiref",
+          "version": "3.11.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "bleach",
+          "version": "6.3.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "certifi",
+          "version": "2026.5.20",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "cffi",
+          "version": "2.1.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "charset-normalizer",
+          "version": "3.4.7",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "cryptography",
+          "version": "49.0.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "dj-database-url",
+          "version": "3.1.2",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "Django",
+          "version": "6.0.5",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "django-cors-headers",
+          "version": "4.9.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "django-redis",
+          "version": "7.0.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "djangorestframework",
+          "version": "3.17.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "djangorestframework_simplejwt",
+          "version": "5.5.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "et_xmlfile",
+          "version": "2.0.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "gunicorn",
+          "version": "26.0.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "idna",
+          "version": "3.13",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "openpyxl",
+          "version": "3.1.5",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "packaging",
+          "version": "26.2",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "pillow",
+          "version": "12.2.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "pip",
+          "version": "24.3.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "psycopg",
+          "version": "3.3.4",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "psycopg-binary",
+          "version": "3.3.4",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "pycparser",
+          "version": "3.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "PyJWT",
+          "version": "2.13.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "pypdf",
+          "version": "6.12.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "python-decouple",
+          "version": "3.8",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "redis",
+          "version": "8.0.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "reportlab",
+          "version": "4.5.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "requests",
+          "version": "2.33.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "sentry-sdk",
+          "version": "2.60.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "sqlparse",
+          "version": "0.5.5",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "tblib",
+          "version": "3.2.2",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "tzdata",
+          "version": "2026.2",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "urllib3",
+          "version": "2.7.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "webencodings",
+          "version": "0.5.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "whitenoise",
+          "version": "6.12.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        }
+      ],
+      "required_lock_versions": {
+        "asgiref": "3.11.1",
+        "bleach": "6.3.0",
+        "certifi": "2026.5.20",
+        "cffi": "2.1.0",
+        "charset-normalizer": "3.4.7",
+        "cryptography": "49.0.0",
+        "dj-database-url": "3.1.2",
+        "django": "6.0.5",
+        "django-cors-headers": "4.9.0",
+        "django-redis": "7.0.0",
+        "djangorestframework": "3.17.1",
+        "djangorestframework-simplejwt": "5.5.1",
+        "et-xmlfile": "2.0.0",
+        "gunicorn": "26.0.0",
+        "idna": "3.13",
+        "openpyxl": "3.1.5",
+        "packaging": "26.2",
+        "pillow": "12.2.0",
+        "psycopg": "3.3.4",
+        "psycopg-binary": "3.3.4",
+        "pycparser": "3.0",
+        "pyjwt": "2.13.0",
+        "pypdf": "6.12.1",
+        "python-decouple": "3.8",
+        "redis": "8.0.0",
+        "reportlab": "4.5.1",
+        "requests": "2.33.1",
+        "sentry-sdk": "2.60.0",
+        "sqlparse": "0.5.5",
+        "tblib": "3.2.2",
+        "tzdata": "2026.2",
+        "urllib3": "2.7.0",
+        "webencodings": "0.5.1",
+        "whitenoise": "6.12.0"
+      },
+      "lock_differences": {},
+      "required_pin_count": 34,
+      "additional_distributions": {
+        "pip": "24.3.1"
+      }
+    },
+    "legacy_base": {
+      "state": "DEPENDENCY_PREFLIGHT_READY",
+      "executable": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\python.exe",
+      "base_executable": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\python.exe",
+      "prefix": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python",
+      "base_prefix": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python",
+      "python_version": "3.13.2 (tags/v3.13.2:4f8bb39, Feb  4 2025, 15:23:48) [MSC v.1942 64 bit (AMD64)]",
+      "site_packages": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages",
+      "django_file": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages\\django\\__init__.py",
+      "psycopg_file": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages\\psycopg\\__init__.py",
+      "durable_file": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\src\\backend\\apps\\agent\\durable.py",
+      "worker_file": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\src\\backend\\apps\\agent\\worker.py",
+      "database": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "test_b9i_control",
+        "HOST": "127.0.0.1",
+        "PORT": "35487"
+      },
+      "packages": [
+        {
+          "name": "asgiref",
+          "version": "3.11.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "bleach",
+          "version": "6.3.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "certifi",
+          "version": "2026.5.20",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "cffi",
+          "version": "2.1.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "charset-normalizer",
+          "version": "3.4.7",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "cryptography",
+          "version": "49.0.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "dj-database-url",
+          "version": "3.1.2",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "Django",
+          "version": "6.0.5",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "django-cors-headers",
+          "version": "4.9.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "django-redis",
+          "version": "7.0.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "djangorestframework",
+          "version": "3.17.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "djangorestframework_simplejwt",
+          "version": "5.5.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "et_xmlfile",
+          "version": "2.0.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "gunicorn",
+          "version": "26.0.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "idna",
+          "version": "3.13",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "openpyxl",
+          "version": "3.1.5",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "packaging",
+          "version": "26.2",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "pillow",
+          "version": "12.2.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "pip",
+          "version": "24.3.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "psycopg",
+          "version": "3.3.4",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "psycopg-binary",
+          "version": "3.3.4",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "pycparser",
+          "version": "3.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "PyJWT",
+          "version": "2.13.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "pypdf",
+          "version": "6.12.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "python-decouple",
+          "version": "3.8",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "redis",
+          "version": "8.0.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "reportlab",
+          "version": "4.5.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "requests",
+          "version": "2.33.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "sentry-sdk",
+          "version": "2.60.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "sqlparse",
+          "version": "0.5.5",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "tblib",
+          "version": "3.2.2",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "tzdata",
+          "version": "2026.2",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "urllib3",
+          "version": "2.7.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "webencodings",
+          "version": "0.5.1",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        },
+        {
+          "name": "whitenoise",
+          "version": "6.12.0",
+          "location": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\python\\Lib\\site-packages"
+        }
+      ],
+      "required_lock_versions": {
+        "asgiref": "3.11.1",
+        "bleach": "6.3.0",
+        "certifi": "2026.5.20",
+        "cffi": "2.1.0",
+        "charset-normalizer": "3.4.7",
+        "cryptography": "49.0.0",
+        "dj-database-url": "3.1.2",
+        "django": "6.0.5",
+        "django-cors-headers": "4.9.0",
+        "django-redis": "7.0.0",
+        "djangorestframework": "3.17.1",
+        "djangorestframework-simplejwt": "5.5.1",
+        "et-xmlfile": "2.0.0",
+        "gunicorn": "26.0.0",
+        "idna": "3.13",
+        "openpyxl": "3.1.5",
+        "packaging": "26.2",
+        "pillow": "12.2.0",
+        "psycopg": "3.3.4",
+        "psycopg-binary": "3.3.4",
+        "pycparser": "3.0",
+        "pyjwt": "2.13.0",
+        "pypdf": "6.12.1",
+        "python-decouple": "3.8",
+        "redis": "8.0.0",
+        "reportlab": "4.5.1",
+        "requests": "2.33.1",
+        "sentry-sdk": "2.60.0",
+        "sqlparse": "0.5.5",
+        "tblib": "3.2.2",
+        "tzdata": "2026.2",
+        "urllib3": "2.7.0",
+        "webencodings": "0.5.1",
+        "whitenoise": "6.12.0"
+      },
+      "lock_differences": {},
+      "required_pin_count": 34,
+      "additional_distributions": {
+        "pip": "24.3.1"
+      }
+    }
+  },
+  "required_lock_versions": "PASS",
+  "required_pin_count": 34,
+  "application_package_parity": "PASS",
+  "hashed_dependency_files": 44636,
+  "application_tests_executed": false,
+  "legacy_B3_entrypoint_executed": false,
+  "sys_base_executable_redirected": false,
+  "base_prefix_private": true,
+  "global_python_environment_used": false
+}

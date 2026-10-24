@@ -1,0 +1,82 @@
+{
+  "state": "PENDING_ENVIRONMENT_DISK_AND_INCOMPLETE_RECEIPTS",
+  "raw_stop_preserved": true,
+  "cause": "Frozen monitor observed backing volume below original 1 GiB reserve",
+  "reserve_bytes": 1073741824,
+  "first_breach_utc": "2026-10-13T07:23:17Z",
+  "minimum_monitor_disk_bytes": 708132864,
+  "disk_after_block_bytes": 267816960,
+  "space_drop_cause_established": false,
+  "product_failure_attributed": false,
+  "partial_failures_preserved_and_unclassified": [
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_01_offer_then_create",
+      "outcome": "FAIL",
+      "reason": null
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_02_all_slots_direct_to_confirm",
+      "outcome": "FAIL",
+      "reason": null
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_03_b5_race_slot_taken",
+      "outcome": "FAIL",
+      "reason": null
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_04_modification_makes_new_pending",
+      "outcome": "FAIL",
+      "reason": null
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_06_expired_confirmation_never_executes",
+      "outcome": "FAIL",
+      "reason": null
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_09_b6_fixed_vet_used",
+      "outcome": "ERROR",
+      "reason": null
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int23Tests.test_23_01_cancel_happy_with_retention",
+      "outcome": "FAIL",
+      "reason": null
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int23Tests.test_23_02_cancel_requires_paraphrase",
+      "outcome": "FAIL",
+      "reason": null
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int24Tests.test_24_01_reschedule_happy",
+      "outcome": "FAIL",
+      "reason": null
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int24Tests.test_24_04_reschedule_race_slot_taken",
+      "outcome": "FAIL",
+      "reason": null
+    },
+    {
+      "id": "apps.agent.tests.test_regression_suite.ReadFlowTests.test_int11_price_flow",
+      "outcome": "FAIL",
+      "reason": null
+    }
+  ],
+  "failures_attributed_to_disk": false,
+  "host_unexpected_restart_observed": true,
+  "restart_or_storage_damage_causality_established": false,
+  "damaged_original_receipts": [
+    "dependency-check-after-full.json",
+    "invocation-formal.json",
+    "seal-check-after-full.json"
+  ],
+  "formal_controller_exit_code": null,
+  "memory_reserve_exhausted": false,
+  "clock_incident_in_retained_formal_samples": false,
+  "termination": "Owned full-suite group terminated by frozen resource monitor; retained command exit -9",
+  "formal_reruns": 0,
+  "later_resource_recovery_does_not_revalidate_block": true
+}

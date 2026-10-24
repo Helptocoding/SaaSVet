@@ -1,0 +1,25 @@
+{
+  "state": "FAILED",
+  "step": "stage-tail-recovery",
+  "utc_started": "2026-10-18T17:49:48.424055Z",
+  "pid": 9240,
+  "argv": [
+    "C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261017-native-r6/diagnostics/resume_preparation.py"
+  ],
+  "preparation_only": true,
+  "application_tests_executed": false,
+  "wsl_invoked": false,
+  "interruption_evidence": "preparation-interruption.json",
+  "utc_failed": "2026-10-18T17:50:24.176625Z",
+  "error_type": "AssertionError",
+  "error": "",
+  "resources_after": {
+    "utc": "2026-10-18T17:50:24Z",
+    "utc_epoch_seconds": 1792345824.1767068,
+    "physical_total": 17031217152,
+    "physical_available": 4552908800,
+    "page_available": 10705182720,
+    "disk_available": 9805443072,
+    "platform": "Windows native"
+  }
+}

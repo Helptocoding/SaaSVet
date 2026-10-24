@@ -1,0 +1,17 @@
+{
+  "state": "PASS",
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "base_commit": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "only_two_test_paths_changed": [
+    "backend/apps/agent/tests/test_regression_f2.py",
+    "backend/apps/agent/tests/test_regression_suite.py"
+  ],
+  "production_runtime_and_locks_unchanged": true,
+  "focused_verification": {
+    "PASS": 155,
+    "SKIP": 1,
+    "FAIL": 0,
+    "ERROR": 0
+  },
+  "previous_results_are_not_current_acceptance": true
+}

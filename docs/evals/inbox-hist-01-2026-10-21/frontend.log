@@ -1,0 +1,752 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/api/inbox.test.js (5 tests | 3 skipped) 22ms
+ ✓ src/pages/inbox/ThreadViewport.test.jsx (8 tests) 926ms
+     ✓ a 201 px del fondo: visible=true  604ms
+ ❯ src/pages/inbox/index.test.jsx (87 tests | 2 failed | 38 skipped) 35352ms
+     ↓ does not call discarded guidance pending delivery
+     ↓ allows the current human owner to explicitly acknowledge a new queued case
+     ↓ shows a durable queue without inventing notification or acknowledgement
+     ↓ labels explicit acknowledgement without claiming clinical attention
+     ↓ keeps uncertain guidance visible and preserves multiple open legacy cases
+     ✓ cambiar de hilo no conserva el botón del historial anterior  1068ms
+     ✓ permite recorrer un hilo archivado sin habilitar el envío 281ms
+     × active: explica el turno y habilita Tomar y acusar recibo al terminar 221ms
+     × human_active: explica el turno y habilita Liberar al terminar 160ms
+     ✓ muestra el indicador sin conceder permiso para tomar o liberar 209ms
+     ✓ no hereda el indicador de otro hilo ni de la fila antigua  414ms
+     ✓ un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada 198ms
+     ✓ distingue carga inicial de lista y mensajes de un panel sin selección 154ms
+     ✓ distingue el fallo inicial de lista vacía y permite reintentar 133ms
+     ✓ explica el fallo inicial de transcript y reintenta la misma conversación 246ms
+     ✓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  1065ms
+     ✓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  1046ms
+     ✓ recupera ambos paneles automáticamente cuando vuelve la API 249ms
+     ✓ un fallo tardío del hilo anterior no contamina la racha del nuevo  361ms
+     ✓ ignora success tardío de lista tras cambiar de filtro 90ms
+     ✓ ignora failure tardío de lista tras cambiar de filtro 89ms
+     ↓ representa staff_verified en ambos paneles sin habilitar acciones de identidad
+     ↓ representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad
+     ↓ representa phone_match en ambos paneles sin habilitar acciones de identidad
+     ↓ representa unknown en ambos paneles sin habilitar acciones de identidad
+     ↓ muestra la verificación del contacto incluso en un hilo archivado
+     ↓ retira el distintivo cuando el siguiente poll informa unknown
+     ✓ pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias 219ms
+     ✓ cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía 288ms
+     ✓ si inicia oculto no consulta la lista y usa el filtro vigente al volver 126ms
+     ↓ refleja el último poll sin solicitar datos adicionales y restaura al salir
+     ↓ copia el cuerpo original completo, sin horas ni autor, y confirma el éxito
+     ↓ muestra un error recuperable cuando el navegador rechaza la copia
+     ↓ maneja clipboard no disponible sin anunciar una copia falsa
+     ↓ copia teléfono y ofrece tel: también con hilo archivado=false
+     ↓ copia teléfono y ofrece tel: también con hilo archivado=true
+     ↓ renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders
+     ✓ agrupa por autor sin ocultar mensajes, horas ni estados de entrega 181ms
+     ✓ corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto 214ms
+     ↓ crece al pegar 2000 caracteres, limita la altura y encoge al borrar
+     ↓ muestra el contador después de 3600 y conserva el límite de 4000
+     ↓ reinicia altura y contador al enviar sin esperar el POST
+     ↓ descarta texto y contador al cambiar de cliente
+     ✓ descarta el texto de Ana al cambiar al hilo de Beto  837ms
+     ✓ conserva el borrador al volver a clicar el mismo hilo  547ms
+     ✓ envía al sessionId vigente con una key de idempotencia no vacía  730ms
+     ✓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde  1985ms
+     ✓ reutiliza la key si se reintenta el mismo texto tras un error de red  1789ms
+     ✓ conserva la key incierta al navegar B y volver a A con el mismo texto  1723ms
+     ✓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto  827ms
+     ✓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío  2150ms
+     ✓ regenera la key cuando cambia el texto después de un error  1630ms
+     ✓ pinta el envío antes del POST y reconcilia el 201 sin duplicar  852ms
+     ✓ elimina el optimista ante 400 y muestra el error del servidor  699ms
+     ✓ conserva el optimista reintentable ante un 5xx  879ms
+     ✓ deduplica un polling concurrente exclusivamente por client_message_id  795ms
+     ✓ dos envíos consecutivos por Enter reciben keys distintas  988ms
+     ✓ no ejecuta continuaciones del POST después de desmontar el Inbox  865ms
+     ✓ aplica el cap global de 20 intentos entre sesiones  3598ms
+     ✓ oculta failed-local cuando el hilo regresa con otra sesión activa  1241ms
+     ✓ renderiza un divisor por día local de la organización 233ms
+     ✓ mantiene la hora del mensaje histórico bajo el divisor Ayer 174ms
+     ✓ integra recibos de entrega solo en mensajes salientes del transcript 174ms
+     ✓ actualiza todos los divisores con una sola referencia al cruzar medianoche 247ms
+     ↓ permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes
+     ↓ deduplica por contacto y cuenta sin ocultar otra cuenta del mismo contacto
+     ↓ refresca todas las páginas cargadas y conserva selección y borrador
+     ↓ bloquea el doble clic y el poll mientras carga otra página
+     ↓ una respuesta de poll anterior no borra una página recién añadida
+     ↓ conserva las filas ante un error de carga y reintenta el mismo desplazamiento
+     ↓ un refresco parcial fallido retiene todas las filas y muestra reconexión tras dos fallos
+     ↓ ignora una carga tardía con éxito después de cambiar de filtro
+     ↓ ignora una carga tardía con error después de cambiar de filtro
+     ↓ no inicia otra página del poll al ocultarse y refresca todas al volver
+     ↓ no continúa un refresco de varias páginas después de desmontar
+     ↓ reduce las páginas a refrescar cuando la lista se agota antes
+     ↓ no ofrece un cursor inválido 0
+     ↓ no ofrece un cursor inválido -1
+     ↓ no ofrece un cursor inválido 100
+     ↓ no ofrece un cursor inválido null
+     ✓ carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo  906ms
+     ✓ el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor  1835ms
+     ✓ un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador  1004ms
+     ✓ la página anterior no sustituye la sesión vigente renovada por el poll  507ms
+     ✓ ignora success antiguo al cambiar de hilo y aborta su petición  435ms
+     ✓ ignora failure antiguo al cambiar de hilo y aborta su petición  421ms
+     ✓ los hilos archivados permiten cargar anteriores sin ofrecer envío 255ms
+ ❯ src/pages/inbox/useThreadHistory.test.jsx (15 tests | 8 failed) 40285ms
+     × recorre 10 mensajes con páginas de 50 y cursores correctos 91ms
+     × recorre 51 mensajes con páginas de 50 y cursores correctos 19ms
+     × recorre 500 mensajes con páginas de 50 y cursores correctos 34ms
+     ✓ ordena empates por ID numérico y no deduplica mensajes por texto 6ms
+     ✓ fusiona páginas solapadas sin sustituir estados más recientes del poll 7ms
+     × ancla la posición que la persona tiene al terminar la petición 10034ms
+     ✓ ignora dos disparos mientras existe una carga y permite seguir con el siguiente cursor 5ms
+     ✓ un cursor rechazado conserva mensajes, posición y cursor y exige reintento explícito 10ms
+     ✓ detiene un cursor sin progreso con página undefined 5ms
+     × detiene un cursor sin progreso con página {"id":2,"body":"Mensaje 2","created_at":"2026-10-21T12:00:00Z"} 4ms
+     ✓ a 500 mensajes cambia a carga manual sin descartar mensajes 9ms
+     × reset aborta y descarta success antiguo, incluso A→B→A 10017ms
+     × reset aborta y descarta failure antiguo, incluso A→B→A 10016ms
+     × desmontar aborta la petición y no aplica su resultado 10015ms
+     ✓ no inicia carga automática con la pestaña oculta 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-AGT-01 — turno del asistente > active: explica el turno y habilita Tomar y acusar recibo al terminar
+TestingLibraryElementError: Found multiple elements with the role "status"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mrole[39m=[32m"status"[39m
+[36m>[39m
+  [0m2[0m
+  [0m [0m
+  [0mconversaciones cargadas.[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"badge badge-info"[39m
+  [33mrole[39m=[32m"status"[39m
+[36m>[39m
+  [0mEl asistente está respondiendo…[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_page_560897"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-header _pageHeader_560897"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1>[39m
+            [0mWhatsApp[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-subtitle"[39m
+          [36m>[39m
+            [0mConversaciones con clientes — responde, toma o cierra cada hilo.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_layout_560897"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_listPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_filterRow_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"_filterTab_560897 _filterTabActive_560897"[39m
+            [36m>[39m
+              [0mActivas[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_filterTab_560897 "[39m
+            [36m>[39m
+              [0mArchivadas[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listScroll_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897 _convItemActive_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mAna[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Ana[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mBeto[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Beto[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listPagination_560897"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0m2[0m
+              [0m [0m
+              [0mconversaciones cargadas.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_chatPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_chatHeader_560897"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_chatIdentity_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_chatIdentityLine_560897"[39m
+              [36m>[39m
+                [36m<strong[39m
+                  [33mclass[39m=[32m"_chatName_560897"[39m
+                [36m>[39m
+                  [0mAna[0m
+                [36m</strong>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                  [33mrole[39m=[32m"status"[39m
+                [36m>[39m
+                  [0mEl asistente está respondiendo…[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_chatActions_560897"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn btn-secondary btn-xs"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtitle[39m=[32m"Espera a que el asistente termine de responder."[39m
+              [36m>[39m
+                [0mTomar y acusar recibo[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn btn-secondary btn-xs"[39m
+              [36m>[39m
+                [0mCerrar[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_threadViewport_560897"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Mensajes de la conversación"[39m
+              [33mclass[39m=[32m"_thread_560897"[39m
+              [33mrole[39m=[32m"region"[39m
+              [33mtabindex[39m=[32m"0"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_historyStatus_560897"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mInicio del historial disponible[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div />[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_composer_560897"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_composerField_560897"[39m
+            [36m>[39m
+              [36m<textarea[39m
+                [33maria-label[39m=[32m"Respuesta al cliente"[39m
+                [33mclass[39m=[32m"_composerInput_560897"[39m
+                [33mmaxlength[39m=[32m"4000"[39m
+                [33mplaceholder[39m=[32m"Escribe una respuesta…"[39m
+                [33mrows[39m=[32m"1"[39m
+                [33mstyle[39m=[32m"height: 2px;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-primary _sendButton_560897"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-send"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"15"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"15"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.854 2.147-10.94 10.939"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mEnviar[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/inbox/index.test.jsx:213:23
+    211|         render(<Inbox />);
+    212|         await selectConversation(user, "Ana");
+    213|         expect(screen.getByRole("status")).toHaveTextContent("El asist…
+       |                       ^
+    214|         const button = screen.getByRole("button", { name: action });
+    215|         expect(button).toBeDisabled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-AGT-01 — turno del asistente > human_active: explica el turno y habilita Liberar al terminar
+TestingLibraryElementError: Found multiple elements with the role "status"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mrole[39m=[32m"status"[39m
+[36m>[39m
+  [0m2[0m
+  [0m [0m
+  [0mconversaciones cargadas.[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"badge badge-info"[39m
+  [33mrole[39m=[32m"status"[39m
+[36m>[39m
+  [0mEl asistente está respondiendo…[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_page_560897"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-header _pageHeader_560897"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1>[39m
+            [0mWhatsApp[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-subtitle"[39m
+          [36m>[39m
+            [0mConversaciones con clientes — responde, toma o cierra cada hilo.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_layout_560897"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_listPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_filterRow_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"_filterTab_560897 _filterTabActive_560897"[39m
+            [36m>[39m
+              [0mActivas[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_filterTab_560897 "[39m
+            [36m>[39m
+              [0mArchivadas[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listScroll_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897 _convItemActive_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mAna[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Ana[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mBeto[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Beto[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listPagination_560897"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0m2[0m
+              [0m [0m
+              [0mconversaciones cargadas.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_chatPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_chatHeader_560897"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_chatIdentity_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_chatIdentityLine_560897"[39m
+              [36m>[39m
+                [36m<strong[39m
+                  [33mclass[39m=[32m"_chatName_560897"[39m
+                [36m>[39m
+                  [0mAna[0m
+                [36m</strong>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                  [33mrole[39m=[32m"status"[39m
+                [36m>[39m
+                  [0mEl asistente está respondiendo…[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-purple"[39m
+                [36m>[39m
+                  [0mAtendida[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_chatActions_560897"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn btn-secondary btn-xs"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtitle[39m=[32m"Espera a que el asistente termine de responder."[39m
+              [36m>[39m
+                [0mLiberar[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn btn-secondary btn-xs"[39m
+              [36m>[39m
+                [0mCerrar[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_threadViewport_560897"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Mensajes de la conversación"[39m
+              [33mclass[39m=[32m"_thread_560897"[39m
+              [33mrole[39m=[32m"region"[39m
+              [33mtabindex[39m=[32m"0"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_historyStatus_560897"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mInicio del historial disponible[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div />[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_composer_560897"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_composerField_560897"[39m
+            [36m>[39m
+              [36m<textarea[39m
+                [33maria-label[39m=[32m"Respuesta al cliente"[39m
+                [33mclass[39m=[32m"_composerInput_560897"[39m
+                [33mmaxlength[39m=[32m"4000"[39m
+                [33mplaceholder[39m=[32m"Escribe una respuesta…"[39m
+                [33mrows[39m=[32m"1"[39m
+                [33mstyle[39m=[32m"height: 2px;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-primary _sendButton_560897"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-send"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"15"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"15"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.854 2.147-10.94 10.939"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mEnviar[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/inbox/index.test.jsx:213:23
+    211|         render(<Inbox />);
+    212|         await selectConversation(user, "Ana");
+    213|         expect(screen.getByRole("status")).toHaveTextContent("El asist…
+       |                       ^
+    214|         const button = screen.getByRole("button", { name: action });
+    215|         expect(button).toBeDisabled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/pages/inbox/useThreadHistory.test.jsx > WA-HIST-01 — estado acumulativo del historial > recorre 10 mensajes con páginas de 50 y cursores correctos
+ FAIL  src/pages/inbox/useThreadHistory.test.jsx > WA-HIST-01 — estado acumulativo del historial > recorre 51 mensajes con páginas de 50 y cursores correctos
+ FAIL  src/pages/inbox/useThreadHistory.test.jsx > WA-HIST-01 — estado acumulativo del historial > recorre 500 mensajes con páginas de 50 y cursores correctos
+TypeError: Cannot destructure property 'before' of 'undefined' as it is undefined.
+ ❯ src/pages/inbox/useThreadHistory.test.jsx:26:69
+     24|     it.each([10, 51, 500])("recorre %i mensajes con páginas de 50 y cu…
+     25|         const history = messages(1, count);
+     26|         getThreadMessages.mockImplementation((_contact, _account, { be…
+       |                                                                     ^
+     27|             const older = history.filter((row) => row.id < before).sli…
+     28|             return Promise.resolve(page(older, older.length === 50 ? o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/pages/inbox/useThreadHistory.test.jsx > WA-HIST-01 — estado acumulativo del historial > ancla la posición que la persona tiene al terminar la petición
+AssertionError: expected 230 to be 1230 // Object.is equality
+
+- Expected
++ Received
+
+- 1230
++ 230
+
+ ❯ src/pages/inbox/useThreadHistory.test.jsx:80:32
+     78|         area.scrollTop = 230;
+     79|         await act(async () => { finish(page(messages(1, 50))); await p…
+     80|         expect(area.scrollTop).toBe(230 + 50 * 20);
+       |                                ^
+     81|     });
+     82|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/pages/inbox/useThreadHistory.test.jsx > WA-HIST-01 — estado acumulativo del historial > ancla la posición que la persona tiene al terminar la petición
+ FAIL  src/pages/inbox/useThreadHistory.test.jsx > WA-HIST-01 — estado acumulativo del historial > reset aborta y descarta success antiguo, incluso A→B→A
+ FAIL  src/pages/inbox/useThreadHistory.test.jsx > WA-HIST-01 — estado acumulativo del historial > reset aborta y descarta failure antiguo, incluso A→B→A
+ FAIL  src/pages/inbox/useThreadHistory.test.jsx > WA-HIST-01 — estado acumulativo del historial > desmontar aborta la petición y no aplica su resultado
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/pages/inbox/useThreadHistory.test.jsx:12:1
+     10| const messages = (start, end) => Array.from({ length: end - start + 1 …
+     11| const page = (rows, cursor = null) => ({ messages: rows, next_before: …
+     12| beforeEach(() => getThreadMessages.mockReset());
+       | ^
+     13| afterEach(() => vi.restoreAllMocks());
+     14|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/pages/inbox/useThreadHistory.test.jsx > WA-HIST-01 — estado acumulativo del historial > detiene un cursor sin progreso con página {"id":2,"body":"Mensaje 2","created_at":"2026-10-21T12:00:00Z"}
+AssertionError: expected 2 to be null
+
+- Expected:
+null
+
++ Received:
+2
+
+ ❯ src/pages/inbox/useThreadHistory.test.jsx:120:43
+    118|         act(() => result.current.receiveLatest([message(2)], 2));
+    119|         await act(async () => { await result.current.loadOlder(target)…
+    120|         expect(result.current.nextBefore).toBeNull();
+       |                                           ^
+    121|         await act(async () => { await result.current.loadOlder(target)…
+    122|         expect(getThreadMessages).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  10 failed | 64 passed | 41 skipped (115)
+   Start at  10:19:41
+   Duration  61.51s (transform 2.83s, setup 3.37s, import 7.94s, tests 76.59s, environment 28.56s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-hist-01-2026-10-21/vitest.json

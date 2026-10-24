@@ -1,0 +1,813 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/index.retry.test.jsx (25 tests) 6149ms
+     ✓ reintenta la fila original de otra autora sin duplicados ni pérdida del borrador  1321ms
+     ✓ bloquea doble clic hasta recibir respuesta  528ms
+ ✓ src/pages/inbox/index.window.test.jsx (18 tests) 3657ms
+     ✓ una ventana de más de 12 h permite enviar sin banda innecesaria  1047ms
+ ✓ src/pages/inbox/index.context.test.jsx (15 tests) 3726ms
+     ✓ carga sólo al abrir y llega al expediente correcto en dos clics desde el chat  890ms
+     ✓ el panel conserva borrador e historial y se pliega con estado accesible  356ms
+     ✓ cambiar de hilo aborta e ignora un contexto antiguo  373ms
+ ❯ src/pages/inbox/index.test.jsx (93 tests | 6 failed) 56556ms
+     ✓ does not call discarded guidance pending delivery 114ms
+     ✓ allows the current human owner to explicitly acknowledge a new queued case  946ms
+     ✓ shows a durable queue without inventing notification or acknowledgement 11ms
+     ✓ labels explicit acknowledgement without claiming clinical attention 8ms
+     ✓ keeps uncertain guidance visible and preserves multiple open legacy cases 27ms
+     ✓ cambiar de hilo no conserva el botón del historial anterior  398ms
+     ✓ permite recorrer un hilo archivado sin habilitar el envío 279ms
+     ✓ active: explica el turno y habilita Tomar y acusar recibo al terminar  346ms
+     ✓ human_active: explica el turno y habilita Liberar al terminar  359ms
+     ✓ muestra el indicador sin conceder permiso para tomar o liberar 205ms
+     ✓ no hereda el indicador de otro hilo ni de la fila antigua  362ms
+     ✓ un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada 211ms
+     ✓ distingue carga inicial de lista y mensajes de un panel sin selección 201ms
+     ✓ distingue el fallo inicial de lista vacía y permite reintentar 217ms
+     × explica el fallo inicial de transcript y reintenta la misma conversación 299ms
+     ✓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  1099ms
+     ✓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  896ms
+     ✓ recupera ambos paneles automáticamente cuando vuelve la API 230ms
+     ✓ un fallo tardío del hilo anterior no contamina la racha del nuevo 291ms
+     ✓ ignora success tardío de lista tras cambiar de filtro 105ms
+     ✓ ignora failure tardío de lista tras cambiar de filtro 82ms
+     ✓ representa staff_verified en ambos paneles sin habilitar acciones de identidad 172ms
+     ✓ representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad 234ms
+     ✓ representa phone_match en ambos paneles sin habilitar acciones de identidad 149ms
+     ✓ representa unknown en ambos paneles sin habilitar acciones de identidad 146ms
+     ✓ muestra la verificación del contacto incluso en un hilo archivado 176ms
+     ✓ retira el distintivo cuando el siguiente poll informa unknown 166ms
+     × pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias 161ms
+     × cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía 289ms
+     × si inicia oculto no consulta la lista y usa el filtro vigente al volver 63ms
+     ✓ refleja el último poll sin solicitar datos adicionales y restaura al salir 30ms
+     ✓ copia el cuerpo original completo, sin horas ni autor, y confirma el éxito 227ms
+     ✓ muestra un error recuperable cuando el navegador rechaza la copia 249ms
+     ✓ maneja clipboard no disponible sin anunciar una copia falsa 283ms
+     ✓ copia teléfono y ofrece tel: también con hilo archivado=false 279ms
+     ✓ copia teléfono y ofrece tel: también con hilo archivado=true 231ms
+     ✓ renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders 201ms
+     ✓ agrupa por autor sin ocultar mensajes, horas ni estados de entrega 164ms
+     ✓ corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto 165ms
+     ✓ crece al pegar 2000 caracteres, limita la altura y encoge al borrar 294ms
+     ✓ muestra el contador después de 3600 y conserva el límite de 4000  412ms
+     ✓ reinicia altura y contador al enviar sin esperar el POST  401ms
+     ✓ descarta texto y contador al cambiar de cliente  364ms
+     ✓ descarta el texto de Ana al cambiar al hilo de Beto  1033ms
+     ✓ conserva el borrador al volver a clicar el mismo hilo  529ms
+     × envía al sessionId vigente con una key de idempotencia no vacía 1158ms
+     ✓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde  2033ms
+     ✓ reutiliza la key si se reintenta el mismo texto tras un error de red  2289ms
+     ✓ conserva la key incierta al navegar B y volver a A con el mismo texto  1892ms
+     ✓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto  1081ms
+     ✓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío  2299ms
+     ✓ regenera la key cuando cambia el texto después de un error  1670ms
+     ✓ pinta el envío antes del POST y reconcilia el 201 sin duplicar  752ms
+     ✓ elimina el optimista ante 400 y muestra el error del servidor  957ms
+     ✓ conserva el optimista reintentable ante un 5xx  716ms
+     ✓ deduplica un polling concurrente exclusivamente por client_message_id  779ms
+     ✓ dos envíos consecutivos por Enter reciben keys distintas  1123ms
+     ✓ no ejecuta continuaciones del POST después de desmontar el Inbox  877ms
+     ✓ aplica el cap global de 20 intentos entre sesiones  3751ms
+     ✓ oculta failed-local cuando el hilo regresa con otra sesión activa  1280ms
+     ✓ renderiza un divisor por día local de la organización 180ms
+     ✓ mantiene la hora del mensaje histórico bajo el divisor Ayer  333ms
+     ✓ integra recibos de entrega solo en mensajes salientes del transcript 224ms
+     ✓ actualiza todos los divisores con una sola referencia al cruzar medianoche 230ms
+     ✓ permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes  3257ms
+     ✓ deduplica por contacto y cuenta sin ocultar otra cuenta del mismo contacto 192ms
+     ✓ refresca todas las páginas cargadas y conserva selección y borrador  864ms
+     ✓ bloquea el doble clic y el poll mientras carga otra página 179ms
+     × una respuesta de poll anterior no borra una página recién añadida 1115ms
+     ✓ conserva las filas ante un error de carga y reintenta el mismo desplazamiento 260ms
+     ✓ un refresco parcial fallido retiene todas las filas y muestra reconexión tras dos fallos 262ms
+     ✓ ignora una carga tardía con éxito después de cambiar de filtro  363ms
+     ✓ ignora una carga tardía con error después de cambiar de filtro  327ms
+     ✓ no inicia otra página del poll al ocultarse y refresca todas al volver 161ms
+     ✓ no continúa un refresco de varias páginas después de desmontar 112ms
+     ✓ reduce las páginas a refrescar cuando la lista se agota antes 164ms
+     ✓ no ofrece un cursor inválido 0 59ms
+     ✓ no ofrece un cursor inválido -1 62ms
+     ✓ no ofrece un cursor inválido 100 70ms
+     ✓ no ofrece un cursor inválido null 60ms
+     ✓ carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo  1154ms
+     ✓ el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor  2777ms
+     ✓ un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador  1091ms
+     ✓ la página anterior no sustituye la sesión vigente renovada por el poll  490ms
+     ✓ ignora success antiguo al cambiar de hilo y aborta su petición  637ms
+     ✓ ignora failure antiguo al cambiar de hilo y aborta su petición  401ms
+     ✓ los hilos archivados permiten cargar anteriores sin ofrecer envío 299ms
+     ✓ una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo  1605ms
+     ✓ un mensaje nuevo pegado al fondo sigue visible sin contador  669ms
+     ✓ bajar manualmente hasta el fondo retira el contador  906ms
+     ✓ cambiar de hilo no conserva el contador del anterior  777ms
+     ✓ al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores  801ms
+     ✓ una llegada de hoy conserva la lectura de julio aunque cree un divisor de día  692ms
+ ✓ src/pages/inbox/index.unread.test.jsx (8 tests) 2942ms
+     ✓ muestra total de todas las páginas y contadores por hilo  868ms
+     ✓ sitúa el divisor antes del primer nuevo y lo quita al confirmar, con view solamente  522ms
+     ✓ cambiar de hilo durante debounce solo marca el nuevo destino  453ms
+ ✓ src/pages/inbox/useThreadRead.test.jsx (17 tests) 194ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-LDE-01 — carga y reconexión > explica el fallo inicial de transcript y reintenta la misma conversación
+AssertionError: expected last "vi.fn()" call to have been called with [ 'contact-ana', 'account-main' ]
+
+- Expected
++ Received
+
+  [
+    "contact-ana",
+    "account-main",
++   {},
++   {
++     "signal": AbortSignal {
++       Symbol(kEvents): Map {},
++       Symbol(events.maxEventTargetListeners): 0,
++       Symbol(events.maxEventTargetListenersWarned): false,
++       Symbol(kHandlers): Map {},
++       Symbol(kAborted): false,
++       Symbol(kReason): undefined,
++       Symbol(kComposite): false,
++     },
++   },
+  ]
+
+ ❯ src/pages/inbox/index.test.jsx:315:44
+    313|         await user.click(within(error).getByRole("button", { name: "Re…
+    314|         expect(await screen.findByPlaceholderText("Escribe una respues…
+    315|         expect(inboxApi.getThreadMessages).toHaveBeenLastCalledWith("c…
+       |                                            ^
+    316|         expect(toast.error).not.toHaveBeenCalled();
+    317|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-VIS-01 — polling del Inbox > pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias
+AssertionError: expected "vi.fn()" to be called once with arguments: [ 'contact-ana', 'account-main' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "contact-ana",
+    "account-main",
++   {},
++   {
++     "signal": AbortSignal {
++       Symbol(kEvents): Map {},
++       Symbol(events.maxEventTargetListeners): 0,
++       Symbol(events.maxEventTargetListenersWarned): false,
++       Symbol(kHandlers): Map {},
++       Symbol(kAborted): false,
++       Symbol(kReason): undefined,
++       Symbol(kComposite): false,
++     },
++   },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/pages/inbox/index.test.jsx:479:44
+    477|         await setHidden(false);
+    478|         expect(inboxApi.getThreads).toHaveBeenCalledTimes(1);
+    479|         expect(inboxApi.getThreadMessages).toHaveBeenCalledExactlyOnce…
+       |                                            ^
+    480|         await act(async () => vi.advanceTimersByTime(20_000));
+    481|         expect(inboxApi.getThreads).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-VIS-01 — polling del Inbox > cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía
+AssertionError: expected last "vi.fn()" call to have been called with [ 'contact-beto', 'account-main' ]
+
+- Expected
++ Received
+
+  [
+    "contact-beto",
+    "account-main",
++   {},
++   {
++     "signal": AbortSignal {
++       Symbol(kEvents): Map {},
++       Symbol(events.maxEventTargetListeners): 0,
++       Symbol(events.maxEventTargetListenersWarned): false,
++       Symbol(kHandlers): Map {},
++       Symbol(kAborted): false,
++       Symbol(kReason): undefined,
++       Symbol(kComposite): false,
++     },
++   },
+  ]
+
+ ❯ src/pages/inbox/index.test.jsx:502:44
+    500|         await setHidden(false);
+    501|         expect(inboxApi.getThreadMessages).toHaveBeenCalledTimes(3);
+    502|         expect(inboxApi.getThreadMessages).toHaveBeenLastCalledWith("c…
+       |                                            ^
+    503|         expect(await screen.findByText("Beto", { selector: "strong" })…
+    504|         const listCalls = inboxApi.getThreads.mock.calls.length;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-VIS-01 — polling del Inbox > si inicia oculto no consulta la lista y usa el filtro vigente al volver
+AssertionError: expected "vi.fn()" to be called once with arguments: [ { archived: 1 } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "archived": 1,
+    },
++   {
++     "signal": AbortSignal {
++       Symbol(kEvents): Map {},
++       Symbol(events.maxEventTargetListeners): 0,
++       Symbol(events.maxEventTargetListenersWarned): false,
++       Symbol(kHandlers): Map {},
++       Symbol(kAborted): false,
++       Symbol(kReason): undefined,
++       Symbol(kComposite): false,
++     },
++   },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/pages/inbox/index.test.jsx:522:37
+    520|         expect(inboxApi.getThreadMessages).not.toHaveBeenCalled();
+    521|         await setHidden(false);
+    522|         expect(inboxApi.getThreads).toHaveBeenCalledExactlyOnceWith({ …
+       |                                     ^
+    523|         expect(await screen.findByRole("button", { name: /Ana/ })).toB…
+    524|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > envía al sessionId vigente con una key de idempotencia no vacía
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'contact-ana', 'account-main' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "contact-ana",
+    "account-main",
++   {},
++   {
++     "signal": AbortSignal {
++       Symbol(kEvents): Map {},
++       Symbol(events.maxEventTargetListeners): 0,
++       Symbol(events.maxEventTargetListenersWarned): false,
++       Symbol(kHandlers): Map {},
++       Symbol(kAborted): false,
++       Symbol(kReason): undefined,
++       Symbol(kComposite): false,
++     },
++   },
+  ]
+
+
+Number of calls: 1
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mSaaslyVet[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_page_560897"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-header _pageHeader_560897"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h1>[39m
+              [0mWhatsApp[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"page-subtitle"[39m
+            [36m>[39m
+              [0mConversaciones con clientes — responde, toma o cierra cada hilo.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_layout_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listPane_560897"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_filterRow_560897"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-describedby[39m=[32m"inbox-unread-total"[39m
+                [33maria-label[39m=[32m"Activas"[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"_filterTab_560897 _filterTabActive_560897"[39m
+              [36m>[39m
+                [0mActivas[0m
+                [36m<span[39m
+                  [33maria-label[39m=[32m"0 mensajes sin leer en conversaciones activas"[39m
+                  [33mclass[39m=[32m"_unreadCount_560897"[39m
+                  [33mid[39m=[32m"inbox-unread-total"[39m
+                [36m>[39m
+                  [0m0[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivadas"[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"_filterTab_560897 "[39m
+              [36m>[39m
+                [0mArchivadas[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_listScroll_560897"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"_convItem_560897 _convItemActive_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convTop_560897"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"_convIdentity_560897"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"_convName_560897"[39m
+                    [36m>[39m
+                      [0mAna[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convTime_560897"[39m
+                  [36m>[39m
+                    [0m22-ago[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convTop_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convPreview_560897"[39m
+                  [36m>[39m
+                    [0mHola de Ana[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"badge badge-info"[39m
+                  [36m>[39m
+                    [0mAbierta[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"_convItem_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convTop_560897"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"_convIdentity_560897"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"_convName_560897"[39m
+                    [36m>[39m
+                      [0mBeto[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convTime_560897"[39m
+                  [36m>[39m
+                    [0m22-ago[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convTop_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convPreview_560897"[39m
+                  [36m>[39m
+                    [0mHola de Beto[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"badge badge-info"[39m
+                  [36m>[39m
+                    [0mAbierta[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_listPagination_560897"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [0m2[0m
+                [0m [0m
+                [0mconversaciones cargadas.[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_chatPane_560897"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Cargando mensajes"[39m
+              [33mclass[39m=[32m"_loadingState_560897"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mCargando mensajes[0m
+                [0m…[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"_loadingRow_560897"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"_loadingRow_560897"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"_loadingRow_560897"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/pages/inbox/index.test.jsx:798:48
+    796|         await user.click(await screen.findByRole("button", { name: /An…
+    797|         await waitFor(() =>
+    798|             expect(inboxApi.getThreadMessages).toHaveBeenCalledWith("c…
+       |                                                ^
+    799|         );
+    800|         const betoComposer = await selectConversation(user, "Beto");
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-PERF-02 — paginación de conversaciones > una respuesta de poll anterior no borra una página recién añadida
+TestingLibraryElementError: Unable to find an element with the text: 3 conversaciones cargadas.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_page_560897"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-header _pageHeader_560897"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1>[39m
+            [0mWhatsApp[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-subtitle"[39m
+          [36m>[39m
+            [0mConversaciones con clientes — responde, toma o cierra cada hilo.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_layout_560897"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_listPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_filterRow_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-describedby[39m=[32m"inbox-unread-total"[39m
+              [33maria-label[39m=[32m"Activas"[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"_filterTab_560897 _filterTabActive_560897"[39m
+            [36m>[39m
+              [0mActivas[0m
+              [36m<span[39m
+                [33maria-label[39m=[32m"0 mensajes sin leer en conversaciones activas"[39m
+                [33mclass[39m=[32m"_unreadCount_560897"[39m
+                [33mid[39m=[32m"inbox-unread-total"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Archivadas"[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_filterTab_560897 "[39m
+            [36m>[39m
+              [0mArchivadas[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listScroll_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mAna[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Ana[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mBeto[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Beto[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listPagination_560897"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0m2[0m
+              [0m [0m
+              [0mconversaciones cargadas.[0m
+              [0m Hay más conversaciones.[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-secondary btn-sm"[39m
+            [36m>[39m
+              [0mCargar más[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_chatPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_emptyPane_560897"[39m
+          [36m>[39m
+            [0mSelecciona una conversación para ver los mensajes.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_page_560897"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-header _pageHeader_560897"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1>[39m
+            [0mWhatsApp[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-subtitle"[39m
+          [36m>[39m
+            [0mConversaciones con clientes — responde, toma o cierra cada hilo.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_layout_560897"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_listPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_filterRow_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-describedby[39m=[32m"inbox-unread-total"[39m
+              [33maria-label[39m=[32m"Activas"[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"_filterTab_560897 _filterTabActive_560897"[39m
+            [36m>[39m
+              [0mActivas[0m
+              [36m<span[39m
+                [33maria-label[39m=[32m"0 mensajes sin leer en conversaciones activas"[39m
+                [33mclass[39m=[32m"_unreadCount_560897"[39m
+                [33mid[39m=[32m"inbox-unread-total"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Archivadas"[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_filterTab_560897 "[39m
+            [36m>[39m
+              [0mArchivadas[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listScroll_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mAna[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Ana[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mBeto[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Beto[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listPagination_560897"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0m2[0m
+              [0m [0m
+              [0mconversaciones cargadas.[0m
+              [0m Hay más conversaciones.[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-secondary btn-sm"[39m
+            [36m>[39m
+              [0mCargar más[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_chatPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_emptyPane_560897"[39m
+          [36m>[39m
+            [0mSelecciona una conversación para ver los mensajes.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/inbox/index.test.jsx:1417:22
+    1415|         await advancePoll();
+    1416|         await user.click(screen.getByRole("button", { name: "Cargar má…
+    1417|         await screen.findByText("3 conversaciones cargadas.");
+       |                      ^
+    1418|         await act(async () => { finishPoll(page([rows[0]])); });
+    1419|         expect(screen.getByText("3 conversaciones cargadas.")).toBeInT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  6 failed | 170 passed (176)
+   Start at  16:49:38
+   Duration  146.84s (transform 3.41s, setup 4.59s, import 13.02s, tests 73.22s, environment 36.05s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-perf-03-2026-10-21/vitest-regressions.json

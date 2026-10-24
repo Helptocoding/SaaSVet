@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-14T01:51:11Z",
+  "port_closed": true,
+  "owned_processes": [
+    {
+      "pid": 343,
+      "argv": [
+        "/home/lap/b9i-wsl-1947726-20261012-r9/tools/rtk",
+        "proxy",
+        "/home/lap/b9i-wsl-1947726-20261012-r9/venv/bin/python",
+        "-B",
+        "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261012-r9/diagnostics/recover_cleanup.py"
+      ]
+    }
+  ],
+  "old_postmaster_pid_file": "1033\n/home/lap/b9i-wsl-1947726-20261012-r9/pgdata\n1791864825\n35479\n/home/lap/b9i-wsl-1947726-20261012-r9/pgsocket\n127.0.0.1\n   163724         4\nready   \n",
+  "purpose": "Restart only private PostgreSQL to preserve SQL ownership/tables and drop owned databases; no application tests"
+}

@@ -1,0 +1,22 @@
+{
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "sources_unchanged_against_historical_candidate": true,
+  "historical_candidate": "08310461337a284386299ec47c54125f2139bf7f",
+  "sources": [
+    "backend/apps/agent/tests/b9e_profile.py",
+    "backend/apps/agent/tests/b9a_harness.py",
+    "backend/apps/agent/tests/test_b9a_e2e.py"
+  ],
+  "compatibility_basis": "Identical Git blobs for runner, controlled providers and existing domain fixture",
+  "executed": false,
+  "warmup_seconds": 30,
+  "measurement_seconds": 300,
+  "drain_seconds": 20,
+  "read_actual_llm_calls": 2,
+  "scenario_or_gate_adaptation": false,
+  "saturation_gates": [
+    "safety_admitted_under_saturation",
+    "bounded_concurrency",
+    "saturation_observed"
+  ]
+}

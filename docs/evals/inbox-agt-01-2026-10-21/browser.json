@@ -1,0 +1,94 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "state": "active",
+      "action": "Tomar y acusar recibo",
+      "disabled_during_turn": true,
+      "enabled_after_poll": true,
+      "horizontal_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "state": "human_active",
+      "action": "Liberar",
+      "disabled_during_turn": true,
+      "enabled_after_poll": true,
+      "horizontal_overflow": false
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    },
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    },
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    }
+  ],
+  "page_errors": [],
+  "temporary_server_listening": false
+}

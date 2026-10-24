@@ -1,0 +1,11 @@
+--- native-r1/run_campaign.py
++++ native/run_campaign.py
+@@ -85,7 +85,7 @@
+         'authorization.json','candidate.json','correction.diff','resource-policy.json',
+         'scope-manifest.json','PLAN.md','assembly.json','candidate-sources.json',
+         'toolchain.json','python-environment.json','dependency-files.json','interpreter-preflight.json',
+-        'private-python-copy.json','frontend-layout.json','security-history.json','preparation-amendment.json',
++        'private-python-copy.json','frontend-layout.json','security-history.json','resumption.json',
+         'install-cache-retirement.json',
+         'launcher-validation.json','downloads.json','audit-toolchain.json','postgresql-preflight.json',
+         'profile-compatibility.json','campaign-adaptation.json','effective-configuration.json',

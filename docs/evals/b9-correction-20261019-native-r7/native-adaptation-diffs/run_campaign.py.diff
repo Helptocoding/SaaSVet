@@ -1,0 +1,48 @@
+--- native-r6/run_campaign.py
++++ native-r7/run_campaign.py
+@@ -32,6 +32,8 @@
+ def verify(label,*,require_awake=True):
+     validate_clock_control()
+     validate_references()
++    from case_resumption import validate_case_references
++    validate_case_references()
+     integrity(label)
+     dependencies=json.loads((EVIDENCE/'dependency-files.json').read_text(encoding='utf-8'))
+     changed=[p for p,h in dependencies['files'].items() if not Path(p).is_file() or sha256(Path(p).read_bytes())!=h]
+@@ -87,6 +89,9 @@
+         'change':'Native Windows orchestration; unchanged five-group receipt adapter and assertions',
+         'application_tests_executed':False})
+     required_names=[
++        'case-resumption-authorization.json','case-resumption-manifest.json','case-resumption-validation.json',
++        'RESUMPTION-PROPOSAL.md','prepared-runtime-references.json','runtime-handoff-supplement.json',
++        'formal-preparation-resumption.json','preparation-history-manifest.json','preparation-native-closure.json',
+         'authorization.json','candidate.json','correction.diff','resource-policy.json',
+         'scope-manifest.json','PLAN.md','assembly.json','candidate-sources.json',
+         'toolchain.json','python-environment.json','dependency-files.json','interpreter-preflight.json',
+@@ -287,6 +292,17 @@
+         label = group['label']
+         if reuse_block(label):
+             continue
++        if label == 'full-general':
++            tail = 'full-general-remainder'
++            code = execute(tail, [PYTHON, '-B', EVIDENCE/'run_remainder.py'],
++                env={'B9I_SUITE': tail, 'B9I_ID_JOURNAL': str(BLOCKS/(tail+'.ids.jsonl')),
++                     'B9I_SUITE_RECEIPT': str(BLOCKS/(tail+'.results.json'))})
++            check_suite(tail, code)
++            code = execute('full-general-assemble', [PYTHON, '-B', EVIDENCE/'case_resumption.py', 'assemble'])
++            if code:
++                stop('PENDING', label, 'Case evidence assembly invalid', exit_code=code)
++            check_suite(label, 0)
++            continue
+         code = execute(label, [PYTHON, '-B', EVIDENCE/'recorded_suite.py', label, group['database']],
+             env={'B9I_SUITE': label, 'B9I_ID_JOURNAL': str(BLOCKS/(label+'.ids.jsonl')),
+                  'B9I_SUITE_RECEIPT': str(BLOCKS/(label+'.results.json'))})
+@@ -326,6 +342,8 @@
+         gate(label,gates=result['gates'])
+     save('technical-completion.json',{'state':'PASS','candidate_sha':SHA,
+         'evidence_mode':'COMPOSITE_ACCEPTANCE','continuous_campaign_claimed':False,
++        'accepted_historical_evidence_limitation':True,
++        'acceptance_label':'PASS_BAJO_CONDICION_DE_EVIDENCIA_ENMENDADA',
+         'activation':'PENDING_ACTIVATION_REQUIREMENTS'})
+     print('TECHNICAL_COMPOSITE_ACCEPTANCE_PASS',flush=True)
+ 

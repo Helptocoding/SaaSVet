@@ -1,0 +1,34 @@
+{
+  "state": "CONFIRMED_BEFORE_FORMAL_SEAL",
+  "user": "rocede con lo que falte",
+  "purpose": "Keep the same bounded native auxiliary lifetimes for one new complete fixed campaign",
+  "awake_maximum_seconds": 43200,
+  "observer_maximum_seconds": 46800,
+  "source_changes": {
+    "awake_guard.py": {
+      "prior_sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+      "sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+      "changed": false
+    },
+    "host_observer.py": {
+      "prior_sha256": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b",
+      "sha256": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b",
+      "changed": false
+    }
+  },
+  "prior_receipt": "../b9-correction-20261016-native-r3/operational-lifetime-amendment.json",
+  "prior_receipt_sha256": "ea34a85051cd5ba2d7d70438eae47067a88ac1f2bbdf6e1ae3c3b376110b90b0",
+  "plan_prior_prefix_sha256": "9a124833067ad147b0f09f82a8bce2b088e03c9f305fdaca14fa4bbb9d61fbbc",
+  "plan_append_sha256": "0c0732c69a54bf4dd174c060d8615fa26a163244e35f6af3f68112204678327b",
+  "host_policies_or_clock_configuration_changed": false,
+  "application_tests_or_gates_changed": false,
+  "profile_warmup_measurement_drain_seconds": [
+    30,
+    300,
+    20
+  ],
+  "heartbeat_seconds": 1,
+  "maximum_heartbeat_age_seconds": 10,
+  "adaptive_formal_renewal": false,
+  "memory_disk_clock_guards_unchanged": true
+}

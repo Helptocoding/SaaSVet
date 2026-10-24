@@ -1,0 +1,72 @@
+{
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "formal_controller_invocations": 1,
+  "formal_command_blocks": 9,
+  "formal_reruns": 0,
+  "full_execution_sources": [
+    "full-b8b",
+    "full-b8c",
+    "full-b8d",
+    "full-b8e",
+    "full-general"
+  ],
+  "logical_full_aggregate_counted_as_additional_execution": false,
+  "backend_id_observations_in_complete_receipts": 214,
+  "backend_unique_ids_in_complete_receipts": 214,
+  "duplicate_observations_in_complete_receipts": 0,
+  "backend_id_observations_including_partial_journals": 248,
+  "backend_unique_observed_ids_including_partial_journals": 248,
+  "duplicate_observations_including_partial_journals": 0,
+  "incomplete_suite_journals": {
+    "b5": {
+      "path": "blocks/b5.ids.jsonl",
+      "journal_present": true,
+      "journal_scope": "ALL_RECORDED_OUTCOMES",
+      "observations": 34,
+      "outcomes": {
+        "PASS": 34
+      },
+      "skips": [],
+      "unique_ids": 34,
+      "selected_ids": 37,
+      "missing_ids": [
+        "apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_01_process_killed_after_detection",
+        "apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_02_process_killed_after_case_before_output",
+        "apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_05_safety_worker_vs_human_takeover"
+      ],
+      "complete_suite_receipt": false,
+      "accepted_as_complete_gate": false
+    }
+  },
+  "focused_development_verification_separate": {
+    "source": "../b9-correction-20261013/focused-verification.json",
+    "sha256": "e42650796e3025eb92b747ec2b45a1c6ecb9b24fa206228c8ea943154def17eb",
+    "receipt": {
+      "state": "PASS_WITH_IDENTIFIED_HISTORICAL_SKIP",
+      "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+      "tests": 156,
+      "PASS": 155,
+      "FAIL": 0,
+      "ERROR": 0,
+      "SKIP": [
+        {
+          "id": "apps.agent.tests.test_regression_f2.Int21Tests.test_21_05_bis_new_pet_existing_owner",
+          "outcome": "SKIP",
+          "reason": "INT-21-bis (mascota nueva de cliente existente) sin tool en PR-17a; el alta reusa create-with-patient — pendiente de PR futuro.",
+          "utc": "2026-10-14T05:42:14Z",
+          "traceback": null
+        }
+      ],
+      "original_11_ids_all_pass": true,
+      "development_test_suite_invocations": 2,
+      "earlier_development_result": "focused/attempt1/diagnostic.results.json",
+      "preflight_failure_without_test_execution": "focused/attempt2-preflight/explanation.json",
+      "formal_campaign_invocations": 0,
+      "production_files_changed": false
+    },
+    "executed_in_this_campaign": false,
+    "substitutes_current_acceptance": false
+  },
+  "profile_variants_executed": 0,
+  "historical_results_transferred": false
+}

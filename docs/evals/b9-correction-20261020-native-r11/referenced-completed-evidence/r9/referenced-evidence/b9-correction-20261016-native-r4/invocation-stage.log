@@ -1,0 +1,17 @@
+initdb: PASS
+discovery: PASS
+FULL_PARTITION_PREFLIGHT_PASS 3331 IDs; no omissions or duplicates
+gitleaks-version: PASS
+audit-venv: PASS
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\b9-correction-20261016-native-r4\prepare_native.py", line 273, in <module>
+    {'setup': setup, 'frontend': frontend, 'stage': stage}[sys.argv[1]]()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\b9-correction-20261016-native-r4\prepare_native.py", line 257, in stage
+    command('audit-tool-install', [WORK / 'audit-venv/Scripts/python.exe', '-m', 'pip', 'install',
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        '--no-cache-dir', 'pip-audit'])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\b9-correction-20261016-native-r4\native_support.py", line 104, in command
+    raise RuntimeError(label + ' failed; see retained log')
+RuntimeError: audit-tool-install failed; see retained log

@@ -1,0 +1,29 @@
+--- native-r6/finalize_preflight.py
++++ native-r7/finalize_preflight.py
+@@ -11,7 +11,7 @@
+     assert not (EVIDENCE / 'evaluation-seal.json').exists()
+     assert not (EVIDENCE / 'STOP.json').exists()
+     assert json.loads((EVIDENCE / 'native-preflight.json').read_text())['state'] == 'PASS'
+-    prior = EVIDENCE.with_name('b9-correction-20261017-native-r5')
++    prior = EVIDENCE.with_name('b9-correction-20261017-native-r6')
+     changes = []
+     for path in sorted(EVIDENCE.glob('*.py')):
+         source = path.read_text(encoding='utf-8')
+@@ -21,7 +21,7 @@
+         previous = prior / path.name
+         baseline = previous.read_text(encoding='utf-8') if previous.exists() else ''
+         diff = ''.join(difflib.unified_diff(baseline.splitlines(True), source.splitlines(True),
+-            fromfile='native-r5/' + path.name, tofile='native/' + path.name))
++            fromfile='native-r6/' + path.name, tofile='native/' + path.name))
+         if diff:
+             target = EVIDENCE / 'native-adaptation-diffs' / (path.name + '.diff')
+             target.parent.mkdir(exist_ok=True)
+@@ -62,7 +62,7 @@
+             'Native imports and UTF-8/LF receipts in evaluator helpers',
+             'Read-only original Git history plus separate corrected-test scope for security'],
+         'resumption_reference': 'resumption.json',
+-        'previous_native_preparation': '../b9-correction-20261017-native-r5/native-preflight.json',
++        'previous_native_preparation': '../b9-correction-20261017-native-r6/native-preflight.json',
+         'source_diffs': 'native-adaptation-diffs', 'helper_sources': changes})
+     assembly = json.loads((EVIDENCE / 'assembly.json').read_text())
+     assembly['phase'] = 'ASSEMBLED_NOT_EXECUTED'

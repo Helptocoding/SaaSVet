@@ -1,0 +1,43 @@
+{
+  "state": "AUTHORIZED_POST_DRY_RUN_METADATA_ADAPTATION",
+  "utc": "2026-10-18T05:24:52.714105+00:00",
+  "sealed_reporter_sha256": "69761d8092bbc03a929cc827c3cc48b0b5775bfb7213d77b8cbc46aa35c495af",
+  "dry_run": {
+    "state": "PASS_RAM_ONLY",
+    "all_reporter_labels_and_probes_exercised": true,
+    "captured_metadata_outputs": 13,
+    "accepted_complete_gates": 13,
+    "general_and_full_accepted_as_pass": false,
+    "application_tests_or_services_started": false
+  },
+  "globals_overridden": [
+    "source_for",
+    "provenance",
+    "is_reused",
+    "block_path",
+    "journal_path"
+  ],
+  "current_only_underscore_labels": [
+    "profile-blocked_llm",
+    "profile-blocked_llm-migrate",
+    "profile-meta_slow",
+    "profile-meta_slow-migrate"
+  ],
+  "existing_references_always_use_original_sha_verification": true,
+  "metadata_preservation_moves": [
+    {
+      "name": "preservation-of-prior-work.json",
+      "source_absolute": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r5\\preservation-of-prior-work.json",
+      "destination_absolute": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r5\\diagnostics\\reporting-attempt-2\\preservation-of-prior-work.json",
+      "sha256_before": "4f8e8b73bb46be49b19f6b7b95cb84ae30f6d09498b1b002588221e2eec439df"
+    },
+    {
+      "name": "integrity-summary.json",
+      "source_absolute": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r5\\integrity-summary.json",
+      "destination_absolute": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261017-native-r5\\diagnostics\\reporting-attempt-2\\integrity-summary.json",
+      "sha256_before": "f53ecce45d21f9e10ebe77eb73f0cf66117a7ce8f2c543f93042e2f431a31e3f"
+    }
+  ],
+  "save_and_path_implementations_unchanged_in_real_main": true,
+  "application_tests_or_gates_modified": false
+}

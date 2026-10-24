@@ -1,0 +1,53 @@
+"""Own a hidden temporary Vite process tree; preserve its cleanup receipt."""
+import json
+import os
+from pathlib import Path
+import socket
+import subprocess
+import sys
+import time
+
+base = Path(__file__).resolve().parent
+root = base.parents[2]
+out = base
+if len(sys.argv) > 1:
+    import re
+    assert re.fullmatch(r'[a-z0-9-]+', sys.argv[1])
+    out = base / sys.argv[1]
+    out.mkdir(exist_ok=False)
+
+
+def listening():
+    with socket.socket() as sock:
+        sock.settimeout(0.2)
+        return sock.connect_ex(('127.0.0.1', 4178)) == 0
+
+
+assert not listening(), 'Do not reuse or stop another server'
+assert not (out / 'browser-run.json').exists()
+started = time.monotonic()
+with (out / 'vite.log').open('w', encoding='utf-8') as log:
+    server = subprocess.Popen(['rtk', 'proxy', 'node', 'frontend/node_modules/vite/bin/vite.js',
+        'frontend', '--host', '127.0.0.1', '--port', '4178', '--strictPort'], cwd=root,
+        stdout=log, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW)
+    code = 1
+    try:
+        while not listening():
+            assert server.poll() is None and time.monotonic() - started < 60
+            time.sleep(0.2)
+        with (out / 'browser.log').open('w', encoding='utf-8') as browser_log:
+            result = subprocess.run(['rtk', 'proxy', 'python', '-X', 'utf8', str(base / 'check_browser.py')],
+                cwd=root, stdout=browser_log, stderr=subprocess.STDOUT, timeout=150,
+                env={**os.environ, 'PHASE3_BROWSER_OUTPUT': str(out)},
+                creationflags=subprocess.CREATE_NO_WINDOW)
+            code = result.returncode
+    finally:
+        subprocess.run(['rtk', 'proxy', 'taskkill', '/PID', str(server.pid), '/T', '/F'], capture_output=True)
+        server.wait(timeout=10)
+        receipt = dict(exit_code=code, elapsed_s=time.monotonic() - started,
+            temporary_server_listening=listening(), synthetic_api=True)
+        (out / 'browser-run.json').write_text(json.dumps(receipt, indent=2), encoding='utf-8')
+        print(json.dumps(receipt))
+        if (out / 'browser.log').exists():
+            print('\n'.join((out / 'browser.log').read_text(encoding='utf-8').splitlines()[-14:]))
+raise SystemExit(code or int(receipt['temporary_server_listening']))

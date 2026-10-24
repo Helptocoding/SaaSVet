@@ -1,0 +1,63 @@
+{
+  "label": "directed",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261011-r7/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011-r7/venv/bin/python",
+    "-B",
+    "-m",
+    "apps.agent.tests.run_b9a_acceptance",
+    "--suite",
+    "targeted",
+    "--database",
+    "test_b8b_b9i_directed",
+    "--ids-file",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r7/directed-selected.json",
+    "--output",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r7/blocks/directed"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261011-r7/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-12T04:30:36Z",
+      "physical_available": 7554666496,
+      "physical_total": 8252514304,
+      "disk_available": 4168253440,
+      "linux_virtual_disk_available": 1017049993216
+    },
+    "host": {
+      "utc": "2026-10-12T04:30:35Z",
+      "physical_total": 17031217152,
+      "physical_available": 5528334336,
+      "page_available": 6838624256,
+      "utc_epoch_seconds": 1791779435.5338106,
+      "observer_pid": 53388
+    },
+    "ready": true
+  },
+  "pid": 1444,
+  "exit_code": 0,
+  "seconds": 1176.5185294070002,
+  "invalidating_incident": null,
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-12T04:50:12Z",
+      "physical_available": 7525486592,
+      "physical_total": 8252514304,
+      "disk_available": 4159913984,
+      "linux_virtual_disk_available": 1016996425728
+    },
+    "host": {
+      "utc": "2026-10-12T04:50:12Z",
+      "physical_total": 17031217152,
+      "physical_available": 5998411776,
+      "page_available": 6532399104,
+      "utc_epoch_seconds": 1791780612.5676668,
+      "observer_pid": 53388
+    }
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "state": "PASS",
+  "utc": "2026-10-20T00:33:51Z",
+  "inputs": {
+    "state": "PASS",
+    "candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+    "candidate_files": 3332,
+    "source_candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+    "fixture_clock_equivalence": {
+      "original_sha256": "1c1bbded0782ac4cbfc671cefdfee27365571c05c6172a67b5804002b681838f",
+      "corrected_sha256": "b386adb26db5ee4ee5e6cffa1367ad13dbbed891e5e4f14d7ffd21bd3f23b118",
+      "source_git_blob": "19eadab2cdea2bd9b221d27387ebad1cc3e0276e",
+      "accepted_git_blob": "0933ea88307421cd623d3dbe850bbd26ce99c5af",
+      "source_bytes": 11578,
+      "accepted_bytes": 11782,
+      "body_AST_identical": true,
+      "all_test_ids_identical": true,
+      "state": "PASS",
+      "source_candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+      "accepted_candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+      "allowed_path": "backend/apps/notifications/tests/test_notifications.py",
+      "patch_sha256": "e17f24b962a1f5ce288c8932a1b5eed8a9e81efa4da6f7dd7b91ea8a476c36b8",
+      "authorization_sha256": "6a535723db1f9e59b4ac5d25ea9b7ad609ef425d783725eea0f724f68a4064a2",
+      "candidate_input_sha256": "addcc4d7ba3a5798afb7d75873bd4d1139eff3d840e00e1db6837a053c621c56",
+      "authorization": "fixture-clock-authorization.json",
+      "unaffected_selected_test_counts": {
+        "directed": 87,
+        "b0": 17,
+        "b3": 42,
+        "b4": 68,
+        "b5": 37,
+        "full-b8b": 21,
+        "full-b8c": 41,
+        "full-b8d": 27,
+        "full-b8e": 29
+      },
+      "other_git_blobs_identical": 3331,
+      "mechanism": "Only the unselected method receives a scoped clock mock; imports do not activate it",
+      "original_error_preserved": true,
+      "complete_general_rerun_required": true
+    },
+    "candidate_files_sha256": "389b50710fab88e56f474b825952634a2541403bce61ad600725f03449d5f686",
+    "python_files": 10083,
+    "python_files_sha256": "b72217ec4a6302010d9df29cfa4f76382cb3114d8e223fba89b26d8fdf6faecd",
+    "required_pins": 34,
+    "requirements_sha256": "9d234a99a1513773616f5b68143707dad3ab04193184fd54c848e5391cebda7a",
+    "configuration_port_normalized_sha256": "edc669a98bf026560092ccc29fcc39d0366455d7590f4e4e1f56cc46b22ae659",
+    "postgresql_configuration_port_normalized": {
+      "postgresql.conf": "b9c039cb7e18f7f7990a9be6dad983c45457640ccfaaef3b380805bcfc19a942",
+      "pg_hba.conf": "26ea6ac3fda1f9c542b2858643a854a716d488fe7eab3c9969d96e0baf0a0658"
+    },
+    "allowed_equivalences": [
+      "Private workspace relocation",
+      "Private loopback PostgreSQL port"
+    ],
+    "platform": "Windows native",
+    "backend_only": true,
+    "frontend_dependencies_reused": false,
+    "frontend_metadata_equivalence_proven": false,
+    "historical_frontend_modules_metadata_hashes": {
+      "b9-correction-20261016-native-r3": {
+        "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\src\\frontend\\node_modules\\.modules.yaml": "b7533ec6fbe7ed839edb4f67485f4d3e505fb36b283853478aa99456ac6c820a",
+        "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r3\\pnpm\\package\\dist\\node_modules\\.modules.yaml": "1efb25167e71e3e08240ac3db4400e9faf9647d5a3c4dc964bd140339931cc4e"
+      },
+      "b9-correction-20261016-native-r4": {
+        "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r4\\src\\frontend\\node_modules\\.modules.yaml": "8f1f4ffb9ae32c61520cc8f6509f9079c7dadbce0ff516b1a58c614331fde322",
+        "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r4\\pnpm\\package\\dist\\node_modules\\.modules.yaml": "1efb25167e71e3e08240ac3db4400e9faf9647d5a3c4dc964bd140339931cc4e"
+      },
+      "b9-correction-20261017-native-r5": {
+        "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\src\\frontend\\node_modules\\.modules.yaml": "58735af508b8ff271f5b7ed045ca68175ebab4aed9589b4131f16b8cca013784",
+        "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r5\\pnpm\\package\\dist\\node_modules\\.modules.yaml": "1efb25167e71e3e08240ac3db4400e9faf9647d5a3c4dc964bd140339931cc4e"
+      }
+    },
+    "frontend_policy": "All frontend blocks run in the current environment"
+  },
+  "blocks": {
+    "b0": {
+      "state": "PASS",
+      "tests": 17,
+      "monitor_samples": 198,
+      "minimum_ram_bytes": 5617946624,
+      "minimum_disk_bytes": 14808444928,
+      "maximum_clock_skew_seconds": 4.100264868611703e-05
+    },
+    "b3": {
+      "state": "PASS",
+      "tests": 42,
+      "monitor_samples": 466,
+      "minimum_ram_bytes": 5284839424,
+      "minimum_disk_bytes": 14785724416,
+      "maximum_clock_skew_seconds": 0.006127979367192893
+    },
+    "b4": {
+      "state": "PASS",
+      "tests": 68,
+      "monitor_samples": 1463,
+      "minimum_ram_bytes": 5433311232,
+      "minimum_disk_bytes": 14775357440,
+      "maximum_clock_skew_seconds": 0.00011000564882124308
+    },
+    "b5": {
+      "state": "PASS",
+      "tests": 37,
+      "monitor_samples": 509,
+      "minimum_ram_bytes": 5558669312,
+      "minimum_disk_bytes": 14754557952,
+      "maximum_clock_skew_seconds": 6.849735382274957e-05
+    },
+    "full-b8b": {
+      "state": "PASS",
+      "tests": 21,
+      "monitor_samples": 964,
+      "minimum_ram_bytes": 5733941248,
+      "minimum_disk_bytes": 14739746816,
+      "maximum_clock_skew_seconds": 0.0021924471184320282
+    },
+    "full-b8c": {
+      "state": "PASS",
+      "tests": 41,
+      "monitor_samples": 1429,
+      "minimum_ram_bytes": 5867180032,
+      "minimum_disk_bytes": 14734589952,
+      "maximum_clock_skew_seconds": 0.0023725011542410357
+    },
+    "directed": {
+      "state": "PASS",
+      "tests": 87,
+      "monitor_samples": 1804,
+      "minimum_ram_bytes": 6270443520,
+      "minimum_disk_bytes": 9168125952,
+      "maximum_clock_skew_seconds": 0.0014758676911696966
+    },
+    "django-check": {
+      "state": "PASS",
+      "tests": 0,
+      "monitor_samples": 15,
+      "minimum_ram_bytes": 6873182208,
+      "minimum_disk_bytes": 9004724224,
+      "maximum_clock_skew_seconds": 1.640081791265402e-06
+    },
+    "migration-drift": {
+      "state": "PASS",
+      "tests": 0,
+      "monitor_samples": 17,
+      "minimum_ram_bytes": 7215046656,
+      "minimum_disk_bytes": 9001132032,
+      "maximum_clock_skew_seconds": 1.0263488547934685e-06
+    },
+    "migrate": {
+      "state": "PASS",
+      "tests": 0,
+      "monitor_samples": 240,
+      "minimum_ram_bytes": 6717423616,
+      "minimum_disk_bytes": 8984047616,
+      "maximum_clock_skew_seconds": 9.341243276139721e-05
+    },
+    "billing-schema": {
+      "state": "PASS",
+      "tests": 0,
+      "monitor_samples": 15,
+      "minimum_ram_bytes": 6987702272,
+      "minimum_disk_bytes": 8982327296,
+      "maximum_clock_skew_seconds": 1.2948667063028552e-06
+    },
+    "full-b8d": {
+      "state": "PASS",
+      "tests": 27,
+      "monitor_samples": 1146,
+      "minimum_ram_bytes": 4302200832,
+      "minimum_disk_bytes": 12362240000,
+      "maximum_clock_skew_seconds": 0.030151577237120364
+    },
+    "full-b8e": {
+      "state": "PASS",
+      "tests": 29,
+      "monitor_samples": 1244,
+      "minimum_ram_bytes": 5619384320,
+      "minimum_disk_bytes": 12353081344,
+      "maximum_clock_skew_seconds": 0.02715336652181577
+    }
+  },
+  "reused_gate_count": 13,
+  "reused_unique_ids": 369,
+  "reused_full_ids": 118,
+  "continuous_campaign": false,
+  "application_tests_executed_by_validation": false,
+  "history_preserved": "r3 full-b8d/r4 B0 interruptions and the r5 general fixture ERROR plus awake interruption remain visible; no FAIL is replaced"
+}

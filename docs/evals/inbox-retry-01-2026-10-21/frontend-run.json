@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "src/pages/inbox/index.retry.test.jsx",
+    "src/api/inbox.test.js",
+    "--testNamePattern=WA-RETRY-01|aplica el cap global|WA-GRP-01|el poll conserva p\u00e1ginas anteriores",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-retry-01-2026-10-21\\vitest.json"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "state": "NEW_CAMPAIGN_NOT_STARTED",
+  "primary_observed_blocker": "Backing volume dropped below 1 GiB",
+  "additional_limits": "Unexpected host restart, three invalid JSON receipts, missing graceful monitor closures",
+  "root_cause_of_space_drop_or_restart": "NOT_ESTABLISHED",
+  "requirements_before_a_separately_authorized_new_campaign": [
+    "A backing volume with stable free space above 1 GiB throughout the fixed run, with preparation and fluctuation margin",
+    "Host continuity and new preflight; preserve memory/clock/awake guards and exact candidate/locks",
+    "Inspect retained FAIL/ERROR IDs in a separately authorized diagnostic task; do not convert them to PASS or exclude them"
+  ],
+  "formal_rerun_performed": false,
+  "threshold_changes": false,
+  "product_or_test_fixes": false
+}

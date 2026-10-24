@@ -1,0 +1,27 @@
+{
+  "state": "COMPLETED",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261011-r8/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011-r8/venv/bin/python",
+    "-m",
+    "pip",
+    "install",
+    "--prefix",
+    "/home/lap/b9i-wsl-1947726-20261011-r8/python/cpython-3.13.2-linux-x86_64-gnu",
+    "--ignore-installed",
+    "--no-cache-dir",
+    "-r",
+    "/home/lap/b9i-wsl-1947726-20261011-r8/src/backend/requirements.lock"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261011-r8",
+  "exit_code": 0,
+  "seconds": 49.82626515700002,
+  "resources_after": {
+    "utc": "2026-10-12T05:31:54Z",
+    "physical_available": 7709609984,
+    "physical_total": 8252514304,
+    "disk_available": 4088582144,
+    "linux_virtual_disk_available": 1018292326400
+  }
+}

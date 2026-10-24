@@ -1,0 +1,36 @@
+{
+  "state": "COMPLETED",
+  "formal_run_number": 1,
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.EXE",
+    "proxy",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\runtime\\b9\\node-v20.20.2-win-x64\\node.exe",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\runtime\\b9\\pnpm\\package\\bin\\pnpm.cjs",
+    "audit",
+    "--json"
+  ],
+  "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-readiness-2026-10-22\\runtime\\b9\\src\\frontend",
+  "advisory": true,
+  "resources_before": {
+    "utc": "2026-10-23T03:30:31Z",
+    "utc_epoch_seconds": 1792726231.0988276,
+    "physical_total": 17031217152,
+    "physical_available": 3027038208,
+    "page_available": 3713839104,
+    "disk_available": 17925169152,
+    "platform": "Windows native"
+  },
+  "owned_wrapper_pid": 52880,
+  "exit_code": 1,
+  "seconds": 20.48397770000156,
+  "invalidating_incident": null,
+  "resources_after": {
+    "utc": "2026-10-23T03:30:51Z",
+    "utc_epoch_seconds": 1792726251.6087294,
+    "physical_total": 17031217152,
+    "physical_available": 3373006848,
+    "page_available": 3706781696,
+    "disk_available": 7707217920,
+    "platform": "Windows native"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "step": "postgres-packages",
+  "state": "COMPLETED",
+  "argv": [
+    "rtk",
+    "proxy",
+    "wsl.exe",
+    "-d",
+    "Ubuntu-24.04",
+    "--exec",
+    "/usr/bin/python3",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r6/prepare_wsl.py",
+    "postgres-packages"
+  ],
+  "utc_started": "2026-10-12T03:31:17Z",
+  "exit_code": 0,
+  "seconds": 8.53330619999906
+}

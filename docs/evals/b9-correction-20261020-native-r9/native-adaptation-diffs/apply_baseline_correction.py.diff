@@ -1,0 +1,133 @@
+--- native-r8/apply_baseline_correction.py
++++ native/apply_baseline_correction.py
+@@ -0,0 +1,130 @@
++"""Apply only the reviewed baseline tuple expressly authorized after the r8 FAIL."""
++import ast
++import difflib
++import hashlib
++import json
++import os
++from pathlib import Path
++import subprocess
++import time
++
++HERE = Path(__file__).resolve().parent
++REPO = HERE.parents[2]
++PRIOR = HERE.with_name('b9-correction-20261020-native-r8')
++OLD_TREE = '5e11236daabf4ef70ea9d0f08fee52aed5c30ff2'
++TARGET = 'backend/apps/core/tests/test_tenant_scoping_audit.py'
++RTK = 'C:/Users/LAP/.local/bin/rtk.exe'
++ENTRY = ('agent', 'services.py', 'TurnWork', 'filter')
++
++
++def sha(raw):
++    return hashlib.sha256(raw).hexdigest()
++
++
++def save(name, data):
++    path = HERE / name
++    assert not path.exists(), path
++    path.parent.mkdir(parents=True, exist_ok=True)
++    with path.open('x', encoding='utf-8', newline='\n') as stream:
++        json.dump(data, stream, indent=2, ensure_ascii=False)
++        stream.write('\n')
++
++
++def run(*args, env=None):
++    return subprocess.check_output([RTK, 'proxy', 'git', *map(str, args)], cwd=REPO,
++        env=env or os.environ.copy(), stderr=subprocess.STDOUT,
++        creationflags=subprocess.CREATE_NO_WINDOW)
++
++
++def main():
++    assert not (HERE / 'candidate.json').exists()
++    proposal = PRIOR / 'diagnostics/tenant-audit-proposal'
++    analysis = json.loads((proposal / 'analysis.json').read_text(encoding='utf-8'))
++    patch = (proposal / 'baseline-correction.diff').read_bytes()
++    assert sha(patch) == analysis['patch_sha256'] == '483810b0b9474e9683316d33622480319d1e08f12a2cd66337a22482505e4aa3'
++    path = REPO / TARGET
++    raw = path.read_bytes()
++    resuming_preparation = (HERE / 'index-before-baseline-correction.json').exists()
++    if resuming_preparation:
++        assert sha(raw.replace(b'\r\n', b'\n')) == analysis['proposed_canonical_lf_sha256']
++        before = run('show', OLD_TREE + ':' + TARGET)
++    else:
++        before = raw.replace(b'\r\n', b'\n')
++    assert sha(before) == analysis['original_canonical_lf_sha256']
++    assert before == run('show', OLD_TREE + ':' + TARGET)
++    source = before.decode('utf-8')
++    addition = (
++        '    # Revisado en B9: B3 introdujo los dos checks de TurnWork en\n'
++        '    # services._capture_witness y services._apply_release. Ambos filtran por\n'
++        '    # conversation=convo bajo lock; la vista resuelve ese padre con\n'
++        '    # Conversation.objects.for_organization(request.user.organization).\n'
++        '    # Es scoping por FK padre tenant-validado, no una lectura cross-org.\n'
++        "    ('agent', 'services.py', 'TurnWork', 'filter'),\n")
++    assert source.count('BASELINE = {\n') == 1
++    corrected = source.replace('BASELINE = {\n', 'BASELINE = {\n' + addition).encode('utf-8')
++    assert sha(corrected) == analysis['proposed_canonical_lf_sha256'] == '49c17280e8bd20be2d0f13ee9cfe51b665bd5cbb1b45bdd3f957cb3b502e631a'
++    exact_diff = ''.join(difflib.unified_diff(source.splitlines(True), corrected.decode().splitlines(True),
++        fromfile='a/' + TARGET, tofile='b/' + TARGET)).encode('utf-8')
++    assert exact_diff == patch
++    old_ast, new_ast = ast.parse(source), ast.parse(corrected.decode())
++    old_set = next(n.value for n in old_ast.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'BASELINE' for t in n.targets))
++    new_set = next(n.value for n in new_ast.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'BASELINE' for t in n.targets))
++    assert isinstance(old_set, ast.Set) and isinstance(new_set, ast.Set)
++    assert len(old_set.elts) == 23 and len(new_set.elts) == 24
++    assert ENTRY not in ast.literal_eval(old_set) and ast.literal_eval(new_set) - ast.literal_eval(old_set) == {ENTRY}
++    new_set.elts = [e for e in new_set.elts if ast.literal_eval(e) != ENTRY]
++    assert ast.dump(old_ast, include_attributes=False) == ast.dump(new_ast, include_attributes=False)
++    if not resuming_preparation:
++        staged = run('ls-files', '--stage', '-z')
++        save('index-before-baseline-correction.json', {'raw_staged_sha256': sha(staged),
++            'head': run('rev-parse', 'HEAD').decode().strip(), 'branch': run('branch', '--show-current').decode().strip()})
++        path.write_bytes(corrected.replace(b'\n', b'\r\n') if b'\r\n' in raw else corrected)
++        run('add', '--', TARGET)
++    assert run('show', ':' + TARGET) == corrected
++    index = HERE / 'candidate-only.index'
++    assert resuming_preparation or not index.exists()
++    env = os.environ.copy()
++    env['GIT_INDEX_FILE'] = str(index.resolve())
++    run('read-tree', OLD_TREE, env=env)
++    # Git may emit an autocrlf warning before its hash when stderr is retained.
++    blob = run('hash-object', '-w', '--', TARGET).decode().strip().splitlines()[-1]
++    assert len(blob) == 40 and all(ch in '0123456789abcdef' for ch in blob)
++    run('update-index', '--add', '--cacheinfo', '100644,' + blob + ',' + TARGET, env=env)
++    candidate = run('write-tree', env=env).decode().strip()
++    assert run('diff', '--name-only', OLD_TREE, candidate).decode().splitlines() == [TARGET]
++    base = '194772677ca4e9fe1a1dec7f4dafa48396a6c583'
++    changed = run('diff', '--name-only', base, candidate).decode().splitlines()
++    (HERE / 'baseline-correction.diff').write_bytes(patch)
++    (HERE / 'baseline-proposal-analysis.json').write_bytes((proposal / 'analysis.json').read_bytes())
++    (HERE / 'correction.diff').write_bytes(run('diff', base, candidate, '--', *changed))
++    save('baseline-resumption-authorization.json', {'state': 'USER_AUTHORIZED_BEFORE_FORMAL_SEAL',
++        'user_answer': 'Sí, corregir ese baseline y continuar sin repetir PASS',
++        'recorded_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
++        'previous_candidate_tree': OLD_TREE, 'candidate_tree': candidate, 'allowed_path': TARGET,
++        'patch_sha256': sha(patch), 'retained_general_PASS': 3200, 'retained_expected_SKIPs': 12,
++        'new_missing_ids': 0, 'corrected_FAILED_ids': 1, 'historical_FAILED_attempts': 3,
++        'all_old_FAILs_preserved': True, 'accepted_historical_evidence_limitation': True,
++        'product_runtime_locks_changed': False, 'no_PASS_reruns': True,
++        'all_new_guards_and_remaining_original_stages_required': True,
++        'runtime_reuse_authorized_to_avoid_reinstallation': True,
++        'commits_push_deploy_activation_authorized': False})
++    save('candidate.json', {'base_commit': base, 'candidate_tree': candidate,
++        'previous_candidate_tree': OLD_TREE, 'changed_paths': changed, 'only_new_change': TARGET,
++        'commits_created': 0, 'pushes_performed': 0, 'authorization': 'baseline-resumption-authorization.json'})
++    save('baseline-equivalence.json', {'state': 'PASS', 'previous_candidate_tree': OLD_TREE,
++        'candidate_tree': candidate, 'allowed_path': TARGET, 'original_sha256': sha(before),
++        'corrected_sha256': sha(corrected), 'original_git_blob': run('rev-parse', OLD_TREE + ':' + TARGET).decode().strip(),
++        'corrected_git_blob': blob, 'original_bytes': len(before), 'corrected_bytes': len(corrected),
++        'patch_sha256': sha(patch), 'only_one_reviewed_baseline_tuple_added_AST': True,
++        'all_other_AST_unchanged': True, 'scanner_assertions_exclusions_test_ids_imports_hooks_unchanged': True,
++        'all_other_3331_blobs_identical': True, 'all_old_FAILs_preserved': True,
++        'product_runtime_locks_changed': False, 'private_runtime_not_yet_updated': True})
++    save('temporary-candidate-index-retirement.json', {'state': 'PASS', 'path': str(index.resolve()),
++        'sha256_before_removal': sha(index.read_bytes()), 'candidate_tree': candidate,
++        'main_index_not_removed': True})
++    index.unlink()
++    print('BASELINE_CORRECTION_APPLIED_AND_STAGED', candidate, flush=True)
++
++
++if __name__ == '__main__':
++    main()

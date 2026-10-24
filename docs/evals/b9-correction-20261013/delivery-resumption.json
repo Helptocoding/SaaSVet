@@ -1,0 +1,17 @@
+{
+  "cause": "git diff --cached --check reported whitespace in empty context lines of two preserved correction.diff artifacts",
+  "initial_packager_exit_code": 1,
+  "affected_paths": [
+    "correction.diff",
+    "focused/attempt1/correction.diff"
+  ],
+  "remediation": "Only path-specific .gitattributes blank-at-eol handling; original diff bytes preserved",
+  "archive_rebuilt": false,
+  "formal_campaign_rerun": false,
+  "sealed_evaluator_changed": false,
+  "archive_sha256": "59f402fbf4dc7bde7321132b1a0c7928236dde724f0d836d7cb814e3333d7ed4",
+  "supplemental_completion_paths_outside_archive": [
+    "diagnostics/resume_delivery.py",
+    "delivery-resumption.json"
+  ]
+}

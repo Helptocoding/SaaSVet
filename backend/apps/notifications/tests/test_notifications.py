@@ -1,5 +1,6 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -175,7 +176,11 @@ class DerivedFeedTests(NotificationsSetupMixin, TestCase):
             reason='Control', status=status,
         )
 
-    def test_upcoming_window(self):
+    @patch(
+        'django.utils.timezone.now',
+        return_value=datetime(2026, 10, 17, 12, 0, tzinfo=dt_timezone.utc),
+    )
+    def test_upcoming_window(self, _now):
         now = timezone.now()
         self._make_appointment(now + timedelta(minutes=10))
         self._make_appointment(now + timedelta(hours=5))

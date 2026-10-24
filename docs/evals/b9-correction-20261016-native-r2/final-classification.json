@@ -1,0 +1,52 @@
+{
+  "decision": "PENDING",
+  "cause": "La reserva de disco C: cayo por debajo de 1 GiB durante B5. El controlador detuvo su arbol propio; B5 conserva 34/37 PASS parciales sin FAIL/ERROR registrados, ocho gates previos PASS y el resto NOT_EXECUTED. La aceptacion integral sigue pendiente por interrupcion ambiental; no se acredita un fallo de producto ni OOM.",
+  "date_local": "2026-10-16",
+  "classified_utc": "2026-10-16T08:07:47Z",
+  "classification": "ENVIRONMENT_DISK_RESERVE_EXHAUSTED",
+  "phase": "b5",
+  "evidence": [
+    "STOP.json",
+    "blocks/b5.command.json",
+    "blocks/b5.ids.jsonl",
+    "monitor-b5.json",
+    "invocation-formal.json"
+  ],
+  "formal_invocations": 1,
+  "formal_reruns": 0,
+  "completed_gates": {
+    "b0": "PASS",
+    "b3": "PASS",
+    "b4": "PASS",
+    "billing-schema": "PASS",
+    "directed": "PASS",
+    "django-check": "PASS",
+    "migrate": "PASS",
+    "migration-drift": "PASS"
+  },
+  "interrupted_suite": {
+    "selected_ids": 37,
+    "observed_unique_ids": 34,
+    "outcomes": {
+      "PASS": 34
+    },
+    "missing_ids": [
+      "apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_01_process_killed_after_detection",
+      "apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_02_process_killed_after_case_before_output",
+      "apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_05_safety_worker_vs_human_takeover"
+    ],
+    "complete_gate": false
+  },
+  "resource_evidence": {
+    "disk_reserve_bytes": 1073741824,
+    "ram_reserve_bytes": 2147483648,
+    "disk_bytes_after_stop": 960815104,
+    "minimum_ram_bytes_during_commands": 4187430912,
+    "minimum_disk_bytes_during_commands": 1034018816,
+    "maximum_clock_skew_seconds_during_commands": 0.004133659756917041
+  },
+  "product_failure_established": false,
+  "oom_established": false,
+  "wsl_invoked": false,
+  "later_blocks_executed": false
+}

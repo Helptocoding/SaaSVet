@@ -1,0 +1,24 @@
+{
+  "state": "COMPLETED",
+  "argv": [
+    "/home/lap/b9i-diagnostic-1947726-20261013-d1/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-diagnostic-1947726-20261013-d1/pgroot/usr/lib/postgresql/16/bin/pg_ctl",
+    "-D",
+    "/home/lap/b9i-diagnostic-1947726-20261013-d1/pgdata",
+    "-m",
+    "fast",
+    "-w",
+    "stop"
+  ],
+  "cwd": "/home/lap/b9i-diagnostic-1947726-20261013-d1",
+  "exit_code": 0,
+  "seconds": 0.48313384899995526,
+  "resources_after": {
+    "utc": "2026-10-14T04:54:29Z",
+    "physical_available": 7669309440,
+    "physical_total": 8252514304,
+    "disk_available": 10352336896,
+    "linux_virtual_disk_available": 1018181259264
+  }
+}

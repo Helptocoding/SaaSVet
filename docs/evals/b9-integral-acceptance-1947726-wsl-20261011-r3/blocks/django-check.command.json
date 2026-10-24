@@ -1,0 +1,51 @@
+{
+  "label": "django-check",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261011-r3/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011-r3/venv/bin/python",
+    "-B",
+    "manage.py",
+    "check"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261011-r3/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-12T01:43:15Z",
+      "physical_available": 7534383104,
+      "physical_total": 8252514304,
+      "disk_available": 4451938304,
+      "linux_virtual_disk_available": 1017133187072
+    },
+    "host": {
+      "utc": "2026-10-12T01:43:16Z",
+      "physical_total": 17031217152,
+      "physical_available": 6243618816,
+      "page_available": 8479260672
+    },
+    "ready": true
+  },
+  "pid": 2125,
+  "exit_code": 0,
+  "seconds": 3.028934023999682,
+  "invalidating_incident": null,
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-12T01:43:19Z",
+      "physical_available": 7528660992,
+      "physical_total": 8252514304,
+      "disk_available": 4451790848,
+      "linux_virtual_disk_available": 1017133187072
+    },
+    "host": {
+      "utc": "2026-10-12T01:43:19Z",
+      "physical_total": 17031217152,
+      "physical_available": 6246948864,
+      "page_available": 8475811840
+    }
+  }
+}

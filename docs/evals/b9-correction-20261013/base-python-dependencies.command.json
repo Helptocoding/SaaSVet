@@ -1,0 +1,27 @@
+{
+  "state": "COMPLETED",
+  "argv": [
+    "/home/lap/b9i-correction-20261013/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-correction-20261013/venv/bin/python",
+    "-m",
+    "pip",
+    "install",
+    "--prefix",
+    "/home/lap/b9i-correction-20261013/python/cpython-3.13.2-linux-x86_64-gnu",
+    "--ignore-installed",
+    "--no-cache-dir",
+    "-r",
+    "/home/lap/b9i-correction-20261013/src/backend/requirements.lock"
+  ],
+  "cwd": "/home/lap/b9i-correction-20261013",
+  "exit_code": 0,
+  "seconds": 28.09807798899999,
+  "resources_after": {
+    "utc": "2026-10-14T05:12:00Z",
+    "physical_available": 7391830016,
+    "physical_total": 8252518400,
+    "disk_available": 10052763648,
+    "linux_virtual_disk_available": 1018329800704
+  }
+}

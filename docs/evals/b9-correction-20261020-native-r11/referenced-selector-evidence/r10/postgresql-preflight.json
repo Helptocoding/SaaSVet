@@ -1,0 +1,24 @@
+{
+  "state": "PASS",
+  "values": [
+    "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+    "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/pgdata",
+    "on",
+    "on",
+    "on"
+  ],
+  "port": 35490,
+  "postmaster_pid": 27812,
+  "private_cluster": true,
+  "existing_databases": [
+    "postgres",
+    "template0",
+    "template1",
+    "test_b9i_control",
+    "test_b9i_full_general",
+    "test_b9i_full_general_remainder"
+  ],
+  "fresh_remainder_database_absent": true,
+  "fresh_remainder_database": "test_b9i_full_general_remainder_r10",
+  "previous_cluster_retired": true
+}

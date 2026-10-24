@@ -1,0 +1,201 @@
+{
+  "directed": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 1508.2193794999994,
+    "formal_runs": 1,
+    "invalidating_incident": null,
+    "tests": 87,
+    "outcomes": {
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "xpass": null
+    },
+    "failed_ids": []
+  },
+  "django-check": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 12.158063800000491,
+    "formal_runs": 1,
+    "invalidating_incident": null
+  },
+  "migration-drift": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 14.204956199999287,
+    "formal_runs": 1,
+    "invalidating_incident": null
+  },
+  "migrate": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 195.5976152000003,
+    "formal_runs": 1,
+    "invalidating_incident": null
+  },
+  "billing-schema": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 12.219037200000457,
+    "formal_runs": 1,
+    "invalidating_incident": null
+  },
+  "b0": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 226.86772459999884,
+    "formal_runs": 1,
+    "invalidating_incident": null,
+    "tests": 17,
+    "outcomes": {
+      "failures": 0,
+      "errors": 0,
+      "skips": [],
+      "xfail": 0,
+      "xpass": 0
+    },
+    "failed_ids": []
+  },
+  "b3": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 493.46426559999964,
+    "formal_runs": 1,
+    "invalidating_incident": null,
+    "tests": 42,
+    "outcomes": {
+      "failures": 0,
+      "errors": 0,
+      "skips": [],
+      "xfail": 0,
+      "xpass": 0
+    },
+    "failed_ids": []
+  },
+  "b4": {
+    "state": "PASS",
+    "exit_code": 0,
+    "seconds": 1598.4681784000004,
+    "formal_runs": 1,
+    "invalidating_incident": null,
+    "tests": 68,
+    "outcomes": {
+      "failures": 0,
+      "errors": 0,
+      "skips": [],
+      "xfail": 0,
+      "xpass": 0
+    },
+    "failed_ids": []
+  },
+  "b5": {
+    "state": "PENDING_ENVIRONMENT_INTERRUPTION",
+    "exit_code": 1,
+    "seconds": 673.6232229999987,
+    "formal_runs": 1,
+    "invalidating_incident": "Backing disk reserve exhausted",
+    "partial_journal": {
+      "path": "blocks/b5.ids.jsonl",
+      "journal_present": true,
+      "journal_scope": "ALL_RECORDED_OUTCOMES",
+      "observations": 34,
+      "outcomes": {
+        "PASS": 34
+      },
+      "skips": [],
+      "unique_ids": 34,
+      "selected_ids": 37,
+      "missing_ids": [
+        "apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_01_process_killed_after_detection",
+        "apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_02_process_killed_after_case_before_output",
+        "apps.agent.tests.test_b5_processes.B5ProcessTests.test_safe_fi_05_safety_worker_vs_human_takeover"
+      ],
+      "complete_suite_receipt": false,
+      "accepted_as_complete_gate": false
+    }
+  },
+  "full-b8b": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8c": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8d": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-b8e": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full-general": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "full": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0,
+    "logical_aggregate": true,
+    "groups": [
+      "full-b8b",
+      "full-b8c",
+      "full-b8d",
+      "full-b8e",
+      "full-general"
+    ],
+    "seconds": 0
+  },
+  "frontend-build": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "frontend-test": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "frontend-lint": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "frontend-smoke-urls": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "security": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "pip-audit": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "pnpm-audit": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-base": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-blocked_llm": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-meta_slow": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-duplicate": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  },
+  "profile-saturation": {
+    "state": "NOT_EXECUTED",
+    "formal_runs": 0
+  }
+}

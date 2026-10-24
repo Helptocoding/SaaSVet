@@ -1,0 +1,86 @@
+{
+  "state": "PROPOSAL_ONLY_NOT_APPLIED",
+  "application_tests_executed": false,
+  "application_services_changed": false,
+  "sealed_files_modified": false,
+  "source_file": "frontend/src/pages/inbox/index.test.jsx",
+  "test_title": "un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto",
+  "test_declaration_line": 311,
+  "source_worktree_sha256": "a3bcde7929301b8ecef4de0be151dc020bf48bd766165190a91119375bcef6df",
+  "original_canonical_lf_sha256": "8a98f6857430d5dee656e3b3ddc57a1bcecfd1f98a3c28f72cd328681d03961f",
+  "proposed_canonical_lf_sha256": "21de54d2d3d1b1ad629b76aca48242249c22889c1cfb0962cabc529956a2ecd2",
+  "proposed_worktree_crlf_sha256": "6d78b8482c94652f4cf772a6cb7e2fb5e217b707c21442466fdd68a5ebff51f7",
+  "patch_sha256": "3d94186cda394428dc02e633b6b8d7478a3ad3b07382b5970645fcd0fdea1bf9",
+  "substitutions": [
+    {
+      "before": "await user.type(firstComposer, \"Texto idéntico, intención nueva\");",
+      "after": "fireEvent.change(firstComposer, { target: { value: \"Texto idéntico, intención nueva\" } });"
+    },
+    {
+      "before": "await user.type(returnedComposer, \"Texto idéntico, intención nueva\");",
+      "after": "fireEvent.change(returnedComposer, { target: { value: \"Texto idéntico, intención nueva\" } });"
+    }
+  ],
+  "normalized_complete_module_AST_identical": true,
+  "exactly_two_awaited_user_type_statements_replaced": true,
+  "test_expect_calls": 8,
+  "parser": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend\\node_modules\\@babel\\parser\\lib\\index.js",
+  "parser_sha256": "201724d1415df7749087d9d6e88af50f2bcafe2eb68dfbe9347f49d3361ff426",
+  "ignored_AST_position_metadata": [
+    "start",
+    "end",
+    "loc",
+    "trailingComma"
+  ],
+  "assertions_imports_timeouts_test_ids_clicks_navigation_promises_confirmations_unchanged": true,
+  "source_and_private_candidate_unchanged": true,
+  "source_evidence": {
+    "frontend/src/pages/inbox/index.test.jsx": {
+      "canonical_lf_sha256": "8a98f6857430d5dee656e3b3ddc57a1bcecfd1f98a3c28f72cd328681d03961f",
+      "private_candidate_identical": true
+    },
+    "frontend/src/pages/inbox/index.jsx": {
+      "canonical_lf_sha256": "b445ea2a96f53d4814fc793aec15bce8330e205ff37410d50f7ac8fa8b900ab1",
+      "private_candidate_identical": true
+    },
+    "frontend/vite.config.js": {
+      "canonical_lf_sha256": "6890f7aca22e09f15aa5d7f2150e08f5014e00147683e3d6a49587480f581f64",
+      "private_candidate_identical": true
+    }
+  },
+  "failure": {
+    "classification": "VITEST_TEST_TIMEOUT_NO_EXPECTATION_FAILURE_SHOWN",
+    "test_timeout_ms": 5000,
+    "duration_ms": 5058.328600000001,
+    "command_exit_code": 1,
+    "invalidating_incident": null,
+    "tests_total": 355,
+    "tests_passed": 354,
+    "tests_failed": 1,
+    "failure_messages": [
+      "Error: STACK_TRACE_ERROR\n    at task (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1784:27)\n    at Object.<anonymous> (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1817:16)\n    at Object.<anonymous> (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1563:28)\n    at chain (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:599:14)\n    at C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/src/pages/inbox/index.test.jsx:311:5\n    at file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1889:40\n    at runWithSuite (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:2258:8)\n    at Object.collect (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1889:10)\n    at Object.collect (file:///C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend/node_modules/@vitest/runner/dist/chunk-artifact.js:1893:54)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)"
+    ]
+  },
+  "resource_witness": {
+    "samples": 193,
+    "minimum_ram_bytes": 3388923904,
+    "minimum_disk_bytes": 8614379520,
+    "maximum_clock_skew_seconds": 0.004218669506371953
+  },
+  "rationale": "The case verifies late-success/new-draft isolation through A→B→A and a new key for the second send, not per-character keyboard behavior. Complete-value change events still invoke the real controlled textarea onChange and increment draft revision while all navigation, clicks, late Promise resolution and expectations remain.",
+  "avoided_character_input_events": 62,
+  "real_controlled_onChange_source": "onChange={(e) => {\n                                            draftRevisionRef.current += 1;\n                                            setBody(e.target.value);\n                                        }}",
+  "limitations": [
+    "This proposal does not establish PASS; a new execution is required.",
+    "The retained trace confirms Vitest testTimeout 5000ms but does not identify the exact await that exhausted it.",
+    "Resource guards were satisfied; this trace does not establish a product assertion regression.",
+    "fireEvent.change intentionally does not retain per-character keyboard simulation; the causal isolation scenario and all its exact checks remain.",
+    "The original 5000ms timeout and all expectations remain unchanged."
+  ],
+  "preserved_existing_evidence": {
+    "frontend_PASS": 354,
+    "backend_logical_full_ids": 3331,
+    "no_existing_PASS_reruns_authorized_by_this_proposal": true
+  },
+  "authorization": "NOT_AUTHORIZED_TO_APPLY; new explicit exception to the frozen candidate required before application/execution"
+}

@@ -1,0 +1,79 @@
+"""Create a new native campaign from the closed Windows preparation, without tests."""
+import ast
+import hashlib
+import json
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+PRIOR = HERE.with_name('b9-correction-20261015-native-r1')
+
+
+def main():
+    assert not (HERE / 'native_support.py').exists()
+    previous = json.loads((PRIOR / 'final-classification.json').read_text(encoding='utf-8'))
+    assert previous['classification'] == 'PENDING_DISK_RESERVE'
+    assert previous['formal_controller_invocations'] == 0
+    assert previous['application_tests_executed'] is False
+    assert json.loads((PRIOR / 'delivery-verification.json').read_text())['state'] == 'PASS'
+    copied = []
+    for source in [*sorted(PRIOR.glob('*.py')), PRIOR / 'diagnostics/close_acceptance.py']:
+        relative = source.relative_to(PRIOR)
+        target = HERE / relative
+        assert not target.exists()
+        text = source.read_text(encoding='utf-8')
+        for old, new in [
+            ('20261015-native-r1', '20261016-native-r2'),
+            ('b9-native-20261015-r1', 'b9-native-20261016-r2'),
+            ('native-20261015-r1', 'native-20261016-r2'),
+            ('2026-10-15', '2026-10-16'),
+            ('35485', '35486'),
+            ('nativo r1', 'nativo r2'), ('nativa r1', 'nativa r2')]:
+            text = text.replace(old, new)
+        if source.name == 'prepare_native.py':
+            text = text.replace("PRIOR = EVIDENCE.with_name('b9-correction-20261014-r4')",
+                "PRIOR = EVIDENCE.with_name('b9-correction-20261014-r4')\nNATIVE_PRIOR = EVIDENCE.with_name('b9-correction-20261015-native-r1')")
+            text = text.replace('El usuario autorizó «ok hazlo»', 'El usuario indicó «continua» para reanudar la alternativa autorizada')
+            text = text.replace("{'user': 'ok hazlo'", "{'user': 'continua'")
+            text = text.replace("'prior_campaign': PRIOR.name", "'prior_campaign': NATIVE_PRIOR.name")
+            text = text.replace("'PENDING_MEMORY_RESERVE'", "'PENDING_DISK_RESERVE'")
+            text = text.replace("source = (PRIOR / name).read_text(encoding='utf-8')",
+                                "source = (NATIVE_PRIOR / name).read_text(encoding='utf-8')")
+            start = text.index('\ndef continue_setup():')
+            end = text.index('\ndef assemble_native():', start)
+            text = text[:start] + '\n' + text[end:]
+            text = text.replace("'setup-continue': continue_setup, ", '')
+        elif source.name == 'capture_native.py':
+            text = text.replace("if step in ('setup', 'setup-continue'):", "if step == 'setup':")
+        elif source.name == 'run_campaign.py':
+            text = text.replace("'preparation-amendment.json'", "'resumption.json'")
+        elif source.name == 'finalize_preflight.py':
+            text = text.replace("prior = EVIDENCE.with_name('b9-correction-20261014-r4')",
+                "prior = EVIDENCE.with_name('b9-correction-20261015-native-r1')")
+            text = text.replace("fromfile='r4/'", "fromfile='native-r1/'")
+            text = text.replace("'preparation_incident': 'preparation-incident-setup.json',\n        'preparation_resolution': 'preparation-amendment.json',",
+                "'resumption_reference': 'resumption.json',\n        'previous_native_preparation': '../b9-correction-20261015-native-r1/native-preflight.json',")
+        ast.parse(text, filename=str(target))
+        compile(text, str(target), 'exec')
+        assert not any(line.rstrip() != line for line in text.splitlines()), relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding='utf-8', newline='\n')
+        copied.append({'path': relative.as_posix(),
+            'prior_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
+            'sha256': hashlib.sha256(target.read_bytes()).hexdigest()})
+    record = {'state': 'NEW_NATIVE_CAMPAIGN_PREPARATION', 'user': 'continua',
+        'date_local': '2026-10-16', 'previous_campaign': PRIOR.name,
+        'previous_decision': previous, 'prior_formal_results_transferred': False,
+        'candidate_tree': '196aceb4f5f234c086b96d8e8af93787613f3c25',
+        'tests_or_product_changes_authorized': False, 'wsl_invoked': False,
+        'new_workspace': 'C:/Users/LAP/AppData/Local/Temp/b9-native-20261016-r2',
+        'private_postgresql_port': 35486, 'copied_helpers': copied,
+        'adaptations': ['New evidence/workspace identity and local PostgreSQL port',
+            'Reuse final Windows-compatible helpers instead of the older WSL imports',
+            'Do not require an incident amendment from the previous closed preparation',
+            'Same candidate, inventory, partition, assertions, workloads and resource guards']}
+    (HERE / 'resumption.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8', newline='\n')
+    print('NATIVE_RESUMPTION_PREPARED', len(copied), flush=True)
+
+
+if __name__ == '__main__':
+    main()

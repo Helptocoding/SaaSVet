@@ -1,0 +1,4 @@
+Migrations for 'channels':
+  backend\apps\channels\migrations\0018_media_retention_policy.py
+    + Add field purge_verified_at to messagemedia
+    + Create model MediaPurgeIncident

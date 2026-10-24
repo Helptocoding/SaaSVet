@@ -1,0 +1,24 @@
+{
+  "kind": "retry",
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/ReplyQuote.test.jsx",
+    "src/pages/inbox/useThreadHistory.jump.test.jsx",
+    "src/pages/inbox/index.jump.test.jsx",
+    "-t",
+    "el rango operacional conserva durante el highlight",
+    "--maxWorkers=1",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-rpl-06-04-2026-10-22\\retry-hidden-highlight-vitest.json"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 45.43255449998833,
+  "working_database_migrated": false,
+  "vitest_report": "retry-hidden-highlight-vitest.json",
+  "passed": 1,
+  "failed": 0
+}

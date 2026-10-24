@@ -43,6 +43,7 @@ import threading
 from uuid import uuid4
 
 from django.db import models
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,29 @@ def clear_tenant_context():
 # ---------------------------------------------------------------------------
 # QuerySet
 # ---------------------------------------------------------------------------
-class TenantQuerySet(models.QuerySet):
+class TimestampedQuerySet(models.QuerySet):
+    """Opt-in timestamp maintenance, including atomic updates and bulk writes.
+
+    Does not change predicates, locks, validation, deletion or tenant filtering.
+    Only models with track_updated_at=True opt in (Inbox projections).
+    """
+
+    def update(self, **kwargs):
+        if kwargs and getattr(self.model, 'track_updated_at', False):
+            kwargs.setdefault('updated_at', timezone.now())
+        return super().update(**kwargs)
+
+    def bulk_update(self, objs, fields, batch_size=None):
+        if fields and getattr(self.model, 'track_updated_at', False):
+            objs = tuple(objs)
+            now = timezone.now()
+            for obj in objs:
+                obj.updated_at = now
+            fields = list(dict.fromkeys([*fields, 'updated_at']))
+        return super().bulk_update(objs, fields, batch_size=batch_size)
+
+
+class TenantQuerySet(TimestampedQuerySet):
     """
     QuerySet seguro para modelos multitenant.
 
@@ -163,9 +186,11 @@ class OrganizationalModel(models.Model):
     is_active = models.BooleanField(default=True)
 
     objects     = TenantManager()
-    all_objects = models.Manager()
+    all_objects = models.Manager.from_queryset(TimestampedQuerySet)()
 
     def save(self, *args, validate=True, **kwargs):
+        if getattr(self, 'track_updated_at', False) and kwargs.get('update_fields'):
+            kwargs['update_fields'] = set(kwargs['update_fields']) | {'updated_at'}
         # 1. Auditoría primero — para que clean() pueda validar created_by si lo necesita
         user = get_current_user()
         if user:

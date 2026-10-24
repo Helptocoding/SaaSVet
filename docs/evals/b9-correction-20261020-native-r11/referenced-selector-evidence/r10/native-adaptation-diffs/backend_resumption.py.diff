@@ -1,0 +1,344 @@
+--- native-r9/backend_resumption.py
++++ native/backend_resumption.py
+@@ -0,0 +1,341 @@
++"""Validate retained r9 backend/build evidence without running application code."""
++from collections import Counter
++from contextlib import contextmanager
++import hashlib
++import importlib.util
++import json
++import math
++from pathlib import Path, PurePosixPath
++import sys
++
++HERE=Path(__file__).resolve().parent
++OLD='b271e314817da51e99811cb18921fd7c9f59e58a'
++NEW='f5f18d71847a46d66644775cd90d30268f072e3b'
++CAMPAIGN='b9-correction-20261020-native-r9'
++TARGET='frontend/src/pages/inbox/index.test.jsx'
++OLD_FILE='8a98f6857430d5dee656e3b3ddc57a1bcecfd1f98a3c28f72cd328681d03961f'
++NEW_FILE='21de54d2d3d1b1ad629b76aca48242249c22889c1cfb0962cabc529956a2ecd2'
++PATCH='3d94186cda394428dc02e633b6b8d7478a3ad3b07382b5970645fcd0fdea1bf9'
++PROOF='575339d8ca2f810039c48fe15db3a7c345189ed617f31988f03a4a993caa5449'
++MANIFEST='completed-reference-manifest.json'
++VALIDATION='backend-reference-validation.json'
++REUSED_LABELS={'directed','django-check','migration-drift','migrate','billing-schema',
++    'b0','b3','b4','b5','full-b8b','full-b8c','full-b8d','full-b8e','full-general','full','frontend-build'}
++_MODULES=None
++_CACHE=None
++
++
++def require(condition,message):
++    if not condition:raise RuntimeError('Retained r9 evidence: '+message)
++
++
++def sha(path):
++    digest=hashlib.sha256()
++    with path.open('rb') as stream:
++        for chunk in iter(lambda:stream.read(1024*1024),b''):digest.update(chunk)
++    return digest.hexdigest()
++
++
++def safe(root,name):
++    require(isinstance(name,str) and '\\' not in name and ':' not in name,'invalid artifact path')
++    parts=PurePosixPath(name).parts
++    require(parts and '/'.join(parts)==name and not name.startswith('/') and
++        all(p not in ('','..','.') for p in parts),'artifact path escapes root')
++    path=root
++    for part in parts:
++        path=path/part
++        require(not path.is_symlink() and not path.is_junction(),'linked artifact '+name)
++    require(path.resolve().is_relative_to(root.resolve()),'artifact outside root')
++    return path
++
++
++def read(root,name):
++    return json.loads(safe(root,name).read_text(encoding='utf-8'))
++
++
++def source_root():
++    return safe(HERE,'referenced-completed-evidence/r9')
++
++
++def inventory(root):
++    require(root.is_dir() and not root.is_symlink() and not root.is_junction(),'missing/linked source root')
++    names=set()
++    for path in root.rglob('*'):
++        require(not path.is_symlink() and not path.is_junction(),'linked item in retained source')
++        if path.is_file() and '__pycache__' not in path.relative_to(root).parts:
++            names.add(path.relative_to(root).as_posix())
++    return names
++
++
++def manifest():
++    data=read(HERE,MANIFEST)
++    require(data['schema']=='b9-completed-r9-reference/1' and data['source_campaign']==CAMPAIGN and
++        data['source_candidate_tree']==OLD and data['candidate_tree']==NEW and
++        data['bundle_relative']=='referenced-completed-evidence/r9' and
++        data['original_relative']=='../'+CAMPAIGN,'manifest identity changed')
++    require(isinstance(data['files'],dict) and bool(data['files']),'empty reference manifest')
++    return data
++
++
++def validate_bundle():
++    data=manifest();bundle=source_root();original=HERE.with_name(CAMPAIGN)
++    require(inventory(bundle)==set(data['files']),'retained source inventory differs from manifest')
++    if original.exists():
++        require(inventory(original)==set(data['files']),'original source inventory changed')
++    for name,item in data['files'].items():
++        require(set(item)=={'sha256','bytes'} and isinstance(item['bytes'],int) and item['bytes']>=0 and
++            isinstance(item['sha256'],str) and len(item['sha256'])==64,'invalid manifest item')
++        for root in (bundle,original) if original.exists() else (bundle,):
++            path=safe(root,name)
++            require(path.is_file() and path.stat().st_size==item['bytes'] and sha(path)==item['sha256'],
++                'artifact drift '+str(root/name))
++    return data
++
++
++def _load(name,path):
++    spec=importlib.util.spec_from_file_location(name,path)
++    module=importlib.util.module_from_spec(spec)
++    sys.modules[name]=module
++    try:spec.loader.exec_module(module)
++    except BaseException:
++        sys.modules.pop(name,None)
++        raise
++    return module
++
++
++def legacy_modules():
++    global _MODULES
++    if _MODULES is None:
++        root=source_root()
++        case=_load('_b9_r10_retained_case',root/'case_resumption.py')
++        composite=_load('_b9_r10_retained_composite',root/'composite_evidence.py')
++        _MODULES=(composite,case)
++    return _MODULES
++
++
++@contextmanager
++def legacy_context():
++    composite,case=legacy_modules();absent=object()
++    previous=sys.modules.get('case_resumption',absent)
++    sys.modules['case_resumption']=case
++    try:yield composite,case
++    finally:
++        if previous is absent:sys.modules.pop('case_resumption',None)
++        else:sys.modules['case_resumption']=previous
++
++
++def number(value):
++    return isinstance(value,(int,float)) and not isinstance(value,bool) and math.isfinite(value)
++
++
++def audit_command(label):
++    root=source_root();command=read(root,'blocks/'+label+'.command.json')
++    require(command['state']=='COMPLETED' and command['exit_code']==0 and
++        command['candidate_sha']==OLD and command['formal_run_number']==1 and
++        command.get('invalidating_incident') is None,'source command not valid PASS '+label)
++    monitor=read(root,'monitor-'+label+'.json')
++    require(bool(monitor),'empty source monitor '+label)
++    epochs=[]
++    for row in monitor:
++        host=row['host'];awake=row['awake'];skew=row['wall_minus_monotonic_seconds']
++        require(host['physical_available']>=2*1024**3 and host['disk_available']>=1024**3 and
++            number(skew) and abs(skew)<=1,'source resource/clock incident '+label)
++        require(awake['state']=='ACTIVE_CONFIRMED' and number(awake['sample_age_seconds']) and
++            0<=awake['sample_age_seconds']<=10,'source awake confirmation invalid '+label)
++        epochs.append(host['utc_epoch_seconds'])
++    require(all(0<=b-a<=10 for a,b in zip(epochs,epochs[1:])),'source monitor gap '+label)
++    for phase in ('before','after'):
++        snapshot=command['resources_'+phase]['host']
++        require(snapshot['physical_available']>=2*1024**3 and snapshot['disk_available']>=1024**3,
++            'source command endpoint resource incident '+label)
++        for prefix,field,count in [('integrity','checked_files',3332),
++            ('dependency-check','checked',len(read(root,'dependency-files.json')['files'])),
++            ('seal-check','checked',len(read(root,'evaluation-seal.json')['files']))]:
++            result=read(root,prefix+'-'+phase+'-'+label+'.json')
++            require(result[field]==count and result['mismatches']==[],'source after/before integrity gap '+label)
++    require(command['resources_after']['awake']['state']=='ACTIVE_CONFIRMED','source awake lost after '+label)
++    return dict(state='PASS',command='blocks/'+label+'.command.json',monitor_samples=len(monitor),
++        min_ram_bytes=min(r['host']['physical_available'] for r in monitor),
++        min_disk_bytes=min(r['host']['disk_available'] for r in monitor),
++        max_clock_skew_seconds=max(abs(r['wall_minus_monotonic_seconds']) for r in monitor))
++
++
++def suite(label,count,skips):
++    root=source_root();result=read(root,'blocks/'+label+'.results.json')
++    gate=read(root,'blocks/'+label+'.gate.json');selected=read(root,label+'-selected.json')
++    raw=safe(root,'blocks/'+label+'.ids.jsonl').read_bytes()
++    require(raw.endswith(b'\n'),'truncated source journal '+label)
++    rows=[json.loads(line) for line in raw.splitlines()]
++    ids=[r['id'] for r in rows]
++    require(len(selected)==len(set(selected))==len(ids)==len(set(ids))==count and
++        set(ids)==set(selected)==set(result['test_ids']) and len(result['test_ids'])==count,
++        'source inventory mismatch '+label)
++    require(Counter(r['outcome'] for r in rows)==Counter(PASS=count-skips,**({'SKIP':skips} if skips else {})),
++        'source non-PASS outcomes '+label)
++    require(result['candidate_sha']==OLD and result['tests']==count and result['exit_code']==0 and
++        all(not result[k] for k in ('failures','errors','failed_ids','xfail','xpass')),
++        'source result failure '+label)
++    expected=sorted((r['id'],r.get('reason')) for r in rows if r['outcome']=='SKIP')
++    require(sorted((r['id'],r['reason']) for r in result['skips'])==expected and
++        gate['state']=='PASS' and gate['label']==label and gate['tests']==count and
++        sorted((r['id'],r['reason']) for r in gate['skips'])==expected,'source gate/skip mismatch '+label)
++    return rows,result
++
++
++def validate_references():
++    global _CACHE
++    data=validate_bundle();root=source_root()
++    require(read(root,'candidate.json')['candidate_tree']==OLD,'source candidate changed')
++    proof_path=safe(root,'diagnostics/backend-and-frontend-prefix-validation.json')
++    require(sha(proof_path)==PROOF,'completed prefix proof changed')
++    proof=read(root,'diagnostics/backend-and-frontend-prefix-validation.json')
++    require(proof['state']=='PASS_COMPLETE_PREFIX_WITH_FRONTEND_TIMEOUT' and proof['candidate_tree']==OLD and
++        proof['backend']=={'tests':3331,'PASS':3319,'SKIP':12,'gate':'PASS'} and
++        proof['frontend_build']=='PASS' and proof['current_seal_mismatches']==[] and
++        proof['historical_r6_limitation_unchanged'] is True and
++        proof['all_historical_backend_FAILED_attempts_preserved']==3,'completed prefix proof contract changed')
++    require(all(data['files'][name]['sha256']==wanted for name,wanted in proof['files'].items()),
++        'completed prefix proof artifact binding changed')
++    with legacy_context() as (legacy,case):
++        reused=legacy.validate_references()
++        historical={campaign:legacy._audit_source(legacy._bundle(campaign),campaign) for campaign in legacy.SEAL_HASHES}
++        case_info=case.validate_case_references()
++        expected={}
++        for _,rows in case.active()['sources'].values():
++            for row in rows:
++                if row['outcome'] in ('PASS','SKIP'):
++                    require(row['id'] not in expected,'historical accepted cases overlap')
++                    expected[row['id']]=row
++        tail=read(root,'blocks/full-general-remainder.results.json')
++        tail_rows=[json.loads(line) for line in safe(root,'blocks/full-general-remainder.ids.jsonl').read_bytes().splitlines()]
++        require(len(tail_rows)==1 and tail_rows[0]['id']==case.FAILED[0] and tail_rows[0]['outcome']=='PASS' and
++            tail['candidate_sha']==OLD and tail['tests']==1 and tail['test_ids']==case.FAILED and tail['exit_code']==0 and
++            all(not tail[k] for k in ('failures','errors','failed_ids','skips','xfail','xpass')) and
++            read(root,'blocks/full-general-remainder.gate.json')['state']=='PASS','corrected backend case not PASS')
++        expected[tail_rows[0]['id']]=tail_rows[0]
++        general,_=suite('full-general',3213,12)
++        require(set(expected)=={r['id'] for r in general},'general accepted case union changed')
++        for row in general:
++            original={k:v for k,v in row.items() if k not in ('case_provenance','evidence_source')}
++            require(original==expected[row['id']],'general row differs from source observation')
++        critical=set().union(*(set(read(root,label+'-selected.json')) for label in ('directed','b0','b3','b4','b5')))
++        require(not critical & {r['id'] for r in general if r['outcome']=='SKIP'},'critical backend case skipped')
++        all_rows,full_result=suite('full',3331,12)
++        partition=read(root,'full-partition.json')
++        require(partition['state']=='PASS' and partition['candidate_tree']==OLD and partition['total_ids']==3331 and
++            partition['duplicate_ids']==0 and not partition['missing_ids'],'full partition changed')
++        expected_labels={'full-b8b':21,'full-b8c':41,'full-b8d':27,'full-b8e':29,'full-general':3213}
++        require({r['label']:r['count'] for r in partition['groups']}==expected_labels,'full group counts changed')
++        expected_full={r['id']:r for r in general}
++        for label,count in expected_labels.items():
++            if label=='full-general':continue
++            selected=read(root,label+'-selected.json')
++            source_rows=[json.loads(line) for line in legacy.block_path(label,'.ids.jsonl').read_bytes().splitlines()]
++            require(len(selected)==len(source_rows)==count and {r['id'] for r in source_rows}==set(selected),
++                'full family selection changed '+label)
++            for row in source_rows:
++                require(row['id'] not in expected_full,'full group overlap')
++                expected_full[row['id']]=row
++        require(len(expected_full)==3331 and set(expected_full)=={r['id'] for r in all_rows},
++            'full journal not exact general+118 union')
++        for row in all_rows:
++            require({k:v for k,v in row.items() if k not in ('case_provenance','evidence_source')}==
++                {k:v for k,v in expected_full[row['id']].items() if k not in ('case_provenance','evidence_source')},
++                'full observation changed')
++    commands={name:audit_command(name) for name in ('full-general-remainder','full-general-assemble','frontend-build')}
++    require(read(root,'blocks/frontend-build.gate.json')['state']=='PASS','frontend build gate not PASS')
++    command=read(root,'blocks/frontend-build.command.json')
++    require(command['argv'][-2:]==['run','build'],'frontend build command changed')
++    require(full_result.get('continuous_campaign_claimed') is False and full_result.get('accepted_historical_evidence_limitation') is True,
++        'historical limitation lost')
++    _CACHE=dict(state='PASS',candidate_tree=NEW,source_candidate_tree=OLD,source_campaign=CAMPAIGN,
++        backend_tests=3331,backend_PASS=3319,backend_SKIP=12,frontend_build='REFERENCED_PASS',
++        historical_reference_blocks=13,manifest=MANIFEST,manifest_sha256=sha(HERE/MANIFEST),
++        completed_prefix_proof_sha256=PROOF,reference_files=len(data['files']),source_commands=commands,
++        accepted_historical_evidence_limitation=True,continuous_campaign_claimed=False,
++        application_tests_executed=False,current_backend_tests_executed=0,
++        case_summary=case_info)
++    return dict(_CACHE)
++
++
++def validate_current_inputs():
++    source=source_root();auth=read(HERE,'frontend-resumption-authorization.json')
++    eq=read(HERE,'frontend-equivalence.json');candidate=read(HERE,'candidate.json')
++    require(candidate['candidate_tree']==NEW and candidate['previous_candidate_tree']==OLD and
++        candidate['only_new_change']==TARGET,'current candidate declaration changed')
++    require(auth['state']=='USER_AUTHORIZED_BEFORE_FORMAL_SEAL' and
++        auth['user_answer']=='Sí, ajustar ese armado y continuar sin repetir PASS' and
++        auth['previous_candidate_tree']==OLD and auth['candidate_tree']==NEW and auth['allowed_path']==TARGET and
++        auth['patch_sha256']==PATCH,'frontend authorization changed')
++    for key in ('no_PASS_reruns','all_new_guards_and_remaining_original_stages_required',
++        'accepted_historical_evidence_limitation','eight_assertions_and_original_5000ms_timeout_unchanged'):
++        require(auth[key] is True,'authorization clause lost '+key)
++    require(auth['product_runtime_locks_changed'] is False and
++        auth['retained_backend_ids']==3331 and auth['retained_frontend_PASS']==354 and
++        auth['new_frontend_selected_ids']==1,'authorized continuation scope changed')
++    require(eq['state']=='PASS' and eq['previous_candidate_tree']==OLD and eq['candidate_tree']==NEW and
++        eq['allowed_path']==TARGET and eq['original_sha256']==OLD_FILE and eq['corrected_sha256']==NEW_FILE and
++        eq['patch_sha256']==PATCH and sha(HERE/'frontend-correction.diff')==PATCH,'frontend equivalence binding changed')
++    for key in ('normalized_complete_module_AST_identical','only_two_input_setup_statements_changed',
++        'eight_assertions_and_original_5000ms_timeout_unchanged','all_other_3331_blobs_identical',
++        'test_ids_imports_hooks_unchanged','retained_backend_and_frontend_build_unaffected',
++        'original_timeout_and_all_historical_FAILs_preserved'):
++        require(eq[key] is True,'frontend equivalence clause lost '+key)
++    require(eq['product_runtime_locks_changed'] is False,'runtime change not authorized')
++    current=read(HERE,'candidate-sources.json');prior=read(source,'candidate-sources.json')
++    require(current['candidate_sha']==NEW and prior['candidate_sha']==OLD,'source manifest tree changed')
++    newer={r['path']:r for r in current['files']};older={r['path']:r for r in prior['files']}
++    require(len(newer)==len(older)==len(current['files'])==len(prior['files'])==3332 and
++        set(newer)==set(older),'candidate source inventory changed')
++    require({p:r for p,r in newer.items() if p!=TARGET}=={p:r for p,r in older.items() if p!=TARGET},
++        'source outside the authorized frontend test changed')
++    require(newer[TARGET]['sha256']==NEW_FILE and older[TARGET]['sha256']==OLD_FILE and
++        newer[TARGET]['git_blob']==eq['corrected_git_blob'] and older[TARGET]['git_blob']==eq['original_git_blob'] and
++        newer[TARGET]['mode']==older[TARGET]['mode']=='100644','frontend source hash/blob/mode changed')
++    assembly=read(HERE,'assembly.json');work=Path(assembly['workspace']).resolve();tree=Path(assembly['tree']).resolve()
++    require(assembly['candidate_sha']==NEW and tree==work/'src' and
++        assembly['platform']=='Windows native' and assembly['wsl_invoked'] is False,'private runtime layout changed')
++    require(all(sha(safe(tree,name))==row['sha256'] for name,row in newer.items()),'current live source drift')
++    corrected=safe(tree,TARGET).read_bytes()
++    require(hashlib.sha256(corrected).hexdigest()==NEW_FILE,'noncanonical current frontend test')
++    original=corrected.decode('utf-8')
++    for composer in ('firstComposer','returnedComposer'):
++        new='        fireEvent.change('+composer+', { target: { value: "Texto idéntico, intención nueva" } });'
++        old='        await user.type('+composer+', "Texto idéntico, intención nueva");'
++        require(original.count(new)==1,'authorized input setup statement not unique')
++        original=original.replace(new,old,1)
++    require(hashlib.sha256(original.encode('utf-8')).hexdigest()==OLD_FILE,
++        'inverse of exactly two authorized input setup calls is not original source')
++    for name in ('dependency-files.json','effective-configuration.json','toolchain.json','recorded_suite.py'):
++        require(sha(HERE/name)==sha(source/name),'prepared backend dependency/configuration drift '+name)
++    for name in ('postgresql.conf','pg_hba.conf'):
++        require(sha(HERE/'private-postgresql'/name)==sha(source/'private-postgresql'/name) and
++            sha(work/'pgdata'/name)==sha(HERE/'private-postgresql'/name),'PostgreSQL configuration drift '+name)
++    return dict(state='PASS',candidate_tree=NEW,source_candidate_tree=OLD,candidate_files=3332,
++        allowed_path=TARGET,unchanged_source_blobs=3331,exact_two_setup_calls_inverse_verified=True,
++        backend_only=False,backend_results_reused=True,frontend_build_result_reused=True,
++        current_backend_test_runs=0,application_tests_executed=False,accepted_historical_evidence_limitation=True)
++
++
++def prepare():
++    require(not (HERE/'evaluation-seal.json').exists() and not (HERE/'invocation-formal.json').exists(),
++        'preparation must precede formal seal')
++    target=HERE/VALIDATION
++    require(not target.exists(),'refusing validation receipt overwrite')
++    result=validate_references();result['inputs']=validate_current_inputs()
++    with target.open('x',encoding='utf-8',newline='\n') as stream:
++        stream.write(json.dumps(result,indent=2,ensure_ascii=False)+'\n')
++    print('RETAINED_BACKEND_AND_BUILD_VALIDATED_NO_TESTS',flush=True)
++
++
++def case_summary():
++    with legacy_context() as (_,case):
++        summary=case.case_summary()
++    return dict(summary,backend_source_campaign=CAMPAIGN,accepted_candidate_tree=NEW,
++        scope='historical backend r9 aggregate; not a new backend test invocation')
++
++
++if __name__=='__main__':
++    require(len(sys.argv)==2 and sys.argv[1]=='prepare','only explicit prepare is supported')
++    prepare()
++

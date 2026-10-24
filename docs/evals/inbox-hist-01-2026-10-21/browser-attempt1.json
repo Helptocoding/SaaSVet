@@ -1,0 +1,64 @@
+{
+  "status": "FAIL",
+  "synthetic_api": true,
+  "error": "Locator.bounding_box: Timeout 30000ms exceeded.\nCall log:\n  - waiting for get_by_role(\"region\", name=\"Mensajes de la conversaci\u00f3n\").get_by_text(\"Mensaje 154: texto sint\u00e9tico del historial disponible.\", exact=True)\n",
+  "measurements": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "me/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "151"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    }
+  ],
+  "page_errors": [],
+  "temporary_server_listening": false
+}

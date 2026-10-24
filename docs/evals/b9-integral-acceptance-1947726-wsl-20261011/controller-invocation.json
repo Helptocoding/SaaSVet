@@ -1,0 +1,19 @@
+{
+  "stage": "preflight preparation / evaluator validation",
+  "entrypoint": "run_campaign.py",
+  "python": "/home/lap/b9i-wsl-1947726-20261011/venv/bin/python",
+  "exit_code": 1,
+  "seconds_reported_by_exec": 6.4913927000000005,
+  "exec_chunk_id": "d8432e",
+  "formal_application_block_started": false,
+  "application_tests_executed": false,
+  "output_provenance": "The launch was not redirected to a file. These diagnostic lines are transcribed from the captured exec tool receipt; they are not presented as an original raw stream file.",
+  "diagnostic_chain": [
+    "run_campaign.py:226 -> run_all()",
+    "run_campaign.py:175 -> seal()",
+    "run_campaign.py:52 -> import recorded_suite",
+    "recorded_suite.py:15 -> django.setup()",
+    "config/settings.py:60 -> SECRET_KEY = config('SECRET_KEY')",
+    "decouple.UndefinedValueError: SECRET_KEY not found. Declare it as envvar or define a default value."
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "state": "AUTHORIZED_FRONTEND_SETUP_ONLY_SUCCESSOR",
+  "candidate_tree": "f5f18d71847a46d66644775cd90d30268f072e3b",
+  "previous_candidate_tree": "b271e314817da51e99811cb18921fd7c9f59e58a",
+  "source_campaign": "b9-correction-20261020-native-r9",
+  "retained_backend_ids": 3331,
+  "retained_backend_PASS": 3319,
+  "retained_backend_SKIP": 12,
+  "retained_frontend_PASS": 354,
+  "new_frontend_cases": 1,
+  "frontend_build_retained": true,
+  "backend_tests_executed_here": false,
+  "historical_backend_failures_preserved": 3,
+  "frontend_timeout_and_exit_1_preserved": true,
+  "no_PASS_reruns": true,
+  "runtime_reinstalled": false,
+  "continuous_campaign_claimed": false,
+  "accepted_historical_evidence_limitation": true,
+  "helpers": [
+    {
+      "path": "native_support.py",
+      "source": "../b9-correction-20261020-native-r9/native_support.py",
+      "source_sha256": "93c8122512fbc3cdaeb427eb67b051a4be9f847527c668cf30f2fb71e2af9822",
+      "sha256": "2d13175d21f40486ceaf3fd933f1e5179461f5031105f655ae088ccf4a97257c"
+    },
+    {
+      "path": "recorded_suite.py",
+      "source": "../b9-correction-20261020-native-r9/recorded_suite.py",
+      "source_sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+      "sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2"
+    },
+    {
+      "path": "full_partition.py",
+      "source": "../b9-correction-20261020-native-r9/full_partition.py",
+      "source_sha256": "b1c7f6b6f238bdc017244250ce31aae2576747d5a13a6f7f125153bd8dbec747",
+      "sha256": "b1c7f6b6f238bdc017244250ce31aae2576747d5a13a6f7f125153bd8dbec747"
+    },
+    {
+      "path": "awake_guard.py",
+      "source": "../b9-correction-20261020-native-r9/awake_guard.py",
+      "source_sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+      "sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049"
+    },
+    {
+      "path": "awake_status.py",
+      "source": "../b9-correction-20261020-native-r9/awake_status.py",
+      "source_sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+      "sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1"
+    },
+    {
+      "path": "host_resources.py",
+      "source": "../b9-correction-20261020-native-r9/host_resources.py",
+      "source_sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083"
+    },
+    {
+      "path": "host_observer.py",
+      "source": "../b9-correction-20261020-native-r9/host_observer.py",
+      "source_sha256": "aeba1a4994af3bdd8c0a3fa6fead4bfe8a178f8be8634eb909c43fa941deb388",
+      "sha256": "aeba1a4994af3bdd8c0a3fa6fead4bfe8a178f8be8634eb909c43fa941deb388"
+    },
+    {
+      "path": "clock_probe.py",
+      "source": "../b9-correction-20261020-native-r9/clock_probe.py",
+      "source_sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+      "sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2"
+    },
+    {
+      "path": "launch_native.py",
+      "source": "../b9-correction-20261020-native-r9/launch_native.py",
+      "source_sha256": "3308360a29816d10841f3f9994d3c963736f58daaaa018aecf84731955cd36e2",
+      "sha256": "3308360a29816d10841f3f9994d3c963736f58daaaa018aecf84731955cd36e2"
+    },
+    {
+      "path": "capture_native.py",
+      "source": "../b9-correction-20261020-native-r9/capture_native.py",
+      "source_sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+      "sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d"
+    },
+    {
+      "path": "cleanup_native.py",
+      "source": "../b9-correction-20261020-native-r9/cleanup_native.py",
+      "source_sha256": "ea0c2e948005882299b688c837eb9953b714acd529c198f8322dfa979931b318",
+      "sha256": "ea0c2e948005882299b688c837eb9953b714acd529c198f8322dfa979931b318"
+    },
+    {
+      "path": "deliver_native.py",
+      "source": "../b9-correction-20261020-native-r9/deliver_native.py",
+      "source_sha256": "6a32648ccbbf96271f9315ae318e08b46e39b33b21980f886a2bfc37f72af46e",
+      "sha256": "db29cd24f1ea4993d3e1e164c64739fa9d2f7fbbb3c1ccf20d856e9b758b071d"
+    },
+    {
+      "path": "restore_native.py",
+      "source": "../b9-correction-20261020-native-r9/restore_native.py",
+      "source_sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065"
+    },
+    {
+      "path": "scan_security.py",
+      "source": "../b9-correction-20261020-native-r9/scan_security.py",
+      "source_sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2",
+      "sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2"
+    },
+    {
+      "path": "finalize_preflight.py",
+      "source": "../b9-correction-20261020-native-r9/finalize_preflight.py",
+      "source_sha256": "be3e6b61593e6a9ba886aeb8442c2cb696ee4c2e82d65ebf233413b0aad72019",
+      "sha256": "c67afc6de3221274fa4c66763d73655675b78bb37cb8836ee187e61b415d5081"
+    },
+    {
+      "path": "retire_previous_cluster.py",
+      "source": "../b9-correction-20261020-native-r9/retire_previous_cluster.py",
+      "source_sha256": "e4e8ebeb17aea508e61b11cbc07a1c94a64f6d8d8de0c9f72bc492e6a4864685",
+      "sha256": "087db968bdb2b257c47bd25662e6e3c91f84bc4829d5d42e6c7329db6b9e4c79"
+    },
+    {
+      "path": "handoff_runtime.py",
+      "source": "../b9-correction-20261020-native-r9/handoff_runtime.py",
+      "source_sha256": "50832c516f85cc5c37d34c55de10d8201526e4fd6fc52b49d7e503686accdb93",
+      "sha256": "a4e6699d177f36c891d09160c4e1627693fd4b4ab04b54448044ce6f6c4540d0"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+Migrations for 'channels':
+  backend\apps\channels\migrations\0016_message_reply_to.py
+    + Add field reply_to to message
+    + Create index message_reply_target on field(s) reply_to of model message
+No changes detected
+System check identified no issues (0 silenced).

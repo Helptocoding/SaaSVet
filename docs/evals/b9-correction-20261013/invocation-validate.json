@@ -1,0 +1,21 @@
+{
+  "step": "validate",
+  "state": "COMPLETED",
+  "argv": [
+    "rtk",
+    "proxy",
+    "wsl.exe",
+    "-d",
+    "Ubuntu-24.04",
+    "--exec",
+    "/home/lap/b9i-correction-20261013/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-correction-20261013/venv/bin/python",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261013/launch_campaign.py",
+    "--validate-only"
+  ],
+  "utc_started": "2026-10-14T05:49:09Z",
+  "exit_code": 0,
+  "seconds": 5.944841100000303
+}

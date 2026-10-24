@@ -1,0 +1,48 @@
+{
+  "state": "PASS",
+  "databases_dropped": [
+    "test_b8b_b9i_directed",
+    "test_b9i_b5",
+    "test_b9i_checks",
+    "test_b9i_control"
+  ],
+  "postgresql_cluster_created": true,
+  "postgresql_state": "STOPPED",
+  "private_postgresql_stopped": true,
+  "wrapper": {
+    "state": "EXITED_CONFIRMED",
+    "wrapper_pid": 11072,
+    "wait_timeout_seconds": 15
+  },
+  "port": 35486,
+  "port_closed": true,
+  "postmaster_pid_file_absent": true,
+  "owned_workspace_removed": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r2",
+  "resolved_recursive_removal_target_verified": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261016-r2",
+  "foreign_processes_terminated": false,
+  "raw_sql_saved_before_cleanup": true,
+  "sql_evidence": "SAVED_BEFORE_REMOVAL",
+  "cleanup_interpreter": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-b8b-locked\\Scripts\\python.exe",
+  "interpreter_outside_workspace": true,
+  "shared_postgresql_bin_preserved": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-b8b-pg16-bin\\pgsql\\bin",
+  "shared_python_environment_removed": false,
+  "previous_campaigns_and_windows_environments_preserved": true,
+  "resources_before": {
+    "utc": "2026-10-16T08:08:52Z",
+    "utc_epoch_seconds": 1792138132.112617,
+    "physical_total": 17031217152,
+    "physical_available": 3730235392,
+    "page_available": 6383403008,
+    "disk_available": 4956577792,
+    "platform": "Windows native"
+  },
+  "resources_after": {
+    "utc": "2026-10-16T23:55:09Z",
+    "utc_epoch_seconds": 1792194909.5089846,
+    "physical_total": 17031217152,
+    "physical_available": 5821087744,
+    "page_available": 8966078464,
+    "disk_available": 4928262144,
+    "platform": "Windows native"
+  }
+}

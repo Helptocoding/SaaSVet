@@ -1,0 +1,18 @@
+{
+  "snapshot_utc": "2026-10-14T06:34:10Z",
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "base_commit": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "formal_session": 56287,
+  "observer_session": 27130,
+  "awake_session": 66834,
+  "clock_guard_session": 36836,
+  "clock_guard_temp": "C:/Users/LAP/AppData/Local/Temp/b9-clock-isolation-r9-aji9q7jd",
+  "work": "/home/lap/b9i-correction-20261013",
+  "port": 35481,
+  "seal_files": 117,
+  "controller_invocations": 1,
+  "formal_reruns": 0,
+  "stage": "Formal campaign running; consult diagnostics/progress.py for current state",
+  "helper_changes_after_formal_seal": "Only reporting/progress files in diagnostics and code-selection.json; no frozen evaluator changes",
+  "next_actions": "Wait for this formal invocation, classify actual PASS/FAIL/PENDING, cleanup once via capture_wsl.py cleanup, release own monitors, clock_setup.py restore, run diagnostics/close_acceptance.py after final-classification.json, deliver_wsl.py once. Preserve all prior evidence and staged blobs. Do not restart formal invocation."
+}

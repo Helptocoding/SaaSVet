@@ -1,0 +1,58 @@
+{
+  "directed": {
+    "samples": 1138,
+    "min_host_bytes": 2983579648,
+    "min_guest_bytes": 7225352192,
+    "min_disk_bytes": 2892402688,
+    "max_clock_skew_seconds": 3.7342863379308255e-06
+  },
+  "django-check": {
+    "samples": 5,
+    "min_host_bytes": 3068948480,
+    "min_guest_bytes": 7455293440,
+    "min_disk_bytes": 2891595776,
+    "max_clock_skew_seconds": 9.177754236588953e-07
+  },
+  "migration-drift": {
+    "samples": 7,
+    "min_host_bytes": 3119869952,
+    "min_guest_bytes": 7445594112,
+    "min_disk_bytes": 2941161472,
+    "max_clock_skew_seconds": 1.2144214451836888e-06
+  },
+  "migrate": {
+    "samples": 156,
+    "min_host_bytes": 3043700736,
+    "min_guest_bytes": 7337091072,
+    "min_disk_bytes": 2885443584,
+    "max_clock_skew_seconds": 9.257055353373289e-07
+  },
+  "billing-schema": {
+    "samples": 5,
+    "min_host_bytes": 3163000832,
+    "min_guest_bytes": 7446126592,
+    "min_disk_bytes": 2942918656,
+    "max_clock_skew_seconds": 6.506543286377564e-07
+  },
+  "b0": {
+    "samples": 172,
+    "min_host_bytes": 3059458048,
+    "min_guest_bytes": 7341842432,
+    "min_disk_bytes": 2870886400,
+    "max_clock_skew_seconds": 2.8560593818838242e-06
+  },
+  "b3": {
+    "samples": 392,
+    "min_host_bytes": 2877845504,
+    "min_guest_bytes": 7218511872,
+    "min_disk_bytes": 2865332224,
+    "max_clock_skew_seconds": 2.573749998191488e-05
+  },
+  "b4": {
+    "samples": 536,
+    "min_host_bytes": 1627594752,
+    "min_guest_bytes": 7234891776,
+    "min_disk_bytes": 2857402368,
+    "max_clock_skew_seconds": 2.2169506337377243e-06
+  }
+}

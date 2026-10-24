@@ -1,0 +1,159 @@
+
+> frontend@0.0.0 test C:\Users\LAP\AppData\Local\Temp\b9-native-20261017-r6\src\frontend
+> vitest run "--reporter=default" "--reporter=json" "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r9\\blocks\\frontend-tests.json"
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.8 [39m[90mC:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6/src/frontend[39m
+
+ [32m✓[39m src/utils/inventory.test.js [2m([22m[2m33 tests[22m[2m)[22m[32m 189[2mms[22m[39m
+ [32m✓[39m src/components/dashboard/FirstRunAssistant.test.jsx [2m([22m[2m17 tests[22m[2m)[22m[33m 3461[2mms[22m[39m
+     [33m[2m✓[22m[39m el CTA primary navega al módulo con fromOnboarding [33m 976[2mms[22m[39m
+     [33m[2m✓[22m[39m el CTA secundario 'Importar' solo existe en el paso 1 [33m 611[2mms[22m[39m
+ [32m✓[39m src/pages/imports/PreviewStep.test.jsx [2m([22m[2m41 tests[22m[2m)[22m[33m 6376[2mms[22m[39m
+     [33m[2m✓[22m[39m muestra mascotas que se crearán, duplicados omitidos, necesitan revisión [33m 466[2mms[22m[39m
+     [33m[2m✓[22m[39m con registros importables y sin blocking muestra el botón de confirmar [33m 763[2mms[22m[39m
+     [33m[2m✓[22m[39m con blocking errors oculta el botón y muestra mensaje de corrección [33m 345[2mms[22m[39m
+     [33m[2m✓[22m[39m sin permiso no muestra el botón e informa [33m 418[2mms[22m[39m
+     [33m[2m✓[22m[39m muestra los registros del preview en la tabla [33m 305[2mms[22m[39m
+ [32m✓[39m src/components/PaymentLinesEditor.test.jsx [2m([22m[2m19 tests[22m[2m)[22m[33m 7036[2mms[22m[39m
+     [33m[2m✓[22m[39m muestra una línea con los 4 métodos de pago del catálogo (payments.js real) [33m 1194[2mms[22m[39m
+     [33m[2m✓[22m[39m escribir un monto actualiza el input y recalcula el footer [33m 804[2mms[22m[39m
+     [33m[2m✓[22m[39m cambiar el valor recalcula (borrar y reescribir) [33m 921[2mms[22m[39m
+     [33m[2m✓[22m[39m 500 en efectivo sobre total 500 → 'Exacto', sin faltante ni cambio [33m 681[2mms[22m[39m
+     [33m[2m✓[22m[39m 600 efectivo / total 500 con allowChange → 'Cambio $100.00' + aviso de no-registro [33m 342[2mms[22m[39m
+     [33m[2m✓[22m[39m 600 efectivo / total 500 SIN allowChange → 'Excede $100.00', sin aviso de cambio [33m 484[2mms[22m[39m
+     [33m[2m✓[22m[39m 300 efectivo + 200 tarjeta sobre total 500 → suma exacta, ambas líneas respetadas [33m 742[2mms[22m[39m
+     [33m[2m✓[22m[39m agregar un método añade una fila [33m 306[2mms[22m[39m
+     [33m[2m✓[22m[39m al agregar tras un pago parcial, la nueva línea precarga el faltante (comportamiento existente) [33m 312[2mms[22m[39m
+     [33m[2m✓[22m[39m eliminar una línea vuelve a una sola fila [33m 310[2mms[22m[39m
+ [32m✓[39m src/pages/imports/MappingStep.test.jsx [2m([22m[2m11 tests[22m[2m)[22m[33m 10821[2mms[22m[39m
+     [33m[2m✓[22m[39m muestra detectadas / listas / necesitan revisión [33m 306[2mms[22m[39m
+     [33m[2m✓[22m[39m las reconocidas van en un resumen colapsable (no como cards) [33m 1511[2mms[22m[39m
+     [33m[2m✓[22m[39m card compacta: título, ejemplos y un solo botón (sin opciones abiertas) [33m 553[2mms[22m[39m
+     [33m[2m✓[22m[39m bloquea continuar hasta decidir la columna pendiente [33m 1639[2mms[22m[39m
+     [33m[2m✓[22m[39m abre modal con categorías colapsadas (opciones ocultas hasta desplegar) [33m 586[2mms[22m[39m
+     [33m[2m✓[22m[39m solo una categoría abierta a la vez (abrir otra cierra la anterior) [33m 1313[2mms[22m[39m
+     [33m[2m✓[22m[39m no permite el mismo campo del sistema en dos columnas [33m 591[2mms[22m[39m
+     [33m[2m✓[22m[39m elegir un campo del sistema deja la card resuelta + payload string [33m 833[2mms[22m[39m
+     [33m[2m✓[22m[39m elegir histórico → card 'se conservará como…' + payload {target, label} [33m 801[2mms[22m[39m
+     [33m[2m✓[22m[39m la decisión nunca es irreversible: Cambiar reabre el modal [33m 1210[2mms[22m[39m
+     [33m[2m✓[22m[39m renombra el nombre visible del dato histórico (no cambia la columna) [33m 1443[2mms[22m[39m
+ [32m✓[39m src/utils/mapFieldErrors.test.js [2m([22m[2m11 tests[22m[2m)[22m[32m 103[2mms[22m[39m
+ [32m✓[39m src/utils/payments.test.js [2m([22m[2m19 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+ [32m✓[39m src/pages/imports/groupImportIssues.test.js [2m([22m[2m8 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32m✓[39m src/utils/datetime.test.js [2m([22m[2m8 tests[22m[2m)[22m[32m 134[2mms[22m[39m
+ [32m✓[39m src/utils/apiError.test.js [2m([22m[2m17 tests[22m[2m)[22m[32m 106[2mms[22m[39m
+ [32m✓[39m src/pages/prescriptions.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[33m 3145[2mms[22m[39m
+     [33m[2m✓[22m[39m no llama getPets al abrir; los datos vienen de las recetas [33m 1510[2mms[22m[39m
+     [33m[2m✓[22m[39m el selector de mascota se deriva de las recetas cargadas (no del catálogo) [33m 383[2mms[22m[39m
+     [33m[2m✓[22m[39m filtra por especie desde pet_species embebido (client-side, sin recargar) [33m 1234[2mms[22m[39m
+ [32m✓[39m src/pages/pets.test.jsx [2m([22m[2m7 tests[22m[2m)[22m[33m 27683[2mms[22m[39m
+     [33m[2m✓[22m[39m renderiza desde el envelope paginado y pide la página 1 (no toda la lista) [33m 2567[2mms[22m[39m
+     [33m[2m✓[22m[39m cambia de página llamando a la API con page=2 [33m 4606[2mms[22m[39m
+     [33m[2m✓[22m[39m la búsqueda se envía al backend (debounced), no se filtra en memoria [33m 2984[2mms[22m[39m
+     [33m[2m✓[22m[39m guarda con datos mínimos: sin especie ni fecha de nacimiento [33m 10913[2mms[22m[39m
+     [33m[2m✓[22m[39m el teléfono del dueño sigue siendo obligatorio [33m 5416[2mms[22m[39m
+     [33m[2m✓[22m[39m con pacientes NO muestra el empty state [33m 906[2mms[22m[39m
+ [32m✓[39m src/api/appointments.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32m✓[39m src/components/EntitySearch.test.jsx [2m([22m[2m4 tests[22m[2m)[22m[33m 3676[2mms[22m[39m
+     [33m[2m✓[22m[39m muestra la primera página (8) y ofrece 'Ver más', sin tope invisible [33m 1496[2mms[22m[39m
+     [33m[2m✓[22m[39m 'Ver más' agrega la página 2 y desaparece al agotar [33m 933[2mms[22m[39m
+     [33m[2m✓[22m[39m la búsqueda se manda al fetcher (debounced) [33m 597[2mms[22m[39m
+     [33m[2m✓[22m[39m seleccionar devuelve el item y refleja su label en el input [33m 634[2mms[22m[39m
+ [31m❯[39m src/pages/inbox/index.test.jsx [2m([22m[2m26 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 51230[2mms[22m[39m
+     [32m✓[39m does not call discarded guidance pending delivery[32m 245[2mms[22m[39m
+     [33m[2m✓[22m[39m allows the current human owner to explicitly acknowledge a new queued case [33m 2290[2mms[22m[39m
+     [32m✓[39m shows a durable queue without inventing notification or acknowledgement[32m 42[2mms[22m[39m
+     [32m✓[39m labels explicit acknowledgement without claiming clinical attention[32m 55[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps uncertain guidance visible and preserves multiple open legacy cases [33m 319[2mms[22m[39m
+     [33m[2m✓[22m[39m descarta el texto de Ana al cambiar al hilo de Beto [33m 2425[2mms[22m[39m
+     [33m[2m✓[22m[39m conserva el borrador al volver a clicar el mismo hilo [33m 1441[2mms[22m[39m
+     [33m[2m✓[22m[39m envía al sessionId vigente con una key de idempotencia no vacía [33m 1602[2mms[22m[39m
+     [33m[2m✓[22m[39m no reinstala ni borra el hilo nuevo si el POST anterior termina tarde [33m 3283[2mms[22m[39m
+     [33m[2m✓[22m[39m reutiliza la key si se reintenta el mismo texto tras un error de red [33m 3612[2mms[22m[39m
+     [33m[2m✓[22m[39m conserva la key incierta al navegar B y volver a A con el mismo texto [33m 2845[2mms[22m[39m
+[31m     [31m×[31m un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto[39m[33m 5058[2mms[22m[39m
+     [33m[2m✓[22m[39m A→B→A conserva visible el 201 aunque el GET de regreso esté vacío [33m 4385[2mms[22m[39m
+     [33m[2m✓[22m[39m regenera la key cuando cambia el texto después de un error [33m 3577[2mms[22m[39m
+     [33m[2m✓[22m[39m pinta el envío antes del POST y reconcilia el 201 sin duplicar [33m 2524[2mms[22m[39m
+     [33m[2m✓[22m[39m elimina el optimista ante 400 y muestra el error del servidor [33m 1576[2mms[22m[39m
+     [33m[2m✓[22m[39m conserva el optimista reintentable ante un 5xx [33m 1666[2mms[22m[39m
+     [33m[2m✓[22m[39m deduplica un polling concurrente exclusivamente por client_message_id [33m 1206[2mms[22m[39m
+     [33m[2m✓[22m[39m dos envíos consecutivos por Enter reciben keys distintas [33m 2073[2mms[22m[39m
+     [33m[2m✓[22m[39m no ejecuta continuaciones del POST después de desmontar el Inbox [33m 2408[2mms[22m[39m
+     [33m[2m✓[22m[39m aplica el cap global de 20 intentos entre sesiones [33m 4600[2mms[22m[39m
+     [33m[2m✓[22m[39m oculta failed-local cuando el hilo regresa con otra sesión activa [33m 2877[2mms[22m[39m
+     [32m✓[39m renderiza un divisor por día local de la organización[32m 291[2mms[22m[39m
+     [32m✓[39m mantiene la hora del mensaje histórico bajo el divisor Ayer[32m 284[2mms[22m[39m
+     [32m✓[39m integra recibos de entrega solo en mensajes salientes del transcript[32m 208[2mms[22m[39m
+     [32m✓[39m actualiza todos los divisores con una sola referencia al cruzar medianoche[32m 267[2mms[22m[39m
+ [32m✓[39m src/pages/imports/entityConfig.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[33m 470[2mms[22m[39m
+ [32m✓[39m src/pages/medicalRecords/PetSidebar.test.jsx [2m([22m[2m4 tests[22m[2m)[22m[33m 2698[2mms[22m[39m
+     [33m[2m✓[22m[39m busca en el backend al montar (no carga la lista completa) y muestra el dueño [33m 467[2mms[22m[39m
+     [33m[2m✓[22m[39m escribir manda la búsqueda al backend (debounced) [33m 1232[2mms[22m[39m
+     [33m[2m✓[22m[39m 'Ver más' trae la página 2 [33m 578[2mms[22m[39m
+     [33m[2m✓[22m[39m al elegir, entrega el objeto pet completo [33m 403[2mms[22m[39m
+ [32m✓[39m src/pages/imports/UploadStep.test.jsx [2m([22m[2m4 tests[22m[2m)[22m[33m 1201[2mms[22m[39m
+     [33m[2m✓[22m[39m rechaza un archivo que excede 5 MB con toast y no lo selecciona [33m 327[2mms[22m[39m
+     [33m[2m✓[22m[39m la X quita el archivo seleccionado [33m 744[2mms[22m[39m
+ [32m✓[39m src/pages/inbox/DeliveryTicks.test.jsx [2m([22m[2m20 tests[22m[2m)[22m[33m 498[2mms[22m[39m
+ [32m✓[39m src/utils/handleFormError.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m src/utils/apiErrorConflict.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/components/SpotlightTour.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1718[2mms[22m[39m
+     [33m[2m✓[22m[39m '← Anterior' está deshabilitado en el primer paso [33m 558[2mms[22m[39m
+     [33m[2m✓[22m[39m el último paso muestra 'Entendido ✓' e invoca onFinish [33m 578[2mms[22m[39m
+ [32m✓[39m src/components/prescriptions/PrescriptionForm.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 2095[2mms[22m[39m
+     [33m[2m✓[22m[39m monta ambos pickers sin crashear (regresión SearchSelect) [33m 515[2mms[22m[39m
+     [33m[2m✓[22m[39m seleccionar mascota fija el PK (body FK) y notifica onPetChange [33m 1528[2mms[22m[39m
+ [32m✓[39m src/pages/acceptLegal.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 2424[2mms[22m[39m
+     [33m[2m✓[22m[39m requiere marcar TODOS los documentos antes de habilitar continuar, luego acepta [33m 2040[2mms[22m[39m
+     [33m[2m✓[22m[39m enlaza al texto legal de la landing (no duplica el texto) [33m 324[2mms[22m[39m
+ [32m✓[39m src/features/consultation/protocols/vaccine/VaccineSection.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[33m 3849[2mms[22m[39m
+     [33m[2m✓[22m[39m con preset: muestra hint de protocolo y la ayuda contextual [33m 356[2mms[22m[39m
+     [33m[2m✓[22m[39m al editar la fecha de refuerzo el hint pasa a 'Personalizado' [33m 1905[2mms[22m[39m
+     [33m[2m✓[22m[39m apagar 'Programar próximo refuerzo' oculta la fecha de refuerzo [33m 448[2mms[22m[39m
+     [33m[2m✓[22m[39m seleccionar una vacuna del combobox llena nombre y refuerzo sugerido [33m 993[2mms[22m[39m
+ [32m✓[39m src/components/ImportedDataSection.test.jsx [2m([22m[2m4 tests[22m[2m)[22m[33m 431[2mms[22m[39m
+ [32m✓[39m src/components/notifications/notificationActions.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m src/components/EmptyState.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1002[2mms[22m[39m
+     [33m[2m✓[22m[39m renderiza las acciones y dispara onClick [33m 700[2mms[22m[39m
+ [32m✓[39m src/components/ErrorBoundary.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 540[2mms[22m[39m
+     [33m[2m✓[22m[39m muestra fallback, reporta a Sentry con componentStack y muestra el event id [33m 334[2mms[22m[39m
+ [32m✓[39m src/features/consultation/protocols/vaccine/vaccinePresets.test.js [2m([22m[2m8 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [32m✓[39m src/features/consultation/protocols/general/GeneralSection.test.jsx [2m([22m[2m4 tests[22m[2m)[22m[33m 1529[2mms[22m[39m
+     [33m[2m✓[22m[39m exploración: marcar un sistema como alterado revela el campo de hallazgo [33m 1207[2mms[22m[39m
+ [32m✓[39m src/utils/sentryScrub.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [32m✓[39m src/pages/imports/ResultStep.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 399[2mms[22m[39m
+ [32m✓[39m src/api/inbox.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m src/components/LoginForm.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[33m 515[2mms[22m[39m
+     [33m[2m✓[22m[39m etiqueta el campo de identidad como 'Correo o usuario' [33m 341[2mms[22m[39m
+ [32m✓[39m src/utils/toList.test.js [2m([22m[2m7 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m src/features/consultation/protocols/vaccine/vaccineProtocol.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32m✓[39m src/utils/prescriptionAvailability.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/features/consultation/protocols/surgery/surgeryProtocol.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m src/test/noConsoleTokenLeak.test.js [2m([22m[2m1 test[22m[2m)[22m[32m 58[2mms[22m[39m
+ [32m✓[39m src/features/consultation/protocols/emergency/emergencyProtocol.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/pages/inbox/index.test.jsx[2m > [22mInbox — aislamiento del borrador[2m > [22mun éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto
+[31m[1mError[22m: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/pages/inbox/index.test.jsx:[2m311:5[22m[39m
+    [90m309|[39m     })[33m;[39m
+    [90m310|[39m
+    [90m311|[39m     it("un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el…
+    [90m   |[39m     [31m^[39m
+    [90m312|[39m         [35mlet[39m resolveFirstSend[33m;[39m
+    [90m313|[39m         inboxApi[33m.[39msendInboxMessage
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m40 passed[39m[22m[90m (41)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m354 passed[39m[22m[90m (355)[39m
+[2m   Start at [22m 00:32:48
+[2m   Duration [22m 183.40s[2m (transform 91.11s, setup 94.97s, import 346.30s, tests 133.87s, environment 335.98s)[22m
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261020-native-r9/blocks/frontend-tests.json
+ ELIFECYCLE  Test failed. See above for more details.

@@ -1,0 +1,141 @@
+--- native-r9/prepare_scheduler.py
++++ native/prepare_scheduler.py
+@@ -0,0 +1,138 @@
++"""Prepare the remaining fixed stages; keep original command guards verbatim."""
++import ast
++from pathlib import Path
++
++HERE = Path(__file__).resolve().parent
++PRIOR = HERE.with_name('b9-correction-20261020-native-r9')
++
++
++def replace_function(source, name, replacement):
++    node = next(n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name == name)
++    lines = source.splitlines(True)
++    return ''.join(lines[:node.lineno - 1]) + replacement.rstrip() + '\n' + ''.join(lines[node.end_lineno:])
++
++
++SEAL = '''def seal():
++    if (EVIDENCE/'preflight.json').exists() or (EVIDENCE/'STOP.json').exists():
++        raise RuntimeError('Preflight already decided; cannot silently restart campaign')
++    for name, state in [('environment-ready.json','READY_FOR_SEAL'),
++        ('interpreter-preflight.json','PASS'),('native-preflight.json','PASS'),
++        ('launcher-validation.json','PASS'),('backend-reference-validation.json','PASS'),
++        ('frontend-resumption-validation.json','PASS'),
++        ('diagnostics/preserved-contract-checks.json','PASS'),
++        ('diagnostics/composite-validator-checks.json','PASS_VALIDATOR_CHECKS')]:
++        assert json.loads((EVIDENCE/name).read_text(encoding='utf-8'))['state']==state, name
++    validate_clock_control()
++    from full_partition import validate_partition
++    validate_partition()
++    validate_current_inputs()
++    validate_references()
++    from frontend_resumption import validate_frontend_references
++    validate_frontend_references()
++    for path in EVIDENCE.glob('*.py'):
++        compile(path.read_text(encoding='utf-8'),str(path),'exec')
++    adapter_diff=''.join(difflib.unified_diff(
++        (EVIDENCE.with_name('b9-correction-20261020-native-r9')/'recorded_suite.py').read_text(encoding='utf-8').splitlines(True),
++        (EVIDENCE/'recorded_suite.py').read_text(encoding='utf-8').splitlines(True),
++        fromfile='native-r9/recorded_suite.py',tofile='native-r10/recorded_suite.py'))
++    (EVIDENCE/'receipt-adapter.diff').write_text(adapter_diff,encoding='utf-8',newline='\\n')
++    save('adapter-validation.json',{'syntax':'PASS','django_runner_resolution':'PASS',
++        'backend_application_tests_executed':False,'backend_results_origin':'REFERENCED_COMPLETED_R9',
++        'change':'Only one exactly filtered frontend case; eight original execution/partition functions preserved',
++        'all_original_guards_preserved':True})
++    required_names=[
++        'frontend-resumption-authorization.json','frontend-equivalence.json','frontend-proposal-analysis.json',
++        'frontend-correction.diff','completed-reference-manifest.json','backend-reference-validation.json',
++        'frontend-resumption-manifest.json','frontend-resumption-validation.json',
++        'frontend-retained-pass-selected.json','frontend-remainder-selected.json','frontend-full-selected.json',
++        'authorization.json','candidate.json','correction.diff','resource-policy.json','scope-manifest.json',
++        'PLAN.md','assembly.json','candidate-sources.json','toolchain.json','python-environment.json',
++        'dependency-files.json','interpreter-preflight.json','private-python-copy.json','frontend-layout.json',
++        'security-history.json','install-cache-retirement.json','operational-lifetime-amendment.json',
++        'runtime-handoff-supplement.json','prepared-runtime-references.json','resumption.json',
++        'composite-amendment.json','pre-patch-current-integrity.json','previous-completion-integrity-reference.json',
++        'diagnostics/preserved-contract-checks.json','diagnostics/composite-validator-checks.json',
++        'diagnostics/frontend-fixture-ast-check.json','diagnostics/frontend-fixture-original.jsx',
++        'diagnostics/verify_frontend_equivalence.py','diagnostics/verify_frontend_equivalence.cjs',
++        'diagnostics/close_acceptance.py','launcher-validation.json','downloads.json','audit-toolchain.json',
++        'postgresql-preflight.json','profile-compatibility.json','campaign-adaptation.json',
++        'effective-configuration.json','code-selection.json','full-partition-contract.json','full-partition.json',
++        'awake-request/control.json','clock-preflight.json','native-preflight.json','environment-ready.json',
++        'discovery.json','receipt-adapter.diff','adapter-validation.json']
++    paths=[*EVIDENCE.glob('*.py'),*[EVIDENCE/name for name in required_names],
++        *EVIDENCE.glob('*-selected.json'),RTK,PYTHON,Path(sys._base_executable),NODE,PNPM,
++        WORK/'gitleaks/gitleaks.exe',*[p for p in PG.glob('*') if p.suffix.lower() in ('.exe','.dll')],
++        DATA/'postgresql.conf',DATA/'pg_hba.conf']
++    for name in ('prior-focused-verification.json','base-python-environment.json'):
++        if (EVIDENCE/name).exists():paths.append(EVIDENCE/name)
++    paths=list(dict.fromkeys(paths))
++    missing=[str(p) for p in paths if not p.is_file()]
++    if missing:stop('PENDING','seal','Required native evaluator/toolchain inputs absent',missing=missing)
++    save('evaluation-seal.json',{'candidate_sha':SHA,'platform':'windows-native',
++        'files':{str(p):sha256(p.read_bytes()) for p in paths},
++        'candidate_manifest_sha256':sha256((EVIDENCE/'candidate-sources.json').read_bytes())})
++    verify('preflight')
++    observation=budget()
++    save('preflight.json',{'state':'PASS' if observation['ready'] else 'PENDING',
++        'candidate_sha':SHA,'exact_git_files':3332,'retained_backend_ids':3331,
++        'retained_frontend_PASS':354,'new_frontend_cases':1,
++        'resource_budget':{'admission_floor':2*GIB,'memory_reserve':2*GIB,
++            'prior_5_gib_admission_waived_by_user':True,'backing_disk_reserve':GIB},
++        'resources':observation,'formal_runs_per_new_block_max':1,'profile_runs_per_scenario_max':1,
++        'platform':'windows-native','host_clock_configuration_unchanged':True,
++        'runtime_and_lock_changes':False,'evidence_mode':'COMPOSITE_ACCEPTANCE',
++        'continuous_campaign_claimed':False,'historical_backend_limit_accepted':True})
++    if not observation['ready']:
++        stop('PENDING','preflight','Insufficient resources for frozen budget',resources=observation)
++    print('PREFLIGHT_PASS',flush=True)
++'''
++
++
++PREFIX = '''def run_all():
++    seal()
++    for label in REQUIRED:
++        if label in ('frontend-test','frontend-smoke-urls','security'):
++            continue
++        assert read_block(label)['state']=='PASS',label
++        save('referenced-block-'+label+'.json',{'state':'REFERENCED_PASS','label':label,
++            'provenance':provenance(label),'application_tests_executed_here':False})
++        print('BLOCK_REFERENCED '+label,flush=True)
++    code=execute('frontend-test-remainder',[PYTHON,'-B',EVIDENCE/'frontend_resumption.py','run'],cwd=TREE/'frontend')
++    if code:stop('PENDING_CLASSIFICATION','frontend-test-remainder','Selected frontend case nonzero; preserve traces',exit_code=code)
++    code=execute('frontend-test-assemble',[PYTHON,'-B',EVIDENCE/'frontend_resumption.py','assemble'],cwd=REPO)
++    if code:stop('PENDING','frontend-test-assemble','Frontend case evidence assembly invalid',exit_code=code)
++    logical=json.loads((BLOCKS/'frontend-tests.json').read_text(encoding='utf-8'))
++    assert logical['logical_aggregate'] is True
++    gate('frontend-test',tests=355,retained_PASS=354,new_PASS=1,
++        command_reference='frontend-test-assemble.command.json',
++        historical_command_exit_1_preserved=True)
++'''
++
++
++def main():
++    target = HERE / 'run_campaign.py'
++    assert not target.exists()
++    source = (PRIOR / 'run_campaign.py').read_text(encoding='utf-8')
++    source = source.replace('from case_resumption import validate_case_references\n    validate_case_references()',
++        'from frontend_resumption import validate_frontend_references\n    validate_frontend_references()')
++    source = replace_function(source, 'seal', SEAL)
++    old_run = next(n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name == 'run_all')
++    original_run = ast.get_source_segment(source, old_run)
++    marker = "    for task in ('build','test','lint','smoke:urls'):"
++    assert marker in original_run
++    remaining = original_run[original_run.index(marker):].replace(marker, "    for task in ('lint','smoke:urls'):", 1)
++    source = replace_function(source, 'run_all', PREFIX + remaining)
++    compile(source, str(target), 'exec')
++    assert all(line == line.rstrip() for line in source.splitlines())
++    target.write_text(source, encoding='utf-8', newline='\n')
++    protected = ('execute', 'check_suite', 'budget', 'gate', 'create_db')
++    def methods(path):
++        return {n.name: ast.dump(n, include_attributes=False)
++                for n in ast.parse(path.read_text(encoding='utf-8')).body if isinstance(n, ast.FunctionDef)}
++    before, after = methods(PRIOR / 'run_campaign.py'), methods(target)
++    assert all(before[n] == after[n] for n in protected)
++    print('REMAINING_FIXED_SCHEDULER_PREPARED_NO_TESTS', flush=True)
++
++
++if __name__ == '__main__':
++    main()

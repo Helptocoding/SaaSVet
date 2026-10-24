@@ -1,0 +1,24 @@
+{
+  "state": "COMPLETED",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261011-r7/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011-r7/pgroot/usr/lib/postgresql/16/bin/pg_ctl",
+    "-D",
+    "/home/lap/b9i-wsl-1947726-20261011-r7/pgdata",
+    "-l",
+    "/home/lap/b9i-wsl-1947726-20261011-r7/postgresql.log",
+    "-w",
+    "start"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261011-r7",
+  "exit_code": 0,
+  "seconds": 0.318914245999963,
+  "resources_after": {
+    "utc": "2026-10-12T04:24:04Z",
+    "physical_available": 7668367360,
+    "physical_total": 8252514304,
+    "disk_available": 4186759168,
+    "linux_virtual_disk_available": 1017608024064
+  }
+}

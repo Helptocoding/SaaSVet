@@ -1,0 +1,67 @@
+{
+  "AGENT_B7B_CONSENT_ENABLED": false,
+  "AGENT_INTERNAL_API_URL": "http://backend:8000",
+  "AGENT_LLM_BASE_URL": "",
+  "AGENT_LLM_COST_PER_MTOK_INPUT": 0.0,
+  "AGENT_LLM_COST_PER_MTOK_OUTPUT": 0.0,
+  "AGENT_LLM_MODEL_OPERATION_AUTHORIZER": "",
+  "AGENT_LLM_MODEL_OPERATION_VERIFIER": "",
+  "AGENT_LLM_MODEL_PLANNER": "",
+  "AGENT_LLM_MODEL_ROUTER": "",
+  "AGENT_MAX_LLM_TURNS_PER_CONVERSATION": 40,
+  "AGENT_MAX_TOOLS_PER_TURN": 5,
+  "AGENT_OPERATION_EXECUTION_ENABLED": {},
+  "AGENT_SAFETY_AUTOMATION_ENABLED": false,
+  "AGENT_SLOT_CONFIDENCE_THRESHOLD": 0.7,
+  "ENVIRONMENT": "dev",
+  "DEBUG": false,
+  "DATABASES": {
+    "default": {
+      "ENGINE": "django.db.backends.postgresql",
+      "USER": "b9e",
+      "PASSWORD": "",
+      "HOST": "127.0.0.1",
+      "PORT": 35483,
+      "NAME": "test_b9i_control",
+      "CONN_MAX_AGE": 60,
+      "CONN_HEALTH_CHECKS": false,
+      "DISABLE_SERVER_SIDE_CURSORS": false,
+      "ATOMIC_REQUESTS": false,
+      "AUTOCOMMIT": true,
+      "OPTIONS": {},
+      "TIME_ZONE": null,
+      "TEST": {
+        "CHARSET": null,
+        "COLLATION": null,
+        "MIGRATE": true,
+        "MIRROR": null,
+        "NAME": null
+      }
+    }
+  },
+  "CACHES": {
+    "default": {
+      "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+      "LOCATION": "vet-default"
+    },
+    "throttle_login": {
+      "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+      "LOCATION": "vet-throttle-login"
+    }
+  },
+  "ALLOWED_HOSTS": [
+    "localhost",
+    "127.0.0.1",
+    "backend"
+  ],
+  "DISABLE_SENTRY": true,
+  "REDIS_URL": "",
+  "DISCORD_WEBHOOK_URL": "",
+  "PASSWORD_HASHERS": [
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher"
+  ]
+}

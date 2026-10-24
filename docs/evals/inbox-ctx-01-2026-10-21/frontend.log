@@ -1,0 +1,555 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ❯ src/pages/inbox/index.test.jsx (93 tests | 1 failed | 53 skipped) 35585ms
+     ↓ does not call discarded guidance pending delivery
+     ↓ allows the current human owner to explicitly acknowledge a new queued case
+     ↓ shows a durable queue without inventing notification or acknowledgement
+     ↓ labels explicit acknowledgement without claiming clinical attention
+     ↓ keeps uncertain guidance visible and preserves multiple open legacy cases
+     ↓ cambiar de hilo no conserva el botón del historial anterior
+     ↓ permite recorrer un hilo archivado sin habilitar el envío
+     ↓ active: explica el turno y habilita Tomar y acusar recibo al terminar
+     ↓ human_active: explica el turno y habilita Liberar al terminar
+     ↓ muestra el indicador sin conceder permiso para tomar o liberar
+     ↓ no hereda el indicador de otro hilo ni de la fila antigua
+     ↓ un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada
+     ↓ distingue carga inicial de lista y mensajes de un panel sin selección
+     ↓ distingue el fallo inicial de lista vacía y permite reintentar
+     ↓ explica el fallo inicial de transcript y reintenta la misma conversación
+     ↓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar
+     ↓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar
+     ↓ recupera ambos paneles automáticamente cuando vuelve la API
+     ↓ un fallo tardío del hilo anterior no contamina la racha del nuevo
+     ↓ ignora success tardío de lista tras cambiar de filtro
+     ↓ ignora failure tardío de lista tras cambiar de filtro
+     ✓ representa staff_verified en ambos paneles sin habilitar acciones de identidad  1143ms
+     ✓ representa confirmed_in_chat en ambos paneles sin habilitar acciones de identidad  410ms
+     ✓ representa phone_match en ambos paneles sin habilitar acciones de identidad 256ms
+     ✓ representa unknown en ambos paneles sin habilitar acciones de identidad 250ms
+     ✓ muestra la verificación del contacto incluso en un hilo archivado 271ms
+     ✓ retira el distintivo cuando el siguiente poll informa unknown 266ms
+     ↓ pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias
+     ↓ cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía
+     ↓ si inicia oculto no consulta la lista y usa el filtro vigente al volver
+     ↓ refleja el último poll sin solicitar datos adicionales y restaura al salir
+     ↓ copia el cuerpo original completo, sin horas ni autor, y confirma el éxito
+     ↓ muestra un error recuperable cuando el navegador rechaza la copia
+     ↓ maneja clipboard no disponible sin anunciar una copia falsa
+     ↓ copia teléfono y ofrece tel: también con hilo archivado=false
+     ↓ copia teléfono y ofrece tel: también con hilo archivado=true
+     ↓ renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders
+     ↓ agrupa por autor sin ocultar mensajes, horas ni estados de entrega
+     ↓ corta la ráfaga en medianoche de la clínica aunque sólo pase un minuto
+     ↓ crece al pegar 2000 caracteres, limita la altura y encoge al borrar
+     ↓ muestra el contador después de 3600 y conserva el límite de 4000
+     ↓ reinicia altura y contador al enviar sin esperar el POST
+     ↓ descarta texto y contador al cambiar de cliente
+     ✓ descarta el texto de Ana al cambiar al hilo de Beto  1271ms
+     ✓ conserva el borrador al volver a clicar el mismo hilo  751ms
+     ✓ envía al sessionId vigente con una key de idempotencia no vacía  757ms
+     ✓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde  1496ms
+     ✓ reutiliza la key si se reintenta el mismo texto tras un error de red  1404ms
+     ✓ conserva la key incierta al navegar B y volver a A con el mismo texto  1607ms
+     ✓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto  734ms
+     ✓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío  1995ms
+     ✓ regenera la key cuando cambia el texto después de un error  2146ms
+     ✓ pinta el envío antes del POST y reconcilia el 201 sin duplicar  645ms
+     ✓ elimina el optimista ante 400 y muestra el error del servidor  599ms
+     ✓ conserva el optimista reintentable ante un 5xx  668ms
+     ✓ deduplica un polling concurrente exclusivamente por client_message_id  866ms
+     ✓ dos envíos consecutivos por Enter reciben keys distintas  1530ms
+     ✓ no ejecuta continuaciones del POST después de desmontar el Inbox  733ms
+     ✓ aplica el cap global de 20 intentos entre sesiones  2926ms
+     ✓ oculta failed-local cuando el hilo regresa con otra sesión activa  1063ms
+     ✓ renderiza un divisor por día local de la organización 195ms
+     ✓ mantiene la hora del mensaje histórico bajo el divisor Ayer 154ms
+     ✓ integra recibos de entrega solo en mensajes salientes del transcript 156ms
+     ✓ actualiza todos los divisores con una sola referencia al cruzar medianoche 154ms
+     ↓ permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes
+     ↓ deduplica por contacto y cuenta sin ocultar otra cuenta del mismo contacto
+     ↓ refresca todas las páginas cargadas y conserva selección y borrador
+     ↓ bloquea el doble clic y el poll mientras carga otra página
+     ↓ una respuesta de poll anterior no borra una página recién añadida
+     ↓ conserva las filas ante un error de carga y reintenta el mismo desplazamiento
+     ↓ un refresco parcial fallido retiene todas las filas y muestra reconexión tras dos fallos
+     ↓ ignora una carga tardía con éxito después de cambiar de filtro
+     ↓ ignora una carga tardía con error después de cambiar de filtro
+     ↓ no inicia otra página del poll al ocultarse y refresca todas al volver
+     ↓ no continúa un refresco de varias páginas después de desmontar
+     ↓ reduce las páginas a refrescar cuando la lista se agota antes
+     ↓ no ofrece un cursor inválido 0
+     ↓ no ofrece un cursor inválido -1
+     ↓ no ofrece un cursor inválido 100
+     ↓ no ofrece un cursor inválido null
+     ✓ carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo  972ms
+     × el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor 1510ms
+     ✓ un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador  1219ms
+     ✓ la página anterior no sustituye la sesión vigente renovada por el poll  729ms
+     ✓ ignora success antiguo al cambiar de hilo y aborta su petición  535ms
+     ✓ ignora failure antiguo al cambiar de hilo y aborta su petición  470ms
+     ✓ los hilos archivados permiten cargar anteriores sin ofrecer envío  322ms
+     ✓ una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo  1288ms
+     ✓ un mensaje nuevo pegado al fondo sigue visible sin contador  907ms
+     ✓ bajar manualmente hasta el fondo retira el contador  1030ms
+     ✓ cambiar de hilo no conserva el contador del anterior  780ms
+     ✓ al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores  731ms
+     ✓ una llegada de hoy conserva la lectura de julio aunque cree un divisor de día  609ms
+ ✓ src/pages/inbox/index.window.test.jsx (18 tests) 3480ms
+     ✓ una ventana de más de 12 h permite enviar sin banda innecesaria  707ms
+     ✓ volver de pestaña oculta corrige el reloj de inmediato y refresca la sesión  343ms
+ ✓ src/pages/inbox/index.context.test.jsx (15 tests) 3416ms
+     ✓ carga sólo al abrir y llega al expediente correcto en dos clics desde el chat  757ms
+     ✓ el panel conserva borrador e historial y se pliega con estado accesible  316ms
+ ✓ src/pages/inbox/index.unread.test.jsx (8 tests) 1734ms
+     ✓ muestra total de todas las páginas y contadores por hilo  586ms
+     ✓ sitúa el divisor antes del primer nuevo y lo quita al confirmar, con view solamente  317ms
+ ✓ src/api/inbox.test.js (11 tests | 5 skipped) 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/inbox/index.test.jsx > WA-HIST-01 — historial en Inbox > el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor
+TestingLibraryElementError: Found multiple elements with the role "region"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Contexto del cliente"[39m
+  [33mclass[39m=[32m"_contextPanel_560897"[39m
+[36m>[39m
+  [36m<button[39m
+    [33maria-controls[39m=[32m"inbox-client-context"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"_contextToggle_560897"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [0mVer contexto del cliente[0m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+    [36m>[39m
+      [0m+[0m
+    [36m</span>[39m
+  [36m</button>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-label[39m=[32m"Mensajes de la conversación"[39m
+  [33mclass[39m=[32m"_thread_560897"[39m
+  [33mrole[39m=[32m"region"[39m
+  [33mtabindex[39m=[32m"0"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"_historyStatus_560897"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn btn-secondary btn-xs"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCargar anteriores[0m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Hoy"[39m
+    [33mclass[39m=[32m"_dateDivider_560897"[39m
+    [33mrole[39m=[32m"separator"[39m
+  [36m>[39m
+    [36m<span>[39m
+      [0mHoy[0m
+    [36m</span>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"110 mensajes de Ana"[39m
+    [33mclass[39m=[32m"_messageGroup_560897 _messageGroupIn_560897"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_bubble_560897 _bubbleIn_560897"[39m
+      [33mdata-message-id[39m=[32m"1"[39m
+    [36m>[39m
+      [0mHistórico 1[0m
+      [36m<div[39m
+        [33mclass[39m=[32m"_bubbleMeta_560897"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Copiar mensaje"[39m
+          [33mclass[39m=[32m"_copyMessage_560897"[39m
+          [33mtitle[39m=[32m"Copiar mensaje"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCopiar[0m
+        [36m</button>[39m
+        [36m<span>[39m
+          [0m05:00 a.m.[0m
+        [36m</span>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_bubble_560897 _bubbleIn_560897"[39m
+      [33mdata-message-id[39m=[32m"2"[39m
+    [36m>[39m
+      [0mHistórico 2[0m
+      [36m<div[39m
+        [33mclass[39m=[32m"_bubbleMeta_560897"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Copiar mensaje"[39m
+          [33mclass[39m=[32m"_copyMessage_560897"[39m
+          [33mtitle[39m=[32m"Copiar mensaje"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCopiar[0m
+        [36m</button>[39m
+        [36m<span>[39m
+          [0m05:00 a.m.[0m
+        [36m</span>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_bubble_560897 _bubbleIn_560897"[39m
+      [33mdata-message-id[39m=[32m"3"[39m
+    [36m>[39m
+      [0mHistórico 3[0m
+      [36m<div[39m
+        [33mclass[39m=[32m"_bubbleMeta_560897"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Copiar mensaje"[39m
+          [33mclass[39m=[32m"_copyMessage_560897"[39m
+          [33mtitle[39m=[32m"Copiar mensaje"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCopiar[0m
+        [36m</button>[39m
+        [36m<span>[39m
+          [0m05:00 a.m.[0m
+        [36m</span>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_bubble_560897 _bubbleIn_560897"[39m
+      [33mdata-message-id[39m=[32m"4"[39m
+    [36m>[39m
+      [0mHistórico 4[0m
+      [36m<div[39m
+        [33mclass[39m=[32m"_bubbleMeta_560897"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Copiar mensaje"[39m
+          [33mclass[39m=[32m"_copyMessage_560897"[39m
+          [33mtitle[39m=[32m"Copiar mensaje"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCopiar[0m
+        [36m</button>[39m
+        [36m<span>[39m
+          [0m05:00 a.m.[0m
+        [36m</span>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_bubble_560897 _bubbleIn_560897"[39m
+      [33mdata-message-id[39m=[32m"5"[39m
+    [36m>[39m
+      [0mHistórico 5[0m
+      [36m<div[39m
+        [33mclass[39m=[32m"_bubbleMeta_560897"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Copiar mensaje"[39m
+          [33mclass[39m=[32m"_copyMessage_560897"[39m
+          [33mtitle[39m=[32m"Copiar mensaje"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCopiar[0m
+        [36m</button>[39m
+        [36m<span>[39m
+          [0m05:00 a.m.[0m
+        [36m</span>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_bubble_560897 _bubbleIn_560897"[39m
+      [33mdata-message-id[39m=[32m"6"[39m
+    [36m>[39m
+      [0mHistórico 6[0m
+      [36m<div[39m
+        [33mclass[39m=[32m"_bubbleMeta_560897"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Copiar mensaje"[39m
+          [33mclass[39m=[32m"_copyMessage_560897"[39m
+          [33mtitle[39m=[32m"Copiar mensaje"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCopiar[0m
+        [36m</button>[39m
+        [36m<span>[39m
+          [0m05:00 a.m.[0m
+        [36m</span>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_bubble_560897 _bubbleIn_560897"[39m
+      [33mdata-message-id[39m=[32m"7"[39m
+    [36m>[39m
+      [0mHistórico 7[0m
+      [36m<div[39m
+        [33mclass[39m=[32m"_bubbleMeta_560897"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Copiar mensaje"[39m
+          [33mclass[39m=[32m"_copyMessage_560897"[39m
+          [33mtitle[39m=[32m"Copiar mensaje"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCopiar[0m
+        [36m</button>[39m
+        [36m<span>[39m
+          [0m05:00 a.m.[0m
+        [36m</span>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_bubble_560897 _bubbleIn_560897"[39m
+      [33mdata-message-id[39m=[32m"8"[39m
+    [36m>[39m
+      [0mHistórico 8[0m
+      [36m<div[39m
+        [33mclass[39m=[32m"_bubbleMeta_560897"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Copiar mensaje"[39m
+          [33mclass[39m=[32m"_copyMessage_560897"[39m
+          [33mtitle[39m=[32m"Copiar mensaje"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCopiar[0m
+        [36m</button>[39m
+        [36m<span>[39m
+          [0m05:00 a.m.[0m
+        [36m</span>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_bubble_560897 _bubbleIn_560897"[39m
+      [33mdata-message-id[39m=[32m"9"[39m
+    [36m>[39m
+      [0mHistórico 9[0m
+      [36m<div[39m
+        [33mclass[39m=[32m"_bubbleMeta_560897"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Copiar mensaje"[39m
+          [33mclass[39m=[32m"_copyMessage_560897"[39m
+          [33mtit...
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_page_560897"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-header _pageHeader_560897"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1>[39m
+            [0mWhatsApp[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-subtitle"[39m
+          [36m>[39m
+            [0mConversaciones con clientes — responde, toma o cierra cada hilo.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_layout_560897"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_listPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_filterRow_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-describedby[39m=[32m"inbox-unread-total"[39m
+              [33maria-label[39m=[32m"Activas"[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"_filterTab_560897 _filterTabActive_560897"[39m
+            [36m>[39m
+              [0mActivas[0m
+              [36m<span[39m
+                [33maria-label[39m=[32m"0 mensajes sin leer en conversaciones activas"[39m
+                [33mclass[39m=[32m"_unreadCount_560897"[39m
+                [33mid[39m=[32m"inbox-unread-total"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Archivadas"[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_filterTab_560897 "[39m
+            [36m>[39m
+              [0mArchivadas[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listScroll_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897 _convItemActive_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mAna[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Ana[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_convItem_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"_convIdentity_560897"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"_convName_560897"[39m
+                  [36m>[39m
+                    [0mBeto[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convTime_560897"[39m
+                [36m>[39m
+                  [0m22-ago[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_convTop_560897"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"_convPreview_560897"[39m
+                [36m>[39m
+                  [0mHola de Beto[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_listPagination_560897"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0m2[0m
+              [0m [0m
+              [0mconversaciones cargadas.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_chatPane_560897"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_chatHeader_560897"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_chatIdentity_560897"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_chatIdentityLine_560897"[39m
+              [36m>[39m
+                [36m<strong[39m
+                  [33mclass[39m=[32m"_chatName_560897"[39m
+                [36m>[39m
+                  [0mAna[0m
+                [36m</strong>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-success"[39m
+                  [33mtitle[39m=[32m"Identidad verificada por el personal de la clínica."[39m
+                [36m>[39m
+                  [0mVerificado[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"badge badge-info"[39m
+                [36m>[39m
+                  [0mAbierta[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Contexto del cliente"[39m
+            [33mclass[39m=[32m"_contextPanel_560897"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"inbox-client-context"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"_contextToggle_560897"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mVer contexto del cliente[0m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"tr...
+ ❯ Object.getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/inbox/index.test.jsx:1590:30
+    1588|         expect(screen.getByText("Histórico 110", { exact: true })).toB…
+    1589|         expect(screen.getByText("Verificado")).toBeInTheDocument();
+    1590|         expect(within(screen.getByRole("region")).getAllByText(/^Histó…
+       |                              ^
+    1591|         await user.click(screen.getByRole("button", { name: "Cargar an…
+    1592|         expect(inboxApi.getThreadMessages.mock.calls[3][2]).toEqual({ …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 86 passed | 58 skipped (145)
+   Start at  16:11:46
+   Duration  93.33s (transform 4.11s, setup 2.76s, import 9.36s, tests 44.24s, environment 23.33s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-ctx-01-2026-10-21/vitest.json

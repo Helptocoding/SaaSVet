@@ -1,0 +1,482 @@
+Found 68 test(s).
+Creating test database for alias 'default' ('test_b9i_b4')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying organizations.0001_initial... OK
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying users.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying organizations.0002_organization_timezone_and_more... OK
+  Applying organizations.0003_organization_tax_rate... OK
+  Applying organizations.0004_org_default_timezone_mexico... OK
+  Applying organizations.0005_organizationsettings... OK
+  Applying organizations.0006_alter_organizationsettings_auto_create_invoice_on_done_and_more... OK
+  Applying organizations.0007_sync_org_settings_data... OK
+  Applying organizations.0008_day6_add_public_id... OK
+  Applying organizations.0009_organizationsettings_require_open_cash_session... OK
+  Applying organizations.0010_organization_is_demo... OK
+  Applying organizations.0011_clinic_configuration_phase1... OK
+  Applying organizations.0012_remove_organizationsettings_auto_create_invoice_on_done_and_more... OK
+  Applying patients.0001_initial... OK
+  Applying patients.0002_alter_owner_organization_alter_pet_organization... OK
+  Applying patients.0003_alter_pet_owner... OK
+  Applying patients.0004_pet_birth_date_pet_color_pet_sex_alter_pet_breed... OK
+  Applying patients.0005_owner_created_at_owner_created_by_owner_is_active_and_more... OK
+  Applying patients.0006_remove_pet_patients_pe_organiz_ac3681_idx_and_more... OK
+  Applying patients.0007_remove_owner_patients_ow_organiz_e2fb0a_idx_and_more... OK
+  Applying patients.0008_pet_is_generic... OK
+  Applying patients.0009_add_public_id_to_exposed_models... OK
+  Applying patients.0010_unique_generic_pet_per_organization... OK
+  Applying patients.0011_alter_pet_owner... OK
+  Applying patients.0012_owner_owner_name_trgm_pet_pet_name_trgm... OK
+  Applying patients.0013_owner_legacy_id_pet_legacy_id_and_more... OK
+  Applying patients.0014_alter_owner_phone... OK
+  Applying patients.0015_alter_pet_species... OK
+  Applying patients.0016_owner_extra_data_pet_extra_data... OK
+  Applying patients.0017_owner_owner_phone_trgm_owner_owner_legacy_trgm_and_more... OK
+  Applying agent.0001_initial... OK
+  Applying channels.0001_initial... OK
+  Applying channels.0002_channelaccount_access_token_encrypted_and_more... OK
+  Applying channels.0003_message_process_attempts... OK
+  Applying patients.0018_owner_phone_normalized... OK
+  Applying agent.0002_initial... OK
+  Applying agent.0003_conversation_total_llm_calls_humanhandoff_llmcall_and_more... OK
+  Applying agent.0004_agentsettings_default_veterinarian_and_more... OK
+  Applying agent.0005_contactidentity_linked_via... OK
+  Applying agent.0006_conversation_processing_until... OK
+  Applying agent.0007_contactidentity_proactive_opt_out... OK
+  Applying agent.0008_conversationgoal... OK
+  Applying agent.0009_remove_agentsettings_business_hours... OK
+  Applying agent.0010_turndecision... OK
+  Applying agent.0011_alter_humanhandoff_reason_code... OK
+  Applying agent.0012_commitment_lifecycle... OK
+  Applying agent.0013_identity_commitments... OK
+  Applying agent.0014_contactidentity_auto_rematch_blocked... OK
+  Applying agent.0015_contact_identity_verification... OK
+  Applying agent.0016_f2_message_contact_and_close_reason... OK
+  Applying channels.0004_f2_message_contact_and_close_reason... OK
+  Applying channels.0005_f2_backfill_message_contact... OK
+  Applying channels.0006_f2_message_contact_index... OK
+  Applying channels.0007_channelaccount_public_id... OK
+  Applying channels.0008_message_semantic_operation... OK
+  Applying channels.0009_message_idempotency_key... OK
+  Applying channels.0010_message_processing_failure_notice... OK
+  Applying agent.0017_contactidentity_public_id... OK
+  Applying agent.0018_f5_drop_conversation_summary... OK
+  Applying agent.0019_conversation_intake_path... OK
+  Applying agent.0020_conversationgoal_authorization_message... OK
+  Applying agent.0021_turn_operation_assessment... OK
+  Applying agent.0022_conversation_ownership_epoch_turnwork... OK
+  Applying channels.0011_message_origin_epoch_message_output_ordinal_and_more... OK
+  Applying channels.0012_b3_scope_and_membership... OK
+  Applying channels.0013_b4_durable_sender... OK
+  Applying channels.0014_alter_message_semantic_type... OK
+  Applying appointments.0001_initial... OK
+  Applying appointments.0002_appointment_end_datetime_appointment_start_datetime_and_more... OK
+  Applying appointments.0003_backfill_start_end_datetime... OK
+  Applying appointments.0004_appointment_created_at_appointment_created_by_and_more... OK
+  Applying appointments.0005_appointment_appointment_end_after_start... OK
+  Applying appointments.0006_appointment_appointment_organiz_abc1ec_idx... OK
+  Applying appointments.0007_add_cancellation_reason_and_new_statuses... OK
+  Applying appointments.0008_appointmentstatuschange... OK
+  Applying appointments.0009_add_public_id_to_exposed_models... OK
+  Applying appointments.0010_appointment_walk_in... OK
+  Applying appointments.0011_appointment_idx_appt_org_start_status... OK
+  Applying appointments.0012_alter_appointment_end_datetime_and_more... OK
+  Applying appointments.0013_appointment_idempotency_key_and_more... OK
+  Applying appointments.0014_appointment_no_overlap_per_vet... OK
+  Applying appointments.0015_appointment_category... OK
+  Applying agent.0023_humanhandoff_acknowledged_at_and_more... OK
+  Applying agent.0024_matter_binding_b6... OK
+  Applying agent.0025_conversation_operation_b7a... OK
+  Applying agent.0026_b7b_consent_evidence... OK
+  Applying channels.0015_b7b_receipt_guard... OK
+  Applying agent.0027_attendance_consent_policy... OK
+  Applying agent.0028_b9_operational_budget... OK
+  Applying medical_records.0001_initial... OK
+  Applying medical_records.0002_medicalrecord_veterinarian_alter_medicalrecord_pet... OK
+  Applying medical_records.0003_alter_medicalrecord_options_and_more... OK
+  Applying medical_records.0004_medicalrecord_created_by_medicalrecord_is_active_and_more... OK
+  Applying medical_records.0005_medicalrecord_medical_rec_organiz_12d8fd_idx... OK
+  Applying medical_records.0006_medicalrecord_close_fields... OK
+  Applying inventory.0001_initial... OK
+  Applying inventory.0002_product_category_product_requires_prescription... OK
+  Applying inventory.0003_product_sale_price... OK
+  Applying inventory.0004_add_internal_code_and_presentation... OK
+  Applying inventory.0005_data_create_presentations... OK
+  Applying inventory.0006_add_presentation_fks_to_movements... OK
+  Applying inventory.0007_data_populate_presentation_fks... OK
+  Applying inventory.0008_finalize_inventory_restructure... OK
+  Applying inventory.0009_alter_presentation_organization... OK
+  Applying billing.0001_initial... OK
+  Applying billing.0002_initial... OK
+  Applying billing.0003_invoice_invoice_type_invoice_medical_record... OK
+  Applying billing.0004_invoiceitem_presentation_alter_invoice_status_and_more... OK
+  Applying inventory.0010_stockmovement_invoice... OK
+  Applying inventory.0011_medicalrecordproduct_created_at_and_more... OK
+  Applying inventory.0012_presentation_presentation_stock_non_negative_and_more... OK
+  Applying billing.0005_invoiceitem_discount... OK
+  Applying billing.0006_invoice_is_active_invoice_updated_by_and_more... OK
+  Applying billing.0007_remove_invoiceitem_billing_inv_organiz_6da732_idx_and_more... OK
+  Applying billing.0008_remove_product_legacy_xor_constraint... OK
+  Applying billing.0009_remove_invoiceitem_invoiceitem_exactly_one_source_and_more... OK
+  Applying billing.0010_invoice_medical_record_onetoone_invoiceitem_unique... OK
+  Applying medical_records.0007_add_medicalrecordservice... OK
+  Applying medical_records.0008_vaccinerecord... OK
+  Applying medical_records.0009_allow_blank_diagnosis_treatment... OK
+  Applying medical_records.0010_add_public_id_to_exposed_models... OK
+  Applying medical_records.0011_alter_medicalrecord_diagnosis_and_more... OK
+  Applying medical_records.0012_add_consultation_type... OK
+  Applying medical_records.0013_create_vitalsigns... OK
+  Applying medical_records.0014_medicalrecord_closed_status_requires_closed_at... OK
+  Applying medical_records.0015_medicalrecord_closed_at_provenance... OK
+  Applying inventory.0013_alter_presentation_options_and_more... OK
+  Applying inventory.0014_add_public_id_to_exposed_models... OK
+  Applying billing.0011_alter_invoice_pet... OK
+  Applying billing.0012_add_public_id_to_exposed_models... OK
+  Applying billing.0013_unique_invoice_service... OK
+  Applying billing.0014_service_base_price_positive... OK
+  Applying billing.0015_invoice_paid_status_requires_paid_at... OK
+  Applying billing.0016_invoice_anchor_completeness... OK
+  Applying billing.0017_invoice_anchor_backfill_and_constraints... OK
+  Applying billing.0018_invoice_idx_inv_org_status_paid_and_more... OK
+  Applying inventory.0015_stockmovement_idx_stockmov_org_pres_created... OK
+  Applying inventory.0016_remove_presentation_inventory_p_product_3223d8_idx_and_more... OK
+  Applying cash.0001_initial... OK
+  Applying billing.0019_payment... OK
+  Applying billing.0020_payment_cash_session... OK
+  Applying billing.0021_externalprescriptionattestation... OK
+  Applying analytics.0001_initial... OK
+  Applying analytics.0002_metricadjustment... OK
+  Applying appointments.0016_appointment_source_operation... OK
+  Applying appointments.0017_appointment_mutation_effect... OK
+  Applying appointments.0018_confirm_attendance_effect... OK
+  Applying medical_records.0016_rename_medical_rec_medical_9efa5c_idx_medical_rec_medical_a94e83_idx_and_more... OK
+  Applying medical_records.0017_alter_medicalrecord_pet_alter_vaccinerecord_pet... OK
+  Applying medical_records.0018_day6_vaccine_public_id... OK
+  Applying inventory.0017_medicalrecordproduct_cost_behavior... OK
+  Applying inventory.0018_adr_p31_product_stock_and_presentation_format... OK
+  Applying inventory.0019_presentation_barcode_unique_index... OK
+  Applying prescriptions.0001_initial... OK
+  Applying prescriptions.0002_prescription_created_by_prescription_is_active_and_more... OK
+  Applying prescriptions.0003_remove_prescriptionitem_prescriptio_organiz_e427c3_idx_and_more... OK
+  Applying prescriptions.0004_add_public_id_to_exposed_models... OK
+  Applying prescriptions.0005_prescription_idx_presc_org_created... OK
+  Applying prescriptions.0006_alter_prescription_pet... OK
+  Applying billing.0022_creditnote_creditnoteitem_refundpayment_and_more... OK
+  Applying billing.0023_invoiceitem_dispensed_from_prescription_item... OK
+  Applying billing.0024_invoice_idx_invoice_org_created_id... OK
+  Applying inventory.0020_stockmovement_idx_stockmov_org_created_id... OK
+  Applying inventory.0021_product_manufacturer_product_tracks_lots_and_more... OK
+  Applying inventory.0022_medicalrecordproduct_lot... OK
+  Applying inventory.0023_product_default_cost_behavior... OK
+  Applying inventory.0024_product_extra_data... OK
+  Applying inventory.0025_presentation_conversion_factor_positive... OK
+  Applying inventory.0026_medical_record_product_factor_snapshot... OK
+  Applying medical_records.0019_medicalrecord_consultation_draft... OK
+  Applying medical_records.0020_consultationassessment... OK
+  Applying medical_records.0021_vaccinerecord_lot_vaccinerecord_lot_expiry_and_more... OK
+  Applying medical_records.0022_surgeryrecord... OK
+  Applying medical_records.0023_emergencyrecord... OK
+  Applying medical_records.0024_medicalrecord_originated_from... OK
+  Applying cash.0002_cashmovement... OK
+  Applying billing.0025_invoiceitem_lot... OK
+  Applying billing.0026_checkout_checkoutestimate_checkoutevent_checkoutitem_and_more... OK
+  Applying billing.0027_alter_checkoutprescriptionselection_eligible_remaining_at_open... OK
+  Applying billing.0028_checkout_dispute... OK
+  Applying billing.0029_external_attestation_corrections... OK
+  Applying billing.0030_collection_case_public_id... OK
+  Applying billing.0031_rename_invoice_void_anchor... OK
+  Applying billing.0032_reconcile_checkout_schema... OK
+  Applying billing.0033_repair_checkout_billing_schema... OK
+  Applying billing.0034_contract_legacy_invoice_anchors... OK
+  Applying billing.0035_unit_snapshots_and_multilot_returns... OK
+  Applying core.0001_rbac_models... OK
+  Applying imports.0001_initial... OK
+  Applying imports.0002_alter_importjob_entity_type... OK
+  Applying legal.0001_initial... OK
+  Applying notifications.0001_initial... OK
+  Applying patients.0019_pet_registration_effect... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+  Applying users.0002_simplify_roles... OK
+  Applying users.0003_seed_test_data... OK
+  Applying users.0004_seed_more_test_data... OK
+  Applying users.0005_user_users_user_organiz_5da7d7_idx... OK
+  Applying users.0006_alter_user_organization... OK
+  Applying users.0007_day6_add_public_id... OK
+  Applying users.0008_user_password_must_change_and_more... OK
+  Applying users.0009_dedup_user_email... OK
+  Applying users.0010_user_email_ci_unique... OK
+  Applying users.0011_user_is_service_account_alter_user_role... OK
+System check identified no issues (0 silenced).
+test_duplicate_and_reordered_events_keep_read_and_stable_timestamps (apps.channels.tests.test_b4_webhook.B4WebhookTests.test_duplicate_and_reordered_events_keep_read_and_stable_timestamps) ... C:\Users\LAP\AppData\Local\Temp\b9-native-20261016-r3\python\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\AppData\Local\Temp\b9-native-20261016-r3\src\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+ok
+test_failed_after_read_does_not_degrade_or_copy_provider_pii (apps.channels.tests.test_b4_webhook.B4WebhookTests.test_failed_after_read_does_not_degrade_or_copy_provider_pii) ... ok
+test_late_webhook_reconciles_uncertain_with_exact_correlation (apps.channels.tests.test_b4_webhook.B4WebhookTests.test_late_webhook_reconciles_uncertain_with_exact_correlation) ... ok
+test_malformed_signed_structures_are_acknowledged_without_mutation (apps.channels.tests.test_b4_webhook.B4WebhookTests.test_malformed_signed_structures_are_acknowledged_without_mutation) ... ok
+test_other_account_same_org_cannot_update (apps.channels.tests.test_b4_webhook.B4WebhookTests.test_other_account_same_org_cannot_update) ... ok
+test_other_org_correct_wamid_cannot_update (apps.channels.tests.test_b4_webhook.B4WebhookTests.test_other_org_correct_wamid_cannot_update) ... ok
+test_unknown_status_and_wamid_are_ignored (apps.channels.tests.test_b4_webhook.B4WebhookTests.test_unknown_status_and_wamid_are_ignored) ... ok
+test_unsigned_status_cannot_mutate (apps.channels.tests.test_b4_webhook.B4WebhookTests.test_unsigned_status_cannot_mutate) ... {"event": "WEBHOOK_SIGNATURE_REJECTED", "level": "WARNING", "ts": "2026-10-16T21:46:50Z", "request_id": "dacdff77-0735-477b-bef3-b6c0b27b5901"}
+ok
+test_compatibility_mode_runs_both (apps.agent.tests.test_b4_command.B4CommandTests.test_compatibility_mode_runs_both) ... {"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-16T21:46:50Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-16T21:46:50Z", "request_id": "-"}
+ok
+test_invalid_bounds_fail_before_polling (apps.agent.tests.test_b4_command.B4CommandTests.test_invalid_bounds_fail_before_polling) ... ok
+test_planner_mode_never_runs_sender (apps.agent.tests.test_b4_command.B4CommandTests.test_planner_mode_never_runs_sender) ... {"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-16T21:46:50Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-16T21:46:50Z", "request_id": "-"}
+ok
+test_sender_mode_never_waits_for_planner (apps.agent.tests.test_b4_command.B4CommandTests.test_sender_mode_never_waits_for_planner) ... {"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-16T21:46:50Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-16T21:46:50Z", "request_id": "-"}
+ok
+test_send_fi_01_process_killed_after_claim_without_admission (apps.agent.tests.test_b4_processes.B4ProcessTests.test_send_fi_01_process_killed_after_claim_without_admission) ... {"event": "AGENT_SEND_EXPIRED", "level": "INFO", "ts": "2026-10-16T21:47:00Z", "message_id": 9, "outcome_code": "lease_expired_before_admission", "sending_age_seconds": 0.13444, "request_id": "-"}
+ok
+test_send_fi_02_takeover_in_other_process_before_admission (apps.agent.tests.test_b4_processes.B4ProcessTests.test_send_fi_02_takeover_in_other_process_before_admission) ... {"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-10-16T21:47:38Z", "conversation_id": 10, "ownership_epoch": 1, "outcome_code": "test_takeover", "discarded_outbounds": 1, "request_id": "-"}
+ok
+test_send_fi_03_process_killed_after_meta_acceptance (apps.agent.tests.test_b4_processes.B4ProcessTests.test_send_fi_03_process_killed_after_meta_acceptance) ... {"event": "AGENT_SEND_EXPIRED", "level": "INFO", "ts": "2026-10-16T21:48:09Z", "message_id": 11, "outcome_code": "lease_expired_after_admission", "sending_age_seconds": 0.241401, "request_id": "-"}
+ok
+test_send_fi_08_other_transaction_progresses_while_http_blocked (apps.agent.tests.test_b4_processes.B4ProcessTests.test_send_fi_08_other_transaction_progresses_while_http_blocked) ... {"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-10-16T21:48:46Z", "conversation_id": 12, "ownership_epoch": 1, "outcome_code": "test_takeover", "discarded_outbounds": 0, "request_id": "-"}
+ok
+test_send_fi_12_two_processes_one_claim_one_http (apps.agent.tests.test_b4_processes.B4ProcessTests.test_send_fi_12_two_processes_one_claim_one_http) ... ok
+test_caller_transaction_is_rejected (apps.agent.tests.test_b4_sender.B4SenderTests.test_caller_transaction_is_rejected) ... ok
+test_claim_wrong_account_or_org_is_denied (apps.agent.tests.test_b4_sender.B4SenderTests.test_claim_wrong_account_or_org_is_denied) ... {"event": "AGENT_SEND_CLAIM_CONFLICT", "level": "INFO", "ts": "2026-10-16T21:49:58Z", "request_id": "-"}
+{"event": "AGENT_SEND_CLAIM_CONFLICT", "level": "INFO", "ts": "2026-10-16T21:49:58Z", "request_id": "-"}
+ok
+test_constraints_reject_claimless_sending_and_timestampless_uncertainty (apps.agent.tests.test_b4_sender.B4SenderTests.test_constraints_reject_claimless_sending_and_timestampless_uncertainty) ... ok
+test_epoch_change_without_discard_is_checked_at_admission (apps.agent.tests.test_b4_sender.B4SenderTests.test_epoch_change_without_discard_is_checked_at_admission) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:50:39Z", "message_id": 17, "attempts": 1, "outbound_pending_age_seconds": 0.07638, "request_id": "-"}
+{"event": "AGENT_SEND_DISCARDED", "level": "INFO", "ts": "2026-10-16T21:50:39Z", "message_id": 17, "outcome_code": "ownership_invalidated", "request_id": "-"}
+ok
+test_expired_lease_can_record_late_acceptance_with_same_token (apps.agent.tests.test_b4_sender.B4SenderTests.test_expired_lease_can_record_late_acceptance_with_same_token) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:51:01Z", "message_id": 18, "attempts": 1, "outbound_pending_age_seconds": 0.066582, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:51:01Z", "message_id": 18, "dispatch_latency_seconds": 0.130769, "request_id": "-"}
+{"event": "AGENT_SEND_EXPIRED", "level": "INFO", "ts": "2026-10-16T21:51:01Z", "message_id": 18, "outcome_code": "lease_expired_after_admission", "sending_age_seconds": 0.133522, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T21:51:01Z", "message_id": 18, "provider_acceptance_latency_seconds": 0.138093, "request_id": "-"}
+ok
+test_finalization_scope_cannot_be_forged (apps.agent.tests.test_b4_sender.B4SenderTests.test_finalization_scope_cannot_be_forged) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:51:27Z", "message_id": 19, "attempts": 1, "outbound_pending_age_seconds": 0.045845, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:51:27Z", "message_id": 19, "dispatch_latency_seconds": 0.088075, "request_id": "-"}
+{"event": "AGENT_SEND_FINALIZE_CONFLICT", "level": "INFO", "ts": "2026-10-16T21:51:27Z", "request_id": "-"}
+ok
+test_first_message_survives_second_finalize_failure (apps.agent.tests.test_b4_sender.B4SenderTests.test_first_message_survives_second_finalize_failure) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:51:50Z", "message_id": 20, "attempts": 1, "outbound_pending_age_seconds": 0.067091, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:51:50Z", "message_id": 20, "dispatch_latency_seconds": 0.134374, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T21:51:50Z", "message_id": 20, "provider_acceptance_latency_seconds": 0.061172, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:51:50Z", "message_id": 21, "attempts": 1, "outbound_pending_age_seconds": 0.020439, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:51:50Z", "message_id": 21, "dispatch_latency_seconds": 0.084524, "request_id": "-"}
+ok
+test_http_runs_outside_transaction (apps.agent.tests.test_b4_sender.B4SenderTests.test_http_runs_outside_transaction) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:52:12Z", "message_id": 22, "attempts": 1, "outbound_pending_age_seconds": 0.060298, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:52:12Z", "message_id": 22, "dispatch_latency_seconds": 0.116356, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T21:52:12Z", "message_id": 22, "provider_acceptance_latency_seconds": 0.061823, "request_id": "-"}
+ok
+test_invalid_accepted_result_is_uncertain (apps.agent.tests.test_b4_sender.B4SenderTests.test_invalid_accepted_result_is_uncertain) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:52:36Z", "message_id": 23, "attempts": 1, "outbound_pending_age_seconds": 0.062514, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:52:36Z", "message_id": 23, "dispatch_latency_seconds": 0.123151, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:52:36Z", "message_id": 23, "outcome_code": "acceptance_id_missing", "request_id": "-"}
+ok
+test_invalid_token_cannot_finalize_external_result (apps.agent.tests.test_b4_sender.B4SenderTests.test_invalid_token_cannot_finalize_external_result) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:53:00Z", "message_id": 24, "attempts": 1, "outbound_pending_age_seconds": 0.05057, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:53:00Z", "message_id": 24, "dispatch_latency_seconds": 0.092838, "request_id": "-"}
+{"event": "AGENT_SEND_FINALIZE_CONFLICT", "level": "INFO", "ts": "2026-10-16T21:53:00Z", "request_id": "-"}
+ok
+test_known_retry_has_backoff_new_token_and_limit (apps.agent.tests.test_b4_sender.B4SenderTests.test_known_retry_has_backoff_new_token_and_limit) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:53:20Z", "message_id": 25, "attempts": 1, "outbound_pending_age_seconds": 0.06356, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:53:20Z", "message_id": 25, "dispatch_latency_seconds": 0.119084, "request_id": "-"}
+{"event": "AGENT_SEND_RETRY_SCHEDULED", "level": "INFO", "ts": "2026-10-16T21:53:20Z", "message_id": 25, "outcome_code": "meta_130429", "request_id": "-"}
+{"event": "AGENT_SEND_CLAIM_CONFLICT", "level": "INFO", "ts": "2026-10-16T21:53:20Z", "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:53:20Z", "message_id": 25, "attempts": 5, "outbound_pending_age_seconds": 0.261644, "request_id": "-"}
+{"event": "AGENT_SEND_FINALIZE_CONFLICT", "level": "INFO", "ts": "2026-10-16T21:53:20Z", "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:53:20Z", "message_id": 25, "dispatch_latency_seconds": 0.337502, "request_id": "-"}
+{"event": "AGENT_SEND_FAILED", "level": "INFO", "ts": "2026-10-16T21:53:20Z", "message_id": 25, "outcome_code": "meta_130429", "request_id": "-"}
+ok
+test_legacy_pending_without_epoch_is_discarded (apps.agent.tests.test_b4_sender.B4SenderTests.test_legacy_pending_without_epoch_is_discarded) ... {"event": "AGENT_SEND_DISCARDED", "level": "INFO", "ts": "2026-10-16T21:53:46Z", "message_id": 26, "outcome_code": "legacy_unverified", "request_id": "-"}
+ok
+test_legacy_retryable_exception_is_uncertain (apps.agent.tests.test_b4_sender.B4SenderTests.test_legacy_retryable_exception_is_uncertain) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:54:07Z", "message_id": 27, "attempts": 1, "outbound_pending_age_seconds": 0.04765, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:54:07Z", "message_id": 27, "dispatch_latency_seconds": 0.094801, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:54:07Z", "message_id": 27, "outcome_code": "adapter_ProviderError", "request_id": "-"}
+ok
+test_meta_failure_matrix_through_real_sender (apps.agent.tests.test_b4_sender.B4SenderTests.test_meta_failure_matrix_through_real_sender) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:54:29Z", "message_id": 28, "attempts": 1, "outbound_pending_age_seconds": 0.080226, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:54:29Z", "message_id": 28, "dispatch_latency_seconds": 0.172825, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:54:29Z", "message_id": 28, "outcome_code": "acceptance_id_missing", "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:54:29Z", "message_id": 29, "attempts": 1, "outbound_pending_age_seconds": 0.022756, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:54:29Z", "message_id": 29, "dispatch_latency_seconds": 0.094699, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:54:29Z", "message_id": 29, "outcome_code": "invalid_json", "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:54:29Z", "message_id": 30, "attempts": 1, "outbound_pending_age_seconds": 0.023388, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 30, "dispatch_latency_seconds": 0.097892, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 30, "outcome_code": "transport_Timeout", "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 31, "attempts": 1, "outbound_pending_age_seconds": 0.036452, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 31, "dispatch_latency_seconds": 0.097021, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 31, "outcome_code": "http_500_unclassified", "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 32, "attempts": 1, "outbound_pending_age_seconds": 0.020131, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 32, "dispatch_latency_seconds": 0.071783, "request_id": "-"}
+{"event": "AGENT_SEND_FAILED", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 32, "outcome_code": "meta_190", "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 33, "attempts": 1, "outbound_pending_age_seconds": 0.017595, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 33, "dispatch_latency_seconds": 0.079327, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T21:54:30Z", "message_id": 33, "provider_acceptance_latency_seconds": 0.045037, "request_id": "-"}
+ok
+test_nonpending_states_are_never_selected (apps.agent.tests.test_b4_sender.B4SenderTests.test_nonpending_states_are_never_selected) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:54:52Z", "message_id": 34, "attempts": 1, "outbound_pending_age_seconds": 0.052051, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:54:52Z", "message_id": 34, "dispatch_latency_seconds": 0.098919, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:54:52Z", "message_id": 34, "outcome_code": "timeout", "request_id": "-"}
+ok
+test_own_03_takeover_before_claim (apps.agent.tests.test_b4_sender.B4SenderTests.test_own_03_takeover_before_claim) ... {"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-10-16T21:55:13Z", "conversation_id": 29, "ownership_epoch": 1, "outcome_code": "test_takeover", "discarded_outbounds": 1, "request_id": "-"}
+ok
+test_partial_safe_id_survives_uncertainty_for_later_webhook (apps.agent.tests.test_b4_sender.B4SenderTests.test_partial_safe_id_survives_uncertainty_for_later_webhook) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:55:35Z", "message_id": 36, "attempts": 1, "outbound_pending_age_seconds": 0.067313, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:55:35Z", "message_id": 36, "dispatch_latency_seconds": 0.140763, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:55:35Z", "message_id": 36, "outcome_code": "partial_evidence", "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_DELIVERED", "level": "INFO", "ts": "2026-10-16T21:55:35Z", "message_id": 36, "request_id": "-"}
+ok
+test_pending_with_prior_external_evidence_is_quarantined (apps.agent.tests.test_b4_sender.B4SenderTests.test_pending_with_prior_external_evidence_is_quarantined) ... {"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:55:57Z", "message_id": 37, "outcome_code": "pending_with_external_evidence", "request_id": "-"}
+ok
+test_real_db_error_in_finalize_preserves_durable_sending (apps.agent.tests.test_b4_sender.B4SenderTests.test_real_db_error_in_finalize_preserves_durable_sending) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:56:23Z", "message_id": 38, "attempts": 1, "outbound_pending_age_seconds": 0.068734, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:56:23Z", "message_id": 38, "dispatch_latency_seconds": 0.132162, "request_id": "-"}
+{"event": "AGENT_SEND_EXPIRED", "level": "INFO", "ts": "2026-10-16T21:56:23Z", "message_id": 38, "outcome_code": "lease_expired_after_admission", "sending_age_seconds": 0.150256, "request_id": "-"}
+ok
+test_reemission_new_message_with_actor_reason_and_idempotency (apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_new_message_with_actor_reason_and_idempotency) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:56:48Z", "message_id": 39, "attempts": 1, "outbound_pending_age_seconds": 0.053318, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:56:48Z", "message_id": 39, "dispatch_latency_seconds": 0.102047, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:56:48Z", "message_id": 39, "outcome_code": "timeout", "request_id": "-"}
+{"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-10-16T21:56:48Z", "conversation_id": 33, "ownership_epoch": 1, "outcome_code": "manual_reemission", "discarded_outbounds": 0, "request_id": "-"}
+{"event": "AGENT_SEND_REEMITTED", "level": "INFO", "ts": "2026-10-16T21:56:48Z", "message_id": 40, "source_message_id": 39, "actor_id": 1, "request_id": "-"}
+ok
+test_reemission_rejects_agent_and_other_org (apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_rejects_agent_and_other_org) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:57:08Z", "message_id": 41, "attempts": 1, "outbound_pending_age_seconds": 0.056455, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:57:08Z", "message_id": 41, "dispatch_latency_seconds": 0.113487, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T21:57:08Z", "message_id": 41, "outcome_code": "timeout", "request_id": "-"}
+ok
+test_retryable_flag_without_approved_rejection_code_does_not_retry (apps.agent.tests.test_b4_sender.B4SenderTests.test_retryable_flag_without_approved_rejection_code_does_not_retry) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:57:32Z", "message_id": 42, "attempts": 1, "outbound_pending_age_seconds": 0.049797, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:57:32Z", "message_id": 42, "dispatch_latency_seconds": 0.093805, "request_id": "-"}
+{"event": "AGENT_SEND_FAILED", "level": "INFO", "ts": "2026-10-16T21:57:32Z", "message_id": 42, "outcome_code": "unknown", "request_id": "-"}
+ok
+test_send_01_individual_durable_claim_and_single_admission (apps.agent.tests.test_b4_sender.B4SenderTests.test_send_01_individual_durable_claim_and_single_admission) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:57:54Z", "message_id": 43, "attempts": 1, "outbound_pending_age_seconds": 0.086968, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIM_CONFLICT", "level": "INFO", "ts": "2026-10-16T21:57:54Z", "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:57:54Z", "message_id": 43, "dispatch_latency_seconds": 0.160729, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T21:57:54Z", "message_id": 43, "provider_acceptance_latency_seconds": 0.060079, "request_id": "-"}
+{"event": "AGENT_SEND_ADMISSION_CONFLICT", "level": "INFO", "ts": "2026-10-16T21:57:54Z", "request_id": "-"}
+ok
+test_send_fi_01_claim_crash_never_admitted_and_no_replay (apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_01_claim_crash_never_admitted_and_no_replay) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:58:20Z", "message_id": 45, "attempts": 1, "outbound_pending_age_seconds": 0.069099, "request_id": "-"}
+{"event": "AGENT_SEND_EXPIRED", "level": "INFO", "ts": "2026-10-16T21:58:20Z", "message_id": 45, "outcome_code": "lease_expired_before_admission", "sending_age_seconds": 0.06589, "request_id": "-"}
+{"event": "AGENT_SEND_ADMISSION_CONFLICT", "level": "INFO", "ts": "2026-10-16T21:58:20Z", "request_id": "-"}
+ok
+test_send_fi_02_takeover_after_claim_before_http (apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_02_takeover_after_claim_before_http) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:58:44Z", "message_id": 46, "attempts": 1, "outbound_pending_age_seconds": 0.055028, "request_id": "-"}
+{"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-10-16T21:58:44Z", "conversation_id": 38, "ownership_epoch": 1, "outcome_code": "test_takeover", "discarded_outbounds": 1, "request_id": "-"}
+{"event": "AGENT_SEND_ADMISSION_CONFLICT", "level": "INFO", "ts": "2026-10-16T21:58:44Z", "request_id": "-"}
+ok
+test_send_fi_03_post_acceptance_db_failure_is_uncertain_no_retry (apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_03_post_acceptance_db_failure_is_uncertain_no_retry) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:59:12Z", "message_id": 47, "attempts": 1, "outbound_pending_age_seconds": 0.077221, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:59:12Z", "message_id": 47, "dispatch_latency_seconds": 0.142496, "request_id": "-"}
+{"event": "AGENT_SEND_EXPIRED", "level": "INFO", "ts": "2026-10-16T21:59:12Z", "message_id": 47, "outcome_code": "lease_expired_after_admission", "sending_age_seconds": 0.134335, "request_id": "-"}
+ok
+test_send_fi_08_takeover_during_http_records_acceptance (apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_08_takeover_during_http_records_acceptance) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T21:59:40Z", "message_id": 48, "attempts": 1, "outbound_pending_age_seconds": 0.071439, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T21:59:41Z", "message_id": 48, "dispatch_latency_seconds": 0.14096, "request_id": "-"}
+{"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-10-16T21:59:41Z", "conversation_id": 40, "ownership_epoch": 1, "outcome_code": "test_takeover", "discarded_outbounds": 0, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T21:59:41Z", "message_id": 48, "provider_acceptance_latency_seconds": 0.166867, "request_id": "-"}
+{"event": "AGENT_SEND_DISCARDED", "level": "INFO", "ts": "2026-10-16T21:59:41Z", "message_id": 49, "outcome_code": "ownership_invalidated", "request_id": "-"}
+ok
+test_send_fi_09_takeover_during_http_records_uncertainty (apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_09_takeover_during_http_records_uncertainty) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:00:02Z", "message_id": 50, "attempts": 1, "outbound_pending_age_seconds": 0.063841, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:00:02Z", "message_id": 50, "dispatch_latency_seconds": 0.127482, "request_id": "-"}
+{"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-10-16T22:00:02Z", "conversation_id": 41, "ownership_epoch": 1, "outcome_code": "test_takeover", "discarded_outbounds": 0, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T22:00:02Z", "message_id": 50, "outcome_code": "timeout", "request_id": "-"}
+ok
+test_snapshot_makes_uncertainty_visible_without_pii (apps.agent.tests.test_b4_sender.B4SenderTests.test_snapshot_makes_uncertainty_visible_without_pii) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:00:22Z", "message_id": 51, "attempts": 1, "outbound_pending_age_seconds": 0.066825, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:00:22Z", "message_id": 51, "dispatch_latency_seconds": 0.116771, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T22:00:22Z", "message_id": 51, "outcome_code": "timeout", "request_id": "-"}
+ok
+test_takeover_during_http_rejection_is_failed_not_retry (apps.agent.tests.test_b4_sender.B4SenderTests.test_takeover_during_http_rejection_is_failed_not_retry) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:00:43Z", "message_id": 52, "attempts": 1, "outbound_pending_age_seconds": 0.053761, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:00:43Z", "message_id": 52, "dispatch_latency_seconds": 0.107552, "request_id": "-"}
+{"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-10-16T22:00:43Z", "conversation_id": 43, "ownership_epoch": 1, "outcome_code": "test_takeover", "discarded_outbounds": 0, "request_id": "-"}
+{"event": "AGENT_SEND_FAILED", "level": "INFO", "ts": "2026-10-16T22:00:43Z", "message_id": 52, "outcome_code": "meta_130429", "request_id": "-"}
+ok
+test_window_closed_after_claim_blocks_admission (apps.agent.tests.test_b4_sender.B4SenderTests.test_window_closed_after_claim_blocks_admission) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:01:06Z", "message_id": 53, "attempts": 1, "outbound_pending_age_seconds": 0.064379, "request_id": "-"}
+ok
+test_correct_wamid_wrong_org_cannot_mutate (apps.agent.tests.test_b4_sender.B4StatusTests.test_correct_wamid_wrong_org_cannot_mutate) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:01:26Z", "message_id": 54, "attempts": 1, "outbound_pending_age_seconds": 0.062648, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:01:26Z", "message_id": 54, "dispatch_latency_seconds": 0.134411, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T22:01:26Z", "message_id": 54, "provider_acceptance_latency_seconds": 0.063818, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_UNMATCHED", "level": "INFO", "ts": "2026-10-16T22:01:27Z", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_SCOPE_REJECTED", "level": "INFO", "ts": "2026-10-16T22:01:27Z", "request_id": "-"}
+ok
+test_duplicate_provider_id_is_ambiguous_not_first_match (apps.agent.tests.test_b4_sender.B4StatusTests.test_duplicate_provider_id_is_ambiguous_not_first_match) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:01:47Z", "message_id": 55, "attempts": 1, "outbound_pending_age_seconds": 0.067212, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:01:48Z", "message_id": 55, "dispatch_latency_seconds": 0.122868, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T22:01:48Z", "message_id": 55, "provider_acceptance_latency_seconds": 0.055346, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_UNMATCHED", "level": "INFO", "ts": "2026-10-16T22:01:48Z", "ambiguous": true, "request_id": "-"}
+ok
+test_failed_delivery_never_erases_acceptance_or_read (apps.agent.tests.test_b4_sender.B4StatusTests.test_failed_delivery_never_erases_acceptance_or_read) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:02:11Z", "message_id": 57, "attempts": 1, "outbound_pending_age_seconds": 0.055993, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:02:11Z", "message_id": 57, "dispatch_latency_seconds": 0.121443, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T22:02:11Z", "message_id": 57, "provider_acceptance_latency_seconds": 0.059079, "request_id": "-"}
+{"event": "AGENT_SEND_DELIVERY_FAILED", "level": "INFO", "ts": "2026-10-16T22:02:11Z", "message_id": 57, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_READ", "level": "INFO", "ts": "2026-10-16T22:02:11Z", "message_id": 57, "read_latency_seconds": 0.145931, "request_id": "-"}
+ok
+test_legacy_sent_keeps_unknown_acceptance_timestamp (apps.agent.tests.test_b4_sender.B4StatusTests.test_legacy_sent_keeps_unknown_acceptance_timestamp) ... {"event": "AGENT_SEND_WEBHOOK_DELIVERED", "level": "INFO", "ts": "2026-10-16T22:02:35Z", "message_id": 58, "request_id": "-"}
+ok
+test_send_03_monotonic_sent_delivered_read_and_duplicate_timestamps (apps.agent.tests.test_b4_sender.B4StatusTests.test_send_03_monotonic_sent_delivered_read_and_duplicate_timestamps) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:02:54Z", "message_id": 59, "attempts": 1, "outbound_pending_age_seconds": 0.052258, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:02:54Z", "message_id": 59, "dispatch_latency_seconds": 0.104673, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T22:02:54Z", "message_id": 59, "provider_acceptance_latency_seconds": 0.03716, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_DELIVERED", "level": "INFO", "ts": "2026-10-16T22:02:54Z", "message_id": 59, "delivery_latency_seconds": 0.043343, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_READ", "level": "INFO", "ts": "2026-10-16T22:02:54Z", "message_id": 59, "read_latency_seconds": 0.101036, "request_id": "-"}
+ok
+test_send_fi_10_webhook_reconciles_uncertain_preserves_history (apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_10_webhook_reconciles_uncertain_preserves_history) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:03:15Z", "message_id": 60, "attempts": 1, "outbound_pending_age_seconds": 0.055607, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:03:15Z", "message_id": 60, "dispatch_latency_seconds": 0.103422, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T22:03:15Z", "message_id": 60, "outcome_code": "timeout", "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_DELIVERED", "level": "INFO", "ts": "2026-10-16T22:03:15Z", "message_id": 60, "request_id": "-"}
+ok
+test_send_fi_11_read_before_delivered_never_degrades (apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_11_read_before_delivered_never_degrades) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:03:40Z", "message_id": 61, "attempts": 1, "outbound_pending_age_seconds": 0.062682, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:03:40Z", "message_id": 61, "dispatch_latency_seconds": 0.120189, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T22:03:40Z", "message_id": 61, "provider_acceptance_latency_seconds": 0.048817, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_READ", "level": "INFO", "ts": "2026-10-16T22:03:40Z", "message_id": 61, "read_latency_seconds": 0.069161, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_DELIVERED", "level": "INFO", "ts": "2026-10-16T22:03:40Z", "message_id": 61, "delivery_latency_seconds": 0.123802, "request_id": "-"}
+ok
+test_uncertain_without_persisted_id_stays_unmatched (apps.agent.tests.test_b4_sender.B4StatusTests.test_uncertain_without_persisted_id_stays_unmatched) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:04:10Z", "message_id": 62, "attempts": 1, "outbound_pending_age_seconds": 0.065478, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:04:10Z", "message_id": 62, "dispatch_latency_seconds": 0.132247, "request_id": "-"}
+{"event": "AGENT_SEND_UNCERTAIN", "level": "INFO", "ts": "2026-10-16T22:04:10Z", "message_id": 62, "outcome_code": "timeout", "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_UNMATCHED", "level": "INFO", "ts": "2026-10-16T22:04:10Z", "ambiguous": false, "request_id": "-"}
+ok
+test_unknown_status_unknown_id_and_wrong_account_do_nothing (apps.agent.tests.test_b4_sender.B4StatusTests.test_unknown_status_unknown_id_and_wrong_account_do_nothing) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:04:32Z", "message_id": 63, "attempts": 1, "outbound_pending_age_seconds": 0.053674, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:04:32Z", "message_id": 63, "dispatch_latency_seconds": 0.092264, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-16T22:04:32Z", "message_id": 63, "provider_acceptance_latency_seconds": 0.040667, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_UNKNOWN", "level": "INFO", "ts": "2026-10-16T22:04:32Z", "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_UNMATCHED", "level": "INFO", "ts": "2026-10-16T22:04:32Z", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_UNMATCHED", "level": "INFO", "ts": "2026-10-16T22:04:32Z", "ambiguous": false, "request_id": "-"}
+ok
+test_webhook_cannot_resurrect_pending_or_discarded (apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_cannot_resurrect_pending_or_discarded) ... {"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-10-16T22:04:55Z", "conversation_id": 54, "ownership_epoch": 1, "outcome_code": "test_takeover", "discarded_outbounds": 1, "request_id": "-"}
+ok
+test_webhook_wins_race_with_uncertain_finalize (apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_wins_race_with_uncertain_finalize) ... {"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-16T22:05:18Z", "message_id": 65, "attempts": 1, "outbound_pending_age_seconds": 0.055763, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-16T22:05:18Z", "message_id": 65, "dispatch_latency_seconds": 0.09732, "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_READ", "level": "INFO", "ts": "2026-10-16T22:05:18Z", "message_id": 65, "request_id": "-"}
+ok
+test_legacy_rows_keep_states_ids_and_null_evidence (apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence) ... ok
+test_5xx_even_with_error_body_is_uncertain (apps.channels.tests.test_b4_transport.B4TransportTests.test_5xx_even_with_error_body_is_uncertain) ... ok
+test_accepted_requires_valid_message_id (apps.channels.tests.test_b4_transport.B4TransportTests.test_accepted_requires_valid_message_id) ... ok
+test_only_explicit_rate_limit_is_safe_retry (apps.channels.tests.test_b4_transport.B4TransportTests.test_only_explicit_rate_limit_is_safe_retry) ... ok
+test_send_fi_04_timeout_and_network_are_uncertain (apps.channels.tests.test_b4_transport.B4TransportTests.test_send_fi_04_timeout_and_network_are_uncertain) ... ok
+test_send_fi_05_2xx_without_wamid_is_uncertain (apps.channels.tests.test_b4_transport.B4TransportTests.test_send_fi_05_2xx_without_wamid_is_uncertain) ... ok
+test_send_fi_06_invalid_json_is_uncertain (apps.channels.tests.test_b4_transport.B4TransportTests.test_send_fi_06_invalid_json_is_uncertain) ... ok
+test_send_fi_07_explicit_4xx_rejection (apps.channels.tests.test_b4_transport.B4TransportTests.test_send_fi_07_explicit_4xx_rejection) ... ok
+test_unclassified_responses_are_uncertain (apps.channels.tests.test_b4_transport.B4TransportTests.test_unclassified_responses_are_uncertain) ... ok
+
+----------------------------------------------------------------------
+Ran 68 tests in 1286.370s
+
+OK
+Destroying test database for alias 'default' ('test_b9i_b4')...

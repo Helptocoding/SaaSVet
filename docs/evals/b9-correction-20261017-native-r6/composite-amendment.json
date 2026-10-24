@@ -1,0 +1,50 @@
+{
+  "state": "USER_AUTHORIZED_BEFORE_FORMAL_SEAL",
+  "date_local": "2026-10-17",
+  "user": "Sí, corregir y continuar conservando lo válido",
+  "evidence_mode": "COMPOSITE_ACCEPTANCE",
+  "continuous_campaign_claimed": false,
+  "candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+  "source_candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "supersedes": "Only the same-candidate requirement for the exact approved fixture patch and the existing composite restart exception",
+  "historical_pass_source_plan": {
+    "b9-correction-20261016-native-r4": [
+      "directed",
+      "django-check",
+      "migration-drift",
+      "migrate",
+      "billing-schema"
+    ],
+    "b9-correction-20261016-native-r3": [
+      "b0",
+      "b3",
+      "b4",
+      "b5",
+      "full-b8b",
+      "full-b8c"
+    ],
+    "b9-correction-20261017-native-r5": [
+      "full-b8d",
+      "full-b8e"
+    ]
+  },
+  "reference_validation": "reuse-manifest.json and reuse-validation.json",
+  "reference_copies_are_current_executions": false,
+  "reference_scope": "Backend only",
+  "frontend_all_checks_executed_here": true,
+  "valid_failure_can_be_discarded_or_retried": false,
+  "interrupted_block_resume": "Whole block, distinct new receipt, after environment revalidation",
+  "fixture_clock_exception": "fixture-clock-authorization.json",
+  "other_app_sources_tests_fixtures_locks_gates_loads_changed": false,
+  "profile_warmup_measurement_drain_seconds": [
+    30,
+    300,
+    20
+  ],
+  "referenced_pass_blocks": 13,
+  "reused_unique_ids": 369,
+  "reused_full_ids": 118,
+  "full_general_partial_reused_as_PASS": false,
+  "prior_amendment": "../b9-correction-20261017-native-r5/composite-amendment.json",
+  "superseding_authorization": "fixture-resumption-amendment.json"
+}

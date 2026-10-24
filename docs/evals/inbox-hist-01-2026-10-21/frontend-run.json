@@ -1,0 +1,19 @@
+{
+  "exit_code": 1,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "src/pages/inbox/useThreadHistory.test.jsx",
+    "src/pages/inbox/ThreadViewport.test.jsx",
+    "src/api/inbox.test.js",
+    "--testNamePattern=WA-HIST-01|WA-GTF-01|WA-LDE-01|WA-VIS-01|WA-GRP-01|WA-AGT-01|Inbox \u2014 aislamiento del borrador",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-hist-01-2026-10-21\\vitest.json"
+  ],
+  "scope": "New HIST-01 and affected transcript/send/viewport regressions"
+}

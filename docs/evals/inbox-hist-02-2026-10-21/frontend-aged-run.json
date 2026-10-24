@@ -1,0 +1,18 @@
+{
+  "exit_code": 0,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "src/pages/inbox/useThreadHistory.test.jsx",
+    "src/pages/inbox/ThreadViewport.test.jsx",
+    "--testNamePattern=historial de tres meses",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-hist-02-2026-10-21\\vitest-aged.json"
+  ],
+  "scope": "New HIST-02 and affected transcript/send/viewport regressions"
+}

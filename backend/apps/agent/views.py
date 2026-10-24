@@ -11,16 +11,21 @@ Toda query org-scoped con for_organization; conversaciones por public_id
 (Conversation/Message del propio subsistema), nunca dominio.
 """
 import logging
+from uuid import UUID
 
+from django.core.exceptions import ValidationError as ModelValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Exists, OuterRef, Prefetch
+from django.db.models import Case, Count, Exists, F, OuterRef, Prefetch, Q, Subquery, Value, When
+from django.db.models.functions import Coalesce, Substr
 from django.utils import timezone
+from rest_framework import serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
 from apps.channels.models import Message
 from apps.core.permissions import make_permission
 from apps.core.sanitize import sanitize_text
+from apps.core.validators import phone_digits
 from apps.core.views import resolve_public_id
 from apps.patients.services import lookup_owner_by_phone
 
@@ -29,6 +34,7 @@ from .models import AgentSettings, ContactIdentity, Conversation, HumanHandoff
 from .serializers import (
     AgentSettingsSerializer,
     ConversationListSerializer,
+    InboxReadSerializer,
     MessageSerializer,
     SendMessageSerializer,
     SessionSerializer,
@@ -69,7 +75,7 @@ def _replay_outbound_message(organization, idempotency_key):
             author_type=Message.AUTHOR_HUMAN,
             idempotency_key=idempotency_key,
         )
-        .select_related('human_author')
+        .select_related('human_author', 'conversation', 'reply_to__human_author', 'media')
         .first()
     )
 
@@ -289,7 +295,7 @@ def conversation_messages(request, pk):
             Message.objects.for_organization(org)
             .filter(conversation=conversation)
         )
-        .select_related('human_author')
+        .select_related('human_author', 'conversation', 'reply_to__human_author', 'media')
         .order_by('-created_at', '-id')[:TRANSCRIPT_CAP]
     )[::-1]  # cap por los más recientes, entregados en orden cronológico
     return _deprecated_conversations(Response({
@@ -544,6 +550,18 @@ def send_message(request, pk):
             if conversation.state == Conversation.STATE_CLOSED:
                 return _closed_send_response(request, conversation)
 
+            reply_to = None
+            if 'reply_to_id' in serializer.validated_data:
+                from apps.channels.replies import resolve_reply_target
+                try:
+                    reply_to = resolve_reply_target(organization_id=org.pk,
+                        channel_account_id=conversation.channel_account_id,
+                        contact_id=conversation.contact_id,
+                        target_id=serializer.validated_data['reply_to_id'], lock=True)
+                except ModelValidationError:
+                    return Response({'code': 'invalid_reply_target',
+                        'message': 'Elige un mensaje de este hilo para responder.'}, status=400)
+
             if conversation.state != Conversation.STATE_HUMAN_ACTIVE or conversation.claimed_by_id is None:
                 invalidate_ownership(conversation, reason='human_reply')
             message = Message(
@@ -556,6 +574,7 @@ def send_message(request, pk):
                 author_type=Message.AUTHOR_HUMAN,
                 human_author=request.user,
                 body=body,
+                reply_to=reply_to,
                 status=Message.STATUS_PENDING,
                 idempotency_key=idempotency_key,
             )
@@ -586,7 +605,24 @@ def send_message(request, pk):
             return Response(MessageSerializer(replay).data, status=201)
         raise
 
+    # Takeover may have discarded the quoted agent outbound. Read its current
+    # status and author in the same SELECT used for the response projection.
+    message = (Message.objects.for_organization(org)
+        .select_related('human_author', 'conversation', 'reply_to__human_author', 'media').get(pk=message.pk))
     return Response(MessageSerializer(message).data, status=201)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('agentinbox.send')])
+def retry_message(request, pk, message_id):
+    from .inbox_retry import retry_failed_message
+    conversation = _get_conversation(request, pk)
+    message = retry_failed_message(actor=request.user, conversation_id=conversation.pk,
+                                   message_id=message_id,
+                                   idempotency_key=_get_send_idempotency_key(request))
+    message = (Message.objects.for_organization(request.user.organization)
+        .select_related('human_author', 'conversation', 'reply_to__human_author', 'media').get(pk=message.pk))
+    return Response(MessageSerializer(message).data)
 
 
 @api_view(['POST'])
@@ -639,6 +675,38 @@ def close_conversation(request, pk):
             convo.closed_at = timezone.now()
             convo.close_reason = Conversation.CLOSE_STAFF
             convo.save(update_fields=['state', 'closed_at', 'close_reason'])
+    return Response(ConversationListSerializer(convo).data)
+
+
+class AssignConversationInput(serializers.Serializer):
+    user_public_id = serializers.UUIDField()
+
+    def validate_user_public_id(self, value):
+        if not isinstance(self.initial_data['user_public_id'], str):
+            raise serializers.ValidationError('Usa el identificador público UUID.')
+        return value
+
+
+@api_view(['GET'])
+@permission_classes([make_permission('agentinbox.claim')])
+def assignable_users_view(request):
+    from .inbox_assignment import assignable_users
+
+    return Response([
+        {'public_id': str(user.public_id), 'name': user.get_full_name().strip() or user.username}
+        for user in assignable_users(request.user.organization)
+    ])
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('agentinbox.claim')])
+def assign_conversation_view(request, pk):
+    from .inbox_assignment import assign_conversation
+
+    conversation = _get_conversation(request, pk)
+    data = AssignConversationInput(data=request.data)
+    data.is_valid(raise_exception=True)
+    convo = assign_conversation(conversation, request.user, data.validated_data['user_public_id'])
     return Response(ConversationListSerializer(convo).data)
 
 
@@ -809,18 +877,16 @@ def agent_settings_view(request):
 # la misma clínica pueden ser dos flujos, y mezclarlos junta conversaciones que
 # nadie tuvo juntas.
 
-THREADS_CAP = 100
+THREADS_PAGE_SIZE = 100
 SESSIONS_PAGE = 20
 # Página del transcript del hilo. Sustituye al tope duro de 200 por conversación:
 # un hilo de años no se carga entero, se recorre hacia atrás con un cursor.
 THREAD_MESSAGES_PAGE = 50
 
 
-def _thread_row(conversation, *, session_count, last_message, unanswered):
-    """Proyecta la sesión VIGENTE (o la última cerrada) como fila de bandeja."""
+def _thread_row(conversation):
+    """Proyecta una cabecera anotada, sin consultas adicionales por hilo."""
     contact = conversation.contact
-    handoff = (conversation.handoffs.filter(resolved_at__isnull=True)
-               .order_by('-priority', '-id').first())
     archived = conversation.state == Conversation.STATE_CLOSED
     return {
         'contact_public_id': contact.public_id,
@@ -834,19 +900,22 @@ def _thread_row(conversation, *, session_count, last_message, unanswered):
         # `public_id` de una conversación cerrada invitaría a la bandeja a
         # ofrecer «responder» sobre algo que devuelve 400.
         'conversation_public_id': None if archived else conversation.public_id,
+        # Entrada privada del serializer: la API publica solo el booleano.
+        'processing_until': None if archived else conversation.processing_until,
         'state': None if archived else conversation.state,
         'claimed_by_name': (
             None if archived or conversation.claimed_by_id is None
             else (conversation.claimed_by.get_full_name()
                   or conversation.claimed_by.username)),
-        'handoff_priority': handoff.priority if handoff else None,
-        'handoff_reason': handoff.reason_code if handoff else None,
-        'handoff_detail': handoff.reason_detail if handoff else None,
-        'last_activity_at': last_message.created_at if last_message else None,
-        'last_message_preview': ((last_message.body or '')[:120]
-                                 if last_message else None),
-        'has_unanswered': unanswered,
-        'session_count': session_count,
+        'handoff_priority': conversation._inbox_handoff_priority,
+        'handoff_reason': conversation._inbox_handoff_reason,
+        'handoff_detail': conversation._inbox_handoff_detail,
+        'last_activity_at': conversation._inbox_message_at,
+        'last_message_preview': conversation._inbox_preview,
+        'last_message_type': conversation._inbox_message_type,
+        'last_message_filename': conversation._inbox_message_filename,
+        'has_unanswered': conversation._inbox_direction == Message.DIRECTION_IN,
+        'session_count': conversation._inbox_session_count,
     }
 
 
@@ -862,52 +931,126 @@ def list_threads(request):
 
     org = request.user.organization
     include_archived = request.query_params.get('archived') in ('1', 'true')
+    try:
+        offset = int(request.query_params.get('offset', 0))
+        if not 0 <= offset <= 2147483647:
+            raise ValueError
+    except (TypeError, ValueError):
+        return Response({'code': 'invalid_offset',
+                         'error': 'El desplazamiento debe ser un entero no negativo.'}, status=400)
 
-    conversations = list(
-        Conversation.objects.for_organization(org)
-        .select_related('contact', 'contact__owner', 'claimed_by',
-                        'channel_account')
-        .order_by('-last_activity_at')
-    )
+    # Normalize effective filters before binding the cursor to this query.
+    unanswered = request.query_params.get('unanswered')
+    urgent = request.query_params.get('urgent')
+    claimed = request.query_params.get('claimed') or None
+    if unanswered not in (None, '0', '1', 'false', 'true') or urgent not in (None, '0', '1', 'false', 'true'):
+        return Response({'code': 'invalid_filter',
+                         'error': 'Los filtros de atención y urgencia deben ser 0 o 1.'}, status=400)
+    unanswered = None if unanswered is None else unanswered in ('1', 'true')
+    urgent = urgent in ('1', 'true')
+    if claimed:
+        try:
+            claimed = str(request.user.public_id if claimed == 'me' else UUID(claimed))
+        except (ValueError, AttributeError):
+            return Response({'code': 'invalid_filter',
+                             'error': 'El responsable debe ser me o un identificador público válido.'}, status=400)
 
-    threads = {}
-    for conversation in conversations:
-        key = (conversation.contact_id, conversation.channel_account_id)
-        bucket = threads.setdefault(key, {'sessions': [], 'current': None})
-        bucket['sessions'].append(conversation)
-        if (bucket['current'] is None
-                and conversation.state != Conversation.STATE_CLOSED):
-            bucket['current'] = conversation
+    query = (request.query_params.get('q') or '').strip()
+    if len(query) < 2:
+        query = ''
 
-    rows = []
-    for bucket in threads.values():
-        sessions = bucket['sessions']
-        current = bucket['current']
-        if current is None and not include_archived:
-            continue
-        head = current or sessions[0]      # ordenadas por actividad, desc
-        last_message = operational_messages(
-            Message.objects.for_organization(org).filter(
-                contact_id=head.contact_id,
-                channel_account_id=head.channel_account_id)
-        ).order_by('-created_at', '-id').first()
-        unanswered = bool(
-            last_message and last_message.direction == Message.DIRECTION_IN)
-        rows.append(_thread_row(head, session_count=len(sessions),
-                                last_message=last_message,
-                                unanswered=unanswered))
+    from .inbox_sync import list_sync, previous_snapshot, scope_for
+    sync_scope = scope_for(request, 'threads', {
+        'archived': include_archived, 'offset': offset,
+        'unanswered': unanswered, 'urgent': urgent, 'claimed': claimed, 'q': query,
+    })
+    previous = previous_snapshot(request, sync_scope)
 
-    # Urgentes primero: una convulsión no puede quedar debajo de una duda de
-    # horarios más reciente (mismo criterio que la lista por conversación).
+    sessions = Conversation.objects.for_organization(org)
+    eligible = sessions if include_archived else sessions.exclude(state=Conversation.STATE_CLOSED)
+    # PostgreSQL elige solo una sesión por persona/cuenta: primero abierta,
+    # luego por actividad. El historial se cuenta en SQL, nunca se materializa.
+    head_ids = (eligible.annotate(
+        _is_closed=Case(When(state=Conversation.STATE_CLOSED, then=Value(1)), default=Value(0)))
+        .order_by('contact_id', 'channel_account_id', '_is_closed', '-last_activity_at', '-pk')
+        .distinct('contact_id', 'channel_account_id').values('pk'))
+    siblings = sessions.filter(contact_id=OuterRef('contact_id'),
+                               channel_account_id=OuterRef('channel_account_id'))
+    session_counts = (siblings.order_by().values('contact_id', 'channel_account_id')
+                      .annotate(total=Count('pk')).values('total'))
+    last_message = (operational_messages(
+        Message.objects.for_organization(org).filter(
+            contact_id=OuterRef('contact_id'), channel_account_id=OuterRef('channel_account_id')))
+        .order_by('-created_at', '-id').annotate(preview=Substr('body', 1, 120),
+            media_name=Case(When(media__organization_id=org.pk,
+                media__channel_account_id=F('channel_account_id'), then=F('media__filename')), default=Value(None))))
+    handoff = (HumanHandoff.objects.for_organization(org)
+               .filter(conversation_id=OuterRef('pk'), resolved_at__isnull=True)
+               .order_by('-priority', '-id'))
+
+    # Conserva el orden previo: urgencia, actividad del mensaje y, en empate,
+    # actividad de cualquier episodio del bucket (no solo la sesión vigente).
     epoch = timezone.make_aware(timezone.datetime(1970, 1, 1))
-    rows.sort(
-        key=lambda row: (
-            row['handoff_priority'] == HumanHandoff.PRIORITY_URGENT,
-            row['last_activity_at'] or epoch,
-        ),
-        reverse=True,
-    )
-    return Response(ThreadSerializer(rows[:THREADS_CAP], many=True).data)
+    conversations = (sessions.filter(pk__in=Subquery(head_ids))
+        .select_related('contact', 'contact__owner', 'claimed_by', 'channel_account')
+        .annotate(
+            _inbox_session_count=Subquery(session_counts[:1]),
+            _bucket_activity=Subquery(siblings.order_by('-last_activity_at').values('last_activity_at')[:1]),
+            _inbox_message_at=Subquery(last_message.values('created_at')[:1]),
+            _inbox_preview=Subquery(last_message.values('preview')[:1]),
+            _inbox_message_type=Subquery(last_message.values('payload_type')[:1]),
+            _inbox_message_filename=Subquery(last_message.values('media_name')[:1]),
+            _inbox_direction=Subquery(last_message.values('direction')[:1]),
+            _inbox_handoff_priority=Subquery(handoff.values('priority')[:1]),
+            _inbox_handoff_reason=Subquery(handoff.values('reason_code')[:1]),
+            _inbox_handoff_detail=Subquery(handoff.values('reason_detail')[:1]),
+        ).annotate(
+            _sort_urgent=Case(When(_inbox_handoff_priority=HumanHandoff.PRIORITY_URGENT,
+                                   then=Value(1)), default=Value(0)),
+            _sort_activity=Coalesce('_inbox_message_at', Value(epoch)),
+        ).order_by('-_sort_urgent', '-_sort_activity', '-_bucket_activity',
+                   'contact_id', 'channel_account_id'))
+    # Filter after choosing each head; historical claims/handoffs must not
+    # resurrect a closed episode or replace the current one in its bucket.
+    if unanswered is True:
+        conversations = conversations.filter(_inbox_direction=Message.DIRECTION_IN)
+    elif unanswered is False:
+        conversations = conversations.filter(_inbox_direction=Message.DIRECTION_OUT)
+    if urgent:
+        conversations = conversations.exclude(state=Conversation.STATE_CLOSED).filter(
+            _inbox_handoff_priority=HumanHandoff.PRIORITY_URGENT)
+    if claimed:
+        conversations = conversations.exclude(state=Conversation.STATE_CLOSED).filter(
+            claimed_by__public_id=claimed, claimed_by__organization_id=org.pk)
+    if query:
+        from .services import normalize_wa_id
+
+        matches = (Q(contact__display_name__icontains=query)
+                   | Q(contact__external_id__icontains=query)
+                   | Q(contact__owner__name__icontains=query,
+                       contact__owner__organization_id=org.pk))
+        # Keep partial phone lookup: full E.164 normalization would reject a
+        # fragment. Never add an empty/one-digit icontains that matches everyone.
+        digits = phone_digits(query)
+        if len(digits) >= 2:
+            matches |= (Q(contact__phone_normalized__icontains=normalize_wa_id(digits) or digits)
+                        | Q(contact__external_id__icontains=digits))
+        conversations = conversations.filter(matches)
+    # Una cabecera extra indica si hay otra página, sin COUNT ni historial en memoria.
+    page = list(conversations[offset:offset + THREADS_PAGE_SIZE + 1])
+    has_more = len(page) > THREADS_PAGE_SIZE
+    from .inbox_read import unread_counts, unread_total
+
+    heads = page[:THREADS_PAGE_SIZE]
+    counts = unread_counts(request.user, heads)
+    rows = [dict(_thread_row(head), unread_count=counts.get(head.pk, 0)) for head in heads]
+    payload = {
+        'results': ThreadSerializer(rows, many=True).data,
+        'unread_total': unread_total(request.user),
+        'has_more': has_more,
+        'next_offset': offset + THREADS_PAGE_SIZE if has_more else None,
+    }
+    return Response(list_sync(request, payload, heads, sync_scope, previous))
 
 
 def _resolve_thread(request, contact_pid, account_pid):
@@ -923,6 +1066,42 @@ def _resolve_thread(request, contact_pid, account_pid):
         ChannelAccount.objects.for_organization(org), account_pid,
     )
     return contact, account
+
+
+@api_view(['GET'])
+@permission_classes([make_permission('agentinbox.view')])
+def thread_context_view(request, contact_pid, account_pid):
+    from .inbox_context import ThreadContextSerializer, thread_context
+
+    contact, account = _resolve_thread(request, contact_pid, account_pid)
+    data = thread_context(organization=request.user.organization, contact=contact, account=account)
+    return Response(ThreadContextSerializer(data).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('agentinbox.view')])
+def thread_read(request, contact_pid, account_pid):
+    """Marca solo la lectura del caller; no reclama ni modifica el episodio."""
+    from .inbox_read import mark_thread_read, unread_counts, unread_total
+
+    contact, account = _resolve_thread(request, contact_pid, account_pid)
+    serializer = InboxReadSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response({'code': 'invalid_read_request', 'errors': serializer.errors}, status=400)
+    state = mark_thread_read(
+        user=request.user, contact=contact, account=account,
+        message_id=serializer.validated_data['last_read_message_id'],
+    )
+    current = (Conversation.objects.for_organization(request.user.organization)
+               .filter(contact=contact, channel_account=account)
+               .exclude(state=Conversation.STATE_CLOSED)
+               .order_by('-last_activity_at', '-pk').first())
+    counts = unread_counts(request.user, [current] if current else [])
+    return Response({
+        'last_read_message_id': state.last_read_message_id,
+        'unread_count': counts.get(current.pk, 0) if current else 0,
+        'unread_total': unread_total(request.user),
+    })
 
 
 @api_view(['GET'])
@@ -955,33 +1134,86 @@ def thread_sessions(request, contact_pid, account_pid):
 @api_view(['GET'])
 @permission_classes([make_permission('agentinbox.view')])
 def thread_messages(request, contact_pid, account_pid):
-    """Transcript COMPLETO del hilo, con cursor hacia atrás.
+    """Historial operacional paginado, reciente o centrado en un mensaje.
 
-    Recepción ve todo el historial de la persona — el gate de verificación que
-    limita al agente (D19) no aplica aquí: quien mira tiene permiso propio y una
-    sesión iniciada. Lo que sí aplica es el mismo selector de visibilidad: un
-    saliente `failed` nunca llegó al cliente, y mostrarlo haría creer que sí.
-
-    Cursor por `before` (id): un hilo de años no se carga entero.
+    `around` incluye el destino aunque esté oculto por estado, marcado como tal.
+    Es lectura para recepción; no cambia la autoridad conversacional del agente.
     """
     from apps.channels.selectors import operational_messages
 
     contact, account = _resolve_thread(request, contact_pid, account_pid)
     org = request.user.organization
 
-    queryset = operational_messages(
-        Message.objects.for_organization(org).filter(
-            contact=contact, channel_account=account)
-    ).select_related('human_author', 'conversation')
+    scoped_messages = Message.objects.for_organization(org).filter(
+        contact=contact, channel_account=account,
+    ).select_related('human_author', 'conversation', 'reply_to__human_author', 'media')
+    queryset = operational_messages(scoped_messages)
 
-    before = request.query_params.get('before')
-    if before:
+    from .inbox_sync import (InvalidSyncCursor, changed_messages, floor_message,
+                             from_floor, hydrate_preview, previous_snapshot, scope_for, sign_floor,
+                             stamped_messages, transcript_sync)
+    queryset = stamped_messages(queryset)
+    sync_scope = scope_for(request, 'messages', [str(contact.public_id), str(account.public_id)])
+    previous = previous_snapshot(request, sync_scope)
+    if previous is not None and ('before' in request.query_params or 'around' in request.query_params):
+        raise InvalidSyncCursor()
+    if 'floor' in request.query_params and ('before' in request.query_params or 'around' in request.query_params):
+        raise InvalidSyncCursor()
+    floor = floor_message(scoped_messages, request.query_params.get('floor'), previous, sync_scope)
+    changes = None
+
+    around_requested = 'around' in request.query_params
+    if around_requested and 'before' in request.query_params:
+        return Response({
+            'code': 'invalid_cursor',
+            'message': 'around y before son mutuamente excluyentes.',
+        }, status=400)
+
+    if previous is not None:
+        changes = changed_messages(queryset, previous, floor)
+        page = changes['page']
+        messages = changes['messages']
+        next_before = None
+    elif around_requested:
         try:
-            queryset = queryset.filter(id__lt=int(before))
+            around = int(request.query_params['around'])
+            if not 0 < around <= 9223372036854775807:
+                raise ValueError
         except (TypeError, ValueError):
-            return Response({'error': 'Cursor inválido.'}, status=400)
+            return Response({
+                'code': 'invalid_cursor', 'message': 'Cursor around inválido.',
+            }, status=400)
+        target = scoped_messages.filter(pk=around).first()
+        if target is None:
+            return Response({'code': 'not_found'}, status=404)
 
-    page = list(queryset.order_by('-created_at', '-id')[:THREAD_MESSAGES_PAGE])
+        # Una fila extra por lado detecta continuidad sin cargar todo el hilo.
+        older = list(queryset.filter(
+            Q(created_at__lt=target.created_at)
+            | Q(created_at=target.created_at, pk__lt=target.pk),
+        ).order_by('-created_at', '-id')[:26])
+        newer = list(queryset.filter(
+            Q(created_at__gt=target.created_at)
+            | Q(created_at=target.created_at, pk__gt=target.pk),
+        ).order_by('created_at', 'id')[:25])
+        has_older, has_newer = len(older) > 25, len(newer) > 24
+        page = older[:25][::-1] + [target] + newer[:24]
+        messages = MessageSerializer(page, many=True).data
+        target_hidden = not queryset.filter(pk=target.pk).exists()
+        for message in messages:
+            message['is_hidden'] = message['id'] == target.pk and target_hidden
+        next_before = page[0].id if has_older else None
+    else:
+        before = request.query_params.get('before')
+        if before:
+            try:
+                queryset = queryset.filter(id__lt=int(before))
+            except (TypeError, ValueError):
+                return Response({'error': 'Cursor inválido.'}, status=400)
+        recent = from_floor(queryset, floor).order_by('-created_at', '-id')
+        page = list(recent if floor else recent[:THREAD_MESSAGES_PAGE])
+        messages = MessageSerializer(page[::-1], many=True).data
+        next_before = page[-1].id if len(page) == THREAD_MESSAGES_PAGE else None
 
     # La sesión VIGENTE viaja con el transcript. La bandeja necesita las dos
     # cosas en el mismo sitio —el hilo para leer, la sesión para actuar— y
@@ -994,7 +1226,8 @@ def thread_messages(request, contact_pid, account_pid):
         .order_by('-last_activity_at')
         .first()
     )
-    return Response({
+    hydrate_preview(current)
+    payload = {
         'contact_public_id': contact.public_id,
         'channel_account_public_id': account.public_id,
         'owner_name': contact.owner.name if contact.owner_id else None,
@@ -1007,7 +1240,21 @@ def thread_messages(request, contact_pid, account_pid):
                           if current else None),
         'handoff': _handoff_payload(current) if current else None,
         # Para pedir la página anterior: el id más viejo de ésta.
-        'next_before': (page[-1].id
-                        if len(page) == THREAD_MESSAGES_PAGE else None),
-        'messages': MessageSerializer(page[::-1], many=True).data,
-    })
+        'next_before': next_before,
+        'messages': messages,
+        'reset_range': floor is not None and previous is None,
+    }
+    from .inbox_read import thread_read_status
+
+    payload.update(thread_read_status(
+        request.user, contact, account, current, page if around_requested or changes else page[::-1],
+    ))
+    if changes is None:
+        ordered = page if around_requested else page[::-1]
+        payload['sync_floor'] = sign_floor(sync_scope, ordered[0] if ordered else None)
+    if around_requested:
+        payload.update(has_older=has_older, has_newer=has_newer)
+    if around_requested or 'before' in request.query_params:
+        return Response(payload)
+    return Response(transcript_sync(request, payload, page if changes else page[::-1],
+                                    sync_scope, previous, changes))

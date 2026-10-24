@@ -14,13 +14,14 @@ Convención de scripting:
 """
 from datetime import datetime, timedelta
 from datetime import timezone as dt_tz
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
 
 from .harness import legacy_write_component
 from apps.agent import executor as executor_module
-from apps.agent import confirmations, tools
+from apps.agent import confirmations, matter_binding, matter_resolution, tools
 from apps.agent.llm import LLMResult
 from apps.agent.models import AgentSettings, ContactIdentity, Conversation
 from apps.agent.tests.harness import run_turn, set_schedule_day
@@ -95,8 +96,21 @@ class RegF2Base(TestCase):
 
     # -- helpers ------------------------------------------------------------
     def _turn(self, text, scripted):
-        return run_turn(self, self.conv, self.agent_user, text,
-                        scripted_llm=scripted)
+        # F2 exercises the inactive legacy component: its scripted tool args
+        # have no B6 message provenance. Do not turn that fixture into a bound
+        # matter halfway through the test. Versioned fixtures retain real B6.
+        resolve = matter_resolution.process_turn
+
+        def resolve_versioned(conversation, context):
+            goal = matter_binding.current_goal(conversation)
+            if goal and matter_binding.metadata(goal):
+                return resolve(conversation, context)
+            return None
+
+        with patch.object(matter_resolution, 'process_turn',
+                          side_effect=resolve_versioned):
+            return run_turn(self, self.conv, self.agent_user, text,
+                            scripted_llm=scripted)
 
     def _propose(self, text, tool_name, tool_args):
         return self._turn(text, [LLMResult(
@@ -444,7 +458,10 @@ class Int23Tests(RegF2Base):
         self.assertEqual(r2["decision"], "committed")
         appt.refresh_from_db()
         self.assertEqual(appt.status, "canceled")
-        self.assertIn("reagendo", bodies[-1].lower())   # retención UX-11
+        # UX-11: cancellation offers another appointment without booking it.
+        self.assertIn("agendar otra", bodies[-1].lower())
+        self.assertIn("¿te acomoda alguno?", bodies[-1].lower())
+        self.assertEqual(Appointment.objects.filter(pet=self.pet).count(), 1)
 
     def test_23_02_cancel_requires_paraphrase(self):
         self._make_appt(status="scheduled")

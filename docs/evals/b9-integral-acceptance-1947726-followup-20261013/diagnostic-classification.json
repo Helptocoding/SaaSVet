@@ -1,0 +1,110 @@
+{
+  "state": "VALID_DIAGNOSTIC_NONPASS",
+  "date_local": "2026-10-13",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "reproduced": {
+    "FAIL": 10,
+    "ERROR": 1
+  },
+  "test_invocations": 1,
+  "environment_invalidating_incidents": [],
+  "findings": [
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_01_offer_then_create",
+      "outcome": "FAIL",
+      "category": "PROPOSAL_STATE_EXPECTATION_NOT_MET",
+      "finding": "Se esperaba awaiting_confirmation; se obtuvo planner_reply o reply. No se alcanzó el estado de propuesta esperado por este guion.",
+      "certainty": "Observed decision mismatch; fixture-versus-product root cause unresolved",
+      "traceback_source": "diagnostic.ids.jsonl"
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_02_all_slots_direct_to_confirm",
+      "outcome": "FAIL",
+      "category": "PROPOSAL_STATE_EXPECTATION_NOT_MET",
+      "finding": "Se esperaba awaiting_confirmation; se obtuvo planner_reply o reply. No se alcanzó el estado de propuesta esperado por este guion.",
+      "certainty": "Observed decision mismatch; fixture-versus-product root cause unresolved",
+      "traceback_source": "diagnostic.ids.jsonl"
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_03_b5_race_slot_taken",
+      "outcome": "FAIL",
+      "category": "SLOT_RACE_COMMIT_BRANCH_NOT_REACHED_AS_EXPECTED",
+      "finding": "Se esperaba commit_slot_taken; se obtuvo reply después del guion de propuesta/afirmativa. No se valida el escenario de carrera en la frontera esperada.",
+      "certainty": "Observed branch mismatch; internal cause unresolved",
+      "traceback_source": "diagnostic.ids.jsonl"
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_04_modification_makes_new_pending",
+      "outcome": "FAIL",
+      "category": "PROPOSAL_STATE_EXPECTATION_NOT_MET",
+      "finding": "Se esperaba awaiting_confirmation; se obtuvo planner_reply o reply. No se alcanzó el estado de propuesta esperado por este guion.",
+      "certainty": "Observed decision mismatch; fixture-versus-product root cause unresolved",
+      "traceback_source": "diagnostic.ids.jsonl"
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_06_expired_confirmation_never_executes",
+      "outcome": "FAIL",
+      "category": "EXPIRY_BRANCH_NOT_REACHED_AS_EXPECTED",
+      "finding": "Se esperaba confirm_expired; se obtuvo reply. Este resultado no demuestra ejecución de una confirmación vencida; falla la llegada al branch que el test pretendía verificar.",
+      "certainty": "Observed branch mismatch; no unsafe mutation proven",
+      "traceback_source": "diagnostic.ids.jsonl"
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int20Tests.test_20_09_b6_fixed_vet_used",
+      "outcome": "ERROR",
+      "category": "APPOINTMENT_CREATION_PRECONDITION_NOT_MET",
+      "finding": "Appointment.objects.get() lanza DoesNotExist después de proponer y responder sí; no se llega a comprobar el veterinario. La causa interna anterior no queda demostrada por esta excepción.",
+      "certainty": "Observed missing fixture/effect precondition; internal cause unresolved",
+      "traceback_source": "diagnostic.ids.jsonl"
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int23Tests.test_23_01_cancel_happy_with_retention",
+      "outcome": "FAIL",
+      "category": "PROPOSAL_STATE_EXPECTATION_NOT_MET",
+      "finding": "Se esperaba awaiting_confirmation; se obtuvo planner_reply o reply. No se alcanzó el estado de propuesta esperado por este guion.",
+      "certainty": "Observed decision mismatch; fixture-versus-product root cause unresolved",
+      "traceback_source": "diagnostic.ids.jsonl"
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int23Tests.test_23_02_cancel_requires_paraphrase",
+      "outcome": "FAIL",
+      "category": "PROPOSAL_STATE_EXPECTATION_NOT_MET",
+      "finding": "Se esperaba awaiting_confirmation; se obtuvo planner_reply o reply. No se alcanzó el estado de propuesta esperado por este guion.",
+      "certainty": "Observed decision mismatch; fixture-versus-product root cause unresolved",
+      "traceback_source": "diagnostic.ids.jsonl"
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int24Tests.test_24_01_reschedule_happy",
+      "outcome": "FAIL",
+      "category": "PROPOSAL_STATE_EXPECTATION_NOT_MET",
+      "finding": "Se esperaba awaiting_confirmation; se obtuvo planner_reply o reply. No se alcanzó el estado de propuesta esperado por este guion.",
+      "certainty": "Observed decision mismatch; fixture-versus-product root cause unresolved",
+      "traceback_source": "diagnostic.ids.jsonl"
+    },
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int24Tests.test_24_04_reschedule_race_slot_taken",
+      "outcome": "FAIL",
+      "category": "SLOT_RACE_COMMIT_BRANCH_NOT_REACHED_AS_EXPECTED",
+      "finding": "Se esperaba commit_slot_taken; se obtuvo reply después del guion de propuesta/afirmativa. No se valida el escenario de carrera en la frontera esperada.",
+      "certainty": "Observed branch mismatch; internal cause unresolved",
+      "traceback_source": "diagnostic.ids.jsonl"
+    },
+    {
+      "id": "apps.agent.tests.test_regression_suite.ReadFlowTests.test_int11_price_flow",
+      "outcome": "FAIL",
+      "category": "STATIC_CONTRACT_CONFLICT_PRICE_RENDERING",
+      "finding": "El test espera T0_GUARD_BLOCKED y ausencia del precio; el candidato devuelve Consulta general: $350.00 MXN. El renderer actual y los tests B2 exigen precios del catálogo validados y asociados a su moneda. Esta aserción legacy contradice ese contrato.",
+      "certainty": "Observed assertion and static contract conflict; no product correction performed",
+      "traceback_source": "diagnostic.ids.jsonl"
+    }
+  ],
+  "WRITE_root_cause_status": "UNRESOLVED_FIXTURE_VERSUS_PRODUCT",
+  "WRITE_static_hypothesis": "F2 uses legacy_write_component and supplies parameters through a scripted tool call. The wrapper patches confirmation boundaries, while goals.capture with B6 metadata accepts only parameters already supported by binding evidence. A fixture/contract mismatch is plausible; the exact returned internal error was not captured, so this is not a proven causal trace.",
+  "PRICE_root_cause_status": "STATIC_ASSERTION_CONFLICT_WITH_CURRENT_VALIDATED_CATALOG_RENDERER",
+  "disk_exhaustion_required_to_reproduce": false,
+  "suite_order_contamination_required_to_reproduce": false,
+  "universal_product_defect_proven": false,
+  "product_tests_or_harness_modified": false,
+  "original_r9_decision": "PENDING_UNCHANGED",
+  "integral_acceptance_reclassified": false
+}

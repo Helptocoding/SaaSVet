@@ -1,0 +1,156 @@
+{
+  "directed": {
+    "samples": 1804,
+    "source": "referenced-evidence/b9-correction-20261016-native-r4/monitor-directed.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r4",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r4/blocks",
+    "min_host_bytes": 6270443520,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 9168125952,
+    "max_clock_skew_seconds": 0.0014758676911696966
+  },
+  "django-check": {
+    "samples": 15,
+    "source": "referenced-evidence/b9-correction-20261016-native-r4/monitor-django-check.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r4",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r4/blocks",
+    "min_host_bytes": 6873182208,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 9004724224,
+    "max_clock_skew_seconds": 1.640081791265402e-06
+  },
+  "migration-drift": {
+    "samples": 17,
+    "source": "referenced-evidence/b9-correction-20261016-native-r4/monitor-migration-drift.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r4",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r4/blocks",
+    "min_host_bytes": 7215046656,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 9001132032,
+    "max_clock_skew_seconds": 1.0263488547934685e-06
+  },
+  "migrate": {
+    "samples": 240,
+    "source": "referenced-evidence/b9-correction-20261016-native-r4/monitor-migrate.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r4",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r4/blocks",
+    "min_host_bytes": 6717423616,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 8984047616,
+    "max_clock_skew_seconds": 9.341243276139721e-05
+  },
+  "billing-schema": {
+    "samples": 15,
+    "source": "referenced-evidence/b9-correction-20261016-native-r4/monitor-billing-schema.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r4",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r4/blocks",
+    "min_host_bytes": 6987702272,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 8982327296,
+    "max_clock_skew_seconds": 1.2948667063028552e-06
+  },
+  "b0": {
+    "samples": 198,
+    "source": "referenced-evidence/b9-correction-20261016-native-r3/monitor-b0.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r3",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+    "min_host_bytes": 5617946624,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 14808444928,
+    "max_clock_skew_seconds": 4.100264868611703e-05
+  },
+  "b3": {
+    "samples": 466,
+    "source": "referenced-evidence/b9-correction-20261016-native-r3/monitor-b3.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r3",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+    "min_host_bytes": 5284839424,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 14785724416,
+    "max_clock_skew_seconds": 0.006127979367192893
+  },
+  "b4": {
+    "samples": 1463,
+    "source": "referenced-evidence/b9-correction-20261016-native-r3/monitor-b4.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r3",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+    "min_host_bytes": 5433311232,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 14775357440,
+    "max_clock_skew_seconds": 0.00011000564882124308
+  },
+  "b5": {
+    "samples": 509,
+    "source": "referenced-evidence/b9-correction-20261016-native-r3/monitor-b5.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r3",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+    "min_host_bytes": 5558669312,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 14754557952,
+    "max_clock_skew_seconds": 6.849735382274957e-05
+  },
+  "full-b8b": {
+    "samples": 964,
+    "source": "referenced-evidence/b9-correction-20261016-native-r3/monitor-full-b8b.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r3",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+    "min_host_bytes": 5733941248,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 14739746816,
+    "max_clock_skew_seconds": 0.0021924471184320282
+  },
+  "full-b8c": {
+    "samples": 1429,
+    "source": "referenced-evidence/b9-correction-20261016-native-r3/monitor-full-b8c.json",
+    "evidence_origin": "REFERENCED_PASS",
+    "source_campaign": "b9-correction-20261016-native-r3",
+    "source_artifact_dir": "referenced-evidence/b9-correction-20261016-native-r3/blocks",
+    "min_host_bytes": 5867180032,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 14734589952,
+    "max_clock_skew_seconds": 0.0023725011542410357
+  },
+  "full-b8d": {
+    "samples": 1146,
+    "source": "monitor-full-b8d.json",
+    "evidence_origin": "CURRENT_EXECUTION",
+    "source_campaign": "b9-correction-20261017-native-r5",
+    "source_artifact_dir": "blocks",
+    "min_host_bytes": 4302200832,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 12362240000,
+    "max_clock_skew_seconds": 0.030151577237120364
+  },
+  "full-b8e": {
+    "samples": 1244,
+    "source": "monitor-full-b8e.json",
+    "evidence_origin": "CURRENT_EXECUTION",
+    "source_campaign": "b9-correction-20261017-native-r5",
+    "source_artifact_dir": "blocks",
+    "min_host_bytes": 5619384320,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 12353081344,
+    "max_clock_skew_seconds": 0.02715336652181577
+  },
+  "full-general": {
+    "samples": 7353,
+    "source": "monitor-full-general.json",
+    "evidence_origin": "CURRENT_EXECUTION",
+    "source_campaign": "b9-correction-20261017-native-r5",
+    "source_artifact_dir": "blocks",
+    "min_host_bytes": 4393852928,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 12712251392,
+    "max_clock_skew_seconds": 0.038163609482580796
+  }
+}

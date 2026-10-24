@@ -1,0 +1,16 @@
+--- native-r2/host_observer.py
++++ native/host_observer.py
+@@ -18,11 +18,11 @@
+         'sample_interval_seconds':1,'maximum_sample_age_seconds':10,
+         'measurement':'Unmodified host_resources.py / GlobalMemoryStatusEx',
+         'run_method':'runpy in one private persistent Windows process',
+-        'application_tests_executed':False,'maximum_lifetime_seconds':25200}
++        'application_tests_executed':False,'maximum_lifetime_seconds':46800}
+     (HERE/'resource-observer-control.json').write_text(json.dumps(control,indent=2)+'\n',encoding='utf-8')
+     start=time.monotonic();count=0
+     with (directory/'samples.jsonl').open('w',encoding='utf-8',newline='\n') as stream:
+-        while not (directory/'stop.request').exists() and time.monotonic()-start<25200:
++        while not (directory/'stop.request').exists() and time.monotonic()-start<46800:
+             capture=io.StringIO()
+             with contextlib.redirect_stdout(capture):
+                 runpy.run_path(str(HERE/'host_resources.py'),run_name='host_memory_observation')

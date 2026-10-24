@@ -1,0 +1,21 @@
+{
+  "step": "frontend",
+  "state": "COMPLETED",
+  "argv": [
+    "rtk",
+    "proxy",
+    "wsl.exe",
+    "-d",
+    "Ubuntu-24.04",
+    "--exec",
+    "/home/lap/b9i-correction-20261014-r2/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-correction-20261014-r2/venv/bin/python",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261014-r2/prepare_campaign.py",
+    "frontend"
+  ],
+  "utc_started": "2026-10-14T23:08:32Z",
+  "exit_code": 1,
+  "seconds": 3.350451999998768
+}

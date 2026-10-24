@@ -1,0 +1,72 @@
+{
+  "state": "PASS",
+  "utc": "2026-10-18T05:36:44Z",
+  "action": "Two-line aggregate receipt candidate compatibility integration",
+  "modified_source": "full_partition.py",
+  "modified_source_sha256": "0d62322334a36ed2b0b77ffabb0e2645d47a2d3fb0b5a8e7047e3064b9df57df",
+  "source_baseline": "../b9-correction-20261017-native-r5/full_partition.py",
+  "source_baseline_sha256": "21731d5d5ed0561172756a9525bd338347c8c983118d7bb62a4c04eb588a14bf",
+  "exact_expected_two_line_change": true,
+  "changed_partition_functions": [
+    "aggregate_full"
+  ],
+  "protected_functions": {
+    "full_partition.py": {
+      "before_sha256": "21731d5d5ed0561172756a9525bd338347c8c983118d7bb62a4c04eb588a14bf",
+      "baseline_sha256": "21731d5d5ed0561172756a9525bd338347c8c983118d7bb62a4c04eb588a14bf",
+      "before_protected_AST": {
+        "projected_groups": "82d47ffbc5bc67b84d4c0eccb117e0fd682ffc7509cf95ec68551e1fb7721328",
+        "build_partition": "784088ba99170723e8a1d86cd78c75d97df7087e81b9bf2ce244e6ca8069b61c",
+        "validate_partition": "50aee508295c980297367d48006aa4ab67e3b4161984443ceb1182a6b47de235"
+      },
+      "baseline_protected_AST": {
+        "projected_groups": "82d47ffbc5bc67b84d4c0eccb117e0fd682ffc7509cf95ec68551e1fb7721328",
+        "build_partition": "784088ba99170723e8a1d86cd78c75d97df7087e81b9bf2ce244e6ca8069b61c",
+        "validate_partition": "50aee508295c980297367d48006aa4ab67e3b4161984443ceb1182a6b47de235"
+      },
+      "after_sha256": "0d62322334a36ed2b0b77ffabb0e2645d47a2d3fb0b5a8e7047e3064b9df57df",
+      "after_protected_AST": {
+        "projected_groups": "82d47ffbc5bc67b84d4c0eccb117e0fd682ffc7509cf95ec68551e1fb7721328",
+        "build_partition": "784088ba99170723e8a1d86cd78c75d97df7087e81b9bf2ce244e6ca8069b61c",
+        "validate_partition": "50aee508295c980297367d48006aa4ab67e3b4161984443ceb1182a6b47de235"
+      },
+      "protected_AST_identical_before_after_and_r5": true
+    },
+    "run_campaign.py": {
+      "before_sha256": "f915573047f6f88297f18df4b5bcc0f7f7844225293e390731a8bfb074c2c54b",
+      "baseline_sha256": "749c83ca7ef91e4cbcb2135c9cc2baf2382b2427de12457bb79cca62959669a2",
+      "before_protected_AST": {
+        "budget": "c9248ceae26063a3a9263c809cfce4737c401d7d2057899fe7455c67a2529794",
+        "execute": "bde31a1ac1b9c4f17b7d8d50d4d5088391561f1dfda7cb7ed58b1527e56dcf3a",
+        "gate": "7da42b82549f594de3647d86cffc0ff139413c54ab2b7bd499e34006cb9717b9",
+        "check_suite": "44bf4fb06af59579039769a7dfed38702704443d938773afc92698a84c0443ec",
+        "create_db": "cbbabb1e0d1e35b366ab3a879de24b1cb60cc0301c7f82061452ddb999f842ff"
+      },
+      "baseline_protected_AST": {
+        "budget": "c9248ceae26063a3a9263c809cfce4737c401d7d2057899fe7455c67a2529794",
+        "execute": "bde31a1ac1b9c4f17b7d8d50d4d5088391561f1dfda7cb7ed58b1527e56dcf3a",
+        "gate": "7da42b82549f594de3647d86cffc0ff139413c54ab2b7bd499e34006cb9717b9",
+        "check_suite": "44bf4fb06af59579039769a7dfed38702704443d938773afc92698a84c0443ec",
+        "create_db": "cbbabb1e0d1e35b366ab3a879de24b1cb60cc0301c7f82061452ddb999f842ff"
+      },
+      "after_sha256": "f915573047f6f88297f18df4b5bcc0f7f7844225293e390731a8bfb074c2c54b",
+      "after_protected_AST": {
+        "budget": "c9248ceae26063a3a9263c809cfce4737c401d7d2057899fe7455c67a2529794",
+        "execute": "bde31a1ac1b9c4f17b7d8d50d4d5088391561f1dfda7cb7ed58b1527e56dcf3a",
+        "gate": "7da42b82549f594de3647d86cffc0ff139413c54ab2b7bd499e34006cb9717b9",
+        "check_suite": "44bf4fb06af59579039769a7dfed38702704443d938773afc92698a84c0443ec",
+        "create_db": "cbbabb1e0d1e35b366ab3a879de24b1cb60cc0301c7f82061452ddb999f842ff"
+      },
+      "protected_AST_identical_before_after_and_r5": true
+    }
+  },
+  "candidate_compatible_module_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719",
+  "candidate_compatible_AST_sha256": "b135a18524c66ea40e45a8c051f1d2819641ae8f7773c2856b45c5e5826a4e84",
+  "syntax_compile": "PASS",
+  "trailing_whitespace": 0,
+  "application_tests_executed": false,
+  "aggregate_full_executed": false,
+  "partition_builder_executed": false,
+  "services_started": false,
+  "sealed_sources_modified": false
+}

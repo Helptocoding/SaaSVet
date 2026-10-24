@@ -1,0 +1,51 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "sends": [
+    {
+      "viewport": "desktop",
+      "path": "inbox/conversations/session-Ana%20sint%C3%A9tica/send/",
+      "body": {
+        "body": "Confirmamos la cita de Luna.",
+        "reply_to_id": 1
+      },
+      "key": "2937ce54-d224-475e-99ed-9386c186ac42"
+    },
+    {
+      "viewport": "mobile",
+      "path": "inbox/conversations/session-Ana%20sint%C3%A9tica/send/",
+      "body": {
+        "body": "Confirmamos la cita de Luna.",
+        "reply_to_id": 1
+      },
+      "key": "bec11082-5c38-47a6-8b8d-aa282778d33a"
+    }
+  ],
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "keyboard": true,
+      "touch": false,
+      "cancel_preserves_draft": true,
+      "one_active_quote": true,
+      "request_has_reply_id": true,
+      "optimistic_reply_disabled": true,
+      "confirmed_reply_enabled": true,
+      "switch_cancels": true,
+      "horizontal_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "keyboard": false,
+      "touch": true,
+      "cancel_preserves_draft": true,
+      "one_active_quote": true,
+      "request_has_reply_id": true,
+      "optimistic_reply_disabled": true,
+      "confirmed_reply_enabled": true,
+      "switch_cancels": true,
+      "horizontal_overflow": false
+    }
+  ],
+  "page_errors": []
+}

@@ -1,0 +1,390 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "messages_reachable": 200,
+      "prepend_checks": [
+        {
+          "cursor": 151,
+          "rows": 100,
+          "height_delta": 3142,
+          "top_delta": 3142,
+          "anchor_delta": 0.1875
+        },
+        {
+          "cursor": 101,
+          "rows": 150,
+          "height_delta": 3142,
+          "top_delta": 3142,
+          "anchor_delta": 0.1875
+        },
+        {
+          "cursor": 51,
+          "rows": 200,
+          "height_delta": 3142,
+          "top_delta": 3142,
+          "anchor_delta": 0.1875
+        },
+        {
+          "cursor": 1,
+          "rows": 200,
+          "height_delta": 0,
+          "top_delta": 0,
+          "anchor_delta": 0.0
+        }
+      ],
+      "no_duplicates": true,
+      "exhaustion_copy_correct": true,
+      "error_retry_preserves_draft": true,
+      "new_burst_count": 5,
+      "reading_history_from": "2026-07-21",
+      "arrivals_from": "2026-10-21",
+      "arrival_anchor_delta": 0.0,
+      "keyboard_or_touch_follow": true,
+      "automatic_follow_at_bottom": true,
+      "manual_bottom_clears_count": true,
+      "unobscured_new_message_control": true,
+      "horizontal_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "messages_reachable": 200,
+      "prepend_checks": [
+        {
+          "cursor": 151,
+          "rows": 100,
+          "height_delta": 4084,
+          "top_delta": 4084,
+          "anchor_delta": 0.375
+        },
+        {
+          "cursor": 101,
+          "rows": 150,
+          "height_delta": 4085,
+          "top_delta": 4084,
+          "anchor_delta": 0.375
+        },
+        {
+          "cursor": 51,
+          "rows": 200,
+          "height_delta": 4084,
+          "top_delta": 4084,
+          "anchor_delta": 0.375
+        },
+        {
+          "cursor": 1,
+          "rows": 200,
+          "height_delta": 0,
+          "top_delta": 0,
+          "anchor_delta": 0.0
+        }
+      ],
+      "no_duplicates": true,
+      "exhaustion_copy_correct": true,
+      "error_retry_preserves_draft": true,
+      "new_burst_count": 5,
+      "reading_history_from": "2026-07-21",
+      "arrivals_from": "2026-10-21",
+      "arrival_anchor_delta": 0.0,
+      "keyboard_or_touch_follow": true,
+      "automatic_follow_at_bottom": true,
+      "manual_bottom_clears_count": true,
+      "unobscured_new_message_control": true,
+      "horizontal_overflow": false
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "me/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "151"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "101"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "51"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "1"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "me/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "151"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "151"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "me/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "151"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "101"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "51"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "1"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "me/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "151"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {
+        "before": [
+          "151"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/",
+      "query": {}
+    }
+  ],
+  "page_errors": [],
+  "temporary_server_listening": false
+}

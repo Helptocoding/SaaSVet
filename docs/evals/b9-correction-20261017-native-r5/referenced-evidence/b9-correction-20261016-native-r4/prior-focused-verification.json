@@ -1,0 +1,29 @@
+{
+  "source": "../b9-correction-20261013/focused-verification.json",
+  "sha256": "e42650796e3025eb92b747ec2b45a1c6ecb9b24fa206228c8ea943154def17eb",
+  "receipt": {
+    "state": "PASS_WITH_IDENTIFIED_HISTORICAL_SKIP",
+    "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+    "tests": 156,
+    "PASS": 155,
+    "FAIL": 0,
+    "ERROR": 0,
+    "SKIP": [
+      {
+        "id": "apps.agent.tests.test_regression_f2.Int21Tests.test_21_05_bis_new_pet_existing_owner",
+        "outcome": "SKIP",
+        "reason": "INT-21-bis (mascota nueva de cliente existente) sin tool en PR-17a; el alta reusa create-with-patient — pendiente de PR futuro.",
+        "utc": "2026-10-14T05:42:14Z",
+        "traceback": null
+      }
+    ],
+    "original_11_ids_all_pass": true,
+    "development_test_suite_invocations": 2,
+    "earlier_development_result": "focused/attempt1/diagnostic.results.json",
+    "preflight_failure_without_test_execution": "focused/attempt2-preflight/explanation.json",
+    "formal_campaign_invocations": 0,
+    "production_files_changed": false
+  },
+  "executed_in_this_campaign": false,
+  "substitutes_current_acceptance": false
+}

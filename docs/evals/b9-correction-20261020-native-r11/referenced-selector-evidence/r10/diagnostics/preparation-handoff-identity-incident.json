@@ -1,0 +1,8 @@
+{
+  "phase": "pre-seal handoff identity",
+  "cause": "Copied handoff identity still referenced the previous candidate/folder; assertion stopped before PostgreSQL startup or tests",
+  "resolution": "Bind expected tree and folder to authorized r10; use the same five-second process/SQL-start identity bound as the verified retirement",
+  "application_guards_and_profile_timings_unchanged": true,
+  "postgresql_process_started_before_incident": false,
+  "application_tests_executed": false
+}

@@ -1,0 +1,98 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "before": {
+        "height": 407,
+        "scroll": 2826,
+        "top": 0
+      },
+      "gap_after": 0,
+      "control_height": 44,
+      "focus_retained": true,
+      "unobscured_hit_area": true,
+      "page_scroll_unchanged": true,
+      "horizontal_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "before": {
+        "height": 490,
+        "scroll": 3580,
+        "top": 0
+      },
+      "gap_after": 0,
+      "control_height": 44,
+      "focus_retained": true,
+      "unobscured_hit_area": true,
+      "page_scroll_unchanged": true,
+      "horizontal_overflow": false
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    },
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    },
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    }
+  ],
+  "page_errors": [],
+  "temporary_server_listening": false
+}

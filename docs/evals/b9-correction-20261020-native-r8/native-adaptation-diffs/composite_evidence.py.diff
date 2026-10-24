@@ -1,0 +1,283 @@
+--- native-r7/composite_evidence.py
++++ native/composite_evidence.py
+@@ -15,7 +15,18 @@
+ 
+ HERE = Path(__file__).resolve().parent
+ SOURCE_TREE_SHA = '196aceb4f5f234c086b96d8e8af93787613f3c25'
+-TREE_SHA = '68dffd746793700071f577a58528b0f9636930db'
++CLOCK_TREE_SHA = '68dffd746793700071f577a58528b0f9636930db'
++TREE_SHA = json.loads((HERE / 'candidate.json').read_text(encoding='utf-8'))['candidate_tree']
++if re.fullmatch('[0-9a-f]{40}', TREE_SHA) is None or TREE_SHA in (SOURCE_TREE_SHA, CLOCK_TREE_SHA):
++    raise RuntimeError('Composite evidence: invalid corrected snapshot candidate')
++SNAPSHOT_PATH = 'backend/apps/agent/tests/test_contracts.py'
++OLD_SNAPSHOT_SHA = 'a9c66b5fc0370726b2c6a21aa189190a006635f03ad10e3dc0857614bb0c7ed4'
++NEW_SNAPSHOT_SHA = 'fc2d8f4152c25e41700235330a8411ccc9066c64bc3089eb07c7c352cc366aff'
++SNAPSHOT_PATCH_SHA = '6d13efc117f33e26f1701dc568b881a1758adfdfdd3f53bc874b0a9989512a50'
++SNAPSHOT_TESTS = {
++    'apps.agent.tests.test_contracts.CommitmentContractTests.test_fields_match_snapshot',
++    'apps.agent.tests.test_contracts.ToolOutcomeContractTests.test_fields_match_snapshot',
++}
+ FIXTURE_PATH = 'backend/apps/notifications/tests/test_notifications.py'
+ FIXTURE_TEST = 'apps.notifications.tests.test_notifications.DerivedFeedTests.test_upcoming_window'
+ OLD_FIXTURE_SHA = '1c1bbded0782ac4cbfc671cefdfee27365571c05c6172a67b5804002b681838f'
+@@ -37,7 +48,7 @@
+     R5: '0b5df35ddbf9c963d67b1811e7eccd609131c5d6dc644031294fe21d41976963',
+ }
+ GIB = 1024 ** 3
+-SCHEMA = 'b9-composite-referenced-pass-v2-fixture-clock'
++SCHEMA = 'b9-composite-referenced-pass-v3-clock-and-snapshots'
+ _MANIFEST_CACHE = None
+ 
+ 
+@@ -322,13 +333,17 @@
+     _require(proof == _read(HERE, 'reuse-validation.json')['inputs']['fixture_clock_equivalence'] and
+              proof.get('state') == 'PASS' and proof.get('allowed_path') == FIXTURE_PATH and
+              proof.get('source_candidate_tree') == SOURCE_TREE_SHA and
+-             proof.get('accepted_candidate_tree') == TREE_SHA and
++             proof.get('accepted_candidate_tree') == CLOCK_TREE_SHA and
+              proof.get('original_sha256') == OLD_FIXTURE_SHA and
+              proof.get('corrected_sha256') == NEW_FIXTURE_SHA and
+              proof.get('body_AST_identical') is True and
+              proof.get('other_git_blobs_identical') == 3331,
+              'cross-candidate fixture proof changed')
+     _authorization()
++    snapshot = _snapshot_declaration()
++    _require(manifest.get('snapshot_equivalence') == snapshot and
++             _read(HERE, 'reuse-validation.json')['inputs'].get('snapshot_equivalence') == snapshot,
++             'authorized snapshot equivalence changed')
+     _require(_sha(_safe(HERE, 'fixture-clock-authorization.json')) == proof['authorization_sha256'] and
+              _sha(_safe(HERE, 'candidate-input.json')) == proof['candidate_input_sha256'],
+              'fixture authorization or candidate declaration drift')
+@@ -421,7 +436,9 @@
+             'tested_candidate_tree': SOURCE_TREE_SHA if reused else TREE_SHA,
+             'accepted_candidate_tree': TREE_SHA,
+             'fixture_clock_equivalence': ('reuse-validation.json#inputs.fixture_clock_equivalence'
+-                                          if reused else None)}
++                                          if reused else None),
++            'snapshot_equivalence': ('reuse-validation.json#inputs.snapshot_equivalence'
++                                     if reused else None)}
+ 
+ 
+ def candidate_compatible(label, receipt_sha):
+@@ -432,9 +449,15 @@
+         _require(label in REUSED, 'old candidate not authorized for this block')
+         proof = _resolved_manifest()['fixture_clock_equivalence']
+         _require(proof['state'] == 'PASS' and proof['source_candidate_tree'] == SOURCE_TREE_SHA and
+-                 proof['accepted_candidate_tree'] == TREE_SHA and
++                 proof['accepted_candidate_tree'] == CLOCK_TREE_SHA and
+                  proof['allowed_path'] == FIXTURE_PATH and proof['body_AST_identical'] is True,
+                  'cross-candidate equivalence unavailable')
++        snapshot = _resolved_manifest().get('snapshot_equivalence', {})
++        _require(snapshot.get('previous_candidate_tree') == CLOCK_TREE_SHA and
++                 snapshot.get('candidate_tree') == TREE_SHA and
++                 snapshot.get('allowed_path') == SNAPSHOT_PATH and
++                 snapshot.get('only_two_expected_literal_lists_change_ast') is True,
++                 'cross-candidate snapshot equivalence unavailable')
+         expected = SOURCE_TREE_SHA
+     _require(receipt_sha == expected, 'receipt candidate incompatible with block provenance: ' + label)
+     return True
+@@ -443,7 +466,7 @@
+ def _authorization():
+     authorization = _read(HERE, 'fixture-clock-authorization.json')
+     expected = {'state': 'USER_AUTHORIZED_APPLIED_AND_STAGED',
+-                'source_candidate_tree': SOURCE_TREE_SHA, 'current_candidate_tree': TREE_SHA,
++                'source_candidate_tree': SOURCE_TREE_SHA, 'current_candidate_tree': CLOCK_TREE_SHA,
+                 'allowed_path': FIXTURE_PATH, 'original_sha256': OLD_FIXTURE_SHA,
+                 'corrected_sha256': NEW_FIXTURE_SHA, 'patch_sha256': CLOCK_PATCH_SHA,
+                 'body_AST_identical': True, 'all_other_3331_blobs_identical': True,
+@@ -452,10 +475,122 @@
+     _require(all(authorization.get(key) == value for key, value in expected.items()) and
+              bool(authorization.get('user')), 'fixture authorization changed or incomplete')
+     candidate = _read(HERE, 'candidate-input.json')
+-    _require(candidate['candidate_tree'] == TREE_SHA and
++    _require(candidate['candidate_tree'] == CLOCK_TREE_SHA and
+              candidate['previous_candidate_tree'] == SOURCE_TREE_SHA and
+              candidate['only_new_change'] == FIXTURE_PATH, 'candidate authorization scope changed')
++    _snapshot_authorization()
+     return authorization
++
++
++def _snapshot_authorization():
++    authorization = _read(HERE, 'snapshot-resumption-authorization.json')
++    expected = {
++        'state': 'USER_AUTHORIZED_BEFORE_FORMAL_SEAL',
++        'user_answer': 'Sí, corregir esos snapshots y continuar sin repetir PASS',
++        'previous_candidate_tree': CLOCK_TREE_SHA, 'allowed_path': SNAPSHOT_PATH,
++        'patch_sha256': SNAPSHOT_PATCH_SHA, 'retained_general_PASS': 2888,
++        'retained_expected_SKIPs': 2, 'new_missing_ids': 321, 'corrected_FAILED_ids': 2,
++        'old_FAILs_preserved': True, 'accepted_historical_evidence_limitation': True,
++        'product_runtime_locks_changed': False, 'no_PASS_reruns': True,
++        'all_new_guards_and_remaining_original_stages_required': True,
++        'commits_push_deploy_activation_authorized': False,
++    }
++    _require(all(authorization.get(key) == value for key, value in expected.items()),
++             'snapshot correction authorization changed or incomplete')
++    candidate = _read(HERE, 'candidate.json')
++    _require(candidate['candidate_tree'] == TREE_SHA and
++             candidate['previous_candidate_tree'] == CLOCK_TREE_SHA and
++             candidate['only_new_change'] == SNAPSHOT_PATH and
++             candidate['authorization'] == 'snapshot-resumption-authorization.json',
++             'snapshot candidate authorization scope changed')
++    _require(authorization.get('candidate_tree', TREE_SHA) == TREE_SHA,
++             'snapshot authorization names a different corrected candidate')
++    _require(_sha(_safe(HERE, 'snapshot-correction.diff')) == SNAPSHOT_PATCH_SHA,
++             'authorized snapshot patch changed')
++    return authorization
++
++
++def _snapshot_declaration():
++    _snapshot_authorization()
++    proof = _read(HERE, 'snapshot-equivalence.json')
++    expected = {
++        'state': 'PASS', 'previous_candidate_tree': CLOCK_TREE_SHA,
++        'candidate_tree': TREE_SHA, 'allowed_path': SNAPSHOT_PATH,
++        'original_sha256': OLD_SNAPSHOT_SHA, 'corrected_sha256': NEW_SNAPSHOT_SHA,
++        'patch_sha256': SNAPSHOT_PATCH_SHA,
++        'only_two_expected_literal_lists_change_ast': True,
++        'assertions_other_AST_unchanged': True, 'all_other_3331_blobs_identical': True,
++        'test_ids_imports_hooks_unchanged': True, 'old_FAILs_preserved': True,
++        'product_runtime_locks_changed': False,
++    }
++    _require(all(proof.get(key) == value for key, value in expected.items()),
++             'snapshot equivalence declaration changed or incomplete')
++    _require(all(isinstance(proof.get(key), str) and re.fullmatch('[0-9a-f]{40}', proof[key])
++                 for key in ('original_git_blob', 'corrected_git_blob')) and
++             all(isinstance(proof.get(key), int) and not isinstance(proof[key], bool) and proof[key] > 0
++                 for key in ('original_bytes', 'corrected_bytes')),
++             'snapshot equivalence blob metadata is invalid')
++    return {**proof,
++            'authorization_sha256': _sha(_safe(HERE, 'snapshot-resumption-authorization.json')),
++            'equivalence_sha256': _sha(_safe(HERE, 'snapshot-equivalence.json')),
++            'authorization': 'snapshot-resumption-authorization.json',
++            'corrected_test_ids': sorted(SNAPSHOT_TESTS)}
++
++
++def _snapshot_transform(corrected):
++    """Invert the two approved expected lists and prove every other AST node."""
++    _require(hashlib.sha256(corrected).hexdigest() == NEW_SNAPSHOT_SHA,
++             'corrected snapshot bytes are not the authorized proposal')
++    text = corrected.decode('utf-8')
++    changes = (
++        ("            'client_error', 'completeness', 'cursor', 'data', 'detail',\n"
++         "            'effects', 'error_kind', 'has_more', 'kind', 'observed_at',\n"
++         "            'operation_key', 'origin', 'partial_effects', 'retryable',\n"
++         "            'scope', 'summary', 'validated',",
++         "            'client_error', 'data', 'detail', 'ok', 'summary',"),
++        ("            'asked', 'attempts_failed', 'authorization_message', 'binding_revision',\n"
++         "            'blocked_reason', 'bound_appointment', 'bound_owner', 'bound_pet', 'closed_at',",
++         "            'asked', 'attempts_failed', 'authorization_message', 'blocked_reason', 'closed_at',"),
++    )
++    original = text
++    for after, before in changes:
++        _require(original.count(after) == 1, 'snapshot contains an unapproved expected-list change')
++        original = original.replace(after, before, 1)
++    raw = original.encode('utf-8')
++    _require(hashlib.sha256(raw).hexdigest() == OLD_SNAPSHOT_SHA,
++             'snapshot inverse differs from the entire original source')
++    old_ast, new_ast = ast.parse(original), ast.parse(text)
++    classes = {'CommitmentContractTests', 'ToolOutcomeContractTests'}
++    for module in (old_ast, new_ast):
++        found = set()
++        for cls in module.body:
++            if isinstance(cls, ast.ClassDef) and cls.name in classes:
++                method = next(node for node in cls.body if isinstance(node, ast.FunctionDef) and
++                              node.name == 'test_fields_match_snapshot')
++                calls = [node for node in ast.walk(method) if isinstance(node, ast.Call) and
++                         isinstance(node.func, ast.Attribute) and node.func.attr == 'assertEqual']
++                _require(len(calls) == 1 and len(calls[0].args) == 2 and
++                         isinstance(calls[0].args[1], ast.List), 'snapshot equality assertion changed')
++                calls[0].args[1] = ast.List(elts=[], ctx=ast.Load())
++                found.add(cls.name)
++        _require(found == classes, 'snapshot test classes changed')
++    _require(ast.dump(old_ast, include_attributes=False) == ast.dump(new_ast, include_attributes=False),
++             'snapshot assertion operators, other code, imports, hooks or test IDs changed')
++    git_blob = lambda data: hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
++    return {'original_sha256': OLD_SNAPSHOT_SHA, 'corrected_sha256': NEW_SNAPSHOT_SHA,
++            'original_git_blob': git_blob(raw), 'corrected_git_blob': git_blob(corrected),
++            'original_bytes': len(raw), 'corrected_bytes': len(corrected)}
++
++
++def _snapshot_equivalence(tree):
++    proof = _snapshot_declaration()
++    transformed = _snapshot_transform(_safe(tree, SNAPSHOT_PATH).read_bytes())
++    _require(all(proof.get(key) == value for key, value in transformed.items()),
++             'live snapshot metadata differs from the authorized equivalence')
++    for label in COUNTS:
++        _require(not SNAPSHOT_TESTS.intersection(_read(HERE, label + '-selected.json')),
++                 'referenced selection executes a changed snapshot: ' + label)
++    return proof
+ 
+ 
+ def _fixture_transform(corrected):
+@@ -510,6 +645,8 @@
+     if current:
+         _require(files.get(FIXTURE_PATH) == NEW_FIXTURE_SHA, 'current fixture SHA differs')
+         normalized[FIXTURE_PATH] = OLD_FIXTURE_SHA
++        _require(files.get(SNAPSHOT_PATH) == NEW_SNAPSHOT_SHA, 'current snapshot SHA differs')
++        normalized[SNAPSHOT_PATH] = OLD_SNAPSHOT_SHA
+     _require(record['candidate_sha'] == (TREE_SHA if current else SOURCE_TREE_SHA) and not record['mismatches'] and
+              len(rows) == len(files) == 3332 and
+              _digest(normalized) == '8aac2863cc2c12aa7da30dab33fcb429c5e3ed8c667c6b8f9c1001b5e75c4ba7',
+@@ -521,8 +658,8 @@
+     old = {row['path']: row for row in _read(source, 'candidate-sources.json')['files']}
+     new = {row['path']: row for row in _read(HERE, 'candidate-sources.json')['files']}
+     _require(set(old) == set(new) and len(old) == 3332, 'candidate blob inventory changed')
+-    _require(all(old[path] == new[path] for path in old if path != FIXTURE_PATH),
+-             'one of the other 3331 Git blobs/modes/bytes changed')
++    _require(all(old[path] == new[path] for path in old if path not in (FIXTURE_PATH, SNAPSHOT_PATH)),
++             'one of the other 3330 Git blobs/modes/bytes changed')
+     before, after = old[FIXTURE_PATH], new[FIXTURE_PATH]
+     _require(set(before) == set(after) and before['mode'] == after['mode'] and
+              before['sha256'] == OLD_FIXTURE_SHA and after['sha256'] == NEW_FIXTURE_SHA and
+@@ -553,10 +690,11 @@
+         if label in COUNTS:
+             ids = _read(HERE, label + '-selected.json')
+             _require(len(ids) == COUNTS[label] and
+-                     not any(value.startswith('apps.notifications.tests.test_notifications.') for value in ids),
++                     not any(value.startswith('apps.notifications.tests.test_notifications.') for value in ids) and
++                     not SNAPSHOT_TESTS.intersection(ids),
+                      'referenced selection can execute the changed fixture: ' + label)
+             selected_counts[label] = len(ids)
+-    proof.update(state='PASS', source_candidate_tree=SOURCE_TREE_SHA, accepted_candidate_tree=TREE_SHA,
++    proof.update(state='PASS', source_candidate_tree=SOURCE_TREE_SHA, accepted_candidate_tree=CLOCK_TREE_SHA,
+                  allowed_path=FIXTURE_PATH, patch_sha256=CLOCK_PATCH_SHA,
+                  authorization_sha256=_sha(_safe(HERE, 'fixture-clock-authorization.json')),
+                  candidate_input_sha256=_sha(_safe(HERE, 'candidate-input.json')),
+@@ -635,6 +773,7 @@
+     _require(all(_sha(_safe(tree, path)) == digest for path, digest in candidate.items()),
+              'live candidate source drift')
+     fixture = _fixture_equivalence(tree, sources[R5])
++    snapshot = _snapshot_equivalence(tree)
+     pyfiles = _python_files(HERE)
+     _require(all(_sha(_safe(python, path)) == digest for path, digest in pyfiles.items()),
+              'live private Python dependency drift')
+@@ -674,9 +813,10 @@
+         oldenv = _read(source, 'python-environment.json')
+         historical = _candidate(source)
+         _candidate_blobs(source, fixture)
+-        _require({path: digest for path, digest in candidate.items() if path != FIXTURE_PATH} ==
+-                 {path: digest for path, digest in historical.items() if path != FIXTURE_PATH} and
+-                 historical[FIXTURE_PATH] == OLD_FIXTURE_SHA and pyfiles == _python_files(source) and
++        _require({path: digest for path, digest in candidate.items() if path not in (FIXTURE_PATH, SNAPSHOT_PATH)} ==
++                 {path: digest for path, digest in historical.items() if path not in (FIXTURE_PATH, SNAPSHOT_PATH)} and
++                 historical[FIXTURE_PATH] == OLD_FIXTURE_SHA and
++                  historical[SNAPSHOT_PATH] == OLD_SNAPSHOT_SHA and pyfiles == _python_files(source) and
+                  config == _configuration(source) and pins == oldenv['required_lock_versions'] and
+                  pg_config == _pg_configuration(source) and
+                  environment['python_version'] == oldenv['python_version'] and
+@@ -701,6 +841,7 @@
+                               if path.replace('\\', '/').endswith('/node_modules/.modules.yaml')}
+     return {'state': 'PASS', 'candidate_tree': TREE_SHA, 'candidate_files': 3332,
+             'source_candidate_tree': SOURCE_TREE_SHA, 'fixture_clock_equivalence': fixture,
++            'snapshot_equivalence': snapshot,
+             'candidate_files_sha256': _digest(candidate), 'python_files': len(pyfiles),
+             'python_files_sha256': _digest(pyfiles), 'required_pins': 34,
+             'requirements_sha256': lock_hash, 'configuration_port_normalized_sha256': _digest(config),
+@@ -753,6 +894,7 @@
+     manifest = {'schema': SCHEMA, 'state': 'VALIDATED_REFERENCED_PASS', 'candidate_tree': TREE_SHA,
+                 'source_candidate_tree': SOURCE_TREE_SHA,
+                 'fixture_clock_equivalence': inputs['fixture_clock_equivalence'],
++                'snapshot_equivalence': inputs['snapshot_equivalence'],
+                 'backend_only': True, 'continuous_campaign': False,
+                 'frontend_dependencies_reused': False,
+                 'frontend_dependencies_reused_scope': 'Legacy field refers only to historical frontend results',

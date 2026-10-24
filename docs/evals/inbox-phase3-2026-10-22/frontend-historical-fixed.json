@@ -1,0 +1,27 @@
+{
+  "kind": "frontend",
+  "labels": [
+    "src/pages/inbox/index.test.jsx",
+    "-t",
+    "allows the current human owner|no reinstala ni borra|aplica el cap global"
+  ],
+  "working_database_migrated": false,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "-t",
+    "allows the current human owner|no reinstala ni borra|aplica el cap global",
+    "--maxWorkers=1",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-phase3-2026-10-22\\frontend-historical-fixed-vitest.json"
+  ],
+  "vitest_report": "frontend-historical-fixed-vitest.json",
+  "passed": 2,
+  "failed": 1,
+  "exit_code": 1,
+  "elapsed_s": 35.63880539999809
+}

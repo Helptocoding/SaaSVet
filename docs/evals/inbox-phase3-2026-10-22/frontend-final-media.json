@@ -1,0 +1,23 @@
+{
+  "kind": "frontend",
+  "labels": [
+    "src/pages/inbox/MediaBubble.test.jsx"
+  ],
+  "working_database_migrated": false,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/MediaBubble.test.jsx",
+    "--maxWorkers=1",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-phase3-2026-10-22\\frontend-final-media-vitest.json"
+  ],
+  "vitest_report": "frontend-final-media-vitest.json",
+  "passed": 17,
+  "failed": 0,
+  "exit_code": 0,
+  "elapsed_s": 32.244160900008865
+}

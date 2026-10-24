@@ -1,0 +1,44 @@
+{
+  "skip_rows": [
+    {
+      "id": "apps.agent.tests.test_regression_f2.Int21Tests.test_21_05_bis_new_pet_existing_owner",
+      "outcome": "SKIP",
+      "reason": "INT-21-bis (mascota nueva de cliente existente) sin tool en PR-17a; el alta reusa create-with-patient — pendiente de PR futuro.",
+      "utc": "2026-10-15T02:58:43Z",
+      "traceback": null
+    }
+  ],
+  "previous_11": {
+    "PASS": [
+      "apps.agent.tests.test_regression_f2.Int20Tests.test_20_01_offer_then_create",
+      "apps.agent.tests.test_regression_f2.Int20Tests.test_20_02_all_slots_direct_to_confirm",
+      "apps.agent.tests.test_regression_f2.Int20Tests.test_20_03_b5_race_slot_taken",
+      "apps.agent.tests.test_regression_f2.Int20Tests.test_20_04_modification_makes_new_pending",
+      "apps.agent.tests.test_regression_f2.Int20Tests.test_20_06_expired_confirmation_never_executes",
+      "apps.agent.tests.test_regression_f2.Int20Tests.test_20_09_b6_fixed_vet_used",
+      "apps.agent.tests.test_regression_f2.Int23Tests.test_23_01_cancel_happy_with_retention",
+      "apps.agent.tests.test_regression_f2.Int23Tests.test_23_02_cancel_requires_paraphrase",
+      "apps.agent.tests.test_regression_f2.Int24Tests.test_24_01_reschedule_happy",
+      "apps.agent.tests.test_regression_f2.Int24Tests.test_24_04_reschedule_race_slot_taken",
+      "apps.agent.tests.test_regression_suite.ReadFlowTests.test_int11_price_flow"
+    ],
+    "not_observed_yet": [],
+    "nonpass": []
+  },
+  "partial_observations": 1230,
+  "full_suite_complete": false,
+  "skip_provenance": {
+    "critical_inventory_member": false,
+    "observed_before_test_corrections": true,
+    "original_candidate": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+    "historical_receipt": "../b9-integral-acceptance-1947726-wsl-20261012-r9/blocks/full.ids.jsonl",
+    "original_skip_rows": [
+      {
+        "id": "apps.agent.tests.test_regression_f2.Int21Tests.test_21_05_bis_new_pet_existing_owner",
+        "outcome": "SKIP",
+        "reason": "INT-21-bis (mascota nueva de cliente existente) sin tool en PR-17a; el alta reusa create-with-patient — pendiente de PR futuro."
+      }
+    ],
+    "covers_no_pending_requirement": true
+  }
+}

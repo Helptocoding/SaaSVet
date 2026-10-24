@@ -1,0 +1,15 @@
+{
+  "phase": "before_native_setup",
+  "application_tests_executed": false,
+  "formal_controller_invoked": false,
+  "observation": "The RTK wrapper for a long inline bootstrap writer remained active; the process snapshot showed no corresponding Python child.",
+  "owned_wrapper_pid": 20648,
+  "verified_parent_pid": 18108,
+  "owned_wrapper_terminated": true,
+  "writer_session_exit_code_after_termination": 1,
+  "earlier_bootstrap_launch": "Exited before execution because its file did not yet exist",
+  "resolution": "Write the bootstrap with the file editor and execute its short command after the file exists",
+  "bootstrap_final_result": "NATIVE_RESUMPTION_PREPARED 21",
+  "candidate_or_previous_evidence_modified": false,
+  "formal_test_rerun": false
+}

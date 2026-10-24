@@ -1,0 +1,33 @@
+{
+  "state": "PASS",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "exact_git_files": 3332,
+  "directed_ids": 87,
+  "full_ids": 3331,
+  "resource_budget": {
+    "single_suite": 3221225472,
+    "memory_reserve": 2147483648,
+    "backing_disk_reserve": 1073741824
+  },
+  "resources": {
+    "guest": {
+      "utc": "2026-10-12T00:32:24Z",
+      "physical_available": 7605293056,
+      "physical_total": 8252522496,
+      "disk_available": 4668915712,
+      "linux_virtual_disk_available": 1017191583744
+    },
+    "host": {
+      "utc": "2026-10-12T00:32:24Z",
+      "physical_total": 17031217152,
+      "physical_available": 6349746176,
+      "page_available": 8726147072
+    },
+    "ready": true
+  },
+  "no_application_tests_yet": true,
+  "formal_runs_per_block_max": 1,
+  "profile_runs_per_scenario_max": 1,
+  "host_clock_configuration_unchanged": true,
+  "runtime_and_lock_changes": false
+}

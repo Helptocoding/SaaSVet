@@ -1,0 +1,51 @@
+{
+  "invalid_json": [
+    {
+      "path": "dependency-check-after-full.json",
+      "bytes": 43,
+      "sha256": "859732b97382a08583d6a67f5842486505e50bee754bd9b57ac3abf81b9714f2",
+      "error": "'utf-32-be' codec can't decode bytes in position 40-42: truncated data"
+    },
+    {
+      "path": "invocation-formal.json",
+      "bytes": 517,
+      "sha256": "966dcc535f89f9dca556dd4d93b4a1b0aca714cd980834431dc9db2de711dfeb",
+      "error": "'utf-32-be' codec can't decode byte 0x00 in position 516: truncated data"
+    },
+    {
+      "path": "seal-check-after-full.json",
+      "bytes": 41,
+      "sha256": "9e1736c43d19118e6ce4302118af337109491ecc52757dfb949bad6a7940b0c2",
+      "error": "'utf-32-be' codec can't decode byte 0x00 in position 40: truncated data"
+    }
+  ],
+  "files_with_null_bytes": [
+    {
+      "path": "dependency-check-after-full.json",
+      "bytes": 43,
+      "sha256": "859732b97382a08583d6a67f5842486505e50bee754bd9b57ac3abf81b9714f2",
+      "null_bytes": 43
+    },
+    {
+      "path": "invocation-formal.json",
+      "bytes": 517,
+      "sha256": "966dcc535f89f9dca556dd4d93b4a1b0aca714cd980834431dc9db2de711dfeb",
+      "null_bytes": 517
+    },
+    {
+      "path": "invocation-formal.log",
+      "bytes": 546,
+      "sha256": "b9c58db103222855dee6f764c508756e0b745502bb973018fb6452768db867eb",
+      "null_bytes": 107
+    },
+    {
+      "path": "seal-check-after-full.json",
+      "bytes": 41,
+      "sha256": "9e1736c43d19118e6ce4302118af337109491ecc52757dfb949bad6a7940b0c2",
+      "null_bytes": 41
+    }
+  ],
+  "original_bytes_preserved": true,
+  "cause_of_byte_damage_established": false,
+  "replacement_formal_receipts_created": false
+}

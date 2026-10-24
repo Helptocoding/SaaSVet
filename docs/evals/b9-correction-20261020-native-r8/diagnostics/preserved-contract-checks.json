@@ -1,0 +1,116 @@
+{
+  "state": "PASS",
+  "utc": "2026-10-20T04:34:04Z",
+  "original_function_AST_identical": {
+    "run_campaign.py:execute": true,
+    "run_campaign.py:check_suite": true,
+    "run_campaign.py:budget": true,
+    "run_campaign.py:gate": true,
+    "run_campaign.py:create_db": true,
+    "full_partition.py:build_partition": true,
+    "full_partition.py:projected_groups": true,
+    "full_partition.py:validate_partition": true
+  },
+  "source_syntax_and_whitespace": "PASS",
+  "application_tests_executed": false,
+  "candidate_tree": "5e11236daabf4ef70ea9d0f08fee52aed5c30ff2",
+  "scope": "Static preservation of eight r5 functions; authorized fixture equivalence and aggregate provenance are documented separately; no application code is imported or executed",
+  "helpers_sha256": {
+    "apply_snapshot_correction.py": "97175d496309a4867a13f10dff9c7ff5bf49d4f04026d8939ae194b47bd756fa",
+    "awake_guard.py": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+    "awake_status.py": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+    "bootstrap_resumption.py": "5e5fe4d2f8c2380642a14b93ded869bbcf964f559f010f3d7aa4ccaa4f99a184",
+    "capture_native.py": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+    "case_resumption.py": "6c5b050faa9f7bb5293e87bb741f188dda99f80cf5507955ea4068e63a236957",
+    "cleanup_native.py": "ea0c2e948005882299b688c837eb9953b714acd529c198f8322dfa979931b318",
+    "clock_probe.py": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+    "composite_evidence.py": "2a82e6599a31ee02e900ebc747160e2d959b20b5d112ec22b7f207507458edef",
+    "deliver_native.py": "b21871936701713621c3b6477cb45b3a6d0a69b4e259ee81520fa08f2387aec0",
+    "diagnostics/close_acceptance.py": "bf8a1549d1c6b548dad4133fcec437a758961fd4aed9c28bed09e55069f53563",
+    "diagnostics/verify_preserved_contract.py": "59a88b71438f2531a1807d47ba992ca863285abc4fa0880b3b502611d5219f86",
+    "finalize_preflight.py": "45a587b710adefcfc05ee1b577cc3d0a6f65157969574bd971d0f5a869592008",
+    "full_partition.py": "b1c7f6b6f238bdc017244250ce31aae2576747d5a13a6f7f125153bd8dbec747",
+    "handoff_runtime.py": "5709eea6f5e5933c756936da72768b70e7412b78a8f9aa9c35339ab038e030e7",
+    "host_observer.py": "aeba1a4994af3bdd8c0a3fa6fead4bfe8a178f8be8634eb909c43fa941deb388",
+    "host_resources.py": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+    "launch_native.py": "3308360a29816d10841f3f9994d3c963736f58daaaa018aecf84731955cd36e2",
+    "native_support.py": "e8fba26b613fe132994838216017bb84329526d2e32775837de2475665ec9ad8",
+    "prepare_continuation.py": "0c739a59a81662bb6d50aa7bdf0a3608d0516ac4e31584a41aa1252aee985df4",
+    "recorded_suite.py": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+    "restore_native.py": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+    "run_campaign.py": "b6e67fcf61cb5de55c8c9a728b12c7896dfcba9c4f63229828490386c903f9f8",
+    "run_remainder.py": "7c6d168d234003c3296f13fb5ebac7d514d8a3d6521e2c2879028f5696b64e22",
+    "scan_security.py": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2"
+  },
+  "baseline_campaign": "b9-correction-20261017-native-r5",
+  "function_AST_sha256": {
+    "run_campaign.py:execute": {
+      "current": "dee94e4a87e81e49cc27e62cc2a16d1c3b1d8d1f62f77891e049dcf4a0a9db5f",
+      "prior_r5": "dee94e4a87e81e49cc27e62cc2a16d1c3b1d8d1f62f77891e049dcf4a0a9db5f"
+    },
+    "run_campaign.py:check_suite": {
+      "current": "fc3e641cb9f2a58d810b3a9c5f57d5086900f53b5b7267b22b68b11c4e078ae8",
+      "prior_r5": "fc3e641cb9f2a58d810b3a9c5f57d5086900f53b5b7267b22b68b11c4e078ae8"
+    },
+    "run_campaign.py:budget": {
+      "current": "85f49b205a4375bdeac3e8db9df95fee8363d6513554c7e6abf15de601fa0a19",
+      "prior_r5": "85f49b205a4375bdeac3e8db9df95fee8363d6513554c7e6abf15de601fa0a19"
+    },
+    "run_campaign.py:gate": {
+      "current": "c6a979b3a6037db8934c96e275485a8b65606cb168e4fe6627eada3f1d9c6f63",
+      "prior_r5": "c6a979b3a6037db8934c96e275485a8b65606cb168e4fe6627eada3f1d9c6f63"
+    },
+    "run_campaign.py:create_db": {
+      "current": "b42a4aae483b2dffc1f6ab444ba2cf47d84bd8c9f7694f028fd2d631dd8d759f",
+      "prior_r5": "b42a4aae483b2dffc1f6ab444ba2cf47d84bd8c9f7694f028fd2d631dd8d759f"
+    },
+    "full_partition.py:build_partition": {
+      "current": "b48ad2611bc0dc0e07e9b74d980b569fd1396f0310761cd11daff75dd4c13c60",
+      "prior_r5": "b48ad2611bc0dc0e07e9b74d980b569fd1396f0310761cd11daff75dd4c13c60"
+    },
+    "full_partition.py:projected_groups": {
+      "current": "ff3875fdcd2966bb6c906f412264ce7a3cc8cbacbcdf6c03a7b5277346cf313d",
+      "prior_r5": "ff3875fdcd2966bb6c906f412264ce7a3cc8cbacbcdf6c03a7b5277346cf313d"
+    },
+    "full_partition.py:validate_partition": {
+      "current": "c42eeba5c946a0fc952dbc4b0edbbc0b411566c57b04b0cc7a567ab11c25b6cf",
+      "prior_r5": "c42eeba5c946a0fc952dbc4b0edbbc0b411566c57b04b0cc7a567ab11c25b6cf"
+    }
+  },
+  "compiled_sources": [
+    "apply_snapshot_correction.py",
+    "awake_guard.py",
+    "awake_status.py",
+    "bootstrap_resumption.py",
+    "capture_native.py",
+    "case_resumption.py",
+    "cleanup_native.py",
+    "clock_probe.py",
+    "composite_evidence.py",
+    "deliver_native.py",
+    "diagnostics/close_acceptance.py",
+    "diagnostics/verify_preserved_contract.py",
+    "finalize_preflight.py",
+    "full_partition.py",
+    "handoff_runtime.py",
+    "host_observer.py",
+    "host_resources.py",
+    "launch_native.py",
+    "native_support.py",
+    "prepare_continuation.py",
+    "recorded_suite.py",
+    "restore_native.py",
+    "run_campaign.py",
+    "run_remainder.py",
+    "scan_security.py"
+  ],
+  "static_issues": [],
+  "source_changes_during_verification": [],
+  "candidate_input_sha256": "bd42f60ab291111a7c0ae21ce01dff431b9a338dd402ba4283058fb8541a734a",
+  "finalize_preflight_metadata": {
+    "formal_application_tests_executed_field_present": true,
+    "preserved_contract_receipt_reference_present": false
+  },
+  "services_started": false,
+  "application_modules_imported": false
+}

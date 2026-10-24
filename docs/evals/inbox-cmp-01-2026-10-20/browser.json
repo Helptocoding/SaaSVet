@@ -1,0 +1,69 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "initial_height": 40,
+      "long_text": {
+        "height": 120,
+        "scrollHeight": 441,
+        "clientHeight": 118
+      },
+      "counter_neutral": "rgb(115, 117, 112)",
+      "counter_warning": "rgb(146, 64, 14)",
+      "send_resets": true
+    },
+    {
+      "viewport": "mobile",
+      "initial_height": 40,
+      "long_text": {
+        "height": 120,
+        "scrollHeight": 1911,
+        "clientHeight": 118
+      },
+      "counter_neutral": "rgb(115, 117, 112)",
+      "counter_warning": "rgb(146, 64, 14)",
+      "send_resets": true
+    }
+  ],
+  "page_errors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "me/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/metrics/"
+    },
+    {
+      "method": "GET",
+      "path": "v1/dashboard/activation/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/account-demo/messages/"
+    },
+    {
+      "method": "POST",
+      "path": "inbox/conversations/session-ana/send/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    },
+    {
+      "method": "POST",
+      "path": "inbox/conversations/session-ana/send/"
+    },
+    {
+      "method": "GET",
+      "path": "inbox/threads/"
+    }
+  ]
+}

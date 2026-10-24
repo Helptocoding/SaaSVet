@@ -1,0 +1,67 @@
+{
+  "label": "b5",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261012-r9/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261012-r9/venv/bin/python",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261012-r9/recorded_suite.py",
+    "b5",
+    "test_b9i_b5"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261012-r9/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-13T05:14:38Z",
+      "physical_available": 7481622528,
+      "physical_total": 8252518400,
+      "disk_available": 4714557440,
+      "linux_virtual_disk_available": 1016992399360
+    },
+    "host": {
+      "utc": "2026-10-13T05:14:37Z",
+      "physical_total": 17031217152,
+      "physical_available": 2872676352,
+      "page_available": 3542392832,
+      "utc_epoch_seconds": 1791868477.6930842,
+      "observer_pid": 18840
+    },
+    "ready": true
+  },
+  "pid": 2473,
+  "exit_code": 0,
+  "seconds": 427.1320076920001,
+  "invalidating_incident": null,
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-13T05:21:45Z",
+      "physical_available": 7479828480,
+      "physical_total": 8252518400,
+      "disk_available": 4687749120,
+      "linux_virtual_disk_available": 1016992366592
+    },
+    "host": {
+      "utc": "2026-10-13T05:21:45Z",
+      "physical_total": 17031217152,
+      "physical_available": 2770710528,
+      "page_available": 3379294208,
+      "utc_epoch_seconds": 1791868905.1940498,
+      "observer_pid": 18840
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-13T05:21:45Z",
+        "utc_epoch_seconds": 1791868905.6748986,
+        "pid": 22456,
+        "thread_id": 20580,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.021945714950561523
+    }
+  }
+}

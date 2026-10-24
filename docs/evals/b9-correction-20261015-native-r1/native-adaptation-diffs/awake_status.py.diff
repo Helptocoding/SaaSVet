@@ -1,0 +1,19 @@
+--- r4/awake_status.py
++++ native/awake_status.py
+@@ -1,14 +1,14 @@
+ """Read the owned Windows awake heartbeat without spawning Windows processes."""
+ import json
+ import time
+-from prepare_wsl import EVIDENCE, sha256
++from native_support import EVIDENCE, sha256
+ 
+ def status():
+     try:
+         directory = EVIDENCE / 'awake-request'
+         if (directory / 'closure.json').exists() or (directory / 'stop.request').exists():
+             raise RuntimeError('Owned awake request closed or release requested')
+-        control = json.loads((directory / 'control.json').read_text())
++        control = json.loads((directory / 'control.json').read_text(encoding='utf-8'))
+         if control['state'] != 'ACTIVE_API_CONFIRMED':
+             raise RuntimeError('Awake request was not confirmed')
+         if control['source_sha256'] != sha256((EVIDENCE / 'awake_guard.py').read_bytes()):

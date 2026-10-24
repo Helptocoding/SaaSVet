@@ -1,0 +1,25 @@
+{
+  "state": "PENDING_ENVIRONMENT_RESOURCES",
+  "cause": "Windows available physical memory fell below the retained 2 GiB execution reserve during directed-runner database migrations",
+  "product_failure_attributed": false,
+  "raw_stop_preserved": true,
+  "formal_block_runs": 1,
+  "test_ids_completed": 0,
+  "suite_receipt_absent": true,
+  "partial_migrations_are_not_a_test_result": true,
+  "termination": "Controller SIGTERM of its owned process group, exit -15",
+  "admission_override": "Prior 5 GiB admission waived by explicit user instruction; block started with 4391899136 bytes available on host",
+  "reserve_retained_bytes": 2147483648,
+  "monitored_minimum_host_available_bytes": 1728331776,
+  "clock_or_disk_invalidating_incidents": false,
+  "cause_of_host_memory_fluctuation": "Not established",
+  "formal_reruns": 0,
+  "evidence": [
+    "STOP.json",
+    "blocks/directed.command.json",
+    "blocks/directed.log",
+    "blocks/directed.results.passed.jsonl",
+    "monitor-directed.json",
+    "resource-policy.json"
+  ]
+}

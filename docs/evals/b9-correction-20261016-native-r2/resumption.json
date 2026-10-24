@@ -1,0 +1,136 @@
+{
+  "state": "NEW_NATIVE_CAMPAIGN_PREPARATION",
+  "user": "continua",
+  "date_local": "2026-10-16",
+  "previous_campaign": "b9-correction-20261015-native-r1",
+  "previous_decision": {
+    "decision": "PENDING",
+    "cause": "Disco C: por debajo de la reserva fija de 1 GiB despu\u00e9s de preparar Windows nativo; no se iniciaron pruebas de aplicaci\u00f3n.",
+    "date_local": "2026-10-15",
+    "classification": "PENDING_DISK_RESERVE",
+    "formal_controller_invocations": 0,
+    "application_tests_executed": false,
+    "product_failure_attributed": false,
+    "native_preparation": "PASS",
+    "wsl_invoked": false
+  },
+  "prior_formal_results_transferred": false,
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "tests_or_product_changes_authorized": false,
+  "wsl_invoked": false,
+  "new_workspace": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261016-r2",
+  "private_postgresql_port": 35486,
+  "copied_helpers": [
+    {
+      "path": "awake_guard.py",
+      "prior_sha256": "64780ecc569c8839cd67dbfcb7ee2ce030589371a8c6691ad239e5e5ca2fde78",
+      "sha256": "64780ecc569c8839cd67dbfcb7ee2ce030589371a8c6691ad239e5e5ca2fde78"
+    },
+    {
+      "path": "awake_status.py",
+      "prior_sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+      "sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1"
+    },
+    {
+      "path": "capture_native.py",
+      "prior_sha256": "b0982e2ec910796eb928faa8c94e0868f64bae957f1d5b475a8350f8c03382cd",
+      "sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d"
+    },
+    {
+      "path": "cleanup_native.py",
+      "prior_sha256": "7cfa4477de5d21d904b2f438da7e0cef27c9a175a26446e9b39fd58e2fdb4aa1",
+      "sha256": "373e8149e8f2bce0df983658e33e40ea29aa68f5aade9b9137b7f3ff59e58481"
+    },
+    {
+      "path": "clock_probe.py",
+      "prior_sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+      "sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2"
+    },
+    {
+      "path": "deliver_native.py",
+      "prior_sha256": "34b150afc61c556e1e68cb547a5b99c5871827b7993ea99a7b3a6ef386b798f3",
+      "sha256": "6a938f13ec75b86f94124b25ba03362a5926846874bc8fb239e52e75bb9a0850"
+    },
+    {
+      "path": "discover_candidate.py",
+      "prior_sha256": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b",
+      "sha256": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b"
+    },
+    {
+      "path": "finalize_preflight.py",
+      "prior_sha256": "cbd76b7a9150f17fd2ce4e6281db6bd02e2149d428d348faec56a6622f0b21b0",
+      "sha256": "21015062aba9ed84b47dacb45b36c0bcae4ba0b96596a63d794487d8d5f1cbf0"
+    },
+    {
+      "path": "full_partition.py",
+      "prior_sha256": "cb09cbe26bb77fec5a5e5e59cdc123901f0cc2d4e1ee82710c5f47e91449a028",
+      "sha256": "cb09cbe26bb77fec5a5e5e59cdc123901f0cc2d4e1ee82710c5f47e91449a028"
+    },
+    {
+      "path": "host_observer.py",
+      "prior_sha256": "0552f16181a28f06b9ceba3858468f88ce6b89e76167bf9d9d26cf1c4987ba56",
+      "sha256": "0552f16181a28f06b9ceba3858468f88ce6b89e76167bf9d9d26cf1c4987ba56"
+    },
+    {
+      "path": "host_resources.py",
+      "prior_sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083"
+    },
+    {
+      "path": "interpreter_preflight.py",
+      "prior_sha256": "69ced1753c4d82c1e47172af016903ceb00afede6fe026da1bb40c9c8f09f6ba",
+      "sha256": "efa52bc0b4990fe96ced7a147bd70aa5510376261b5d147994f997aeae77af23"
+    },
+    {
+      "path": "launch_native.py",
+      "prior_sha256": "a1b9ea1589f70dd58039bbd0a751613f404a47162941a18877b9f95e78c8f037",
+      "sha256": "b71af7038e3357b97d82b25a3424fa1a4fa911e202d6d50be62c1d6e4dca98de"
+    },
+    {
+      "path": "native_support.py",
+      "prior_sha256": "ed2283343741cccaa4473252d0a8bb3d104bd33b7230e1007a579768eab4723e",
+      "sha256": "89a264a60228a93d5a7f96cf4ed1287e4e3cb2f38820d29aff1b34d0e385b17e"
+    },
+    {
+      "path": "prepare_native.py",
+      "prior_sha256": "48270e741111c159e1299943753377db25cec5b68f739093787ed3e6fbfaa960",
+      "sha256": "f0f4bc742d0a888419ba0f876aa1516859c0f4723b50ac272ad72bc1240ada8b"
+    },
+    {
+      "path": "recorded_suite.py",
+      "prior_sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+      "sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2"
+    },
+    {
+      "path": "restore_native.py",
+      "prior_sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065"
+    },
+    {
+      "path": "retire_install_cache.py",
+      "prior_sha256": "2760adda5e35a7ab87add1ff9ed5185c4389134b37ebefd6dbbf223ffb334802",
+      "sha256": "700c5910a80ba7274838dde723f0fd3b915854d5ec0c6c330e9d765dc85f167f"
+    },
+    {
+      "path": "run_campaign.py",
+      "prior_sha256": "d5863f510a9a010cb7b92199c7545e31bfb8c10f26e6ea5e211a798799ce61e4",
+      "sha256": "7709ed90652ce2b1347a05bfcdd97da734798ea525095baca8d6a1f9bec80580"
+    },
+    {
+      "path": "scan_security.py",
+      "prior_sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2",
+      "sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2"
+    },
+    {
+      "path": "diagnostics/close_acceptance.py",
+      "prior_sha256": "fae71b628c4941ba074c508ee36ce7970b96ac97fc40049b77d5edb15788cf2b",
+      "sha256": "62f84bea06b8135a21be24b741091e80edca24305063a8417082ebf425240ed6"
+    }
+  ],
+  "adaptations": [
+    "New evidence/workspace identity and local PostgreSQL port",
+    "Reuse final Windows-compatible helpers instead of the older WSL imports",
+    "Do not require an incident amendment from the previous closed preparation",
+    "Same candidate, inventory, partition, assertions, workloads and resource guards"
+  ]
+}

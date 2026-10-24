@@ -1,0 +1,22 @@
+{
+  "kind": "frontend",
+  "labels": [
+    "src/pages/inbox/index.search.test.jsx"
+  ],
+  "working_database_migrated": false,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.search.test.jsx",
+    "--fileParallelism=false",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-srch-01-2026-10-21\\vitest-new.json"
+  ],
+  "sentry_upload_disabled": true,
+  "exit_code": 0,
+  "elapsed_s": 25.912684199996875
+}

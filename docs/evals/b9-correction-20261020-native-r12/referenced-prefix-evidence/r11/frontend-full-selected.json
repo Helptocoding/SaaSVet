@@ -1,0 +1,1422 @@
+[
+  {
+    "file": "src/api/appointments.test.js",
+    "fullName": "expectedStateOf omite la clave si la cita no trae la tupla completa"
+  },
+  {
+    "file": "src/api/appointments.test.js",
+    "fullName": "expectedStateOf proyecta la tupla semántica y recorta los segundos"
+  },
+  {
+    "file": "src/api/appointments.test.js",
+    "fullName": "las mutaciones viajan con la precondición assignPatient la incluye — muta la cita y escribe auditoría"
+  },
+  {
+    "file": "src/api/appointments.test.js",
+    "fullName": "las mutaciones viajan con la precondición sin cita en pantalla NO inventa una precondición"
+  },
+  {
+    "file": "src/api/appointments.test.js",
+    "fullName": "las mutaciones viajan con la precondición updateAppointment la incluye junto a los campos editados"
+  },
+  {
+    "file": "src/api/appointments.test.js",
+    "fullName": "las mutaciones viajan con la precondición updateAppointmentStatus la incluye cuando se le pasa la cita"
+  },
+  {
+    "file": "src/api/inbox.test.js",
+    "fullName": "sendInboxMessage envía la key en X-Idempotency-Key cuando se proporciona"
+  },
+  {
+    "file": "src/api/inbox.test.js",
+    "fullName": "sendInboxMessage mantiene compatible la llamada sin key durante la integración"
+  },
+  {
+    "file": "src/api/inbox.test.js",
+    "fullName": "sendInboxMessage propaga AbortSignal sin perder la key de idempotencia"
+  },
+  {
+    "file": "src/components/EmptyState.test.jsx",
+    "fullName": "EmptyState muestra título y cuerpo"
+  },
+  {
+    "file": "src/components/EmptyState.test.jsx",
+    "fullName": "EmptyState no rompe sin prop actions"
+  },
+  {
+    "file": "src/components/EmptyState.test.jsx",
+    "fullName": "EmptyState omite las acciones nulas (sin permiso) y conserva las visibles"
+  },
+  {
+    "file": "src/components/EmptyState.test.jsx",
+    "fullName": "EmptyState renderiza las acciones y dispara onClick"
+  },
+  {
+    "file": "src/components/EmptyState.test.jsx",
+    "fullName": "EmptyState sin acciones visibles no renderiza la fila de acciones"
+  },
+  {
+    "file": "src/components/EntitySearch.test.jsx",
+    "fullName": "EntitySearch 'Ver más' agrega la página 2 y desaparece al agotar"
+  },
+  {
+    "file": "src/components/EntitySearch.test.jsx",
+    "fullName": "EntitySearch la búsqueda se manda al fetcher (debounced)"
+  },
+  {
+    "file": "src/components/EntitySearch.test.jsx",
+    "fullName": "EntitySearch muestra la primera página (8) y ofrece 'Ver más', sin tope invisible"
+  },
+  {
+    "file": "src/components/EntitySearch.test.jsx",
+    "fullName": "EntitySearch seleccionar devuelve el item y refleja su label en el input"
+  },
+  {
+    "file": "src/components/ErrorBoundary.test.jsx",
+    "fullName": "ErrorBoundary muestra fallback, reporta a Sentry con componentStack y muestra el event id"
+  },
+  {
+    "file": "src/components/ErrorBoundary.test.jsx",
+    "fullName": "ErrorBoundary renderiza children cuando no hay error"
+  },
+  {
+    "file": "src/components/ImportedDataSection.test.jsx",
+    "fullName": "ImportedDataSection lista label/value con el encabezado de migración + aviso read-only"
+  },
+  {
+    "file": "src/components/ImportedDataSection.test.jsx",
+    "fullName": "ImportedDataSection muestra — cuando el valor está vacío"
+  },
+  {
+    "file": "src/components/ImportedDataSection.test.jsx",
+    "fullName": "ImportedDataSection no renderiza nada si no hay datos"
+  },
+  {
+    "file": "src/components/ImportedDataSection.test.jsx",
+    "fullName": "ImportedDataSection no usa lenguaje editable (Notas / Información adicional)"
+  },
+  {
+    "file": "src/components/LoginForm.test.jsx",
+    "fullName": "LoginForm — identidad de login (ADR p48) el placeholder admite correo o usuario"
+  },
+  {
+    "file": "src/components/LoginForm.test.jsx",
+    "fullName": "LoginForm — identidad de login (ADR p48) etiqueta el campo de identidad como 'Correo o usuario'"
+  },
+  {
+    "file": "src/components/LoginForm.test.jsx",
+    "fullName": "LoginForm — identidad de login (ADR p48) ya NO etiqueta el campo solo como 'Correo electrónico'"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — agregar / eliminar líneas agregar un método añade una fila"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — agregar / eliminar líneas al agregar tras un pago parcial, la nueva línea precarga el faltante (comportamiento existente)"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — agregar / eliminar líneas eliminar una línea vuelve a una sola fila"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — captura de cantidad cambiar el método de pago se refleja en el select"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — captura de cantidad cambiar el valor recalcula (borrar y reescribir)"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — captura de cantidad escribir un monto actualiza el input y recalcula el footer"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — disabled con disabled, los controles quedan inhabilitados"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — múltiples métodos (split) 300 efectivo + 200 tarjeta sobre total 500 → suma exacta, ambas líneas respetadas"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — múltiples métodos (split) split con centavos que sufre drift flotante → 'Exacto' (protege la normalización .toFixed(2))"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — pago exacto 500 en efectivo sobre total 500 → 'Exacto', sin faltante ni cambio"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — render inicial con una sola línea no hay control de eliminar accesible (no se queda sin métodos)"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — render inicial estado inicial: monto vacío, total y faltante reflejan el pendiente"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — render inicial muestra una línea con los 4 métodos de pago del catálogo (payments.js real)"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — sobrepago (regla existente, sin inventar) 600 efectivo / total 500 SIN allowChange → 'Excede $100.00', sin aviso de cambio"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — sobrepago (regla existente, sin inventar) 600 efectivo / total 500 con allowChange → 'Cambio $100.00' + aviso de no-registro"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — valores inválidos (comportamiento existente, sin cambiar validación) monto cero → faltante = total"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — valores inválidos (comportamiento existente, sin cambiar validación) monto negativo fluye al cálculo del editor (el gate de validez vive en payments.js, no aquí)"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — valores inválidos (comportamiento existente, sin cambiar validación) monto vacío cuenta como 0 (faltante = total)"
+  },
+  {
+    "file": "src/components/PaymentLinesEditor.test.jsx",
+    "fullName": "PaymentLinesEditor — valores inválidos (comportamiento existente, sin cambiar validación) texto no numérico no entra al input number (queda vacío, no rompe el cálculo)"
+  },
+  {
+    "file": "src/components/SpotlightTour.test.jsx",
+    "fullName": "SpotlightTour 'Saltar' invoca onSkip"
+  },
+  {
+    "file": "src/components/SpotlightTour.test.jsx",
+    "fullName": "SpotlightTour 'Siguiente' avanza de paso"
+  },
+  {
+    "file": "src/components/SpotlightTour.test.jsx",
+    "fullName": "SpotlightTour '← Anterior' está deshabilitado en el primer paso"
+  },
+  {
+    "file": "src/components/SpotlightTour.test.jsx",
+    "fullName": "SpotlightTour el último paso muestra 'Entendido ✓' e invoca onFinish"
+  },
+  {
+    "file": "src/components/SpotlightTour.test.jsx",
+    "fullName": "SpotlightTour muestra el paso actual y no dice 'Tutorial'"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant al completar readiness muestra el momento de cierre"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant celebra el hito de contacto al volver de /config"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant celebra el paso recién completado (signal por router state)"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant el CTA de clínica deep-linkea su sección de /config"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant el CTA de servicios abre la sección de servicios, no la de clínica"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant el CTA primary navega al módulo con fromOnboarding"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant el CTA secundario 'Importar' solo existe en el paso 1"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant el copy habla de llamadas, WhatsApp y emergencias — no de 'completar tus datos'"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant muestra SOLO el paso actual + saludo con el nombre de la clínica"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant no incluye pasos de cita ni consulta (readiness = paciente + contacto + servicio)"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant no renderiza cuando la clínica ya estaba activada (completed, sin transición)"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant no renderiza para un usuario sin capability de setup (VET/ASISTENTE)"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant no renderiza sin activación"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant nunca verbaliza 'Paso N de N' (solo barra de progreso)"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant oculta 'Importar' sin permiso import.create (deja 'Agregar paciente')"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant pide los datos de la clínica después de pacientes y antes de servicios"
+  },
+  {
+    "file": "src/components/dashboard/FirstRunAssistant.test.jsx",
+    "fullName": "FirstRunAssistant sin teléfono NO cierra el onboarding aunque haya pacientes y servicios"
+  },
+  {
+    "file": "src/components/notifications/notificationActions.test.js",
+    "fullName": "formatRelativeTime formatea correctamente una cita futura"
+  },
+  {
+    "file": "src/components/notifications/notificationActions.test.js",
+    "fullName": "formatRelativeTime formatea minutos, horas y días en español"
+  },
+  {
+    "file": "src/components/notifications/notificationActions.test.js",
+    "fullName": "formatRelativeTime vacio ante entrada inválida"
+  },
+  {
+    "file": "src/components/notifications/notificationActions.test.js",
+    "fullName": "notificationActions mapea cada tipo a su CTA con ruta real"
+  },
+  {
+    "file": "src/components/notifications/notificationActions.test.js",
+    "fullName": "notificationActions nunca persiste href: solo label + ruta"
+  },
+  {
+    "file": "src/components/notifications/notificationActions.test.js",
+    "fullName": "notificationActions tipo desconocido no tiene acción"
+  },
+  {
+    "file": "src/components/prescriptions/PrescriptionForm.test.jsx",
+    "fullName": "PrescriptionForm monta ambos pickers sin crashear (regresión SearchSelect)"
+  },
+  {
+    "file": "src/components/prescriptions/PrescriptionForm.test.jsx",
+    "fullName": "PrescriptionForm seleccionar mascota fija el PK (body FK) y notifica onPetChange"
+  },
+  {
+    "file": "src/features/consultation/protocols/emergency/emergencyProtocol.test.js",
+    "fullName": "emergencyProtocol label + initDraft por defecto"
+  },
+  {
+    "file": "src/features/consultation/protocols/emergency/emergencyProtocol.test.js",
+    "fullName": "emergencyProtocol validate exige el mínimo obligatorio"
+  },
+  {
+    "file": "src/features/consultation/protocols/emergency/emergencyProtocol.test.js",
+    "fullName": "emergencyProtocol validate ok con el mínimo completo"
+  },
+  {
+    "file": "src/features/consultation/protocols/emergency/emergencyProtocol.test.js",
+    "fullName": "emergencyProtocol validate rechaza triage anterior a la llegada"
+  },
+  {
+    "file": "src/features/consultation/protocols/general/GeneralSection.test.jsx",
+    "fullName": "GeneralSection captura el motivo principal"
+  },
+  {
+    "file": "src/features/consultation/protocols/general/GeneralSection.test.jsx",
+    "fullName": "GeneralSection exploración: marcar un sistema como alterado revela el campo de hallazgo"
+  },
+  {
+    "file": "src/features/consultation/protocols/general/GeneralSection.test.jsx",
+    "fullName": "generalProtocol contrato initDraft por defecto y rehidratación desde consultation_draft"
+  },
+  {
+    "file": "src/features/consultation/protocols/general/GeneralSection.test.jsx",
+    "fullName": "generalProtocol contrato label y validate no bloqueante"
+  },
+  {
+    "file": "src/features/consultation/protocols/surgery/surgeryProtocol.test.js",
+    "fullName": "surgeryProtocol initDraft rehidrata desde consultation_draft.surgery"
+  },
+  {
+    "file": "src/features/consultation/protocols/surgery/surgeryProtocol.test.js",
+    "fullName": "surgeryProtocol label + initDraft por defecto"
+  },
+  {
+    "file": "src/features/consultation/protocols/surgery/surgeryProtocol.test.js",
+    "fullName": "surgeryProtocol validate exige el mínimo obligatorio"
+  },
+  {
+    "file": "src/features/consultation/protocols/surgery/surgeryProtocol.test.js",
+    "fullName": "surgeryProtocol validate ok con el parte completo"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/VaccineSection.test.jsx",
+    "fullName": "VaccineSection al editar la fecha de refuerzo el hint pasa a 'Personalizado'"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/VaccineSection.test.jsx",
+    "fullName": "VaccineSection apagar 'Programar próximo refuerzo' oculta la fecha de refuerzo"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/VaccineSection.test.jsx",
+    "fullName": "VaccineSection con preset: muestra hint de protocolo y la ayuda contextual"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/VaccineSection.test.jsx",
+    "fullName": "VaccineSection muestra ayuda histórica no bloqueante si la mascota ya tiene esa vacuna"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/VaccineSection.test.jsx",
+    "fullName": "VaccineSection seleccionar una vacuna del combobox llena nombre y refuerzo sugerido"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccinePresets.test.js",
+    "fullName": "computeNextDue null si no hay meses de refuerzo o falta la fecha base"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccinePresets.test.js",
+    "fullName": "computeNextDue suma N meses a la fecha de aplicación"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccinePresets.test.js",
+    "fullName": "getVaccinePresets — filtro por especie canino incluye Rabia y excluye Triple felina"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccinePresets.test.js",
+    "fullName": "getVaccinePresets — filtro por especie especie sin protocolo (fallback) devuelve el catálogo completo"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccinePresets.test.js",
+    "fullName": "getVaccinePresets — filtro por especie felino incluye Triple felina y excluye Parvovirus"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccinePresets.test.js",
+    "fullName": "getVaccinePresets — filtro por especie sin especie devuelve todos"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccinePresets.test.js",
+    "fullName": "helpers auxiliares getVaccinePreset resuelve por id"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccinePresets.test.js",
+    "fullName": "helpers auxiliares todayISO devuelve formato YYYY-MM-DD"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccineProtocol.test.js",
+    "fullName": "vaccineProtocol.initDraft rehidrata desde record.consultation_draft.vaccine"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccineProtocol.test.js",
+    "fullName": "vaccineProtocol.initDraft sin record: draft vacío con fecha de aplicación = hoy y refuerzo apagado"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccineProtocol.test.js",
+    "fullName": "vaccineProtocol.validate refuerzo no posterior a la aplicación: error"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccineProtocol.test.js",
+    "fullName": "vaccineProtocol.validate refuerzo posterior a la aplicación: válido"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccineProtocol.test.js",
+    "fullName": "vaccineProtocol.validate refuerzo programado sin fecha: error"
+  },
+  {
+    "file": "src/features/consultation/protocols/vaccine/vaccineProtocol.test.js",
+    "fullName": "vaccineProtocol.validate sin refuerzo programado: siempre válido"
+  },
+  {
+    "file": "src/pages/acceptLegal.test.jsx",
+    "fullName": "AcceptLegal enlaza al texto legal de la landing (no duplica el texto)"
+  },
+  {
+    "file": "src/pages/acceptLegal.test.jsx",
+    "fullName": "AcceptLegal requiere marcar TODOS los documentos antes de habilitar continuar, luego acepta"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — card de columna a revisar bloquea continuar hasta decidir la columna pendiente"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — card de columna a revisar card compacta: título, ejemplos y un solo botón (sin opciones abiertas)"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — header + reconocidas compactas las reconocidas van en un resumen colapsable (no como cards)"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — header + reconocidas compactas muestra detectadas / listas / necesitan revisión"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — histórico + reversibilidad + renombrar elegir histórico → card 'se conservará como…' + payload {target, label}"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — histórico + reversibilidad + renombrar la decisión nunca es irreversible: Cambiar reabre el modal"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — histórico + reversibilidad + renombrar renombra el nombre visible del dato histórico (no cambia la columna)"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — selector de destino (acordeón) abre modal con categorías colapsadas (opciones ocultas hasta desplegar)"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — selector de destino (acordeón) elegir un campo del sistema deja la card resuelta + payload string"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — selector de destino (acordeón) no permite el mismo campo del sistema en dos columnas"
+  },
+  {
+    "file": "src/pages/imports/MappingStep.test.jsx",
+    "fullName": "MappingStep — selector de destino (acordeón) solo una categoría abierta a la vez (abrir otra cierra la anterior)"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — NO SE IMPORTARÁN (unificado) gap grande: skippedTotal=1500 con 10 samples muestra 1500 en contador y 10 de 1500"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — NO SE IMPORTARÁN (unificado) muestra 'Mostrando N de M' cuando la muestra no cubre el total"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — NO SE IMPORTARÁN (unificado) muestra 'Ya estaban registrados' con el total real, no la muestra"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — NO SE IMPORTARÁN (unificado) muestra el motivo del omitido por duplicado"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — NO SE IMPORTARÁN (unificado) muestra el nombre de la mascota y cliente omitidos (skipped)"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — NO SE IMPORTARÁN (unificado) muestra sección unificada con el total combinado"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — NO SE IMPORTARÁN (unificado) no muestra sección cuando no hay omitidos ni conflictos"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — No se importarán: Mismo expediente con datos diferentes muestra descripción sobre múltiples orígenes posibles"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — No se importarán: Mismo expediente con datos diferentes muestra el mensaje de conflicto en la card"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — No se importarán: Mismo expediente con datos diferentes solo uncertain: no muestra 'Ya estaban registrados'"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — No se importarán: Mismo expediente con datos diferentes uncertain aparece como 'Mismo expediente con datos diferentes'"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — No se importarán: Ya estaban registrados el intro general de NO SE IMPORTARÁN es tranquilizador"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — No se importarán: Ya estaban registrados high muestra 'Parece el mismo paciente' en la card"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — No se importarán: Ya estaban registrados high-confidence aparece agrupado como 'Ya estaban registrados' con total real"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — SE CREARÁN (preview table) celdas vacías muestran guion (—)"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — SE CREARÁN (preview table) muestra 'Mostrando N de M' cuando hay más registros que preview"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — SE CREARÁN (preview table) muestra el total de mascotas en el encabezado"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — SE CREARÁN (preview table) muestra los registros del preview en la tabla"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — SE CREARÁN (preview table) muestra tabla con columnas Mascota, Cliente, Especie, Teléfono"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — SE CREARÁN (preview table) no muestra 'Mostrando N de M' cuando el total cabe en el preview"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — SE CREARÁN (preview table) no muestra la tabla cuando no hay preview"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — caps (muestra < total) conflictos high muestreados: indicador 'Mostrando N de M'"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — caps (muestra < total) preview en el tope exacto (20) con total mayor: 'Mostrando 20 de 25'"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — consecuencias y CTA con blocking errors oculta el botón y muestra mensaje de corrección"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — consecuencias y CTA con registros importables y sin blocking muestra el botón de confirmar"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — consecuencias y CTA sin blocking ni registros muestra 'No hay registros nuevos'"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — consecuencias y CTA sin permiso no muestra el botón e informa"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — integración barra de estado mantiene el pill de datos incompletos"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — integración el aviso de warnings muestra 'ver detalle'"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — integración muestra SE CREARÁN y NO SE IMPORTARÁN simultáneamente"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — integración warnings aparecen dentro de SE CREARÁN como aviso colapsable"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — los números siempre cuadran conflictos muestreados (agregado > muestra): el total no se rompe"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — los números siempre cuadran mixto: padre 'No se importarán' == suma de los hijos visibles"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — los números siempre cuadran solo uncertain: padre == hijo uncertain (sin bloque 'Ya estaban')"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — nombres y comparación 'Ver paciente' usa public_id con target _blank"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — nombres y comparación muestra nombres humanos en la comparación lado a lado"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — regresión: 0 explícito no se enmascara preview_total=0 se respeta (no cae a created_pets)"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — respuesta vieja (sin agregados de conflictos) cae al .length del array y los números siguen cuadrando"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — respuesta vieja (sin agregados de conflictos) no muestra 'Mostrando N de M' cuando el array está completo"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — resumen humano con bloqueantes muestra sidebar y pill de corrección"
+  },
+  {
+    "file": "src/pages/imports/PreviewStep.test.jsx",
+    "fullName": "PreviewStep — resumen humano muestra mascotas que se crearán, duplicados omitidos, necesitan revisión"
+  },
+  {
+    "file": "src/pages/imports/ResultStep.test.jsx",
+    "fullName": "ResultStep — resumen de datos incompletos (C) agrega los warnings por campo con etiqueta humana"
+  },
+  {
+    "file": "src/pages/imports/ResultStep.test.jsx",
+    "fullName": "ResultStep — resumen de datos incompletos (C) no muestra la sección si no hay warnings"
+  },
+  {
+    "file": "src/pages/imports/UploadStep.test.jsx",
+    "fullName": "UploadStep — validación de archivo acepta un archivo válido y muestra su chip"
+  },
+  {
+    "file": "src/pages/imports/UploadStep.test.jsx",
+    "fullName": "UploadStep — validación de archivo la X quita el archivo seleccionado"
+  },
+  {
+    "file": "src/pages/imports/UploadStep.test.jsx",
+    "fullName": "UploadStep — validación de archivo rechaza un archivo que excede 5 MB con toast y no lo selecciona"
+  },
+  {
+    "file": "src/pages/imports/UploadStep.test.jsx",
+    "fullName": "UploadStep — validación de archivo rechaza una extensión no soportada con toast"
+  },
+  {
+    "file": "src/pages/imports/entityConfig.test.jsx",
+    "fullName": "Wizard con entityType=inventory PreviewStep renderiza columnas de producto y contadores"
+  },
+  {
+    "file": "src/pages/imports/entityConfig.test.jsx",
+    "fullName": "Wizard con entityType=inventory ResultStep muestra tarjetas de inventario y CTA a /inventory"
+  },
+  {
+    "file": "src/pages/imports/entityConfig.test.jsx",
+    "fullName": "Wizard con entityType=inventory UploadStep muestra el copy de inventario"
+  },
+  {
+    "file": "src/pages/imports/groupImportIssues.test.js",
+    "fullName": "groupImportIssues agrupa por field"
+  },
+  {
+    "file": "src/pages/imports/groupImportIssues.test.js",
+    "fullName": "groupImportIssues devuelve array vacío si no hay ítems"
+  },
+  {
+    "file": "src/pages/imports/groupImportIssues.test.js",
+    "fullName": "groupImportIssues field null/undefined → grupo 'unknown'"
+  },
+  {
+    "file": "src/pages/imports/groupImportIssues.test.js",
+    "fullName": "groupImportIssues mismo field con samples preserva las primeras 5 filas"
+  },
+  {
+    "file": "src/pages/imports/groupImportIssues.test.js",
+    "fullName": "groupImportIssues ordena por count descendente"
+  },
+  {
+    "file": "src/pages/imports/groupImportIssues.test.js",
+    "fullName": "groupImportIssues samples limitados a 5"
+  },
+  {
+    "file": "src/pages/imports/groupImportIssues.test.js",
+    "fullName": "groupImportIssues usa label genérico si no existe en labelByKey"
+  },
+  {
+    "file": "src/pages/imports/groupImportIssues.test.js",
+    "fullName": "groupImportIssues usa mensaje 'qué hacer' específico por field"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks conserva aceptación y muestra fallo posterior de entrega"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks expone el motivo de fallo sin convertirlo en texto visible del transcript"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks marca visualmente read como leído y no solo como entregado"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks no afirma aceptación de un SENT histórico sin evidencia"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks no muestra delivered en mensajes entrantes"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks no muestra discarded en mensajes entrantes"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks no muestra failed en mensajes entrantes"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks no muestra failed-local en mensajes entrantes"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks no muestra pending en mensajes entrantes"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks no muestra read en mensajes entrantes"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks no muestra sent en mensajes entrantes"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks omite estados de salida desconocidos"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks representa delivered con nombre y título accesibles"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks representa discarded con nombre y título accesibles"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks representa failed-local con nombre y título accesibles"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks representa pending con nombre y título accesibles"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks representa read con nombre y título accesibles"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks representa sending con nombre y título accesibles"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks representa sent con nombre y título accesibles"
+  },
+  {
+    "file": "src/pages/inbox/DeliveryTicks.test.jsx",
+    "fullName": "DeliveryTicks representa uncertain con nombre y título accesibles"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "B5 handoff evidence allows the current human owner to explicitly acknowledge a new queued case"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "B5 handoff evidence does not call discarded guidance pending delivery"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "B5 handoff evidence keeps uncertain guidance visible and preserves multiple open legacy cases"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "B5 handoff evidence labels explicit acknowledgement without claiming clinical attention"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "B5 handoff evidence shows a durable queue without inventing notification or acknowledgement"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador A→B→A conserva visible el 201 aunque el GET de regreso esté vacío"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador actualiza todos los divisores con una sola referencia al cruzar medianoche"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador aplica el cap global de 20 intentos entre sesiones"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador conserva el borrador al volver a clicar el mismo hilo"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador conserva el optimista reintentable ante un 5xx"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador conserva la key incierta al navegar B y volver a A con el mismo texto"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador deduplica un polling concurrente exclusivamente por client_message_id"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador descarta el texto de Ana al cambiar al hilo de Beto"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador dos envíos consecutivos por Enter reciben keys distintas"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador elimina el optimista ante 400 y muestra el error del servidor"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador envía al sessionId vigente con una key de idempotencia no vacía"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador integra recibos de entrega solo en mensajes salientes del transcript"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador mantiene la hora del mensaje histórico bajo el divisor Ayer"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador no ejecuta continuaciones del POST después de desmontar el Inbox"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador no reinstala ni borra el hilo nuevo si el POST anterior termina tarde"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador oculta failed-local cuando el hilo regresa con otra sesión activa"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador pinta el envío antes del POST y reconcilia el 201 sin duplicar"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador regenera la key cuando cambia el texto después de un error"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador renderiza un divisor por día local de la organización"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador reutiliza la key si se reintenta el mismo texto tras un error de red"
+  },
+  {
+    "file": "src/pages/inbox/index.test.jsx",
+    "fullName": "Inbox — aislamiento del borrador un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto"
+  },
+  {
+    "file": "src/pages/medicalRecords/PetSidebar.test.jsx",
+    "fullName": "PetSidebar (server-side) 'Ver más' trae la página 2"
+  },
+  {
+    "file": "src/pages/medicalRecords/PetSidebar.test.jsx",
+    "fullName": "PetSidebar (server-side) al elegir, entrega el objeto pet completo"
+  },
+  {
+    "file": "src/pages/medicalRecords/PetSidebar.test.jsx",
+    "fullName": "PetSidebar (server-side) busca en el backend al montar (no carga la lista completa) y muestra el dueño"
+  },
+  {
+    "file": "src/pages/medicalRecords/PetSidebar.test.jsx",
+    "fullName": "PetSidebar (server-side) escribir manda la búsqueda al backend (debounced)"
+  },
+  {
+    "file": "src/pages/pets.test.jsx",
+    "fullName": "Mascotas — alta con datos mínimos el teléfono del dueño sigue siendo obligatorio"
+  },
+  {
+    "file": "src/pages/pets.test.jsx",
+    "fullName": "Mascotas — alta con datos mínimos guarda con datos mínimos: sin especie ni fecha de nacimiento"
+  },
+  {
+    "file": "src/pages/pets.test.jsx",
+    "fullName": "Mascotas — empty state guiado con pacientes NO muestra el empty state"
+  },
+  {
+    "file": "src/pages/pets.test.jsx",
+    "fullName": "Mascotas — empty state guiado sin pacientes muestra título guiado + CTAs importar/agregar"
+  },
+  {
+    "file": "src/pages/pets.test.jsx",
+    "fullName": "Mascotas — lista paginada server-side cambia de página llamando a la API con page=2"
+  },
+  {
+    "file": "src/pages/pets.test.jsx",
+    "fullName": "Mascotas — lista paginada server-side la búsqueda se envía al backend (debounced), no se filtra en memoria"
+  },
+  {
+    "file": "src/pages/pets.test.jsx",
+    "fullName": "Mascotas — lista paginada server-side renderiza desde el envelope paginado y pide la página 1 (no toda la lista)"
+  },
+  {
+    "file": "src/pages/prescriptions.test.jsx",
+    "fullName": "Recetas — sin carga completa de mascotas el selector de mascota se deriva de las recetas cargadas (no del catálogo)"
+  },
+  {
+    "file": "src/pages/prescriptions.test.jsx",
+    "fullName": "Recetas — sin carga completa de mascotas filtra por especie desde pet_species embebido (client-side, sin recargar)"
+  },
+  {
+    "file": "src/pages/prescriptions.test.jsx",
+    "fullName": "Recetas — sin carga completa de mascotas no llama getPets al abrir; los datos vienen de las recetas"
+  },
+  {
+    "file": "src/test/noConsoleTokenLeak.test.js",
+    "fullName": "console must not leak auth tokens (H-07/H-08) no console.* logs a raw Axios error object or its response body"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción 429 corta ANTES que data.error (prioridad máxima)"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción 429 → mensaje de throttle fijo cuando no hay message/detail"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción 429 → usa data.message si viene"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción data array vacío → fallback (no devuelve undefined)"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción data como array (errores non-field) → primer elemento"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción data como string plano → se devuelve tal cual"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción detail (auth/permisos) tiene prioridad sobre message"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción error (errores manuales en views) tiene prioridad sobre message"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción errors[] (array plano) → primer mensaje"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción errors{} con key desconocida → humaniza el nombre del campo"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción errors{} cuyo valor es string (no array) → toma el string directo"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción errors{} por campo → traduce la key vía FIELD_MAP y muestra el primer mensaje"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción message (formato estándar {code, message}) cuando no hay nada de mayor prioridad"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción objeto totalmente vacío → fallback"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción respeta el fallback custom cuando no hay data"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción sin response.data → fallback (default)"
+  },
+  {
+    "file": "src/utils/apiError.test.js",
+    "fullName": "apiError — cadena de prioridad de extracción último recurso: Object.values aplanado cuando no matchea ninguna clave conocida"
+  },
+  {
+    "file": "src/utils/apiErrorConflict.test.js",
+    "fullName": "apiError sigue sirviendo de fallback extrae el mensaje del propio 409"
+  },
+  {
+    "file": "src/utils/apiErrorConflict.test.js",
+    "fullName": "appointmentChangedCurrent es null si el cuerpo no lo trae"
+  },
+  {
+    "file": "src/utils/apiErrorConflict.test.js",
+    "fullName": "appointmentChangedCurrent expone el estado REAL para poder decir qué cambió"
+  },
+  {
+    "file": "src/utils/apiErrorConflict.test.js",
+    "fullName": "isAppointmentChanged no confunde otros 409 del contrato con este"
+  },
+  {
+    "file": "src/utils/apiErrorConflict.test.js",
+    "fullName": "isAppointmentChanged no se dispara con errores normales ni con undefined"
+  },
+  {
+    "file": "src/utils/apiErrorConflict.test.js",
+    "fullName": "isAppointmentChanged reconoce el 409 tipificado"
+  },
+  {
+    "file": "src/utils/datetime.test.js",
+    "fullName": "datetime org-aware calcula Ayer en la frontera UTC que cruza medianoche local"
+  },
+  {
+    "file": "src/utils/datetime.test.js",
+    "fullName": "datetime org-aware clockTimeOrg siempre conserva hora:minuto aunque el mensaje sea histórico"
+  },
+  {
+    "file": "src/utils/datetime.test.js",
+    "fullName": "datetime org-aware mantiene Hoy y la hora correcta durante el salto DST"
+  },
+  {
+    "file": "src/utils/datetime.test.js",
+    "fullName": "datetime org-aware produce etiquetas es-MX, tiempo relativo y fallback ante TZ inválida"
+  },
+  {
+    "file": "src/utils/datetime.test.js",
+    "fullName": "datetime org-aware resuelve la TZ del usuario y cae defensivamente a México"
+  },
+  {
+    "file": "src/utils/datetime.test.js",
+    "fullName": "groupMessagesByDay agrupa una frontera de medianoche y únicamente los tres días presentes"
+  },
+  {
+    "file": "src/utils/datetime.test.js",
+    "fullName": "groupMessagesByDay devuelve vacío sin mensajes"
+  },
+  {
+    "file": "src/utils/datetime.test.js",
+    "fullName": "groupMessagesByDay no divide un mismo día durante DST"
+  },
+  {
+    "file": "src/utils/handleFormError.test.js",
+    "fullName": "handleFormError — ruteo de errores DRF a form vs toast data vacía → toast con fallback, sin form"
+  },
+  {
+    "file": "src/utils/handleFormError.test.js",
+    "fullName": "handleFormError — ruteo de errores DRF a form vs toast errores de campo → setErrors (merge), sin toast global"
+  },
+  {
+    "file": "src/utils/handleFormError.test.js",
+    "fullName": "handleFormError — ruteo de errores DRF a form vs toast merge limpia la clave previa antes de fusionar (sin errores 'pegados')"
+  },
+  {
+    "file": "src/utils/handleFormError.test.js",
+    "fullName": "handleFormError — ruteo de errores DRF a form vs toast opts.merge=false → reemplaza el estado completo (objeto directo, no updater)"
+  },
+  {
+    "file": "src/utils/handleFormError.test.js",
+    "fullName": "handleFormError — ruteo de errores DRF a form vs toast sin errores de campo (red/permiso) → toast global, sin tocar el form"
+  },
+  {
+    "file": "src/utils/handleFormError.test.js",
+    "fullName": "handleFormError — ruteo de errores DRF a form vs toast varios campos → todos llegan al form"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "computeInitialStock — stock inicial del wizard de alta acepta números y decimales"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "computeInitialStock — stock inicial del wizard de alta cantidad vacía → 0"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "computeInitialStock — stock inicial del wizard de alta modo multi (divide): cantidad × sub-unidades (5 cajas × 100 = 500)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "computeInitialStock — stock inicial del wizard de alta modo simple (no divide): devuelve la cantidad contada"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "computeInitialStock — stock inicial del wizard de alta multi sin dividesCount → 0 (5 × 0)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "fmt — redondeo entero para display null/undefined/no-numérico → 0"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "fmt — redondeo entero para display parsea strings numéricos"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "fmt — redondeo entero para display redondea al entero más cercano"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "fmtCur — moneda sin decimales formatea miles con separador (locale explícito para estabilidad)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "fmtCur — moneda sin decimales negativos se formatean"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "fmtCur — moneda sin decimales null/0 → '0'"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockQty — cantidad de stock en unidades base cae a presentation.stock si no hay stock_quantity"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockQty — cantidad de stock en unidades base null/undefined de la API → 0 (no NaN, no crash)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockQty — cantidad de stock en unidades base producto sin datos → 0"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockQty — cantidad de stock en unidades base stock negativo se conserva (el sistema lo permite en este cálculo)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockQty — cantidad de stock en unidades base stock_quantity tiene prioridad sobre presentation.stock"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockQty — cantidad de stock en unidades base string numérico de la API se parsea"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockQty — cantidad de stock en unidades base usa stock_quantity cuando está presente"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockValue — valor $ = sale_price / conversion_factor × qty cf=1: valor = precio × cantidad"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockValue — valor $ = sale_price / conversion_factor × qty cf>1: normaliza el precio a unidad base antes de multiplicar"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockValue — valor $ = sale_price / conversion_factor × qty conversion_factor 0 → se protege a 1 (no divide por cero)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockValue — valor $ = sale_price / conversion_factor × qty conversion_factor ausente → cf=1 por defecto"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockValue — valor $ = sale_price / conversion_factor × qty producto vacío → 0"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "productStockValue — valor $ = sale_price / conversion_factor × qty sin presentación → 0 (precio 0)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "stockStatus — estado para la UI (agotado/bajo/normal) min_stock puede venir en la presentación"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "stockStatus — estado para la UI (agotado/bajo/normal) pct nunca baja de 15 en estado ok (visibilidad mínima de la barra)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "stockStatus — estado para la UI (agotado/bajo/normal) presentation null → no crashea, stock 0 → 'Agotado'"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "stockStatus — estado para la UI (agotado/bajo/normal) producto sin configuración completa (vacío) → 'Agotado' (stock 0)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "stockStatus — estado para la UI (agotado/bajo/normal) stock cero → 'Agotado' (crit), pct 0"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "stockStatus — estado para la UI (agotado/bajo/normal) stock exactamente igual al mínimo → 'Normal' (la regla es estrictamente <)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "stockStatus — estado para la UI (agotado/bajo/normal) stock negativo → 'Agotado' (crit)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "stockStatus — estado para la UI (agotado/bajo/normal) stock normal sin mínimo → 'Normal' (ok)"
+  },
+  {
+    "file": "src/utils/inventory.test.js",
+    "fullName": "stockStatus — estado para la UI (agotado/bajo/normal) stock por debajo del mínimo → 'Stock bajo' (low) con pct proporcional"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF case real: cita con errores múltiples"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF case real: inventario con presentation_input anidado"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF debe devolver objeto vacío si entrada es null/undefined"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF debe devolver objeto vacío si entrada no es objeto"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF debe extraer el primer mensaje de arrays"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF debe manejar colisiones: preservar raíz y nested (determinista)"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF debe manejar valores no-array en nested"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF debe manejar valores no-array en top-level"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF debe mapear errores top-level a claves planas"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF debe mapear objetos anidados a clave dotted Y a clave plana de raíz libre"
+  },
+  {
+    "file": "src/utils/mapFieldErrors.test.js",
+    "fullName": "mapFieldErrors — normalización de errores DRF debe preservar ambas versiones de campo que existe en root y nested"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "PAYMENT_METHODS — catálogo (espejo del backend) expone los 4 métodos contables conocidos"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "buildPaymentLines — líneas a enviar al backend (ADR p30) líneas en cero se descartan (no se mandan al backend)"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "buildPaymentLines — líneas a enviar al backend (ADR p30) múltiples métodos que suman el total → se conservan todas las líneas"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "buildPaymentLines — líneas a enviar al backend (ADR p30) normaliza montos string con un decimal a dos decimales"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "buildPaymentLines — líneas a enviar al backend (ADR p30) pago exacto con un método → una línea normalizada a 2 decimales"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "buildPaymentLines — líneas a enviar al backend (ADR p30) redondea a 2 decimales sin disparar la rama de sobrepago por ruido flotante"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "buildPaymentLines — líneas a enviar al backend (ADR p30) sobrepago con varias líneas → colapsa al total con el método de la primera línea"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "buildPaymentLines — líneas a enviar al backend (ADR p30) sobrepago en efectivo → registra SOLO el total (el cambio no se persiste)"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar array de líneas vacío → inválido"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar cualquier monto negativo → inválido"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar líneas positivas + ceros que suman exacto → válido (los ceros se ignoran)"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar monto negativo se bloquea ANTES que la rama de cambio (invariante de dinero)"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar pago insuficiente permitiendo parcial → válido (refund parcial / casos futuros)"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar pago insuficiente sin permitir parcial → inválido (ADR p30: sin parciales)"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar sobrepago permitiendo cambio (efectivo) → válido"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar sobrepago sin permitir cambio → inválido"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar split de varios métodos que suma exacto → válido"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar todas las líneas en cero → inválido (no hay monto positivo)"
+  },
+  {
+    "file": "src/utils/payments.test.js",
+    "fullName": "paymentLinesValid — habilita/bloquea el botón de cobrar total exacto sin parciales → válido"
+  },
+  {
+    "file": "src/utils/prescriptionAvailability.test.js",
+    "fullName": "authoritativePresentationMax fails closed for an invalid API maximum: -1"
+  },
+  {
+    "file": "src/utils/prescriptionAvailability.test.js",
+    "fullName": "authoritativePresentationMax fails closed for an invalid API maximum: 1.5"
+  },
+  {
+    "file": "src/utils/prescriptionAvailability.test.js",
+    "fullName": "authoritativePresentationMax fails closed for an invalid API maximum: NaN"
+  },
+  {
+    "file": "src/utils/prescriptionAvailability.test.js",
+    "fullName": "authoritativePresentationMax fails closed for an invalid API maximum: null"
+  },
+  {
+    "file": "src/utils/prescriptionAvailability.test.js",
+    "fullName": "authoritativePresentationMax fails closed for an invalid API maximum: undefined"
+  },
+  {
+    "file": "src/utils/prescriptionAvailability.test.js",
+    "fullName": "authoritativePresentationMax uses the backend projection without recalculating from base units"
+  },
+  {
+    "file": "src/utils/sentryScrub.test.js",
+    "fullName": "scrubEvent dropea el body y cookies del request, filtra headers sensibles"
+  },
+  {
+    "file": "src/utils/sentryScrub.test.js",
+    "fullName": "scrubEvent elimina PII del user pero conserva el id"
+  },
+  {
+    "file": "src/utils/sentryScrub.test.js",
+    "fullName": "scrubEvent maneja request/user ausentes sin lanzar"
+  },
+  {
+    "file": "src/utils/toList.test.js",
+    "fullName": "toList — normalización array | paginado DRF array vacío se mantiene"
+  },
+  {
+    "file": "src/utils/toList.test.js",
+    "fullName": "toList — normalización array | paginado DRF devuelve el array tal cual cuando la respuesta ya es array"
+  },
+  {
+    "file": "src/utils/toList.test.js",
+    "fullName": "toList — normalización array | paginado DRF es idempotente sobre su propia salida"
+  },
+  {
+    "file": "src/utils/toList.test.js",
+    "fullName": "toList — normalización array | paginado DRF extrae `results` de la respuesta paginada DRF"
+  },
+  {
+    "file": "src/utils/toList.test.js",
+    "fullName": "toList — normalización array | paginado DRF null / undefined → array vacío (no crashea consumidores .map)"
+  },
+  {
+    "file": "src/utils/toList.test.js",
+    "fullName": "toList — normalización array | paginado DRF objeto sin results → array vacío"
+  },
+  {
+    "file": "src/utils/toList.test.js",
+    "fullName": "toList — normalización array | paginado DRF results vacío devuelve array vacío"
+  }
+]

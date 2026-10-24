@@ -1,0 +1,19 @@
+--- a/frontend/src/pages/inbox/index.test.jsx
++++ b/frontend/src/pages/inbox/index.test.jsx
+@@ -319,14 +319,14 @@
+         render(<Inbox />);
+ 
+         const firstComposer = await selectConversation(user, "Ana");
+-        await user.type(firstComposer, "Texto idéntico, intención nueva");
++        fireEvent.change(firstComposer, { target: { value: "Texto idéntico, intención nueva" } });
+         await user.click(screen.getByRole("button", { name: "Enviar" }));
+         await waitFor(() => expect(inboxApi.sendInboxMessage).toHaveBeenCalledTimes(1));
+         const oldKey = inboxApi.sendInboxMessage.mock.calls[0][2];
+ 
+         await selectConversation(user, "Beto");
+         const returnedComposer = await selectConversation(user, "Ana");
+-        await user.type(returnedComposer, "Texto idéntico, intención nueva");
++        fireEvent.change(returnedComposer, { target: { value: "Texto idéntico, intención nueva" } });
+         const [, oldBody, oldKeyFromCall] = inboxApi.sendInboxMessage.mock.calls[0];
+         await act(async () => {
+             resolveFirstSend(sentMessage(oldBody, oldKeyFromCall, "message-ana-old"));

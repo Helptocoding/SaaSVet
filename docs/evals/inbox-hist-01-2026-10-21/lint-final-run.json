@@ -1,0 +1,15 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "src/pages/inbox/index.test.jsx",
+    "src/pages/inbox/ThreadViewport.test.jsx",
+    "src/pages/inbox/useThreadHistory.test.jsx",
+    "--format=json",
+    "--output-file=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-hist-01-2026-10-21\\lint-final.json"
+  ],
+  "exit_code": 0,
+  "sentry_upload_disabled": true
+}

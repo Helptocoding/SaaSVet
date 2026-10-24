@@ -1,0 +1,67 @@
+{
+  "label": "full",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261012-r9/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261012-r9/venv/bin/python",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261012-r9/recorded_suite.py",
+    "full",
+    "test_b9i_full"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261012-r9/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-13T05:21:58Z",
+      "physical_available": 7480799232,
+      "physical_total": 8252518400,
+      "disk_available": 4649418752,
+      "linux_virtual_disk_available": 1016992382976
+    },
+    "host": {
+      "utc": "2026-10-13T05:21:57Z",
+      "physical_total": 17031217152,
+      "physical_available": 2858934272,
+      "page_available": 3526717440,
+      "utc_epoch_seconds": 1791868917.252104,
+      "observer_pid": 18840
+    },
+    "ready": true
+  },
+  "pid": 2622,
+  "exit_code": -9,
+  "seconds": 7289.097498895,
+  "invalidating_incident": "Backing disk reserve exhausted",
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-13T07:23:27Z",
+      "physical_available": 7438393344,
+      "physical_total": 8252518400,
+      "disk_available": 267816960,
+      "linux_virtual_disk_available": 1016954195968
+    },
+    "host": {
+      "utc": "2026-10-13T07:23:26Z",
+      "physical_total": 17031217152,
+      "physical_available": 3508211712,
+      "page_available": 1918959616,
+      "utc_epoch_seconds": 1791876206.934474,
+      "observer_pid": 18840
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-13T07:23:26Z",
+        "utc_epoch_seconds": 1791876206.690205,
+        "pid": 22456,
+        "thread_id": 20580,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.6431901454925537
+    }
+  }
+}

@@ -1,0 +1,67 @@
+--- a/frontend/src/pages/aviso-de-privacidad.astro
++++ b/frontend/src/pages/aviso-de-privacidad.astro
+@@ -6,7 +6,7 @@
+   title="Aviso de Privacidad"
+   heading="Aviso de Privacidad"
+   description="Aviso de Privacidad de SaaslyVet conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (México)."
+-  lastUpdated="22 de agosto de 2026"
++  lastUpdated="23 de octubre de 2026"
+ >
+   <p>
+     El presente Aviso de Privacidad se emite en cumplimiento de la <strong>Ley Federal de
+@@ -138,7 +138,7 @@
+   <ul>
+     <li>Número de teléfono de WhatsApp e identificadores de conversación.</li>
+     <li>Mensajes enviados y recibidos, textos de acompañamiento (<em>captions</em>), estados de entrega y marcas de tiempo.</li>
+-    <li>Archivos intercambiados por el canal (imágenes, audio o documentos), que se conservarán en un almacenamiento operativo privado en <strong>Backblaze B2</strong>.</li>
++    <li>Archivos recibidos por el canal (imágenes, audio, video, documentos y stickers), que se conservarán en un almacenamiento operativo privado en <strong>Backblaze B2</strong>.</li>
+   </ul>
+   <ul>
+     <li>
+@@ -154,7 +154,16 @@
+     </li>
+     <li>
+       <strong>Conservación:</strong> los archivos adjuntos se conservan <strong>180
+-      días</strong> y después son eliminados; el texto del mensaje, su caption y los metadatos
++      días naturales</strong> desde que se completa correctamente su almacenamiento operativo.
++      Al vencer ese plazo dejan de estar disponibles para consulta y descarga. Su purga operativa,
++      incluidas las versiones y marcadores de borrado pertinentes, debe completarse y verificarse
++      dentro de los <strong>siete días naturales siguientes</strong>. Si ocurre una incidencia,
++      el acceso permanece bloqueado durante los reintentos y la atención del incidente. Este
++      límite corresponde al proceso gestionado por SaaslyVet; no afirma el momento exacto de
++      eliminación de todos los bloques físicos internos del proveedor. Las copias descargadas
++      por la Clínica, los originales que conserve Meta y los respaldos independientes se rigen
++      por sus propios controles; una restauración no debe restablecer accesos expirados o revocados.
++      El texto del mensaje, su caption y los metadatos
+       de la conversación <strong>permanecen</strong> en el historial de la plataforma. Ante una
+       solicitud de derechos (ARCO) que proceda, los objetos aún vigentes podrán eliminarse de
+       forma anticipada.
+@@ -245,7 +254,7 @@
+     </li>
+     <li>
+       <strong>Respuesta:</strong> dentro de un máximo de <strong>20 días hábiles</strong>
+-      contados desde que recibimos la solicitud completa, te notificaremos la respuesta al
++      contados desde que recibimos la solicitud, te notificaremos la respuesta al
+       correo electrónico que nos hayas designado.
+     </li>
+     <li>
+@@ -292,7 +301,7 @@
+       cifradas de extremo a extremo bajo un esquema en el que el proveedor no puede leer su
+       contenido; y (b) <strong>almacenamiento operativo de archivos del canal WhatsApp</strong>
+       (cuando se habilite, sección 3.5), protegido con el cifrado en reposo estándar del
+-      proveedor, con acceso controlado del servicio.
++      proveedor, con acceso controlado del servicio. Este almacenamiento operativo no utiliza el esquema de cifrado de las copias de seguridad: Backblaze administra las claves de cifrado en reposo. Los adjuntos solo se entregan a usuarios autenticados y autorizados de la Clínica, sin enlaces públicos.
+     </li>
+     <li>
+       <strong>Functional Software, Inc. (Sentry)</strong> (Estados Unidos): monitoreo de
+@@ -354,8 +363,8 @@
+       formulario o hasta el retiro del consentimiento (sección 3.3).
+     </li>
+     <li>
+-      Los <strong>archivos del canal WhatsApp</strong> se conservarán 180 días una vez
+-      habilitada esa función; su texto, captions y metadatos permanecen en el historial
++      Los <strong>archivos del canal WhatsApp</strong> estarán disponibles durante 180 días desde su almacenamiento operativo, una vez
++      habilitada esa función, con el proceso de eliminación descrito en la sección 3.5; su texto, captions y metadatos permanecen en el historial
+       (sección 3.5).
+     </li>
+   </ul>

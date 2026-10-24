@@ -1,0 +1,74 @@
+{
+  "label": "directed",
+  "candidate_sha": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "argv": [
+    "/home/lap/b9i-correction-20261014-r4/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-correction-20261014-r4/venv/bin/python",
+    "-B",
+    "-m",
+    "apps.agent.tests.run_b9a_acceptance",
+    "--suite",
+    "targeted",
+    "--database",
+    "test_b8b_b9i_directed",
+    "--ids-file",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261014-r4/directed-selected.json",
+    "--output",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-correction-20261014-r4/blocks/directed"
+  ],
+  "cwd": "/home/lap/b9i-correction-20261014-r4/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-15T05:44:26Z",
+      "physical_available": 7564787712,
+      "physical_total": 8252510208,
+      "disk_available": 6346854400,
+      "linux_virtual_disk_available": 1017051136000
+    },
+    "host": {
+      "utc": "2026-10-15T05:44:25Z",
+      "physical_total": 17031217152,
+      "physical_available": 2347286528,
+      "page_available": 6765350912,
+      "utc_epoch_seconds": 1792043065.652886,
+      "observer_pid": 52132
+    },
+    "ready": true
+  },
+  "pid": 1214,
+  "exit_code": -15,
+  "seconds": 10.983375918000092,
+  "invalidating_incident": "Memory reserve exhausted",
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-15T05:44:37Z",
+      "physical_available": 7554859008,
+      "physical_total": 8252510208,
+      "disk_available": 6288601088,
+      "linux_virtual_disk_available": 1017049116672
+    },
+    "host": {
+      "utc": "2026-10-15T05:44:36Z",
+      "physical_total": 17031217152,
+      "physical_available": 1961009152,
+      "page_available": 6607671296,
+      "utc_epoch_seconds": 1792043076.8095808,
+      "observer_pid": 52132
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-15T05:44:37Z",
+        "utc_epoch_seconds": 1792043077.2839258,
+        "pid": 61236,
+        "thread_id": 59644,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.06893062591552734
+    }
+  }
+}

@@ -1,0 +1,69 @@
+--- native-r11/handoff_runtime.py
++++ native/handoff_runtime.py
+@@ -1,4 +1,4 @@
+-"""Start one fresh r11 PostgreSQL owner after a verified, preserved r10 retirement."""
++"""Start one fresh r12 PostgreSQL owner after a verified, preserved r11 retirement."""
+ import json
+ from pathlib import Path
+ import subprocess
+@@ -6,14 +6,14 @@
+ from native_support import EVIDENCE, WORK, DATA, PG, PORT, SHA, RTK, save, sha256, environment, resources, integrity
+ from retire_previous_cluster import verify_scope, confirm_port_free, stable_previous_log, kernel_api, identity, parent_pid, confirm_previous_absence
+ 
+-FRESH_DB='test_b9i_full_general_remainder_r11'
++FRESH_DB='test_b9i_full_general_remainder_r12'
+ EXPECTED_SHA='f5f18d71847a46d66644775cd90d30268f072e3b'
+ 
+ 
+ def main():
+     verify_scope()
+     assert SHA==EXPECTED_SHA
+-    assert EVIDENCE.name=='b9-correction-20261020-native-r11'
++    assert EVIDENCE.name=='b9-correction-20261020-native-r12'
+     assert Path(json.loads((EVIDENCE/'assembly.json').read_text(encoding='utf-8'))['workspace']).resolve()==WORK.resolve()
+     assert not (EVIDENCE/'postgresql-start.json').exists(), 'Refusing duplicate owned server invocation'
+     assert not (EVIDENCE/'postgresql-start-attempt-1.json').exists(), 'No automatic start retry'
+@@ -44,7 +44,7 @@
+     with logpath.open('xb') as log:
+         server=subprocess.Popen(argv,cwd=WORK,env=environment(),stdin=subprocess.DEVNULL,
+             stdout=log,stderr=subprocess.STDOUT,close_fds=True,creationflags=subprocess.CREATE_NO_WINDOW)
+-    info=dict(mode='Owned same-cluster handoff after verified r10 retirement under RTK',
++    info=dict(mode='Owned same-cluster handoff after verified r11 retirement under RTK',
+         argv=argv,wrapper_pid=server.pid,port=PORT,data_directory=str(DATA),
+         previous_invocation_resumed=False,same_disposable_cluster=True,
+         previous_cluster_retirement='previous-cluster-retirement.json',
+@@ -56,14 +56,14 @@
+     connection=None;started=time.monotonic()
+     while time.monotonic()-started<120:
+         if server.poll() is not None:
+-            raise RuntimeError('Owned r11 PostgreSQL start failed; retained exact log; no retry')
++            raise RuntimeError('Owned r12 PostgreSQL start failed; retained exact log; no retry')
+         try:
+             connection=psycopg.connect(host='127.0.0.1',port=PORT,user='b9e',dbname='postgres',
+                 autocommit=True,connect_timeout=2)
+             break
+         except psycopg.OperationalError:
+             time.sleep(.5)
+-    assert connection is not None, 'Owned r11 PostgreSQL readiness timeout; no retry'
++    assert connection is not None, 'Owned r12 PostgreSQL readiness timeout; no retry'
+     assert server.poll() is None
+     lines=pidfile.read_text(encoding='utf-8').splitlines()
+     postmaster=int(lines[0]);start_epoch=int(lines[2])
+@@ -92,7 +92,7 @@
+     finally:
+         if connection is not None:connection.close()
+         for handle in reversed(handles):k.CloseHandle(handle)
+-    assert stable_previous_log()==retirement['previous_log'], 'New startup changed closed r10 server log'
++    assert stable_previous_log()==retirement['previous_log'], 'New startup changed closed r11 server log'
+     info.update(state='PASS_READY',postmaster_pid=postmaster,postmaster=server_identity,wrapper=wrapper_identity)
+     save('postgresql-start.json',info)
+     save('postgresql-preflight.json',dict(state='PASS',values=values,port=PORT,postmaster_pid=postmaster,
+@@ -107,7 +107,7 @@
+     save('environment-ready.json',dict(state='READY_FOR_SEAL',candidate_sha=SHA,platform='Windows native',
+         wsl_invoked=False,application_tests_executed=False,runtime_reinstalled=False,
+         runtime_reference='prepared-runtime-references.json',previous_invocation_resumed=False))
+-    print('SAME_CLUSTER_R11_HANDOFF_PASS_NO_TESTS',flush=True)
++    print('SAME_CLUSTER_R12_HANDOFF_PASS_NO_TESTS',flush=True)
+ 
+ 
+ if __name__=='__main__':main()

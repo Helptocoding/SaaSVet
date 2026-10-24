@@ -1,0 +1,24 @@
+PREFLIGHT_PASS
+BLOCK_REFERENCED directed
+BLOCK_REFERENCED django-check
+BLOCK_REFERENCED migration-drift
+BLOCK_REFERENCED migrate
+BLOCK_REFERENCED billing-schema
+BLOCK_REFERENCED b0
+BLOCK_REFERENCED b3
+BLOCK_REFERENCED b4
+BLOCK_REFERENCED b5
+BLOCK_REFERENCED full-b8b
+BLOCK_REFERENCED full-b8c
+BLOCK_REFERENCED full-b8d
+BLOCK_REFERENCED full-b8e
+BLOCK_START full-general-remainder
+BLOCK_END full-general-remainder exit=0
+BLOCK_START full-general-assemble
+BLOCK_END full-general-assemble exit=0
+FULL_AGGREGATE_COMPLETE 3331 IDs
+BLOCK_START frontend-build
+BLOCK_END frontend-build exit=0
+BLOCK_START frontend-test
+BLOCK_END frontend-test exit=1
+{"campaign": "PENDING_CLASSIFICATION", "phase": "frontend-test", "cause": "Frontend blocking command nonzero"}

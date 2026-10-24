@@ -1,0 +1,17 @@
+{
+  "exit_code": 1,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/messageText.test.js",
+    "src/pages/inbox/index.test.jsx",
+    "--testNamePattern=WA-CPY-01|WA-GRP-01|pinta el env\u00edo|integra recibos|conserva el optimista|oculta failed-local",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-cpy-01-2026-10-20\\vitest.json"
+  ],
+  "scope": "New copy/link tests, grouping render and directly affected optimistic regressions only"
+}

@@ -1,0 +1,26 @@
+RTK Token Savings (Global Scope)
+════════════════════════════════════════════════════════════
+
+Total commands:    18338
+Input tokens:      134.3M
+Output tokens:     129.4M
+Tokens saved:      4.8M (3.6%)
+Total exec time:   34528m32s (avg 1m52s)
+Efficiency meter: █░░░░░░░░░░░░░░░░░░░░░░░ 3.6%
+
+By Command
+───────────────────────────────────────────────────────────────────────
+  #  Command                   Count  Saved    Avg%    Time  Impact    
+───────────────────────────────────────────────────────────────────────
+ 1.  rtk read                   3165   3.3M    9.8%     1ms  ██████████
+ 2.  rtk rg                      279   1.4M   18.3%   617ms  ████░░░░░░
+ 3.  rtk git commit               74  44.6K   93.2%    1.9s  ░░░░░░░░░░
+ 4.  rtk git diff --name-o...      5  15.2K   50.0%    1.2s  ░░░░░░░░░░
+ 5.  rtk git diff -- .gith...      1   6.0K   51.0%   954ms  ░░░░░░░░░░
+ 6.  rtk git add backend/a...      1   4.0K   99.6%    4.7s  ░░░░░░░░░░
+ 7.  rtk git diff --name-s...      1   3.1K   50.0%    2.6s  ░░░░░░░░░░
+ 8.  rtk git diff -- backe...      1   1.4K   32.5%    1.2s  ░░░░░░░░░░
+ 9.  rtk git diff -- backe...      1   1.3K   36.2%    3.0s  ░░░░░░░░░░
+10.  rtk git diff -- backe...      1   1.2K   20.2%   973ms  ░░░░░░░░░░
+───────────────────────────────────────────────────────────────────────
+

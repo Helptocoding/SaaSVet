@@ -1,0 +1,36 @@
+{
+  "blocks": {
+    "directed": {
+      "samples": 1169,
+      "minimum_host_available_bytes": 2368262144,
+      "minimum_guest_available_bytes": 7225163776,
+      "minimum_backing_disk_available_bytes": 4222431232,
+      "maximum_absolute_clock_skew_seconds": 6.58973517602135e-05
+    },
+    "django-check": {
+      "samples": 3,
+      "minimum_host_available_bytes": 5316390912,
+      "minimum_guest_available_bytes": 7454388224,
+      "minimum_backing_disk_available_bytes": 4226465792,
+      "maximum_absolute_clock_skew_seconds": 3.8134658097987995e-07
+    },
+    "migration-drift": {
+      "samples": 4,
+      "minimum_host_available_bytes": 5252120576,
+      "minimum_guest_available_bytes": 7435673600,
+      "minimum_backing_disk_available_bytes": 4225802240,
+      "maximum_absolute_clock_skew_seconds": 8.479062216792954e-07
+    },
+    "migrate": {
+      "samples": 83,
+      "minimum_host_available_bytes": 2561167360,
+      "minimum_guest_available_bytes": 7372378112,
+      "minimum_backing_disk_available_bytes": 4222058496,
+      "maximum_absolute_clock_skew_seconds": 121.91211131459704
+    }
+  },
+  "samples": 1259,
+  "memory_or_disk_reserve_exhausted": false,
+  "clock_incident_block": "migrate",
+  "host_samples_during_suspend": "Retained raw cached host observations; observer itself paused, and the clock guard stopped the block after resume"
+}

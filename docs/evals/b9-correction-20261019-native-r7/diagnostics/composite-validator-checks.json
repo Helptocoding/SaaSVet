@@ -1,0 +1,131 @@
+{
+  "schema": "b9-r7-composite-validator-pure-checks-v1",
+  "state": "PASS_VALIDATOR_CHECKS",
+  "utc": "2026-10-20T00:29:56.785076Z",
+  "scope": "Static syntax/AST and pure in-memory API checks only; does not assert actual reuse or case reference validation",
+  "source_campaign": "b9-correction-20261017-native-r6",
+  "current_campaign": "b9-correction-20261019-native-r7",
+  "source_files": {
+    "composite_evidence.py": {
+      "source_campaign": "b9-correction-20261017-native-r6",
+      "source_sha256": "27475c5a941e38b9d7488dcc5b716221416f8b1bc135643efec1d185ac110719",
+      "current_sha256": "1b3d3d246efe3a57b24aa2927846023cc345e334e93a8d5cd9cc518477a3762f"
+    },
+    "diagnostics/close_acceptance.py": {
+      "source_campaign": "b9-correction-20261017-native-r6",
+      "source_sha256": "e669d2a99a1ed9d46a703d173e34a7554a2505c71f705aa73aebdc9a3750102b",
+      "current_sha256": "5704311389276f17dcac0b60aa9ba8f5bd5e53f09f00304573ce7d7539d3bfa9"
+    }
+  },
+  "historical_validator_receipt": {
+    "path": "../b9-correction-20261017-native-r6/diagnostics/composite-validator-checks.json",
+    "sha256": "3c9c6747470e75dffd28ab92f0b7c93430c6dbcf811939e7eb8fff698317692a",
+    "copied_r7_bytes_were_identical": true
+  },
+  "checks": [
+    {
+      "name": "syntax_and_trailing_whitespace",
+      "state": "PASS",
+      "files": [
+        "composite_evidence.py",
+        "diagnostics/close_acceptance.py"
+      ]
+    },
+    {
+      "name": "r6_strict_validators_preserved_AST",
+      "state": "PASS",
+      "unchanged_functions": [
+        "_absence",
+        "_audit_block",
+        "_audit_source",
+        "_authorization",
+        "_bundle",
+        "_candidate",
+        "_candidate_blobs",
+        "_configuration",
+        "_digest",
+        "_fixture_equivalence",
+        "_fixture_transform",
+        "_number",
+        "_original",
+        "_package_versions",
+        "_partition",
+        "_pg_configuration",
+        "_pg_files",
+        "_python_files",
+        "_read",
+        "_require",
+        "_resolved_manifest",
+        "_resources",
+        "_retained_seal",
+        "_safe",
+        "_seal",
+        "_sha",
+        "_whitelist",
+        "candidate_compatible",
+        "is_reused",
+        "read_block",
+        "source_for",
+        "validate_references"
+      ],
+      "only_changed_functions": [
+        "block_path",
+        "provenance",
+        "validate_current_inputs",
+        "build_manifest"
+      ]
+    },
+    {
+      "name": "runtime_metadata_only_no_validation_change",
+      "state": "PASS",
+      "functions": [
+        "validate_current_inputs",
+        "build_manifest"
+      ],
+      "frontend_results_reused": false,
+      "prepared_frontend_installation_reused": true,
+      "runtime_reference": "prepared-runtime-references.json"
+    },
+    {
+      "name": "thirteen_reference_mapping_and_candidate_constants",
+      "state": "PASS"
+    },
+    {
+      "name": "profile_underscore_labels_and_escape_rejection",
+      "state": "PASS",
+      "fixture": "nonexistent path; not created"
+    },
+    {
+      "name": "general_command_alias_current_assembler_only",
+      "state": "PASS",
+      "expected_relative": "blocks/full-general-assemble.command.json"
+    },
+    {
+      "name": "strict_reference_whitelist_digest_and_suffix_fail_closed",
+      "state": "PASS",
+      "fixture": "virtual manifest and digests only; no receipt bytes fabricated"
+    },
+    {
+      "name": "candidate_SHA_reuse_only_thirteen_blocks",
+      "state": "PASS"
+    },
+    {
+      "name": "composite_case_provenance_delegation_and_mismatch_rejection",
+      "state": "PASS",
+      "fixture": "in-memory API response; no case manifest created"
+    },
+    {
+      "name": "reporter_import_alias_and_conditional_accounting_contract",
+      "state": "PASS",
+      "main_invoked": false
+    }
+  ],
+  "application_tests_executed": false,
+  "services_started": false,
+  "reporter_main_invoked": false,
+  "build_manifest_invoked": false,
+  "case_prepare_or_assemble_invoked": false,
+  "actual_runtime_artifacts_created": false,
+  "only_output": "diagnostics/composite-validator-checks.json",
+  "actual_reference_validation": "Deferred to actual validated manifests/preflight; not simulated as a runtime PASS"
+}

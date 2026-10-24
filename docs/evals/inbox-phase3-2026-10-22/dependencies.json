@@ -1,0 +1,63 @@
+{
+  "status": "PASS",
+  "installed": {
+    "boto3": "1.43.95",
+    "botocore": "1.43.95",
+    "s3transfer": "0.19.2",
+    "jmespath": "1.1.0",
+    "python-dateutil": "2.9.0.post0",
+    "six": "1.17.0"
+  },
+  "checks": [
+    {
+      "parent": "boto3",
+      "dependency": "botocore",
+      "installed": "1.43.95",
+      "satisfied": true
+    },
+    {
+      "parent": "boto3",
+      "dependency": "jmespath",
+      "installed": "1.1.0",
+      "satisfied": true
+    },
+    {
+      "parent": "boto3",
+      "dependency": "s3transfer",
+      "installed": "0.19.2",
+      "satisfied": true
+    },
+    {
+      "parent": "botocore",
+      "dependency": "jmespath",
+      "installed": "1.1.0",
+      "satisfied": true
+    },
+    {
+      "parent": "botocore",
+      "dependency": "python-dateutil",
+      "installed": "2.9.0.post0",
+      "satisfied": true
+    },
+    {
+      "parent": "botocore",
+      "dependency": "urllib3",
+      "installed": "2.7.0",
+      "satisfied": true
+    },
+    {
+      "parent": "s3transfer",
+      "dependency": "botocore",
+      "installed": "1.43.95",
+      "satisfied": true
+    },
+    {
+      "parent": "python-dateutil",
+      "dependency": "six",
+      "installed": "1.17.0",
+      "satisfied": true
+    }
+  ],
+  "network_used": false,
+  "existing_pins_refreshed": false
+}

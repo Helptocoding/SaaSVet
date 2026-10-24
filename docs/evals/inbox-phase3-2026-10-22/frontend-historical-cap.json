@@ -1,0 +1,29 @@
+{
+  "kind": "frontend",
+  "labels": [
+    "src/pages/inbox/index.test.jsx",
+    "-t",
+    "aplica el cap global",
+    "--testTimeout=15000"
+  ],
+  "working_database_migrated": false,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "-t",
+    "aplica el cap global",
+    "--testTimeout=15000",
+    "--maxWorkers=1",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-phase3-2026-10-22\\frontend-historical-cap-vitest.json"
+  ],
+  "vitest_report": "frontend-historical-cap-vitest.json",
+  "passed": 1,
+  "failed": 0,
+  "exit_code": 0,
+  "elapsed_s": 36.92172660000506
+}

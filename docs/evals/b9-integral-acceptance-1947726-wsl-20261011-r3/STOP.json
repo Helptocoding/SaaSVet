@@ -1,0 +1,11 @@
+{
+  "state": "PENDING_CLASSIFICATION",
+  "phase": "b3",
+  "cause": "Suite reports failures/errors; classify validity from retained traces",
+  "no_rerun": true,
+  "failed_ids": [
+    "apps.agent.tests.test_b3_processes.B3ProcessTests.test_dup_01_two_processes_compete_for_one_lease",
+    "apps.agent.tests.test_b3_processes.B3ProcessTests.test_dur_01_killed_process_restarted_worker_recovers_same_work",
+    "apps.agent.tests.test_b3_processes.B3ProcessTests.test_llm_timeout_runs_outside_transaction_and_commits_fallback"
+  ]
+}

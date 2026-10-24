@@ -1,0 +1,35 @@
+{
+  "state": "PREPARED_WAITING_FOR_AC",
+  "candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+  "utc": "2026-10-20T00:37:22Z",
+  "cause": "Windows reports battery without AC; remaining power is shorter than the pending complete stages",
+  "power": {
+    "ac": 0,
+    "flag": 2,
+    "percent": 32,
+    "reserved": 0,
+    "remaining_seconds": 1038,
+    "full": 4294967295
+  },
+  "resources": {
+    "utc": "2026-10-20T00:37:22Z",
+    "utc_epoch_seconds": 1792456642.784373,
+    "physical_total": 17031217152,
+    "physical_available": 5059186688,
+    "page_available": 8239992832,
+    "disk_available": 12029837312,
+    "platform": "Windows native"
+  },
+  "retained_PASS": 2483,
+  "retained_expected_skips": 2,
+  "remaining_cases": 728,
+  "reused_complete_PASS_blocks": 13,
+  "formal_application_tests_executed_here": false,
+  "formal_invocation_started": false,
+  "candidate_or_dependencies_removed": false,
+  "accepted_historical_evidence_limitation": true,
+  "authorization": "case-resumption-authorization.json",
+  "next": "Confirm AC, start fresh bounded auxiliaries, restart same cluster, refresh live launcher/clock checks, seal, run only 728 cases and remaining stages",
+  "new_authorization_required": false,
+  "no_test_reruns_required": true
+}

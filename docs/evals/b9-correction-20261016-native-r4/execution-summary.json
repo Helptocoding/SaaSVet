@@ -1,0 +1,84 @@
+{
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "formal_controller_invocations": 1,
+  "formal_command_blocks": 6,
+  "formal_reruns": 0,
+  "full_execution_sources": [
+    "full-b8b",
+    "full-b8c",
+    "full-b8d",
+    "full-b8e",
+    "full-general"
+  ],
+  "logical_full_aggregate_counted_as_additional_execution": false,
+  "backend_id_observations_in_complete_receipts": 87,
+  "backend_unique_ids_in_complete_receipts": 87,
+  "duplicate_observations_in_complete_receipts": 0,
+  "backend_id_observations_including_partial_journals": 87,
+  "backend_unique_observed_ids_including_partial_journals": 87,
+  "duplicate_observations_including_partial_journals": 0,
+  "incomplete_suite_journals": {
+    "b0": {
+      "path": "blocks/b0.ids.jsonl",
+      "journal_present": true,
+      "journal_scope": "ALL_RECORDED_OUTCOMES",
+      "observations": 0,
+      "outcomes": {},
+      "skips": [],
+      "unique_ids": 0,
+      "selected_ids": 17,
+      "missing_ids": [
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_direct_pending_commit_is_contained",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_emergency_copy_uses_only_configured_phone",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_failure_after_persistence_leaves_pending_event",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_forced_dispatch_cannot_invoke_any_write_handler",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_forced_planner_write_is_handed_off",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_legacy_pending_cannot_authorize_any_reply",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_llm_timeout_yields_honest_fallback",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_pending_events_and_queued_outbound_do_not_mean_delivery",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_personal_read_needs_current_identity",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_public_read_and_explicit_human_remain_available",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_read_result_does_not_prove_write_or_price",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_registry_covers_every_current_write",
+        "apps.agent.tests.test_b0_containment.B0ContainmentTests.test_unsafe_output_corpus_is_replaced_without_retry",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_alert_acceptance_failure_and_no_free_text_export",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_controlled_provider_failure_boundaries",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_failed_empty_skipped_or_expected_failure_cannot_pass_gate",
+        "apps.agent.tests.test_b0_containment.B0CorpusGateTests.test_fixture_is_required_and_complete"
+      ],
+      "complete_suite_receipt": false,
+      "accepted_as_complete_gate": false
+    }
+  },
+  "focused_development_verification_separate": {
+    "source": "../b9-correction-20261013/focused-verification.json",
+    "sha256": "e42650796e3025eb92b747ec2b45a1c6ecb9b24fa206228c8ea943154def17eb",
+    "receipt": {
+      "state": "PASS_WITH_IDENTIFIED_HISTORICAL_SKIP",
+      "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+      "tests": 156,
+      "PASS": 155,
+      "FAIL": 0,
+      "ERROR": 0,
+      "SKIP": [
+        {
+          "id": "apps.agent.tests.test_regression_f2.Int21Tests.test_21_05_bis_new_pet_existing_owner",
+          "outcome": "SKIP",
+          "reason": "INT-21-bis (mascota nueva de cliente existente) sin tool en PR-17a; el alta reusa create-with-patient — pendiente de PR futuro.",
+          "utc": "2026-10-14T05:42:14Z",
+          "traceback": null
+        }
+      ],
+      "original_11_ids_all_pass": true,
+      "development_test_suite_invocations": 2,
+      "earlier_development_result": "focused/attempt1/diagnostic.results.json",
+      "preflight_failure_without_test_execution": "focused/attempt2-preflight/explanation.json",
+      "formal_campaign_invocations": 0,
+      "production_files_changed": false
+    },
+    "executed_in_this_campaign": false,
+    "substitutes_current_acceptance": false
+  },
+  "profile_variants_executed": 0,
+  "historical_results_transferred": false
+}

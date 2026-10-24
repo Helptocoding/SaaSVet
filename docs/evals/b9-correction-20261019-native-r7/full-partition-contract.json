@@ -1,0 +1,109 @@
+{
+  "candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+  "full_selection_sha256": "3aa55ce8470fd29ff9688df5f94fc49b57d0429ab76d8595379df0755a81a6c6",
+  "guards": {
+    "b8b": {
+      "path": "backend/apps/agent/tests/b8b_process.py",
+      "required_prefix": "test_b8b_",
+      "source_sha256": "92b72220c21ae839b05c08362b4e2f56ec253a9b943433efb65ae410286f149b",
+      "matching_lines": [
+        [
+          24,
+          "    if not config['NAME'].startswith('test_b8b_'):"
+        ],
+        [
+          72,
+          "                if mode.startswith('hold_'):"
+        ],
+        [
+          90,
+          "                if mode.startswith('hold_'):"
+        ]
+      ],
+      "local_checkout_sha256": "92b72220c21ae839b05c08362b4e2f56ec253a9b943433efb65ae410286f149b",
+      "source_hash_scope": "Exact candidate Git blob after verified Windows newline normalization"
+    },
+    "b8c": {
+      "path": "backend/apps/agent/tests/b8c_process.py",
+      "required_prefix": "test_b8c_",
+      "source_sha256": "9d3abf6b5e7dd40cc692ee22e82179777374408d8f67548957e49ae6ea068424",
+      "matching_lines": [
+        [
+          24,
+          "    if not config['NAME'].startswith('test_b8c_'):"
+        ],
+        [
+          66,
+          "                if mode.startswith('hold_'):"
+        ]
+      ],
+      "local_checkout_sha256": "9d3abf6b5e7dd40cc692ee22e82179777374408d8f67548957e49ae6ea068424",
+      "source_hash_scope": "Exact candidate Git blob after verified Windows newline normalization"
+    },
+    "b8d": {
+      "path": "backend/apps/agent/tests/b8d_process.py",
+      "required_prefix": "test_b8d_",
+      "source_sha256": "61d7163be1311168b0f6758bfc206c396669a61fe0d9e97f9ebdfeabde0e5180",
+      "matching_lines": [
+        [
+          24,
+          "    if not config['NAME'].startswith('test_b8d_'):"
+        ],
+        [
+          59,
+          "                if mode.startswith('hold_'):"
+        ],
+        [
+          79,
+          "                if mode.startswith('hold_'):"
+        ]
+      ],
+      "local_checkout_sha256": "b2bd92db42a8897e4e5c4b2d44c1784ea1c0d8ee1b0d76e43ab74a8b0352afd9",
+      "source_hash_scope": "Exact candidate Git blob after verified Windows newline normalization"
+    },
+    "b8e": {
+      "path": "backend/apps/agent/tests/b8e_process.py",
+      "required_prefix": "test_b8e_",
+      "source_sha256": "d9cc3950c92545062c55f11cb74b8ef87486ec526f024bc5f1ec29ab427ba018",
+      "matching_lines": [
+        [
+          23,
+          "    if not config['NAME'].startswith('test_b8e_'):"
+        ],
+        [
+          55,
+          "                if mode.startswith('hold_'): barrier('OWNER_EDIT_LOCKED')"
+        ],
+        [
+          64,
+          "                if mode.startswith('hold_'): barrier('CHANGED')"
+        ],
+        [
+          90,
+          "                if mode.startswith('hold_'): barrier('CHANGED')"
+        ],
+        [
+          101,
+          "                if mode.startswith('hold_'): barrier('CHANGED')"
+        ]
+      ],
+      "local_checkout_sha256": "d9cc3950c92545062c55f11cb74b8ef87486ec526f024bc5f1ec29ab427ba018",
+      "source_hash_scope": "Exact candidate Git blob after verified Windows newline normalization"
+    }
+  },
+  "counts": {
+    "b8b": 21,
+    "b8c": 41,
+    "b8d": 27,
+    "b8e": 29,
+    "general": 3213
+  },
+  "order": [
+    "b8b",
+    "b8c",
+    "b8d",
+    "b8e",
+    "general"
+  ],
+  "sources_assertions_guards_loads_timings_thresholds_changed": false
+}

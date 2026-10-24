@@ -1,0 +1,217 @@
+{
+  "status": "PASS",
+  "scope": "WA-RPL-03 quoted send API and transcript projection",
+  "unique_pass": 42,
+  "new_cases": 25,
+  "affected_cases": 17,
+  "results": {
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_api_query_count_does_not_grow_with_quote_count": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_before_around_and_legacy_transcript_include_quote": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_closed_session_rejects_new_quoted_send": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_corrupt_legacy_quote_does_not_leak_foreign_or_other_person_content": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_empty_media_and_discarded_or_failed_targets_keep_status": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_foreign_conversation_is_404_before_replay": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_foreign_human_author_name_is_not_disclosed_in_quote": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_historical_episode_and_hidden_target_are_valid": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_human_author_and_username_fallback_are_projected": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_invalid_input_values_are_400": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_missing_optional_field_keeps_legacy_send_and_null_projection": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_other_person_account_organization_and_missing_target_are_rejected_without_takeover": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_post_get_roundtrip_and_exact_bounded_projection": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_projection_is_one_level_even_when_target_is_a_reply": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_quote_edit_outside_loaded_page_updates_parent_without_touching_it": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_quote_status_and_author_rename_are_detected_without_parent_write": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_replay_after_close_preserves_quote": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_replay_keeps_original_quote_even_with_invalid_changed_request": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_retry_preserves_quote_body_author_and_key": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_serializer_has_one_query_for_many_quotes_and_authors": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_stable_delta_with_quotes_is_empty": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_tail_beyond_excerpt_does_not_change_parent_projection": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_takeover_response_reads_current_discarded_target_status": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyApiTests.test_view_only_and_anonymous_cannot_send_but_viewer_can_read_quote": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_replies.InboxReplyRaceTests.test_concurrent_same_key_with_different_quotes_returns_one_original": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_creates_outbound_and_takes_over": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_same_idempotency_key_replays_same_message_once": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_replay_survives_conversation_closed_after_first_send": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_same_key_with_different_body_returns_original": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_recovers_winner_after_idempotency_integrity_race": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_does_not_mask_integrity_error_without_winner": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_empty_body_rejected": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_send_to_closed_conversation_rejected": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_api.InboxFlowTests.test_transcript_returns_messages_in_order": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_api.InboxRbacTests.test_idempotency_replay_cannot_bypass_cross_tenant_send_404": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_stable_transcript_transfers_no_bodies_metadata_or_new_cursor": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_new_and_modified_messages_are_merged_with_equal_updated_at": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_scroll_back_expands_range_and_preserves_old_message_updates": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_cache_loss_requests_recovery_and_stores_no_pii": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_stable_delta_does_not_select_message_bodies": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_sync.InboxSyncTests.test_query_plan_and_payload_size_for_large_thread": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    },
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_other_staff_requeues_same_row_preserving_payload_author_key_and_claim": {
+      "status": "passed",
+      "receipt": "backend-affected.json"
+    }
+  },
+  "source_sha256": {
+    "backend/apps/agent/serializers.py": "eec1e9c20a9576762c174ae0361783162e4ca8fd2857c0e80df0273732122dee",
+    "backend/apps/agent/views.py": "33ae9131e47fd1610394a7e8e4ef835a8c578c057634448c4b71c2c543166c42",
+    "backend/apps/agent/inbox_sync.py": "43137c827bcce958581852e3d675354967270e332e5cd1213e9d470c461c4393",
+    "backend/apps/agent/tests/test_inbox_replies.py": "b61aa0e3fc317454324541f3755020cff638df9e72fdb7e11dd5d55d41d3a766",
+    "backend/apps/channels/replies.py": "3ba1cbccf0ea5b02d0dc73d73cea1865b26411bcdbe690cf0325758287ff6d5e",
+    "docs/CIERRE-INBOX-WHATSAPP.md": "b87d90e6cc2b20e8861372a40b1d1f929b94aaa41f43f45a393404feb59a6143",
+    "docs/plan-implementacion-whatsapp-inbox-2026-08-22.md": "96d1a418a723b28ab6ababcd040795f430deacc465573352c9f1d14bdd803af9",
+    "docs/modules/agent.md": "cb3ea3cff6a882c7cc877bf432d6d504ce559cc4d07842d1436bfa6bfcaaaa35",
+    "CHANGELOG.md": "810ba18d8ef7b19b43fc88737c4fb97596dc4b8fd43c58aceaea97f5cb67350b",
+    "docs/evals/inbox-rpl-03-2026-10-21/README.md": "16b5a8ad17b85112e354d2b360ca1c6a0e2f3b504dde0a7daade4af8645d9369",
+    "docs/evals/inbox-rpl-03-2026-10-21/run_checks.py": "92aa252a346989f1078f88a9d5ac8f17542faad1eb605ce54a5de245a9b7af47",
+    "docs/evals/inbox-rpl-03-2026-10-21/verify.py": "2563c0b5080dfd459b0a36ca9986fc4e783c586fa3e1de16c645832a38238105"
+  },
+  "drift": "drift-final.json",
+  "working_database_migrated": false,
+  "new_migrations": false,
+  "query_plan": {
+    "artifact": "query-plan-affected.json",
+    "total_messages": 6001,
+    "loaded_messages": 50,
+    "full_payload_bytes": 52804,
+    "stable_delta_bytes": 303,
+    "domain_queries": 13,
+    "execution_time_ms": 1.49,
+    "indexes": [
+      "agent_conversation_pkey",
+      "channels_me_organiz_c00b67_idx",
+      "channels_message_pkey",
+      "users_user_pkey"
+    ]
+  },
+  "native_provider_citation": "IMPLEMENTATION_PENDING",
+  "real_meta": "POSTPONED_PENDING",
+  "next_task": "WA-RPL-05",
+  "diff_check": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "warning: in the working copy of 'backend/apps/agent/serializers.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'backend/apps/agent/views.py', LF will be replaced by CRLF the next time Git touches it\n"
+  }
+}

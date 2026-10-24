@@ -1,0 +1,13 @@
+--- native-r3/clock_probe.py
++++ native/clock_probe.py
+@@ -12,8 +12,8 @@
+         break
+     time.sleep(.5)
+ maximum = max(abs(row['wall_minus_monotonic_seconds']) for row in rows)
+-save('clock-observation.json', rows)
+-save('clock-preflight.json', {'state': 'PASS' if maximum <= 1 else 'PENDING',
++save('clock-recovery-observation.json', rows)
++save('clock-recovery-preflight.json', {'state': 'PASS' if maximum <= 1 else 'PENDING',
+      'elapsed_seconds': rows[-1]['elapsed_seconds'], 'samples': len(rows),
+      'max_absolute_wall_minus_monotonic_seconds': maximum,
+      'host_clock_configuration_changed': False, 'W32Time_changed': False, 'wsl_invoked': False,

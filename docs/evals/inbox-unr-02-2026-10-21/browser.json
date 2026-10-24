@@ -1,0 +1,246 @@
+{
+  "status": "PASS",
+  "synthetic_api": true,
+  "controlled_focus_visibility": true,
+  "measurements": [
+    {
+      "viewport": "desktop",
+      "independent_staff": true,
+      "view_only_read": true,
+      "blur_cancels": true,
+      "hidden_does_not_mark": true,
+      "silent_failure_retry": true,
+      "divider_removed_after_ack": true,
+      "anchor_delta": 0.0,
+      "total_spans_pages": true,
+      "horizontal_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "independent_staff": true,
+      "view_only_read": true,
+      "blur_cancels": true,
+      "hidden_does_not_mark": true,
+      "silent_failure_retry": true,
+      "divider_removed_after_ack": true,
+      "anchor_delta": 0.0,
+      "total_spans_pages": true,
+      "horizontal_overflow": false
+    }
+  ],
+  "requests": [
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "me/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/main/messages/",
+      "body": null
+    },
+    {
+      "actor": "b",
+      "method": "GET",
+      "path": "me/",
+      "body": null
+    },
+    {
+      "actor": "b",
+      "method": "GET",
+      "path": "inbox/threads/",
+      "body": null
+    },
+    {
+      "actor": "b",
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "body": null
+    },
+    {
+      "actor": "b",
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "body": null
+    },
+    {
+      "actor": "b",
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/main/messages/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/main/messages/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "POST",
+      "path": "inbox/threads/contact-ana/main/read/",
+      "body": {
+        "last_read_message_id": 200
+      }
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/main/messages/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "POST",
+      "path": "inbox/threads/contact-ana/main/read/",
+      "body": {
+        "last_read_message_id": 200
+      }
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "me/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/main/messages/",
+      "body": null
+    },
+    {
+      "actor": "b",
+      "method": "GET",
+      "path": "me/",
+      "body": null
+    },
+    {
+      "actor": "b",
+      "method": "GET",
+      "path": "inbox/threads/",
+      "body": null
+    },
+    {
+      "actor": "b",
+      "method": "GET",
+      "path": "inbox/metrics/",
+      "body": null
+    },
+    {
+      "actor": "b",
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "body": null
+    },
+    {
+      "actor": "b",
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/main/messages/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/main/messages/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "POST",
+      "path": "inbox/threads/contact-ana/main/read/",
+      "body": {
+        "last_read_message_id": 200
+      }
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/contact-ana/main/messages/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "POST",
+      "path": "inbox/threads/contact-ana/main/read/",
+      "body": {
+        "last_read_message_id": 200
+      }
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "inbox/threads/",
+      "body": null
+    }
+  ],
+  "page_errors": []
+}

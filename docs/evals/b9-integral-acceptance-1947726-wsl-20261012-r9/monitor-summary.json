@@ -1,0 +1,171 @@
+{
+  "blocks": {
+    "directed": {
+      "samples": 1125,
+      "first_utc": "2026-10-13T04:20:02Z",
+      "last_utc": "2026-10-13T04:39:03Z",
+      "minimum_host_available_bytes": 2339975168,
+      "minimum_guest_available_bytes": 7223742464,
+      "minimum_backing_disk_available_bytes": 4909170688,
+      "maximum_absolute_clock_skew_seconds": 4.760758679367427e-05,
+      "awake_states": [
+        "ACTIVE_CONFIRMED"
+      ],
+      "maximum_checked_awake_heartbeat_age_seconds": 1.0008628368377686
+    },
+    "django-check": {
+      "samples": 5,
+      "first_utc": "2026-10-13T04:39:19Z",
+      "last_utc": "2026-10-13T04:39:23Z",
+      "minimum_host_available_bytes": 3165491200,
+      "minimum_guest_available_bytes": 7452377088,
+      "minimum_backing_disk_available_bytes": 4906741760,
+      "maximum_absolute_clock_skew_seconds": 2.621956127768499e-06,
+      "awake_states": [
+        "ACTIVE_CONFIRMED"
+      ],
+      "maximum_checked_awake_heartbeat_age_seconds": 0.5976293087005615
+    },
+    "migration-drift": {
+      "samples": 6,
+      "first_utc": "2026-10-13T04:39:37Z",
+      "last_utc": "2026-10-13T04:39:42Z",
+      "minimum_host_available_bytes": 3269029888,
+      "minimum_guest_available_bytes": 7429865472,
+      "minimum_backing_disk_available_bytes": 4905132032,
+      "maximum_absolute_clock_skew_seconds": 7.34523382561747e-07,
+      "awake_states": [
+        "ACTIVE_CONFIRMED"
+      ],
+      "maximum_checked_awake_heartbeat_age_seconds": 0.8242926597595215
+    },
+    "migrate": {
+      "samples": 147,
+      "first_utc": "2026-10-13T04:39:58Z",
+      "last_utc": "2026-10-13T04:42:25Z",
+      "minimum_host_available_bytes": 3517063168,
+      "minimum_guest_available_bytes": 7361884160,
+      "minimum_backing_disk_available_bytes": 4840218624,
+      "maximum_absolute_clock_skew_seconds": 2.180173169108457e-06,
+      "awake_states": [
+        "ACTIVE_CONFIRMED"
+      ],
+      "maximum_checked_awake_heartbeat_age_seconds": 0.9954464435577393
+    },
+    "billing-schema": {
+      "samples": 6,
+      "first_utc": "2026-10-13T04:42:39Z",
+      "last_utc": "2026-10-13T04:42:44Z",
+      "minimum_host_available_bytes": 3516182528,
+      "minimum_guest_available_bytes": 7437643776,
+      "minimum_backing_disk_available_bytes": 4891291648,
+      "maximum_absolute_clock_skew_seconds": 1.015968791762134e-06,
+      "awake_states": [
+        "ACTIVE_CONFIRMED"
+      ],
+      "maximum_checked_awake_heartbeat_age_seconds": 0.9371237754821777
+    },
+    "b0": {
+      "samples": 162,
+      "first_utc": "2026-10-13T04:42:59Z",
+      "last_utc": "2026-10-13T04:45:41Z",
+      "minimum_host_available_bytes": 3470692352,
+      "minimum_guest_available_bytes": 7346204672,
+      "minimum_backing_disk_available_bytes": 4823855104,
+      "maximum_absolute_clock_skew_seconds": 2.5025068680406548e-05,
+      "awake_states": [
+        "ACTIVE_CONFIRMED"
+      ],
+      "maximum_checked_awake_heartbeat_age_seconds": 0.9815053939819336
+    },
+    "b3": {
+      "samples": 372,
+      "first_utc": "2026-10-13T04:45:57Z",
+      "last_utc": "2026-10-13T04:52:11Z",
+      "minimum_host_available_bytes": 3348193280,
+      "minimum_guest_available_bytes": 7215599616,
+      "minimum_backing_disk_available_bytes": 4807548928,
+      "maximum_absolute_clock_skew_seconds": 2.295103058713721e-06,
+      "awake_states": [
+        "ACTIVE_CONFIRMED"
+      ],
+      "maximum_checked_awake_heartbeat_age_seconds": 0.9784622192382812
+    },
+    "b4": {
+      "samples": 1309,
+      "first_utc": "2026-10-13T04:52:24Z",
+      "last_utc": "2026-10-13T05:14:21Z",
+      "minimum_host_available_bytes": 2862813184,
+      "minimum_guest_available_bytes": 7214776320,
+      "minimum_backing_disk_available_bytes": 4716470272,
+      "maximum_absolute_clock_skew_seconds": 5.114222267366131e-05,
+      "awake_states": [
+        "ACTIVE_CONFIRMED"
+      ],
+      "maximum_checked_awake_heartbeat_age_seconds": 0.9978842735290527
+    },
+    "b5": {
+      "samples": 424,
+      "first_utc": "2026-10-13T05:14:38Z",
+      "last_utc": "2026-10-13T05:21:44Z",
+      "minimum_host_available_bytes": 2752765952,
+      "minimum_guest_available_bytes": 7157071872,
+      "minimum_backing_disk_available_bytes": 4649365504,
+      "maximum_absolute_clock_skew_seconds": 2.6170691853621975e-06,
+      "awake_states": [
+        "ACTIVE_CONFIRMED"
+      ],
+      "maximum_checked_awake_heartbeat_age_seconds": 0.9961001873016357
+    },
+    "full": {
+      "samples": 7196,
+      "first_utc": "2026-10-13T05:21:58Z",
+      "last_utc": "2026-10-13T07:23:17Z",
+      "minimum_host_available_bytes": 2403557376,
+      "minimum_guest_available_bytes": 7078313984,
+      "minimum_backing_disk_available_bytes": 708132864,
+      "maximum_absolute_clock_skew_seconds": 0.00021491849292942788,
+      "awake_states": [
+        "ACTIVE_CONFIRMED"
+      ],
+      "maximum_checked_awake_heartbeat_age_seconds": 1.0054938793182373
+    }
+  },
+  "samples": 10752,
+  "memory_reserve_exhausted": false,
+  "disk_reserve_exhausted": true,
+  "clock_incident": false,
+  "awake_request_unavailable": false,
+  "first_disk_breach": {
+    "elapsed_seconds": 7279.039435767001,
+    "wall_minus_monotonic_seconds": 1.0501680662855506e-06,
+    "guest": {
+      "utc": "2026-10-13T07:23:17Z",
+      "physical_available": 7233540096,
+      "physical_total": 8252518400,
+      "disk_available": 708132864,
+      "linux_virtual_disk_available": 1016954195968
+    },
+    "host": {
+      "utc": "2026-10-13T07:23:15Z",
+      "physical_total": 17031217152,
+      "physical_available": 3692482560,
+      "page_available": 2084478976,
+      "utc_epoch_seconds": 1791876195.9017818,
+      "observer_pid": 18840
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-13T07:23:15Z",
+        "utc_epoch_seconds": 1791876195.6775432,
+        "pid": 22456,
+        "thread_id": 20580,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.5977346897125244
+    }
+  },
+  "disk_breach_samples": 1,
+  "scope": "Formal monitor samples only; no claim of continuity across host restart"
+}

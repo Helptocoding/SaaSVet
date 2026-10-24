@@ -1,0 +1,65 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/index.filters.test.jsx (10 tests) 2381ms
+     ✓ Sin atender envía filtro al servidor y muestra su respuesta  784ms
+ ✓ src/pages/inbox/index.test.jsx (93 tests) 52135ms
+     ✓ allows the current human owner to explicitly acknowledge a new queued case  1513ms
+     ✓ cambiar de hilo no conserva el botón del historial anterior  636ms
+     ✓ active: explica el turno y habilita Tomar y acusar recibo al terminar  437ms
+     ✓ human_active: explica el turno y habilita Liberar al terminar  409ms
+     ✓ no hereda el indicador de otro hilo ni de la fila antigua  317ms
+     ✓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  947ms
+     ✓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  961ms
+     ✓ un fallo tardío del hilo anterior no contamina la racha del nuevo  344ms
+     ✓ pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias  319ms
+     ✓ cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía  311ms
+     ✓ maneja clipboard no disponible sin anunciar una copia falsa  355ms
+     ✓ crece al pegar 2000 caracteres, limita la altura y encoge al borrar  327ms
+     ✓ muestra el contador después de 3600 y conserva el límite de 4000  421ms
+     ✓ reinicia altura y contador al enviar sin esperar el POST  398ms
+     ✓ descarta texto y contador al cambiar de cliente  477ms
+     ✓ descarta el texto de Ana al cambiar al hilo de Beto  875ms
+     ✓ conserva el borrador al volver a clicar el mismo hilo  735ms
+     ✓ envía al sessionId vigente con una key de idempotencia no vacía  934ms
+     ✓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde  2034ms
+     ✓ reutiliza la key si se reintenta el mismo texto tras un error de red  2107ms
+     ✓ conserva la key incierta al navegar B y volver a A con el mismo texto  1611ms
+     ✓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto  889ms
+     ✓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío  1894ms
+     ✓ regenera la key cuando cambia el texto después de un error  1545ms
+     ✓ pinta el envío antes del POST y reconcilia el 201 sin duplicar  1050ms
+     ✓ elimina el optimista ante 400 y muestra el error del servidor  712ms
+     ✓ conserva el optimista reintentable ante un 5xx  898ms
+     ✓ deduplica un polling concurrente exclusivamente por client_message_id  960ms
+     ✓ dos envíos consecutivos por Enter reciben keys distintas  1125ms
+     ✓ no ejecuta continuaciones del POST después de desmontar el Inbox  777ms
+     ✓ aplica el cap global de 20 intentos entre sesiones  2980ms
+     ✓ oculta failed-local cuando el hilo regresa con otra sesión activa  1132ms
+     ✓ permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes  2165ms
+     ✓ refresca todas las páginas cargadas y conserva selección y borrador  685ms
+     ✓ bloquea el doble clic y el poll mientras carga otra página  375ms
+     ✓ carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo  795ms
+     ✓ el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor  2080ms
+     ✓ un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador  885ms
+     ✓ la página anterior no sustituye la sesión vigente renovada por el poll  412ms
+     ✓ ignora success antiguo al cambiar de hilo y aborta su petición  407ms
+     ✓ ignora failure antiguo al cambiar de hilo y aborta su petición  421ms
+     ✓ una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo  1417ms
+     ✓ un mensaje nuevo pegado al fondo sigue visible sin contador  604ms
+     ✓ bajar manualmente hasta el fondo retira el contador  893ms
+     ✓ cambiar de hilo no conserva el contador del anterior  810ms
+     ✓ al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores  715ms
+     ✓ una llegada de hoy conserva la lectura de julio aunque cree un divisor de día  829ms
+ ✓ src/pages/inbox/index.sync.test.jsx (16 tests) 4137ms
+     ✓ tras cargar usa since en lista y transcript sin volver a descargar mensajes  767ms
+     ✓ publica juntas las páginas con movimientos y sin duplicar un hilo  357ms
+     ✓ cambiar filtro aborta lista y empieza con un cursor propio  684ms
+     ✓ conserva el floor opaco del servidor al ampliar historial y reconcilia su rango  427ms
+
+ Test Files  3 passed (3)
+      Tests  119 passed (119)
+   Start at  20:41:52
+   Duration  95.25s (transform 2.23s, setup 1.79s, import 6.56s, tests 58.65s, environment 18.09s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-srch-01-2026-10-21/vitest-affected.json

@@ -1,0 +1,52 @@
+{
+  "label": "b3",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261011-r3/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011-r3/venv/bin/python",
+    "-B",
+    "/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261011-r3/recorded_suite.py",
+    "b3",
+    "test_b9i_b3"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261011-r3/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-12T01:48:55Z",
+      "physical_available": 7497347072,
+      "physical_total": 8252514304,
+      "disk_available": 4417355776,
+      "linux_virtual_disk_available": 1017099100160
+    },
+    "host": {
+      "utc": "2026-10-12T01:48:56Z",
+      "physical_total": 17031217152,
+      "physical_available": 5987028992,
+      "page_available": 8166543360
+    },
+    "ready": true
+  },
+  "pid": 2335,
+  "exit_code": 1,
+  "seconds": 378.05218939299994,
+  "invalidating_incident": null,
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-12T01:55:15Z",
+      "physical_available": 7497162752,
+      "physical_total": 8252514304,
+      "disk_available": 4375478272,
+      "linux_virtual_disk_available": 1017099059200
+    },
+    "host": {
+      "utc": "2026-10-12T01:55:16Z",
+      "physical_total": 17031217152,
+      "physical_available": 6044823552,
+      "page_available": 8267124736
+    }
+  }
+}

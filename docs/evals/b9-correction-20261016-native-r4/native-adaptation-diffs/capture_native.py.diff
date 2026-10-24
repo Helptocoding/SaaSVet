@@ -1,0 +1,10 @@
+--- native-r3/capture_native.py
++++ native/capture_native.py
+@@ -15,6 +15,7 @@
+         args = [PYTHON, '-B', EVIDENCE / 'prepare_native.py', step]
+     else:
+         args = {'clock': [PYTHON, '-B', EVIDENCE / 'clock_probe.py'],
++                'recover': [PYTHON, '-B', EVIDENCE / 'recover_preparation.py'],
+                 'retire-cache': [PYTHON, '-B', EVIDENCE / 'retire_install_cache.py'],
+                 'finalize': [PYTHON, '-B', EVIDENCE / 'finalize_preflight.py'],
+                 'validate': [PYTHON, '-B', EVIDENCE / 'launch_native.py', '--validate-only'],

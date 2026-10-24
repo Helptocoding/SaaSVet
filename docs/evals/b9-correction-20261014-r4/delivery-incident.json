@@ -1,0 +1,24 @@
+{
+  "state": "RESOLVED_EVIDENCE_FORMAT_ONLY",
+  "initial_command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "cause": "Two trailing spaces in the already sealed bootstrap evidence, lines 91 and 97",
+  "preserved_source_sha256": "9ce6293feefc51d0698dc2f08827bdeff9a85fd81acd840ad34066d88752847d",
+  "original_archive_sha256": "5e12b00e737a73c7f3c6092cdac414d93c2fb0f5ec47ca84f70453d308d921d0",
+  "frozen_evaluator_source_modified": false,
+  "original_package_rewritten": false,
+  "format_exception_exact_path": "docs/evals/b9-correction-20261014-r4/bootstrap.py",
+  "format_exception_rule": "docs/evals/b9-correction-20261014-r4/bootstrap.py whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol",
+  "application_tests_guards_assertions_or_gates_changed": false,
+  "formal_campaign_restarted": false,
+  "supplemental_delivery_metadata_outside_original_archive": [
+    "delivery-incident.json",
+    "diagnostics/finish_delivery.py"
+  ],
+  "initial_delivery_process_exit_code": 1,
+  "raw_git_exit_code_not_retained": true
+}

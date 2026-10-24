@@ -1,0 +1,75 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/index.sync.test.jsx (16 tests) 4862ms
+     ✓ tras cargar usa since en lista y transcript sin volver a descargar mensajes  1043ms
+     ✓ actualiza una fila y añade una nueva sin duplicar ni perder el borrador  388ms
+     ✓ publica juntas las páginas con movimientos y sin duplicar un hilo  551ms
+     ✓ metadatos de archivo retiran composer y conservan historia  324ms
+     ✓ cambiar filtro aborta lista y empieza con un cursor propio  364ms
+ ✓ src/pages/inbox/index.test.jsx (93 tests) 68164ms
+     ✓ allows the current human owner to explicitly acknowledge a new queued case  1533ms
+     ✓ cambiar de hilo no conserva el botón del historial anterior  864ms
+     ✓ permite recorrer un hilo archivado sin habilitar el envío  367ms
+     ✓ active: explica el turno y habilita Tomar y acusar recibo al terminar  542ms
+     ✓ human_active: explica el turno y habilita Liberar al terminar  435ms
+     ✓ no hereda el indicador de otro hilo ni de la fila antigua  436ms
+     ✓ un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada  420ms
+     ✓ distingue carga inicial de lista y mensajes de un panel sin selección  354ms
+     ✓ explica el fallo inicial de transcript y reintenta la misma conversación  344ms
+     ✓ Conversaciones: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  1424ms
+     ✓ Mensajes: dos fallos muestran banner, conserva datos/borrador y reintenta sin duplicar  1294ms
+     ✓ recupera ambos paneles automáticamente cuando vuelve la API  301ms
+     ✓ un fallo tardío del hilo anterior no contamina la racha del nuevo  492ms
+     ✓ representa unknown en ambos paneles sin habilitar acciones de identidad  328ms
+     ✓ cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía  373ms
+     ✓ copia el cuerpo original completo, sin horas ni autor, y confirma el éxito  319ms
+     ✓ copia teléfono y ofrece tel: también con hilo archivado=true  363ms
+     ✓ crece al pegar 2000 caracteres, limita la altura y encoge al borrar  370ms
+     ✓ muestra el contador después de 3600 y conserva el límite de 4000  546ms
+     ✓ reinicia altura y contador al enviar sin esperar el POST  493ms
+     ✓ descarta texto y contador al cambiar de cliente  476ms
+     ✓ descarta el texto de Ana al cambiar al hilo de Beto  1288ms
+     ✓ conserva el borrador al volver a clicar el mismo hilo  777ms
+     ✓ envía al sessionId vigente con una key de idempotencia no vacía  1079ms
+     ✓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde  2424ms
+     ✓ reutiliza la key si se reintenta el mismo texto tras un error de red  2217ms
+     ✓ conserva la key incierta al navegar B y volver a A con el mismo texto  1945ms
+     ✓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto  1058ms
+     ✓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío  2383ms
+     ✓ regenera la key cuando cambia el texto después de un error  1828ms
+     ✓ pinta el envío antes del POST y reconcilia el 201 sin duplicar  1262ms
+     ✓ elimina el optimista ante 400 y muestra el error del servidor  855ms
+     ✓ conserva el optimista reintentable ante un 5xx  1083ms
+     ✓ deduplica un polling concurrente exclusivamente por client_message_id  1015ms
+     ✓ dos envíos consecutivos por Enter reciben keys distintas  1449ms
+     ✓ no ejecuta continuaciones del POST después de desmontar el Inbox  1220ms
+     ✓ aplica el cap global de 20 intentos entre sesiones  4528ms
+     ✓ oculta failed-local cuando el hilo regresa con otra sesión activa  1673ms
+     ✓ renderiza un divisor por día local de la organización  522ms
+     ✓ permite alcanzar 250 conversaciones en tres páginas y anuncia las restantes  3343ms
+     ✓ refresca todas las páginas cargadas y conserva selección y borrador  994ms
+     ✓ bloquea el doble clic y el poll mientras carga otra página  305ms
+     ✓ un refresco parcial fallido retiene todas las filas y muestra reconexión tras dos fallos  395ms
+     ✓ ignora una carga tardía con éxito después de cambiar de filtro  555ms
+     ✓ ignora una carga tardía con error después de cambiar de filtro  354ms
+     ✓ carga al subir, deduplica 51 mensajes y conserva la posición sin saltar al fondo  1201ms
+     ✓ el poll conserva páginas anteriores y actualiza mensajes y metadatos sin adelantar el cursor  3024ms
+     ✓ un 400 muestra error persistente y reintenta el cursor manteniendo lista, historial y borrador  1117ms
+     ✓ la página anterior no sustituye la sesión vigente renovada por el poll  622ms
+     ✓ ignora success antiguo al cambiar de hilo y aborta su petición  523ms
+     ✓ ignora failure antiguo al cambiar de hilo y aborta su petición  483ms
+     ✓ los hilos archivados permiten cargar anteriores sin ofrecer envío  346ms
+     ✓ una ráfaga muestra cinco nuevos sin mover la lectura y click vuelve al fondo  1829ms
+     ✓ un mensaje nuevo pegado al fondo sigue visible sin contador  993ms
+     ✓ bajar manualmente hasta el fondo retira el contador  1543ms
+     ✓ cambiar de hilo no conserva el contador del anterior  1118ms
+     ✓ al volver de pestaña oculta conserva la lectura y cuenta sólo llegadas posteriores  1056ms
+     ✓ una llegada de hoy conserva la lectura de julio aunque cree un divisor de día  1011ms
+
+ Test Files  2 passed (2)
+      Tests  109 passed (109)
+   Start at  19:39:58
+   Duration  103.37s (transform 2.95s, setup 1.69s, import 6.94s, tests 73.03s, environment 13.45s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-fil-01-2026-10-21/vitest-affected.json

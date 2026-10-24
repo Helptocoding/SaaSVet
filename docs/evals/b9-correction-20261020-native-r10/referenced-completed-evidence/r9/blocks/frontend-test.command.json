@@ -1,0 +1,58 @@
+{
+  "label": "frontend-test",
+  "candidate_sha": "b271e314817da51e99811cb18921fd7c9f59e58a",
+  "argv": [
+    "C:\\Users\\LAP\\.local\\bin\\rtk.exe",
+    "proxy",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\node-v20.20.2-win-x64\\node.exe",
+    "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\pnpm\\package\\bin\\pnpm.cjs",
+    "run",
+    "test",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9-correction-20261020-native-r9\\blocks\\frontend-tests.json"
+  ],
+  "cwd": "C:\\Users\\LAP\\AppData\\Local\\Temp\\b9-native-20261017-r6\\src\\frontend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "host": {
+      "utc": "2026-10-20T06:32:39Z",
+      "utc_epoch_seconds": 1792477959.9186308,
+      "physical_total": 17031217152,
+      "physical_available": 4164562944,
+      "page_available": 8015036416,
+      "disk_available": 8621002752,
+      "platform": "Windows native"
+    },
+    "ready": true
+  },
+  "pid": 17932,
+  "wrapper_pid": 17932,
+  "exit_code": 1,
+  "seconds": 195.41318279999905,
+  "invalidating_incident": null,
+  "resources_after": {
+    "host": {
+      "utc": "2026-10-20T06:35:55Z",
+      "utc_epoch_seconds": 1792478155.3310156,
+      "physical_total": 17031217152,
+      "physical_available": 4293525504,
+      "page_available": 7865974784,
+      "disk_available": 8628006912,
+      "platform": "Windows native"
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-20T06:35:54Z",
+        "utc_epoch_seconds": 1792478154.4662588,
+        "pid": 24076,
+        "thread_id": 26160,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.8704009056091309
+    }
+  }
+}

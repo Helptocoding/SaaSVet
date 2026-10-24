@@ -8,6 +8,7 @@ keys de React, consistente con InvoiceItem/VitalSigns (ADR p18).
 """
 import unicodedata
 
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.channels.models import Message
@@ -33,24 +34,68 @@ def _normalize_fact_key(key):
 
 
 class MessageSerializer(serializers.ModelSerializer):
+    conversation_public_id = serializers.UUIDField(source='conversation.public_id', read_only=True,
+                                                  allow_null=True)
     acceptance_known = serializers.SerializerMethodField()
     human_author_name = serializers.SerializerMethodField()
+    human_author_public_id = serializers.SerializerMethodField()
     client_message_id = serializers.SerializerMethodField()
+    reply_to = serializers.SerializerMethodField()
+    media = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
         fields = [
-            'id', 'direction', 'author_type', 'payload_type', 'body',
+            'id', 'conversation_public_id', 'direction', 'author_type', 'payload_type', 'body',
             'status', 'failure_reason', 'created_at', 'human_author_name',
-            'client_message_id', 'acceptance_known',
+            'human_author_public_id',
+            'client_message_id', 'acceptance_known', 'reply_to', 'media',
             'send_started_at', 'send_admitted_at', 'provider_accepted_at',
             'delivered_at', 'read_at', 'uncertain_at', 'supersedes_message_id',
         ]
+
+    def get_media(self, obj):
+        media = getattr(obj, 'media', None)
+        if media is None or (media.organization_id != obj.organization_id
+                or media.channel_account_id != obj.channel_account_id or media.message_id != obj.pk):
+            return None
+        expired = media.status == 'expired' or (media.expires_at is not None and media.expires_at <= timezone.now())
+        return dict(public_id=str(media.public_id), status='expired' if expired else media.status,
+            mime_type=media.mime_type, file_size=media.file_size, filename=media.filename,
+            error='media_unavailable' if media.status == 'failed' else '',
+            expires_at=media.expires_at.isoformat() if media.expires_at else None,
+            duration_ms=media.duration_ms, width=media.width, height=media.height)
 
     def get_human_author_name(self, obj):
         if obj.human_author_id is None:
             return None
         return obj.human_author.get_full_name() or obj.human_author.username
+
+    def get_reply_to(self, obj):
+        if obj.reply_to_id is None:
+            return None
+        target = obj.reply_to
+        # A legacy/bulk bypass can violate application-level FK scope. Never
+        # expose another person's or organization's text through that relation.
+        if (obj.contact_id is None or target.organization_id != obj.organization_id
+                or target.contact_id != obj.contact_id
+                or target.channel_account_id != obj.channel_account_id):
+            return None
+        author = target.human_author if target.human_author_id else None
+        name = ((author.get_full_name() or author.username)
+                if author and author.organization_id == obj.organization_id else None)
+        return {'id': target.pk, 'author_type': target.author_type,
+            'human_author_name': name, 'payload_type': target.payload_type,
+            'excerpt': target.body[:80], 'status': target.status}
+
+    def get_human_author_public_id(self, obj):
+        # Identidad estable para agrupar ráfagas sin confundir homónimos.
+        # Los queries de transcript ya cargan human_author con select_related.
+        if (obj.direction != Message.DIRECTION_OUT
+                or obj.author_type != Message.AUTHOR_HUMAN
+                or obj.human_author_id is None):
+            return None
+        return str(obj.human_author.public_id)
 
     def get_acceptance_known(self, obj):
         from apps.channels.providers import valid_provider_id
@@ -69,6 +114,9 @@ class MessageSerializer(serializers.ModelSerializer):
 
 
 class ConversationListSerializer(serializers.ModelSerializer):
+    agent_processing = serializers.SerializerMethodField()
+    session_window_open = serializers.SerializerMethodField()
+    session_window_expires_at = serializers.SerializerMethodField()
     contact_display_name = serializers.CharField(
         source='contact.display_name', read_only=True,
     )
@@ -99,12 +147,31 @@ class ConversationListSerializer(serializers.ModelSerializer):
         model = Conversation
         fields = [
             'public_id', 'state', 'created_at', 'last_inbound_at',
-            'last_activity_at', 'closed_at',
+            'last_activity_at', 'closed_at', 'agent_processing',
+            'session_window_open', 'session_window_expires_at',
             'contact_display_name', 'contact_phone', 'contact_verification',
             'linked_via', 'owner_name', 'claimed_by_name',
             'last_message_preview', 'has_unanswered',
             'handoff_priority', 'handoff_reason', 'handoff_detail',
         ]
+
+    def get_session_window_expires_at(self, obj):
+        from .sender import SESSION_WINDOW
+        if obj.state == Conversation.STATE_CLOSED or obj.last_inbound_at is None:
+            return None
+        return serializers.DateTimeField().to_representation(obj.last_inbound_at + SESSION_WINDOW)
+
+    def get_session_window_open(self, obj):
+        from .sender import SESSION_WINDOW
+        # Same elapsed-time boundary as B4 (closed only after 24 hours).
+        return bool(obj.state != Conversation.STATE_CLOSED and obj.last_inbound_at is not None
+                    and timezone.now() <= obj.last_inbound_at + SESSION_WINDOW)
+
+    def get_agent_processing(self, obj):
+        # Proyección informativa; la autoridad del turno sigue en TurnWork.
+        return bool(obj.state != Conversation.STATE_CLOSED
+                    and obj.processing_until
+                    and obj.processing_until > timezone.now())
 
     def _open_handoff(self, obj):
         prefetched = getattr(obj, 'open_handoffs', None)
@@ -163,6 +230,7 @@ class ConversationListSerializer(serializers.ModelSerializer):
 
 class SendMessageSerializer(serializers.Serializer):
     body = serializers.CharField(max_length=4000, allow_blank=False)
+    reply_to_id = serializers.IntegerField(required=False, min_value=1, max_value=9223372036854775807)
 
 
 class AgentSettingsSerializer(serializers.ModelSerializer):
@@ -212,6 +280,10 @@ class AgentSettingsSerializer(serializers.ModelSerializer):
         return value
 
 
+class InboxReadSerializer(serializers.Serializer):
+    last_read_message_id = serializers.IntegerField(min_value=1, max_value=9223372036854775807)
+
+
 class ThreadSerializer(serializers.Serializer):
     """Una fila de la bandeja AGRUPADA: la persona, no el episodio.
 
@@ -242,8 +314,16 @@ class ThreadSerializer(serializers.Serializer):
     # Hilo completo, no solo la sesión: es lo que hace útil la agrupación.
     last_activity_at = serializers.DateTimeField(allow_null=True)
     last_message_preview = serializers.CharField(allow_null=True)
+    last_message_type = serializers.CharField(allow_null=True, required=False)
+    last_message_filename = serializers.CharField(allow_null=True, required=False)
     has_unanswered = serializers.BooleanField()
+    unread_count = serializers.IntegerField(min_value=0)
     session_count = serializers.IntegerField()
+    agent_processing = serializers.SerializerMethodField()
+
+    def get_agent_processing(self, obj):
+        until = obj.get('processing_until')
+        return bool(until and until > timezone.now())
 
 
 class SessionSerializer(serializers.ModelSerializer):

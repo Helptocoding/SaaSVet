@@ -1,0 +1,8 @@
+{
+  "status": "HARNESS_ERROR",
+  "exit_code": 1,
+  "failure": "Locator.click: Timeout 30000ms exceeded waiting for get_by_role(button, name=Ana)",
+  "evidence": "browser-initial.png / browser-initial.html",
+  "cause": "El interceptor aceptaba cualquier path que contuviera /api/, incluyendo módulos de Vite en /src/api/. Devolvió JSON en lugar de JavaScript y el frontend no pudo montar.",
+  "correction": "Limitar la interceptación a paths que comiencen con /api/. Sin cambios de producto ni de aserciones."
+}

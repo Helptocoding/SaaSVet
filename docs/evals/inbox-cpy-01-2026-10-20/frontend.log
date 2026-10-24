@@ -1,0 +1,19 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/index.test.jsx (38 tests | 28 skipped) 8081ms
+     ✓ copia el cuerpo original completo, sin horas ni autor, y confirma el éxito  1841ms
+     ✓ muestra un error recuperable cuando el navegador rechaza la copia  501ms
+     ✓ maneja clipboard no disponible sin anunciar una copia falsa  315ms
+     ✓ renderiza enlaces seguros, preserva HTML literal y no ofrece copiar placeholders  634ms
+     ✓ agrupa por autor sin ocultar mensajes, horas ni estados de entrega  396ms
+     ✓ pinta el envío antes del POST y reconcilia el 201 sin duplicar  1239ms
+     ✓ conserva el optimista reintentable ante un 5xx  1263ms
+     ✓ oculta failed-local cuando el hilo regresa con otra sesión activa  1381ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed | 28 skipped (38)
+   Start at  23:21:04
+   Duration  31.63s (transform 2.87s, setup 1.54s, import 5.86s, tests 8.08s, environment 9.62s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-cpy-01-2026-10-20/vitest.json

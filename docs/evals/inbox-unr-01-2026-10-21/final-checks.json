@@ -1,0 +1,18 @@
+{
+  "all_35_unique_cases_pass": true,
+  "independent_staff_counts": true,
+  "only_current_episode_inbound_counts": true,
+  "monotonic_idempotent_upsert": true,
+  "first_creation_and_update_races": true,
+  "view_only_permission": true,
+  "thread_and_tenant_scope": true,
+  "invisible_outbound_malformed_rejected": true,
+  "legacy_list_payload_except_new_field": true,
+  "pagination_preserved": true,
+  "constant_query_budget_preserved": true,
+  "one_unread_aggregate_no_model_materialization": true,
+  "message_claim_and_turn_authority_unchanged": true,
+  "migration_drift": true,
+  "test_databases_removed": true,
+  "initial_failures_preserved_and_resolved": true
+}

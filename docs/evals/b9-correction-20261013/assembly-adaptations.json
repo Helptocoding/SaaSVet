@@ -1,0 +1,18 @@
+{
+  "state": "RECORDED_BEFORE_FORMAL",
+  "base_commit": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "candidate": {
+    "base_commit": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+    "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+    "changed_paths": [
+      "backend/apps/agent/tests/test_regression_f2.py",
+      "backend/apps/agent/tests/test_regression_suite.py"
+    ],
+    "patch_sha256": "15d088cb4bdad0d0fec74e5085343ae24c7a80fe4796b700a94c3688df6827ac",
+    "commits_created": 0,
+    "authorization": "ok hazlo: minimal corrections, focused verification, then bounded B9 acceptance",
+    "focused_attempts": 2
+  },
+  "scope": "Original B9 plan on corrected Git tree; two test files changed. Receipt adapter adds UTC and immediate tracebacks only. Backend focused verification is separate. No workload/timing/gate changes.",
+  "security": "Full history at base commit plus redacted no-git scan of two corrected paths"
+}

@@ -1,0 +1,103 @@
+diff --git a/backend/apps/agent/tests/test_regression_f2.py b/backend/apps/agent/tests/test_regression_f2.py
+index 5db98f4..34d3dab 100644
+--- a/backend/apps/agent/tests/test_regression_f2.py
++++ b/backend/apps/agent/tests/test_regression_f2.py
+@@ -14,13 +14,14 @@ Convención de scripting:
+ """
+ from datetime import datetime, timedelta
+ from datetime import timezone as dt_tz
++from unittest.mock import patch
+ 
+ from django.test import TestCase
+ from django.utils import timezone
+ 
+ from .harness import legacy_write_component
+ from apps.agent import executor as executor_module
+-from apps.agent import confirmations, tools
++from apps.agent import confirmations, matter_binding, matter_resolution, tools
+ from apps.agent.llm import LLMResult
+ from apps.agent.models import AgentSettings, ContactIdentity, Conversation
+ from apps.agent.tests.harness import run_turn, set_schedule_day
+@@ -95,8 +96,21 @@ class RegF2Base(TestCase):
+ 
+     # -- helpers ------------------------------------------------------------
+     def _turn(self, text, scripted):
+-        return run_turn(self, self.conv, self.agent_user, text,
+-                        scripted_llm=scripted)
++        # F2 exercises the inactive legacy component: its scripted tool args
++        # have no B6 message provenance. Do not turn that fixture into a bound
++        # matter halfway through the test. Versioned fixtures retain real B6.
++        resolve = matter_resolution.process_turn
++
++        def resolve_versioned(conversation, context):
++            goal = matter_binding.current_goal(conversation)
++            if goal and matter_binding.metadata(goal):
++                return resolve(conversation, context)
++            return None
++
++        with patch.object(matter_resolution, 'process_turn',
++                          side_effect=resolve_versioned):
++            return run_turn(self, self.conv, self.agent_user, text,
++                            scripted_llm=scripted)
+ 
+     def _propose(self, text, tool_name, tool_args):
+         return self._turn(text, [LLMResult(
+@@ -444,7 +458,10 @@ class Int23Tests(RegF2Base):
+         self.assertEqual(r2["decision"], "committed")
+         appt.refresh_from_db()
+         self.assertEqual(appt.status, "canceled")
+-        self.assertIn("reagendo", bodies[-1].lower())   # retención UX-11
++        # UX-11: cancellation offers another appointment without booking it.
++        self.assertIn("agendar otra", bodies[-1].lower())
++        self.assertIn("¿te acomoda alguno?", bodies[-1].lower())
++        self.assertEqual(Appointment.objects.filter(pet=self.pet).count(), 1)
+ 
+     def test_23_02_cancel_requires_paraphrase(self):
+         self._make_appt(status="scheduled")
+diff --git a/backend/apps/agent/tests/test_regression_suite.py b/backend/apps/agent/tests/test_regression_suite.py
+index 6e7e9b0..884be81 100644
+--- a/backend/apps/agent/tests/test_regression_suite.py
++++ b/backend/apps/agent/tests/test_regression_suite.py
+@@ -147,11 +147,14 @@ class ReadFlowTests(RegressionBase):
+             scripted=[
+                 LLMResult(kind="tool_call", tool_name="get_service_catalog",
+                           tool_args={"query": "consulta"}),
+-                LLMResult(kind="text", text="La consulta cuesta $350.00 🙂"),
++                LLMResult(kind="text", text="La consulta cuesta $999.00 USD 🙂"),
+             ],
+         )
+-        self.assertEqual(bodies[-1], tier0.T0_GUARD_BLOCKED)
+-        self.assertNotIn("350", bodies[-1])  # B0: precio en prosa requiere revisión.
++        # Only the validated catalog result may supply service, price/currency.
++        # The model's conflicting price and currency must never reach the user.
++        self.assertEqual(bodies[-1], "Consulta general: $350.00 MXN.")
++        self.assertNotIn("999", bodies[-1])
++        self.assertNotIn("USD", bodies[-1])
+ 
+     def test_int10_clinic_info(self):
+         bodies, _, _ = self._turn(
+diff --git a/backend/apps/notifications/tests/test_notifications.py b/backend/apps/notifications/tests/test_notifications.py
+index 19eadab..0933ea8 100644
+--- a/backend/apps/notifications/tests/test_notifications.py
++++ b/backend/apps/notifications/tests/test_notifications.py
+@@ -1,5 +1,6 @@
+-from datetime import timedelta
++from datetime import datetime, timedelta, timezone as dt_timezone
+ from decimal import Decimal
++from unittest.mock import patch
+ 
+ from django.core.exceptions import ValidationError
+ from django.test import TestCase
+@@ -175,7 +176,11 @@ class DerivedFeedTests(NotificationsSetupMixin, TestCase):
+             reason='Control', status=status,
+         )
+ 
+-    def test_upcoming_window(self):
++    @patch(
++        'django.utils.timezone.now',
++        return_value=datetime(2026, 10, 17, 12, 0, tzinfo=dt_timezone.utc),
++    )
++    def test_upcoming_window(self, _now):
+         now = timezone.now()
+         self._make_appointment(now + timedelta(minutes=10))
+         self._make_appointment(now + timedelta(hours=5))

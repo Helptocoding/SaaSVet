@@ -1,0 +1,36 @@
+{
+  "state": "PASS",
+  "candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+  "test_ids": [
+    "apps.notifications.tests.test_notifications.DerivedFeedTests.test_upcoming_window"
+  ],
+  "tests": 1,
+  "failures": 0,
+  "errors": 0,
+  "skips": [],
+  "exit_code": 0,
+  "seconds": 198.08140910000293,
+  "development_verification_only": true,
+  "formal_gate_credit": false,
+  "complete_general_gate_still_required": 3213,
+  "frozen_clock_from_authorized_source": "2026-10-17T12:00:00+00:00",
+  "test_assertions_and_constraint_changed": false,
+  "resources_before": {
+    "utc": "2026-10-18T17:58:50Z",
+    "utc_epoch_seconds": 1792346330.5578563,
+    "physical_total": 17031217152,
+    "physical_available": 5522055168,
+    "page_available": 10421088256,
+    "disk_available": 8275140608,
+    "platform": "Windows native"
+  },
+  "resources_after": {
+    "utc": "2026-10-18T18:02:20Z",
+    "utc_epoch_seconds": 1792346540.8090053,
+    "physical_total": 17031217152,
+    "physical_available": 5537583104,
+    "page_available": 10721423360,
+    "disk_available": 7955161088,
+    "platform": "Windows native"
+  }
+}

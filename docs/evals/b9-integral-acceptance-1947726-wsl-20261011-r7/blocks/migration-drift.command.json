@@ -1,0 +1,57 @@
+{
+  "label": "migration-drift",
+  "candidate_sha": "194772677ca4e9fe1a1dec7f4dafa48396a6c583",
+  "argv": [
+    "/home/lap/b9i-wsl-1947726-20261011-r7/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261011-r7/venv/bin/python",
+    "-B",
+    "manage.py",
+    "makemigrations",
+    "--check",
+    "--dry-run"
+  ],
+  "cwd": "/home/lap/b9i-wsl-1947726-20261011-r7/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-12T04:50:55Z",
+      "physical_available": 7517941760,
+      "physical_total": 8252514304,
+      "disk_available": 4158042112,
+      "linux_virtual_disk_available": 1016994365440
+    },
+    "host": {
+      "utc": "2026-10-12T04:50:54Z",
+      "physical_total": 17031217152,
+      "physical_available": 5635051520,
+      "page_available": 6218588160,
+      "utc_epoch_seconds": 1791780654.756518,
+      "observer_pid": 53388
+    },
+    "ready": true
+  },
+  "pid": 1812,
+  "exit_code": 0,
+  "seconds": 6.0443706920000295,
+  "invalidating_incident": null,
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-12T04:51:01Z",
+      "physical_available": 7519105024,
+      "physical_total": 8252514304,
+      "disk_available": 4158447616,
+      "linux_virtual_disk_available": 1016994201600
+    },
+    "host": {
+      "utc": "2026-10-12T04:51:00Z",
+      "physical_total": 17031217152,
+      "physical_available": 5735571456,
+      "page_available": 6345023488,
+      "utc_epoch_seconds": 1791780660.7829602,
+      "observer_pid": 53388
+    }
+  }
+}

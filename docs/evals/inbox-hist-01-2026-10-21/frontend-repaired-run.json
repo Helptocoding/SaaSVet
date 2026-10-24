@@ -1,0 +1,19 @@
+{
+  "exit_code": 0,
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "src/pages/inbox/index.test.jsx",
+    "src/pages/inbox/useThreadHistory.test.jsx",
+    "src/pages/inbox/ThreadViewport.test.jsx",
+    "src/api/inbox.test.js",
+    "--testNamePattern=estado acumulativo del historial|explica el turno y habilita|umbral del viewport",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-hist-01-2026-10-21\\vitest-repaired.json"
+  ],
+  "scope": "New HIST-01 and affected transcript/send/viewport regressions"
+}

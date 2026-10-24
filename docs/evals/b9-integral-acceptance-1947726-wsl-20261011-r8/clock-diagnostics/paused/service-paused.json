@@ -1,0 +1,16 @@
+{
+  "state": "PASS",
+  "status": {
+    "argv": [
+      "systemctl",
+      "show",
+      "systemd-timesyncd.service",
+      "--property=ActiveState,SubState,UnitFileState,MainPID"
+    ],
+    "exit_code": 0,
+    "output": "MainPID=0\nActiveState=inactive\nSubState=dead\nUnitFileState=enabled\n"
+  },
+  "pid": 1328,
+  "unit_enabled_state_unchanged": true,
+  "restoration_required": true
+}

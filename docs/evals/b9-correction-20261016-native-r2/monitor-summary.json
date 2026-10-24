@@ -1,0 +1,65 @@
+{
+  "directed": {
+    "samples": 1504,
+    "min_host_bytes": 4812079104,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 4006461440,
+    "max_clock_skew_seconds": 0.002320433197382954
+  },
+  "django-check": {
+    "samples": 12,
+    "min_host_bytes": 5378768896,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 8678887424,
+    "max_clock_skew_seconds": 1.2714717740891501e-06
+  },
+  "migration-drift": {
+    "samples": 14,
+    "min_host_bytes": 4947394560,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 8290758656,
+    "max_clock_skew_seconds": 7.727430784143507e-07
+  },
+  "migrate": {
+    "samples": 195,
+    "min_host_bytes": 4868112384,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 7844839424,
+    "max_clock_skew_seconds": 1.2437212717486545e-06
+  },
+  "billing-schema": {
+    "samples": 12,
+    "min_host_bytes": 5285253120,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 7570087936,
+    "max_clock_skew_seconds": 8.731167326914147e-07
+  },
+  "b0": {
+    "samples": 226,
+    "min_host_bytes": 4827430912,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 7070420992,
+    "max_clock_skew_seconds": 8.448819971818011e-05
+  },
+  "b3": {
+    "samples": 492,
+    "min_host_bytes": 4736086016,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 6634299392,
+    "max_clock_skew_seconds": 4.759978401125409e-05
+  },
+  "b4": {
+    "samples": 1594,
+    "min_host_bytes": 4648443904,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 6069821440,
+    "max_clock_skew_seconds": 0.004133659756917041
+  },
+  "b5": {
+    "samples": 666,
+    "min_host_bytes": 4187430912,
+    "guest_metrics": "NOT_APPLICABLE_WINDOWS_NATIVE",
+    "min_disk_bytes": 1034018816,
+    "max_clock_skew_seconds": 0.002169454166505602
+  }
+}

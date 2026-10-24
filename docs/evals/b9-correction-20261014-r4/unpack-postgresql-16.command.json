@@ -1,0 +1,21 @@
+{
+  "state": "COMPLETED",
+  "argv": [
+    "/home/lap/b9i-correction-20261014-r4/tools/rtk",
+    "proxy",
+    "dpkg-deb",
+    "-x",
+    "/home/lap/b9i-correction-20261014-r4/downloads/postgresql-16_16.15-1.pgdg24.04+2_amd64.deb",
+    "/home/lap/b9i-correction-20261014-r4/pgroot"
+  ],
+  "cwd": "/home/lap/b9i-correction-20261014-r4",
+  "exit_code": 0,
+  "seconds": 4.667019159999995,
+  "resources_after": {
+    "utc": "2026-10-15T05:30:30Z",
+    "physical_available": 7386378240,
+    "physical_total": 8252510208,
+    "disk_available": 7762280448,
+    "linux_virtual_disk_available": 1018274725888
+  }
+}

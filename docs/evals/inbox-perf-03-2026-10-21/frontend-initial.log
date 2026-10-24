@@ -1,0 +1,18 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/useThreadHistory.test.jsx (28 tests) 352ms
+ ✓ src/pages/inbox/index.sync.test.jsx (15 tests) 3776ms
+     ✓ tras cargar usa since en lista y transcript sin volver a descargar mensajes  780ms
+     ✓ publica juntas las páginas con movimientos y sin duplicar un hilo  521ms
+     ✓ cambiar de hilo aborta un delta viejo y no conserva su cursor  309ms
+ ✓ src/hooks/usePollingWhenVisible.test.jsx (7 tests) 118ms
+ ✓ src/api/inbox.test.js (11 tests) 34ms
+ ✓ src/pages/inbox/inboxSync.test.js (21 tests) 38ms
+
+ Test Files  5 passed (5)
+      Tests  82 passed (82)
+   Start at  16:45:01
+   Duration  53.72s (transform 1.88s, setup 3.21s, import 4.80s, tests 4.32s, environment 26.07s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-perf-03-2026-10-21/vitest-initial.json

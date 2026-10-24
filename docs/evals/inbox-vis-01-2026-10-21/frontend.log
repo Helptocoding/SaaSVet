@@ -1,0 +1,19 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/hooks/usePollingWhenVisible.test.jsx (7 tests) 193ms
+ ✓ src/pages/inbox/index.test.jsx (42 tests | 32 skipped) 10118ms
+     ✓ pausa ambos polls y refresca lista/hilo al volver, conservando sus cadencias  1170ms
+     ✓ cambia de hilo oculto sin consultar el anterior ni aplicar su respuesta tardía  356ms
+     ✓ no reinstala ni borra el hilo nuevo si el POST anterior termina tarde  2516ms
+     ✓ un éxito antiguo A→B→A no borra un draft nuevo aunque tenga el mismo texto  956ms
+     ✓ A→B→A conserva visible el 201 aunque el GET de regreso esté vacío  2290ms
+     ✓ deduplica un polling concurrente exclusivamente por client_message_id  1073ms
+     ✓ no ejecuta continuaciones del POST después de desmontar el Inbox  1364ms
+
+ Test Files  2 passed (2)
+      Tests  17 passed | 32 skipped (49)
+   Start at  08:01:44
+   Duration  46.18s (transform 3.18s, setup 4.44s, import 7.78s, tests 10.31s, environment 36.13s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-vis-01-2026-10-21/vitest.json

@@ -1,0 +1,67 @@
+{
+  "label": "migrate",
+  "candidate_sha": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "argv": [
+    "/home/lap/b9i-correction-20261014-r2/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-correction-20261014-r2/venv/bin/python",
+    "-B",
+    "manage.py",
+    "migrate",
+    "--no-input"
+  ],
+  "cwd": "/home/lap/b9i-correction-20261014-r2/src/backend",
+  "formal_run_number": 1,
+  "advisory": false,
+  "state": "COMPLETED",
+  "resources_before": {
+    "guest": {
+      "utc": "2026-10-14T23:38:33Z",
+      "physical_available": 7520276480,
+      "physical_total": 8252518400,
+      "disk_available": 2887323648,
+      "linux_virtual_disk_available": 1016992497664
+    },
+    "host": {
+      "utc": "2026-10-14T23:38:33Z",
+      "physical_total": 17031217152,
+      "physical_available": 3085463552,
+      "page_available": 7098753024,
+      "utc_epoch_seconds": 1792021113.023172,
+      "observer_pid": 33908
+    },
+    "ready": true
+  },
+  "pid": 1630,
+  "exit_code": 0,
+  "seconds": 157.639489916,
+  "invalidating_incident": null,
+  "resources_after": {
+    "guest": {
+      "utc": "2026-10-14T23:41:10Z",
+      "physical_available": 7514304512,
+      "physical_total": 8252518400,
+      "disk_available": 2942320640,
+      "linux_virtual_disk_available": 1016980676608
+    },
+    "host": {
+      "utc": "2026-10-14T23:41:10Z",
+      "physical_total": 17031217152,
+      "physical_available": 3120959488,
+      "page_available": 7046307840,
+      "utc_epoch_seconds": 1792021270.7953,
+      "observer_pid": 33908
+    },
+    "awake": {
+      "state": "ACTIVE_CONFIRMED",
+      "sample": {
+        "utc": "2026-10-14T23:41:09Z",
+        "utc_epoch_seconds": 1792021269.9020293,
+        "pid": 32500,
+        "thread_id": 39508,
+        "api_previous_state": "0x80000001"
+      },
+      "sample_age_seconds": 0.966517448425293
+    }
+  }
+}

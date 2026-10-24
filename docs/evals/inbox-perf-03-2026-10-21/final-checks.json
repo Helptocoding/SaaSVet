@@ -1,0 +1,60 @@
+{
+  "status": "PASS",
+  "backend_unique_pass": 123,
+  "new_backend_pass": 26,
+  "frontend_unique_pass": 259,
+  "new_frontend_pass": 37,
+  "backend_runs": [
+    {
+      "tag": "backend",
+      "executed": 116,
+      "failures": 24,
+      "skipped": 0,
+      "exit_code": 1
+    },
+    {
+      "tag": "backend-api-fixed",
+      "executed": 52,
+      "failures": 4,
+      "skipped": 0,
+      "exit_code": 1
+    },
+    {
+      "tag": "backend-api-final",
+      "executed": 29,
+      "failures": 1,
+      "skipped": 0,
+      "exit_code": 1
+    },
+    {
+      "tag": "backend-plan",
+      "executed": 1,
+      "failures": 0,
+      "skipped": 0,
+      "exit_code": 0
+    }
+  ],
+  "frontend_composite": true,
+  "backend_composite": true,
+  "build": "PASS",
+  "lint": "PASS",
+  "migration_drift": "PASS",
+  "browser": "PASS",
+  "diff_check": "PASS",
+  "b4_sources_unchanged": true,
+  "window_helpers_unchanged": true,
+  "indices": [
+    "agent_conversation_pkey",
+    "channels_me_organiz_c00b67_idx"
+  ],
+  "full_payload_bytes": 52002,
+  "stable_delta_bytes": 303,
+  "payload_reduction_percent": 99.42,
+  "explain_execution_ms": 2.116,
+  "temporary_server_listening": false,
+  "test_databases_remain": false,
+  "new_migration": false,
+  "working_database_migrated": false,
+  "deployment": false,
+  "activation": false
+}

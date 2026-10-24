@@ -1,0 +1,44 @@
+{
+  "state": "PASS",
+  "candidate_tree": "5e11236daabf4ef70ea9d0f08fee52aed5c30ff2",
+  "source_candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+  "retained_ids": 2890,
+  "retained_PASS": 2888,
+  "retained_SKIP": 2,
+  "new_selected_ids": 323,
+  "previous_accepted_cases": 2890,
+  "prior_pass": 2888,
+  "prior_skips": 2,
+  "current_cases": 323,
+  "historical_failed_attempts": 2,
+  "result_general": 3213,
+  "corrected_failed_case_ids": [
+    "apps.agent.tests.test_contracts.CommitmentContractTests.test_fields_match_snapshot",
+    "apps.agent.tests.test_contracts.ToolOutcomeContractTests.test_fields_match_snapshot"
+  ],
+  "retained_sources": {
+    "r6": {
+      "tests": 2485,
+      "PASS": 2483,
+      "SKIP": 2
+    },
+    "r7": {
+      "tests": 405,
+      "PASS": 405,
+      "SKIP": 0,
+      "source_journal_observations": 407,
+      "excluded_historical_FAIL": 2
+    }
+  },
+  "original_invocation_exits": {
+    "r6": "UNKNOWN",
+    "r7": "UNKNOWN"
+  },
+  "historical_disk_and_monotonic_evidence_verified": false,
+  "accepted_historical_evidence_limitation": true,
+  "manifest": "case-resumption-manifest.json",
+  "validation": "case-resumption-validation.json",
+  "authorization": "snapshot-resumption-authorization.json",
+  "manifest_sha256": "8743d2a75d0c96533f2c6d5c5bc6a7207152d853d47a268b22d4d47498f5e71e",
+  "full_group_pass": false
+}

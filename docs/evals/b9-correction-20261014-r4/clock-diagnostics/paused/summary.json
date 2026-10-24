@@ -1,0 +1,104 @@
+{
+  "type": "read-only clock observation, not an acceptance campaign",
+  "duration_target_seconds": 120,
+  "project_tests_executed": false,
+  "system_configuration_changed": false,
+  "exit_codes": {
+    "windows": 0,
+    "wsl": 0
+  },
+  "surfaces": {
+    "windows": {
+      "metadata": {
+        "kind": "metadata",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+        "clocks": {
+          "time": {
+            "implementation": "GetSystemTimeAsFileTime()",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 0.015625
+          },
+          "monotonic": {
+            "implementation": "GetTickCount64()",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 0.015625
+          },
+          "perf_counter": {
+            "implementation": "QueryPerformanceCounter()",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-07
+          }
+        }
+      },
+      "samples": 240,
+      "elapsed_seconds": 120.047,
+      "max_absolute_wall_minus_monotonic_seconds": 0.0098766,
+      "first": {
+        "kind": "sample",
+        "wall_ns": 1792042853342450100,
+        "monotonic_ns": 90598312000000,
+        "elapsed_seconds": 0.0,
+        "wall_minus_monotonic_seconds": 0.0
+      },
+      "last": {
+        "kind": "sample",
+        "wall_ns": 1792042973397597500,
+        "monotonic_ns": 90718359000000,
+        "elapsed_seconds": 120.047,
+        "wall_minus_monotonic_seconds": 0.0081474
+      }
+    },
+    "wsl": {
+      "metadata": {
+        "kind": "metadata",
+        "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "clocks": {
+          "time": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "perf_counter": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          }
+        }
+      },
+      "samples": 240,
+      "elapsed_seconds": 120.440965477,
+      "max_absolute_wall_minus_monotonic_seconds": 8.187e-06,
+      "first": {
+        "kind": "sample",
+        "wall_ns": 1792042852198581296,
+        "monotonic_ns": 1068969211459,
+        "elapsed_seconds": 2.577e-06,
+        "wall_minus_monotonic_seconds": -1.24e-06,
+        "CLOCK_MONOTONIC_RAW": 1118225942900,
+        "CLOCK_BOOTTIME": 1068969230076
+      },
+      "last": {
+        "kind": "sample",
+        "wall_ns": 1792042972639546323,
+        "monotonic_ns": 1189410174359,
+        "elapsed_seconds": 120.440965477,
+        "wall_minus_monotonic_seconds": 8.87e-07,
+        "CLOCK_MONOTONIC_RAW": 1237427396100,
+        "CLOCK_BOOTTIME": 1189410198559
+      }
+    }
+  }
+}

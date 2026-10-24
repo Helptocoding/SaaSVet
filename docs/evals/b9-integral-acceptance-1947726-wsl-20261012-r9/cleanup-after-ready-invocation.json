@@ -1,0 +1,18 @@
+{
+  "exit_code": 0,
+  "seconds": 53.057507100000294,
+  "argv": [
+    "rtk",
+    "proxy",
+    "wsl.exe",
+    "-d",
+    "Ubuntu-24.04",
+    "--exec",
+    "/home/lap/b9i-wsl-1947726-20261012-r9/tools/rtk",
+    "proxy",
+    "/home/lap/b9i-wsl-1947726-20261012-r9/venv/bin/python",
+    "-B",
+    "-c",
+    "import sys; sys.path.insert(0,'/mnt/c/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/b9-integral-acceptance-1947726-wsl-20261012-r9'); from cleanup_linux import main; main()"
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "state": "AUTHORIZED_FIXTURE_ONLY_COMPOSITE_SUCCESSOR",
+  "user": "Sí, corregir y continuar conservando lo válido",
+  "date_local": "2026-10-17",
+  "previous_campaign": "b9-correction-20261017-native-r5",
+  "previous_decision": {
+    "decision": "PENDING",
+    "classification": "HARNESS_FIXTURE_TIME_DEPENDENCE_AND_ENVIRONMENT_AWAKE_INTERRUPTION",
+    "date_local": "2026-10-17",
+    "classified_utc": "2026-10-18T05:10:28.031168+00:00",
+    "cause": "Se conservan 13 gates completos PASS: 11 referenciados y full-b8d/full-b8e nuevos (27/27 y 29/29). Full-general queda incompleto: 2639/3213 IDs, 2636 PASS, 2 SKIP y 1 ERROR por fixture dependiente de la hora en test_upcoming_window, anterior a la interrupción. La parada formal corresponde a heartbeat de vigilia inválido tras una brecha de unas 3 horas; los eventos System documentan suspensión/reanudación. No se establece fallo del producto ni escasez de RAM/disco como causa. La corrección propuesta del fixture no se aplicó al candidato sellado; los bloques pendientes necesitan ejecución válida. [Diagnóstico conjunto](diagnostics/fixture-and-awake-observation.json).",
+    "evidence_mode": "COMPOSITE_ACCEPTANCE",
+    "continuous_single_campaign": false,
+    "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+    "formal_invocations": 1,
+    "formal_reruns": 0,
+    "accepted_complete_pass_gates": [
+      "b0",
+      "b3",
+      "b4",
+      "b5",
+      "billing-schema",
+      "directed",
+      "django-check",
+      "full-b8b",
+      "full-b8c",
+      "migrate",
+      "migration-drift",
+      "full-b8d",
+      "full-b8e"
+    ],
+    "accepted_complete_gate_count": 13,
+    "referenced_pass_gates": [
+      "b0",
+      "b3",
+      "b4",
+      "b5",
+      "billing-schema",
+      "directed",
+      "django-check",
+      "full-b8b",
+      "full-b8c",
+      "migrate",
+      "migration-drift"
+    ],
+    "new_complete_pass_groups": [
+      "full-b8d",
+      "full-b8e"
+    ],
+    "full_general_selected_ids": 3213,
+    "full_general_observed_ids": 2639,
+    "full_general_partial_outcomes": {
+      "PASS": 2636,
+      "SKIP": 2,
+      "ERROR": 1,
+      "FAIL": 0
+    },
+    "full_general_missing_ids": 574,
+    "full_general_complete_gate_accepted": false,
+    "invalid_fixture_test_id": "apps.notifications.tests.test_notifications.DerivedFeedTests.test_upcoming_window",
+    "fixture_error_utc": "2026-10-17T18:46:03Z",
+    "formal_environment_stop": "Owned awake request unavailable: RuntimeError: Awake heartbeat stale or clock mismatch",
+    "product_failure_established": false,
+    "resource_shortage_cause_established": false,
+    "oom_established": false,
+    "supersession_performed": false,
+    "sealed_candidate_fixture_patch_applied": false,
+    "supporting_evidence": "diagnostics/fixture-and-awake-observation.json"
+  },
+  "source_candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "candidate_tree": "68dffd746793700071f577a58528b0f9636930db",
+  "authorized_fixture": "fixture-clock-authorization.json",
+  "product_runtime_changes": false,
+  "reused_blocks": 13,
+  "reused_unique_ids": 369,
+  "reused_full_ids": 118,
+  "prior_formal_results_copied_as_current": false,
+  "continuous_campaign_claimed": false,
+  "general_partial_reused_as_PASS": false,
+  "wsl_invoked": false,
+  "new_workspace": "C:/Users/LAP/AppData/Local/Temp/b9-native-20261017-r6",
+  "private_postgresql_port": 35490,
+  "copied_helpers": [
+    {
+      "path": "awake_guard.py",
+      "source_sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049",
+      "sha256": "80b37c1dbf5fc5518e84b1a93df850aa98f7ff289ab6ce1e3dcf254818e58049"
+    },
+    {
+      "path": "awake_status.py",
+      "source_sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1",
+      "sha256": "25f3e7d50676d04844f34db41994723930c79d31c90e8ffdc47c01dfd3979eb1"
+    },
+    {
+      "path": "capture_native.py",
+      "source_sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d",
+      "sha256": "ae21b1b75fd3c1b2f88e84389c18b6741d234e8cec4717f24883ecea37fc6b4d"
+    },
+    {
+      "path": "cleanup_native.py",
+      "source_sha256": "fd7c24075b1c77fee1868e14a75177b1c2ba4239d95c25192e7238c42cc09f7b",
+      "sha256": "ea0c2e948005882299b688c837eb9953b714acd529c198f8322dfa979931b318"
+    },
+    {
+      "path": "clock_probe.py",
+      "source_sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2",
+      "sha256": "19c9fefee807beb4dd2842be5e981f376e029cc9ecb8300b0a5244dc714823c2"
+    },
+    {
+      "path": "deliver_native.py",
+      "source_sha256": "0539782e9f4f358c3c6c6b08bee9a4edd6a641267893fda0f1074fa4fe172b8e",
+      "sha256": "0539782e9f4f358c3c6c6b08bee9a4edd6a641267893fda0f1074fa4fe172b8e"
+    },
+    {
+      "path": "discover_candidate.py",
+      "source_sha256": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b",
+      "sha256": "8e57bedb3a10082c5b76c928d6ca3d83722a8e3bb5173d47b36805955fd3a19b"
+    },
+    {
+      "path": "finalize_preflight.py",
+      "source_sha256": "74c2e27ced5c0e72b8106246d8e9fd8812b4cdd97f91a4396259e2f18bdf44ce",
+      "sha256": "e8cec81db0b990998ce1f7ebbbe4b8a67afd50d3e0d89bc5bf2b4b65b3612f72"
+    },
+    {
+      "path": "full_partition.py",
+      "source_sha256": "21731d5d5ed0561172756a9525bd338347c8c983118d7bb62a4c04eb588a14bf",
+      "sha256": "21731d5d5ed0561172756a9525bd338347c8c983118d7bb62a4c04eb588a14bf"
+    },
+    {
+      "path": "host_observer.py",
+      "source_sha256": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b",
+      "sha256": "b00ac6c4c6cddf400d8ab5b0169fb06f32a3d2ac4ae9043c1d4634f471cc493b"
+    },
+    {
+      "path": "host_resources.py",
+      "source_sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083"
+    },
+    {
+      "path": "interpreter_preflight.py",
+      "source_sha256": "f39ce698bb62f2314657cae75e825c16439afc16d4867f8cf5b78cc8a6e86f92",
+      "sha256": "448428a04cd279d7f12dcaaa2361d61ce6b6307039f322c0f1f6ca8b44b2f800"
+    },
+    {
+      "path": "launch_native.py",
+      "source_sha256": "d39799ab836de20a1ee03112a137002424bb5cf3d11df616c050bdb35b9ff308",
+      "sha256": "3308360a29816d10841f3f9994d3c963736f58daaaa018aecf84731955cd36e2"
+    },
+    {
+      "path": "native_support.py",
+      "source_sha256": "442bf318f921602805b611f9d12624a3e6728ff9bcbd20e1a6d20f0b2253d1a0",
+      "sha256": "0029999bf89659bf9a0e3a7f3288df8da5b3bf632c7511e5e8a2dc134cf9977b"
+    },
+    {
+      "path": "prepare_native.py",
+      "source_sha256": "3df96bb58cdd64291f4e8c7b4bba6ae707abe6bdafa5bbd4730967b67a00926e",
+      "sha256": "269d9c3be7981e9675751339fcd716b0d92d16a8197aaa705d2fa9d48a4d32c5"
+    },
+    {
+      "path": "recorded_suite.py",
+      "source_sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2",
+      "sha256": "0ec73a22bca32e48b26d9af7c6b5b07475f757eccade3fccabc00954d2cd3af2"
+    },
+    {
+      "path": "restore_native.py",
+      "source_sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065"
+    },
+    {
+      "path": "retire_install_cache.py",
+      "source_sha256": "834cdb571c422861e7083d8fee361e34bf62ffa7ba9fdeaa41f4bf4c539914f7",
+      "sha256": "610555b68810d40d39f3e01f8761b192a9ebf564b8cab59ebdd6c6190b3150ae"
+    },
+    {
+      "path": "run_campaign.py",
+      "source_sha256": "749c83ca7ef91e4cbcb2135c9cc2baf2382b2427de12457bb79cca62959669a2",
+      "sha256": "f915573047f6f88297f18df4b5bcc0f7f7844225293e390731a8bfb074c2c54b"
+    },
+    {
+      "path": "scan_security.py",
+      "source_sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2",
+      "sha256": "f6260b118db2ee4ef8694dcdba10d7c4e1a447b14549617c6d5dbfd31d5d0ab2"
+    }
+  ]
+}

@@ -1,8 +1,9 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import {
+    assignConversation,
     authorizeIdentityLink,
     claimConversation,
     closeConversation,
@@ -28,6 +29,25 @@ import { clockTimeOrg, fmtTimeOrg, groupMessagesByDay, orgTz } from "../../utils
 import { newIdempotencyKey } from "../../utils/idempotency";
 import { toList } from "../../utils/toList";
 import DeliveryTicks from "./DeliveryTicks";
+import FailedMessageRetry from "./FailedMessageRetry";
+import SessionWindowNotice from "./SessionWindowNotice";
+import ThreadContextPanel from "./ThreadContextPanel";
+import ThreadAssignment from "./ThreadAssignment";
+import { getSessionWindow } from "./sessionWindow";
+import { groupConsecutiveMessages } from "./messageGroups";
+import MessageBody from "./MessageBody";
+import ReplyQuote from "./ReplyQuote";
+import MediaBubble from "./MediaBubble";
+import { phoneHref } from "./messageText";
+import useInboxTitle from "./useInboxTitle";
+import usePollingWhenVisible from "../../hooks/usePollingWhenVisible";
+import ContactVerificationBadge from "./ContactVerificationBadge";
+import ThreadViewport from "./ThreadViewport";
+import useThreadHistory from "./useThreadHistory";
+import useThreadRead from "./useThreadRead";
+import { compareMessages } from "./threadMessages";
+import { fetchSynced, mergeListPacket, mergeTranscriptPacket } from "./inboxSync";
+import { InboxConnectionBanner, InboxLoadError, InboxLoading } from "./InboxLoadState";
 import styles from "./inbox.module.css";
 
 // Bandeja WhatsApp (É-F0 PR-7). Polling (patrón useDashboardSummary): la
@@ -38,6 +58,18 @@ const LIST_POLL_MS = 20000;
 const THREAD_POLL_MS = 10000;
 const INBOX_CLOCK_TICK_MS = 60000;
 const MAX_PENDING_SEND_ATTEMPTS = 20;
+const COMPOSER_MAX_LENGTH = 4000;
+const COMPOSER_MAX_HEIGHT = 120;
+const EMPTY_LOAD_STATE = { loading: false, error: "", failures: 0 };
+
+const uniqueThreads = (rows) => [...new Map(rows.map((row) => [
+    JSON.stringify([row.contact_public_id, row.channel_account_public_id]), row,
+])).values()];
+
+const nextThreadOffset = (data, offset) => (
+    data?.has_more === true && Number.isSafeInteger(data.next_offset) && data.next_offset > offset
+        ? data.next_offset : null
+);
 
 const removePendingAttempt = (registry, sessionId, clientMessageId) => {
     const sessionAttempts = registry.get(sessionId);
@@ -74,12 +106,6 @@ const registerPendingAttempt = (registry, attempt) => {
     }
 };
 
-const compareMessages = (left, right) => {
-    const byTime = new Date(left.created_at).getTime() - new Date(right.created_at).getTime();
-    if (byTime !== 0) return byTime;
-    return String(left.id).localeCompare(String(right.id));
-};
-
 const mergeServerMessage = (messages, serverMessage) => {
     const serverId = serverMessage?.id;
     const clientMessageId = serverMessage?.client_message_id;
@@ -111,6 +137,11 @@ const FILTERS = [
 
 const contactLabel = (conv) =>
     conv.owner_name || conv.contact_display_name || conv.contact_phone || "Sin nombre";
+
+const threadPreview = (row) => row.last_message_preview || ({
+    image: "📷 Foto", audio: "🎤 Nota de voz", video: "🎬 Video", sticker: "Sticker",
+    document: "📄 " + (row.last_message_filename || "Documento"),
+}[row.last_message_type]) || "—";
 
 const AUTHOR_LABEL = {
     client: null,
@@ -303,15 +334,29 @@ const Inbox = () => {
     const navigate = useNavigate();
 
     const [conversations, setConversations] = useState([]);
+    useInboxTitle(conversations);
     const [loadingList, setLoadingList] = useState(true);
+    const [listLoad, setListLoad] = useState(EMPTY_LOAD_STATE);
+    const [hasMoreThreads, setHasMoreThreads] = useState(false);
+    const [loadingMoreThreads, setLoadingMoreThreads] = useState(false);
+    const [moreThreadsError, setMoreThreadsError] = useState("");
     const [filter, setFilter] = useState("");
+    const [attention, setAttention] = useState("");
+    const [urgentOnly, setUrgentOnly] = useState(false);
+    const [mineOnly, setMineOnly] = useState(false);
+    const [searchText, setSearchText] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const searchRef = useRef(null);
     // La selección es el HILO —la persona—, no el episodio: `{contact, account}`.
     // Las ACCIONES siguen apuntando a la sesión vigente (`thread.conversation`),
     // porque de ella cuelgan el claim, el hand-off y los compromisos.
     const [selectedThread, setSelectedThread] = useState(null);
-    const [thread, setThread] = useState(null); // { conversation, messages, ... }
+    const [thread, setThread] = useState(null); // Metadatos de la sesión vigente.
+    const [threadLoad, setThreadLoad] = useState(EMPTY_LOAD_STATE);
     const [body, setBody] = useState("");
+    const [replyTarget, setReplyTarget] = useState(null);
     const [acting, setActing] = useState(false);
+    const actionInFlightRef = useRef(false);
     const [agentSettings, setAgentSettings] = useState(null);
     const [metrics, setMetrics] = useState(null);
     const [tokenStatus, setTokenStatus] = useState(null);
@@ -319,8 +364,25 @@ const Inbox = () => {
     const [savingToken, setSavingToken] = useState(false);
     const [timeReference, setTimeReference] = useState(() => new Date());
     const [optimisticMessages, setOptimisticMessages] = useState([]);
-    const threadEndRef = useRef(null);
+    const [unreadTotal, setUnreadTotal] = useState(0);
+    const [firstUnreadId, setFirstUnreadId] = useState(null);
+    const threadViewportRef = useRef(null);
+    const { transcriptMessages, nextBefore, olderLoad, newBelow, jumpLoad, highlightedId, captureScroll,
+        trackScroll, goToEnd, receiveLatest, updateMessages, resetHistory, loadOlder, getSyncFloor,
+        jumpToMessage, isJumping } = useThreadHistory(
+        threadViewportRef, { optimisticMessages, sessionId: thread?.conversation?.public_id || null,
+            layoutKey: firstUnreadId }
+    );
+    const composerRef = useRef(null);
     const threadLoadRequestRef = useRef(0);
+    const listLoadRequestRef = useRef(0);
+    const listControllerRef = useRef(null);
+    const threadControllerRef = useRef(null);
+    const listPagesRef = useRef(new Map());
+    const threadSnapshotRef = useRef(null);
+    const loadedListPagesRef = useRef(1);
+    const nextListOffsetRef = useRef(null);
+    const loadingMoreThreadsRef = useRef(false);
     const selectedThreadRef = useRef(null);
     const activeSessionIdRef = useRef(null);
     const selectionRevisionRef = useRef(0);
@@ -340,41 +402,194 @@ const Inbox = () => {
     // ella el kill switch del agente.
     const canVerifyIdentity = can?.("agentinbox.identity_verify");
 
-    const loadList = useCallback(async ({ silent = true } = {}) => {
-        if (!mountedRef.current) return;
+    const resetList = useCallback(() => {
+        listLoadRequestRef.current += 1;
+        listControllerRef.current?.abort();
+        listControllerRef.current = null;
+        listPagesRef.current.clear();
+        loadedListPagesRef.current = 1;
+        nextListOffsetRef.current = null;
+        loadingMoreThreadsRef.current = false;
+        setHasMoreThreads(false);
+        setLoadingMoreThreads(false);
+        setMoreThreadsError("");
+        setListLoad(EMPTY_LOAD_STATE);
+        setLoadingList(true);
+        setConversations([]);
+    }, []);
+
+    useEffect(() => {
+        const trimmed = searchText.trim();
+        const nextQuery = trimmed.length >= 2 ? trimmed : "";
+        if (nextQuery === searchQuery) return;
+        const timer = setTimeout(() => {
+            resetList();
+            setSearchQuery(nextQuery);
+        }, 250);
+        return () => clearTimeout(timer);
+    }, [searchText, searchQuery, resetList]);
+
+    useEffect(() => {
+        const focusSearch = (event) => {
+            if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.isComposing
+                && event.key.toLowerCase() === "k") {
+                event.preventDefault();
+                searchRef.current?.focus();
+                searchRef.current?.select();
+            }
+        };
+        document.addEventListener("keydown", focusSearch);
+        return () => document.removeEventListener("keydown", focusSearch);
+    }, []);
+
+    const clearSearch = () => {
+        setSearchText("");
+        if (searchQuery) {
+            resetList();
+            setSearchQuery("");
+        }
+        searchRef.current?.focus();
+    };
+
+    const loadList = useCallback(async ({ silent = true, append = false } = {}) => {
+        if (!mountedRef.current || loadingMoreThreadsRef.current) return;
+        if (listControllerRef.current) {
+            if (!append) return;
+            // An explicit page request supersedes a background refresh.
+            listControllerRef.current.abort();
+            listControllerRef.current = null;
+        }
+        if (append && nextListOffsetRef.current === null) return;
+        const controller = new AbortController();
+        listControllerRef.current = controller;
+        const requestId = ++listLoadRequestRef.current;
+        const isCurrent = () => mountedRef.current && !controller.signal.aborted && requestId === listLoadRequestRef.current;
+        if (append) {
+            loadingMoreThreadsRef.current = true;
+            setLoadingMoreThreads(true);
+            setMoreThreadsError("");
+        }
         if (!silent) setLoadingList(true);
         try {
-            // `archived` en vez de `state`: el hilo no tiene estado propio — lo
-            // tiene su sesión vigente, y si no hay ninguna está archivado.
-            const data = await getThreads(filter === "archived" ? { archived: 1 } : {});
-            if (!mountedRef.current) return;
-            setConversations(toList(data));
+            // Apply each delta to its own offset page, then publish all pages
+            // together. Moving between pages never removes a still-visible row.
+            const nextPages = append ? new Map(listPagesRef.current) : new Map();
+            const pagesToLoad = append ? 1 : loadedListPagesRef.current;
+            let offset = append ? nextListOffsetRef.current : 0;
+            let nextOffset = null;
+            let pagesLoaded = 0;
+            let totalUnread = null;
+            const rows = [];
+            for (let page = 0; page < pagesToLoad; page += 1) {
+                if (!isCurrent() || (page > 0 && document.hidden)) return;
+                const params = filter === "archived" ? { archived: 1 } : {};
+                if (attention !== "") params.unanswered = Number(attention);
+                if (urgentOnly) params.urgent = 1;
+                if (mineOnly) params.claimed = "me";
+                if (searchQuery) params.q = searchQuery;
+                if (offset > 0) params.offset = offset;
+                const previous = listPagesRef.current.get(offset);
+                const data = await fetchSynced(
+                    (since) => getThreads({ ...params, ...(since ? { since } : {}) }, { signal: controller.signal }),
+                    previous?.sync_cursor, (packet) => mergeListPacket(previous, packet));
+                if (!isCurrent()) return;
+                nextPages.set(offset, data);
+                if (Number.isSafeInteger(data?.unread_total)) totalUnread = data.unread_total;
+                const pageRows = toList(data);
+                rows.push(...pageRows);
+                pagesLoaded += 1;
+                nextOffset = pageRows.length > 0 ? nextThreadOffset(data, offset) : null;
+                if (nextOffset === null) break;
+                offset = nextOffset;
+            }
+            setConversations((previous) => uniqueThreads(append ? [...previous, ...rows] : rows));
+            listPagesRef.current = nextPages;
+            if (totalUnread !== null) setUnreadTotal(totalUnread);
+            loadedListPagesRef.current = append ? loadedListPagesRef.current + pagesLoaded : pagesLoaded;
+            nextListOffsetRef.current = nextOffset;
+            setHasMoreThreads(nextOffset !== null);
+            setMoreThreadsError("");
+            setListLoad(EMPTY_LOAD_STATE);
         } catch (err) {
-            if (mountedRef.current) console.error(apiError(err));
+            if (!isCurrent()) return;
+            if (append) {
+                setMoreThreadsError(apiError(err, "No se pudieron cargar más conversaciones"));
+                return;
+            }
+            setListLoad((previous) => ({
+                loading: false,
+                error: apiError(err, "No se pudo cargar la lista de conversaciones"),
+                failures: previous.failures + 1,
+            }));
         } finally {
-            if (mountedRef.current) setLoadingList(false);
+            if (listControllerRef.current === controller) listControllerRef.current = null;
+            if (isCurrent()) {
+                setLoadingList(false);
+                if (append) {
+                    loadingMoreThreadsRef.current = false;
+                    setLoadingMoreThreads(false);
+                }
+            }
         }
-    }, [filter]);
+    }, [filter, attention, urgentOnly, mineOnly, searchQuery]);
+
+    const onReadDivider = useCallback((id) => {
+        captureScroll();
+        setFirstUnreadId(id);
+    }, [captureScroll]);
+    const onMarkedRead = useCallback((target, data) => {
+        // Descartar GETs que empezaron antes del acuse; refrescar las páginas cargadas.
+        listLoadRequestRef.current += 1;
+        threadLoadRequestRef.current += 1;
+        listControllerRef.current?.abort();
+        listControllerRef.current = null;
+        threadControllerRef.current?.abort();
+        threadControllerRef.current = null;
+        loadingMoreThreadsRef.current = false;
+        setLoadingMoreThreads(false);
+        setLoadingList(false);
+        setConversations((rows) => rows.map((row) => (
+            row.contact_public_id === target.contact && row.channel_account_public_id === target.account
+                ? { ...row, unread_count: data.unread_count } : row
+        )));
+        if (Number.isSafeInteger(data.unread_total)) setUnreadTotal(data.unread_total);
+        loadList();
+    }, [loadList]);
+    const { resetRead, receiveReadState } = useThreadRead({
+        onDivider: onReadDivider, onMarked: onMarkedRead,
+    });
 
     const updateOptimisticMessages = useCallback((updater) => {
         if (!mountedRef.current) return;
+        captureScroll();
         const next = updater(optimisticMessagesRef.current);
         optimisticMessagesRef.current = next;
         setOptimisticMessages(next);
-    }, []);
+    }, [captureScroll]);
 
-    const loadThread = useCallback(async (target) => {
-        if (!target) return;
+    const loadThread = useCallback(async (target, { silent = true } = {}) => {
+        if (!target || !mountedRef.current || threadControllerRef.current || isJumping()) return;
+        const controller = new AbortController();
+        threadControllerRef.current = controller;
         const requestId = ++threadLoadRequestRef.current;
+        if (!silent) setThreadLoad((previous) => ({ ...previous, loading: true }));
         try {
-            const data = await getThreadMessages(target.contact, target.account);
+            const previous = threadSnapshotRef.current;
+            const floor = previous?.sync_cursor ? getSyncFloor() : null;
+            const data = await fetchSynced(
+                (since) => getThreadMessages(target.contact, target.account,
+                    { ...(since ? { since } : {}), ...(floor !== null ? { floor } : {}) },
+                    { signal: controller.signal }),
+                previous?.sync_cursor, (packet) => mergeTranscriptPacket(previous, packet));
             if (!mountedRef.current) return;
+            if (controller.signal.aborted) return;
             if (requestId !== threadLoadRequestRef.current) return;
             const current = selectedThreadRef.current;
             if (!current
                 || current.contact !== target.contact
                 || current.account !== target.account) return;
             const loadedSessionId = data?.conversation?.public_id || null;
+            if (loadedSessionId !== activeSessionIdRef.current) setReplyTarget(null);
             activeSessionIdRef.current = loadedSessionId;
             const serverClientIds = new Set(
                 (data?.messages || [])
@@ -399,17 +614,30 @@ const Inbox = () => {
                     )));
                 }
             }
-            setThread(data);
+            const { messages = [], next_before: cursor, removals = [], reset_range: replace = false,
+                range_ids: rangeIds, sync_floor: syncFloor, ...metadata } = data;
+            receiveLatest(messages, cursor, { removals, replace, rangeIds, syncFloor });
+            receiveReadState(target, data);
+            threadSnapshotRef.current = metadata;
+            setThread(metadata);
+            setThreadLoad(EMPTY_LOAD_STATE);
         } catch (err) {
             if (!mountedRef.current) return;
+            if (controller.signal.aborted) return;
             if (requestId !== threadLoadRequestRef.current) return;
             const current = selectedThreadRef.current;
             if (!current
                 || current.contact !== target.contact
                 || current.account !== target.account) return;
-            toast.error(apiError(err, "No se pudo cargar la conversación"));
+            setThreadLoad((previous) => ({
+                loading: false,
+                error: apiError(err, "No se pudo cargar la conversación"),
+                failures: previous.failures + 1,
+            }));
+        } finally {
+            if (threadControllerRef.current === controller) threadControllerRef.current = null;
         }
-    }, [updateOptimisticMessages]);
+    }, [updateOptimisticMessages, receiveLatest, receiveReadState, getSyncFloor, isJumping]);
 
     useEffect(() => {
         mountedRef.current = true;
@@ -417,6 +645,11 @@ const Inbox = () => {
         return () => {
             mountedRef.current = false;
             threadLoadRequestRef.current += 1;
+            listLoadRequestRef.current += 1;
+            listControllerRef.current?.abort();
+            threadControllerRef.current?.abort();
+            listControllerRef.current = null;
+            threadControllerRef.current = null;
             for (const controller of controllers.values()) {
                 controller.abort();
             }
@@ -424,28 +657,21 @@ const Inbox = () => {
         };
     }, []);
 
-    // Lista: carga inicial + polling.
-    useEffect(() => {
-        loadList({ silent: false });
-        const t = setInterval(loadList, LIST_POLL_MS);
-        return () => clearInterval(t);
+    const pollList = useCallback(({ initial }) => {
+        loadList({ silent: !initial });
     }, [loadList]);
+    usePollingWhenVisible(pollList, LIST_POLL_MS);
 
     // Una única referencia temporal alimenta todo el render. Se renueva cada
     // minuto para que Hoy/Ayer cambie al cruzar medianoche sin dejar el Inbox
     // congelado si no llegan mensajes nuevos.
-    useEffect(() => {
-        const timer = setInterval(() => setTimeReference(new Date()), INBOX_CLOCK_TICK_MS);
-        return () => clearInterval(timer);
-    }, []);
+    const updateTimeReference = useCallback(() => setTimeReference(new Date()), []);
+    usePollingWhenVisible(updateTimeReference, INBOX_CLOCK_TICK_MS);
 
-    // Transcript del seleccionado: carga + polling.
-    useEffect(() => {
-        if (!selectedThread) return;
-        loadThread(selectedThread);
-        const t = setInterval(() => loadThread(selectedThread), THREAD_POLL_MS);
-        return () => clearInterval(t);
+    const pollThread = useCallback(({ initial }) => {
+        loadThread(selectedThread, { silent: !initial });
     }, [selectedThread, loadThread]);
+    usePollingWhenVisible(pollThread, THREAD_POLL_MS, Boolean(selectedThread));
 
     // Kill switch: solo si puede configurarlo.
     useEffect(() => {
@@ -486,28 +712,45 @@ const Inbox = () => {
         }
     };
 
-    useEffect(() => {
-        threadEndRef.current?.scrollIntoView({ block: "end" });
-    }, [thread?.messages?.length, optimisticMessages.length]);
-
     // La sesión contra la que se ACTÚA. `null` = hilo archivado: se lee, se
     // recorre, y no ofrece acciones — escribir sobre una sesión cerrada devuelve
     // 400, así que no se pinta el botón.
     const sessionId = thread?.conversation?.public_id || null;
-    const transcriptMessages = useMemo(() => {
-        const serverMessages = thread?.messages || [];
-        if (!sessionId) return serverMessages;
-        const serverClientIds = new Set(
-            serverMessages.map((message) => message.client_message_id).filter(Boolean)
-        );
-        const localMessages = optimisticMessages.filter((message) => (
-            message.sessionId === sessionId
-            && !serverClientIds.has(message.client_message_id)
-        ));
-        return [...serverMessages, ...localMessages].sort(compareMessages);
-    }, [thread?.messages, optimisticMessages, sessionId]);
+    const sessionWindow = getSessionWindow(thread?.conversation, timeReference.getTime());
+    const windowCanSend = ["open", "closing"].includes(sessionWindow.state);
+    const windowExpiresAt = sessionWindow.expiresAt;
+    useEffect(() => {
+        // Expire at the boundary even between minute ticks; never use a long
+        // timeout for absent/malformed timestamps or archived conversations.
+        const remaining = windowExpiresAt - Date.now() + 1;
+        if (!sessionId || !windowCanSend || !Number.isFinite(remaining)) return;
+        const timer = setTimeout(updateTimeReference, Math.max(1, Math.min(remaining, 2147483647)));
+        return () => clearTimeout(timer);
+    }, [sessionId, windowCanSend, windowExpiresAt, timeReference, updateTimeReference]);
+    const retrySelectionRevision = selectionRevisionRef.current;
+    const handleRetriedMessage = (serverMessage) => {
+        if (!mountedRef.current || selectionRevisionRef.current !== retrySelectionRevision
+                || activeSessionIdRef.current !== sessionId) return;
+        threadLoadRequestRef.current += 1;
+        // Un poll/acuse puede haber avanzado el mismo mensaje mientras llegaba
+        // el POST: el acuse siempre gana a la proyección PENDING del reintento.
+        updateMessages((messages) => messages.map((message) => (
+            message.id === serverMessage.id && ["failed", "pending"].includes(message.status)
+                ? serverMessage : message
+        )));
+    };
+    useLayoutEffect(() => {
+        const input = composerRef.current;
+        if (!input) return;
+        // Medir tras aplicar el texto permite crecer al pegar y encoger al
+        // borrar, enviar o cambiar de hilo. scrollHeight no incluye el borde.
+        input.style.height = "auto";
+        input.style.height = `${Math.min(input.scrollHeight + 2, COMPOSER_MAX_HEIGHT)}px`;
+    }, [body, sessionId, canSend]);
+
     const messageGroups = useMemo(
-        () => groupMessagesByDay(transcriptMessages, timezone, timeReference),
+        () => groupMessagesByDay(transcriptMessages, timezone, timeReference)
+            .map((day) => ({ ...day, bursts: groupConsecutiveMessages(day.messages) })),
         [transcriptMessages, timezone, timeReference]
     );
     const isSelected = (row) => (
@@ -520,6 +763,36 @@ const Inbox = () => {
         await Promise.all([loadList(), selectedThread ? loadThread(selectedThread) : null]);
     };
 
+    const handleJumpToMessage = (id) => {
+        // A recovery started before around must not replace the opened page.
+        threadLoadRequestRef.current += 1;
+        threadControllerRef.current?.abort();
+        threadControllerRef.current = null;
+        jumpToMessage(selectedThreadRef.current, id);
+    };
+
+    const selectReply = (message) => {
+        if (!canSend || !sessionId || !windowCanSend || !Number.isSafeInteger(message.id) || message.id <= 0) return;
+        captureScroll();
+        setReplyTarget({
+            id: message.id,
+            author_type: message.author_type,
+            human_author_name: message.human_author_name,
+            authorLabel: message.direction === "in" ? contactLabel(thread)
+                : (message.human_author_name || AUTHOR_LABEL[message.author_type] || "Staff"),
+            excerpt: Array.from(message.body || "").slice(0, 80).join(""),
+            payload_type: message.payload_type || "text",
+            status: message.status,
+        });
+        composerRef.current?.focus({ preventScroll: true });
+    };
+
+    const cancelReply = () => {
+        captureScroll();
+        setReplyTarget(null);
+        composerRef.current?.focus({ preventScroll: true });
+    };
+
     const executeSendAttempt = async (attempt) => {
         const controller = new AbortController();
         sendAbortControllersRef.current.set(attempt.clientMessageId, controller);
@@ -528,7 +801,7 @@ const Inbox = () => {
                 attempt.sessionId,
                 attempt.body,
                 attempt.clientMessageId,
-                { signal: controller.signal }
+                { signal: controller.signal, ...(attempt.replyToId != null ? { replyToId: attempt.replyToId } : {}) }
             );
             if (!mountedRef.current || controller.signal.aborted) return;
             if (serverMessage?.client_message_id !== attempt.clientMessageId) {
@@ -550,17 +823,7 @@ const Inbox = () => {
                 updateOptimisticMessages((messages) => messages.filter(
                     (message) => message.client_message_id !== attempt.clientMessageId
                 ));
-                setThread((currentThread) => (
-                    currentThread?.conversation?.public_id === attempt.sessionId
-                        ? {
-                            ...currentThread,
-                            messages: mergeServerMessage(
-                                currentThread.messages || [],
-                                serverMessage
-                            ),
-                        }
-                        : currentThread
-                ));
+                updateMessages((messages) => mergeServerMessage(messages, serverMessage));
             } else {
                 // Confirmado, pero el hilo original no está activo. Mantener la
                 // proyección real evita que desaparezca durante navegación o
@@ -603,6 +866,8 @@ const Inbox = () => {
     };
 
     const handleSend = () => {
+        // Recheck at the click/Enter, including a timer delayed by tab suspension.
+        if (!canSend || !["open", "closing"].includes(getSessionWindow(thread?.conversation).state)) return;
         const text = body.trim();
         if (!text) { toast.error("Escribe un mensaje"); return; }
         const currentSessionId = sessionId;
@@ -613,6 +878,7 @@ const Inbox = () => {
             sessionId: currentSessionId,
             clientMessageId,
             body: text,
+            replyToId: replyTarget?.id ?? null,
             targetThread,
             selectionRevision: selectionRevisionRef.current,
             sequence: ++sendSequenceRef.current,
@@ -623,6 +889,12 @@ const Inbox = () => {
             client_message_id: clientMessageId,
             sessionId: currentSessionId,
             body: text,
+            reply_to: replyTarget ? {
+                id: replyTarget.id, author_type: replyTarget.author_type,
+                human_author_name: replyTarget.human_author_name,
+                excerpt: replyTarget.excerpt, payload_type: replyTarget.payload_type,
+                status: replyTarget.status,
+            } : null,
             direction: "out",
             author_type: "human_staff",
             human_author_name: "Tú",
@@ -633,6 +905,7 @@ const Inbox = () => {
         }].slice(-MAX_PENDING_SEND_ATTEMPTS));
         draftRevisionRef.current += 1;
         setBody("");
+        setReplyTarget(null);
         executeSendAttempt(attempt);
     };
 
@@ -655,19 +928,30 @@ const Inbox = () => {
     };
 
     const runAction = async (fn, successMsg) => {
+        if (actionInFlightRef.current) return false;
+        actionInFlightRef.current = true;
+        const actionSession = sessionId;
+        const revision = selectionRevisionRef.current;
+        const stillCurrent = () => mountedRef.current && revision === selectionRevisionRef.current
+            && actionSession === activeSessionIdRef.current;
         setActing(true);
         try {
-            await fn(sessionId);
+            await fn(actionSession);
+            if (!stillCurrent()) return false;
             if (successMsg) toast.success(successMsg);
             await refreshAll();
+            return true;
         } catch (err) {
+            if (!stillCurrent()) return false;
             if (err?.response?.status === 409) {
                 toast.error(apiError(err, "Otra persona ya la está atendiendo"));
                 await refreshAll();
             } else {
                 toast.error(apiError(err, "Error inesperado"));
             }
+            return false;
         } finally {
+            actionInFlightRef.current = false;
             setActing(false);
         }
     };
@@ -776,6 +1060,19 @@ const Inbox = () => {
     };
 
     const conv = thread?.conversation;
+    const agentProcessing = conv?.agent_processing === true;
+    const turnHint = agentProcessing ? "Espera a que el asistente termine de responder." : undefined;
+    const contactPhone = conv?.contact_phone || thread?.contact_phone
+        || conversations.find(isSelected)?.contact_phone || "";
+    const contactPhoneHref = phoneHref(contactPhone);
+    const handleCopy = async (text, successMessage) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            toast.success(successMessage);
+        } catch {
+            toast.error("No se pudo copiar. Selecciona y copia el texto manualmente.");
+        }
+    };
 
     return (
         <div className={styles.page}>
@@ -827,27 +1124,79 @@ const Inbox = () => {
             <div className={styles.layout}>
                 {/* -------- Lista -------- */}
                 <div className={styles.listPane}>
+                    <div className={styles.searchBox}>
+                        <label htmlFor="inbox-contact-search">Buscar conversaciones</label>
+                        <div className={styles.searchControl}>
+                            <input id="inbox-contact-search" ref={searchRef} type="search"
+                                value={searchText} placeholder="Nombre o teléfono"
+                                aria-describedby="inbox-search-hint" aria-keyshortcuts="Control+k Meta+k"
+                                onChange={(event) => setSearchText(event.target.value)}
+                                onKeyDown={(event) => {
+                                    if (event.key === "Escape") { event.preventDefault(); clearSearch(); }
+                                }} />
+                            {searchText && <button type="button" aria-label="Limpiar búsqueda"
+                                onClick={clearSearch}>×</button>}
+                        </div>
+                        <span id="inbox-search-hint">Nombre, teléfono o cliente · mínimo 2 caracteres</span>
+                    </div>
                     <div className={styles.filterRow}>
                         {FILTERS.map((f) => (
                             <button
                                 key={f.value}
                                 className={`${styles.filterTab} ${filter === f.value ? styles.filterTabActive : ""}`}
-                                onClick={() => setFilter(f.value)}
+                                onClick={() => {
+                                    if (filter === f.value) return;
+                                    resetList();
+                                    setFilter(f.value);
+                                }}
                                 aria-pressed={filter === f.value}
+                                aria-label={f.label}
+                                aria-describedby={f.value === "" ? "inbox-unread-total" : undefined}
                             >
                                 {f.label}
+                                {f.value === "" && (
+                                    <span id="inbox-unread-total" className={styles.unreadCount}
+                                        aria-label={`${unreadTotal} mensajes sin leer en conversaciones activas`}>
+                                        {unreadTotal}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                    <div className={styles.segmentRow} role="group" aria-label="Filtros de conversaciones">
+                        {[
+                            { label: "Sin atender", active: attention === "1", toggle: () => setAttention(attention === "1" ? "" : "1") },
+                            { label: "Esperando cliente", active: attention === "0", toggle: () => setAttention(attention === "0" ? "" : "0") },
+                            { label: "Urgentes", active: urgentOnly, toggle: () => setUrgentOnly(!urgentOnly) },
+                            { label: "Míos", active: mineOnly, toggle: () => setMineOnly(!mineOnly) },
+                        ].map(({ label, active, toggle }) => (
+                            <button key={label} type="button" aria-pressed={active}
+                                className={`${styles.segmentChip} ${active ? styles.segmentChipActive : ""}`}
+                                onClick={() => { resetList(); toggle(); }}>
+                                {label}
                             </button>
                         ))}
                     </div>
                     <div className={styles.listScroll}>
-                        {loadingList ? (
-                            <div className={styles.emptyPane}>Cargando…</div>
+                        {listLoad.failures >= 2 && (
+                            <InboxConnectionBanner panel="Conversaciones" retrying={loadingList || loadingMoreThreads}
+                                onRetry={() => loadList({ silent: false })} />
+                        )}
+                        {loadingList && conversations.length === 0 ? (
+                            <InboxLoading label="Cargando conversaciones" />
+                        ) : listLoad.error && conversations.length === 0 ? (
+                            <InboxLoadError title="No se pudieron cargar las conversaciones" error={listLoad.error}
+                                onRetry={listLoad.failures < 2 ? () => loadList({ silent: false }) : undefined} />
                         ) : conversations.length === 0 ? (
                             <EmptyState
                                 compact
                                 icon={Icon.MessageCircle}
-                                title="Sin conversaciones"
-                                body="Cuando un cliente escriba al WhatsApp de la clínica, aparecerá aquí."
+                                title={searchQuery || attention !== "" || urgentOnly || mineOnly ? "Sin coincidencias" : "Sin conversaciones"}
+                                body={searchQuery
+                                    ? "Prueba otro nombre o teléfono, o desactiva un filtro para ampliar la búsqueda."
+                                    : attention !== "" || urgentOnly || mineOnly
+                                        ? "No hay conversaciones con estos filtros. Desactiva un filtro para ampliar la lista."
+                                    : "Cuando un cliente escriba al WhatsApp de la clínica, aparecerá aquí."}
                             />
                         ) : (
                             conversations.map((c) => (
@@ -873,22 +1222,39 @@ const Inbox = () => {
                                         // el texto de una persona pueda enviarse
                                         // a otra; un efecto encadenaría renders.
                                         selectedThreadRef.current = target;
+                                        threadControllerRef.current?.abort();
+                                        threadControllerRef.current = null;
+                                        threadSnapshotRef.current = null;
                                         activeSessionIdRef.current = null;
                                         selectionRevisionRef.current += 1;
+                                        resetRead(target);
+                                        resetHistory();
                                         draftRevisionRef.current += 1;
                                         setBody("");
+                                        setReplyTarget(null);
                                         // Invalida cualquier GET del hilo anterior
                                         // que siga en vuelo y termine más tarde.
                                         threadLoadRequestRef.current += 1;
                                         setThread(null);
+                                        setThreadLoad({ ...EMPTY_LOAD_STATE, loading: true });
                                         setSelectedThread(target);
                                     }}
                                 >
                                     <div className={styles.convTop}>
-                                        <span className={styles.convName}>
-                                            {c.has_unanswered && <span className={styles.unansweredDot} />}
-                                            {contactLabel(c)}
-                                        </span>
+                                        <div className={styles.convIdentity}>
+                                            <span className={styles.convName}>
+                                                {!Number.isSafeInteger(c.unread_count) && c.has_unanswered
+                                                    && <span className={styles.unansweredDot} />}
+                                                {contactLabel(c)}
+                                            </span>
+                                            {c.unread_count > 0 && (
+                                                <span className={styles.unreadCount}
+                                                    aria-label={`${c.unread_count} ${c.unread_count === 1 ? "mensaje sin leer" : "mensajes sin leer"}`}>
+                                                    {c.unread_count}
+                                                </span>
+                                            )}
+                                            <ContactVerificationBadge level={c.contact_verification} />
+                                        </div>
                                         <span className={styles.convTime}>
                                             {c.session_count > 1 && (
                                                 <span className={styles.sessionCount}
@@ -900,7 +1266,7 @@ const Inbox = () => {
                                         </span>
                                     </div>
                                     <div className={styles.convTop}>
-                                        <span className={styles.convPreview}>{c.last_message_preview || "—"}</span>
+                                        <span className={styles.convPreview}>{threadPreview(c)}</span>
                                         {c.handoff_priority === "urgent" ? (
                                             <span className="badge badge-danger">Urgente</span>
                                         ) : c.state ? (
@@ -930,11 +1296,36 @@ const Inbox = () => {
                             ))
                         )}
                     </div>
+                    {conversations.length > 0 && (
+                        <div className={styles.listPagination}>
+                            <span role="status">
+                                {conversations.length} {conversations.length === 1 ? "conversación cargada." : "conversaciones cargadas."}
+                                {hasMoreThreads && " Hay más conversaciones."}
+                            </span>
+                            {moreThreadsError && <span role="alert">{moreThreadsError}</span>}
+                            {hasMoreThreads && (
+                                <button className="btn btn-secondary btn-sm"
+                                    disabled={loadingMoreThreads}
+                                    onClick={() => loadList({ append: true })}>
+                                    {loadingMoreThreads ? "Cargando más…" : moreThreadsError ? "Reintentar cargar más" : "Cargar más"}
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* -------- Transcript -------- */}
                 <div className={styles.chatPane}>
-                    {!thread ? (
+                    {threadLoad.failures >= 2 && (
+                        <InboxConnectionBanner panel="Mensajes" retrying={threadLoad.loading}
+                            onRetry={() => loadThread(selectedThread, { silent: false })} />
+                    )}
+                    {!thread && selectedThread && threadLoad.loading ? (
+                        <InboxLoading label="Cargando mensajes" />
+                    ) : !thread && threadLoad.error ? (
+                        <InboxLoadError title="No se pudo cargar la conversación" error={threadLoad.error}
+                            onRetry={threadLoad.failures < 2 ? () => loadThread(selectedThread, { silent: false }) : undefined} />
+                    ) : !thread ? (
                         <div className={styles.emptyPane}>
                             Selecciona una conversación para ver los mensajes.
                         </div>
@@ -944,6 +1335,12 @@ const Inbox = () => {
                                 <div className={styles.chatIdentity}>
                                     <div className={styles.chatIdentityLine}>
                                         <strong className={styles.chatName}>{contactLabel(thread)}</strong>
+                                        <ContactVerificationBadge level={thread.contact_verification ?? conv?.contact_verification} />
+                                        {agentProcessing && (
+                                            <span className="badge badge-info" role="status">
+                                                El asistente está respondiendo…
+                                            </span>
+                                        )}
                                         {conv ? (
                                             <span className={`badge ${STATE_BADGE[conv.state]}`}>
                                                 {STATE_LABEL[conv.state]}
@@ -961,23 +1358,40 @@ const Inbox = () => {
                                             <span className="badge badge-purple">Vínculo familiar</span>
                                         )}
                                     </div>
-                                    {(conv?.contact_phone || conv?.claimed_by_name) && (
+                                    {(contactPhone || conv?.claimed_by_name) && (
                                         <div className={styles.chatMeta}>
-                                            {[conv?.contact_phone, conv?.claimed_by_name ? `Atiende: ${conv.claimed_by_name}` : null]
-                                                .filter(Boolean).join(" · ")}
+                                            {contactPhone && (
+                                                <>
+                                                    {contactPhoneHref ? (
+                                                        <a href={contactPhoneHref}>{contactPhone}</a>
+                                                    ) : <span>{contactPhone}</span>}
+                                                    <button type="button" className={styles.copyPhone}
+                                                        onClick={() => handleCopy(contactPhone, "Teléfono copiado")}>
+                                                        Copiar teléfono
+                                                    </button>
+                                                </>
+                                            )}
+                                            {conv?.claimed_by_name && <span>Atiende: {conv.claimed_by_name}</span>}
                                         </div>
                                     )}
                                 </div>
                                 {canClaim && sessionId && (
                                     <div className={styles.chatActions}>
+                                        {conv?.state !== "closed" && <ThreadAssignment key={sessionId}
+                                            disabled={acting || agentProcessing}
+                                            onAssign={(userId) => runAction(
+                                                (id) => assignConversation(id, userId), "Conversación asignada",
+                                            )} />}
                                         {(conv?.state !== "human_active" || thread?.handoff?.state === "QUEUED") && (
-                                            <button className="btn btn-secondary btn-xs" disabled={acting}
+                                            <button className="btn btn-secondary btn-xs" disabled={acting || agentProcessing}
+                                                title={turnHint}
                                                 onClick={() => runAction(claimConversation)}>
                                                 {conv?.state === "human_active" ? "Acusar recibo" : "Tomar y acusar recibo"}
                                             </button>
                                         )}
                                         {conv?.state === "human_active" && (
-                                            <button className="btn btn-secondary btn-xs" disabled={acting}
+                                            <button className="btn btn-secondary btn-xs" disabled={acting || agentProcessing}
+                                                title={turnHint}
                                                 onClick={() => runAction(releaseConversation, "Conversación liberada")}>
                                                 Liberar
                                             </button>
@@ -1019,71 +1433,182 @@ const Inbox = () => {
                                 <HandoffReasonBanner handoff={thread.handoff} />
                             )}
 
-                            <div className={styles.thread}>
+                            {selectedThread && <ThreadContextPanel
+                                key={JSON.stringify([selectedThread.contact, selectedThread.account,
+                                    thread.owner_name, thread.contact_verification, conv?.linked_via])}
+                                contactId={selectedThread.contact} accountId={selectedThread.account}
+                                canOpenPet={Boolean(can?.("patient.retrieve"))}
+                                onOpenPet={(publicId) => navigate(`/pets/${publicId}`)} />}
+
+                            <ThreadViewport viewportRef={threadViewportRef} newBelow={newBelow}
+                                onViewportScroll={trackScroll} onGoToEnd={goToEnd}
+                                onReachStart={() => loadOlder(selectedThread)}>
+                                {jumpLoad.loading && <p className={styles.jumpNotice} role="status">Buscando mensaje original…</p>}
+                                {jumpLoad.error && <p className={styles.jumpNotice} role="alert">{jumpLoad.error}</p>}
+                                <div className={styles.historyStatus}>
+                                    {olderLoad.loading ? (
+                                        <span role="status" aria-label="Cargando mensajes anteriores">Cargando anteriores…</span>
+                                    ) : olderLoad.error ? (
+                                        <>
+                                            <span role="alert">{olderLoad.error}</span>
+                                            <button type="button" className="btn btn-secondary btn-xs"
+                                                onClick={() => loadOlder(selectedThread, { manual: true })}>
+                                                Reintentar anteriores
+                                            </button>
+                                        </>
+                                    ) : nextBefore !== null ? (
+                                        <button type="button" className="btn btn-secondary btn-xs"
+                                            onClick={() => loadOlder(selectedThread, { manual: true })}>
+                                            Cargar anteriores
+                                        </button>
+                                    ) : (
+                                        <span>Inicio del historial disponible</span>
+                                    )}
+                                </div>
                                 {messageGroups.map((group) => (
                                     <Fragment key={group.key}>
                                         <DateDivider label={group.label} />
-                                        {group.messages.map((m) => (
+                                        {group.bursts.map((burst) => (
                                             <div
-                                                key={m.id}
-                                                className={
-                                                    m.direction === "in"
-                                                        ? `${styles.bubble} ${styles.bubbleIn}`
-                                                        : `${styles.bubble} ${styles.bubbleOut}`
-                                                }
+                                                key={burst.key}
+                                                role="group"
+                                                aria-label={`${burst.messages.length} ${burst.messages.length === 1 ? "mensaje" : "mensajes"} de ${burst.messages[0].direction === "in" ? contactLabel(thread) : (burst.messages[0].human_author_name || AUTHOR_LABEL[burst.messages[0].author_type] || "Staff")}`}
+                                                className={`${styles.messageGroup} ${burst.messages[0].direction === "in" ? styles.messageGroupIn : styles.messageGroupOut}`}
                                             >
-                                                {m.body || <em>[{m.payload_type}]</em>}
-                                                <div className={styles.bubbleMeta}>
-                                                    {m.direction === "out" && (
-                                                        <span>
-                                                            {m.author_type === "human_staff"
-                                                                ? (m.human_author_name || "Staff")
-                                                                : (AUTHOR_LABEL[m.author_type] || "")}
-                                                        </span>
-                                                    )}
-                                                    <span>{clockTimeOrg(m.created_at, timezone)}</span>
-                                                    <DeliveryTicks
-                                                        status={m.status}
-                                                        direction={m.direction}
-                                                        failure_reason={m.failure_reason}
-                                                        acceptance_known={m.acceptance_known}
-                                                    />
-                                                    {m.status === "failed-local" && (
-                                                        <button
-                                                            type="button"
-                                                            className={styles.retrySend}
-                                                            onClick={() => handleRetrySend(m.client_message_id)}
-                                                        >
-                                                            Reintentar
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                {burst.messages.map((m) => (
+                                                    <Fragment key={m.id}>
+                                                        {Number(m.id) === firstUnreadId && (
+                                                            <div role="separator" aria-label="Mensajes nuevos"
+                                                                className={styles.unreadDivider}>Mensajes nuevos</div>
+                                                        )}
+                                                    <div
+                                                        data-message-id={m.client_message_id || String(m.id)}
+                                                        data-server-message-id={Number.isSafeInteger(m.id) ? m.id : undefined}
+                                                        tabIndex={-1}
+                                                        className={
+                                                            (m.direction === "in"
+                                                                ? `${styles.bubble} ${styles.bubbleIn}`
+                                                                : `${styles.bubble} ${styles.bubbleOut}`)
+                                                            + (m.id === highlightedId ? ` ${styles.messageHighlight}` : "")
+                                                        }
+                                                    >
+                                                        <ReplyQuote reply={m.reply_to} contactName={contactLabel(thread)}
+                                                            onJump={handleJumpToMessage}
+                                                            busy={jumpLoad.loading && jumpLoad.targetId === m.reply_to?.id} />
+                                                        {m.media && <MediaBubble key={m.media.public_id} media={m.media}
+                                                            kind={m.payload_type} caption={m.body} />}
+                                                        {m.body ? <MessageBody text={m.body} /> : (!m.media && <em>[{m.payload_type}]</em>)}
+                                                        <div className={styles.bubbleMeta}>
+                                                            {canSend && sessionId && (
+                                                                <button type="button" className={styles.replyMessage}
+                                                                    aria-label="Responder al mensaje" title="Responder"
+                                                                    disabled={!windowCanSend || !Number.isSafeInteger(m.id) || m.id <= 0}
+                                                                    onClick={() => selectReply(m)}>
+                                                                    Responder
+                                                                </button>
+                                                            )}
+                                                            {m.body && (
+                                                                <button type="button" className={styles.copyMessage}
+                                                                    aria-label="Copiar mensaje" title="Copiar mensaje"
+                                                                    onClick={() => handleCopy(m.body, "Mensaje copiado")}>
+                                                                    Copiar
+                                                                </button>
+                                                            )}
+                                                            {m.direction === "out" && (
+                                                                <span>
+                                                                    {m.author_type === "human_staff"
+                                                                        ? (m.human_author_name || "Staff")
+                                                                        : (AUTHOR_LABEL[m.author_type] || "")}
+                                                                </span>
+                                                            )}
+                                                            <span>{clockTimeOrg(m.created_at, timezone)}</span>
+                                                            <DeliveryTicks
+                                                                status={m.status}
+                                                                direction={m.direction}
+                                                                failure_reason={m.failure_reason}
+                                                                acceptance_known={m.acceptance_known}
+                                                            />
+                                                            {m.status === "failed-local" && (
+                                                                <button
+                                                                    type="button"
+                                                                    className={styles.retrySend}
+                                                                    onClick={() => handleRetrySend(m.client_message_id)}
+                                                                >
+                                                                    Reintentar
+                                                                </button>
+                                                            )}
+                                                            {m.direction === "out" && m.status === "failed" && (
+                                                            <FailedMessageRetry message={m} sessionId={sessionId}
+                                                                canSend={canSend} phone={thread.contact_phone}
+                                                                onRetried={handleRetriedMessage} />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    </Fragment>
+                                                ))}
                                             </div>
                                         ))}
                                     </Fragment>
                                 ))}
-                                <div ref={threadEndRef} />
-                            </div>
+                            </ThreadViewport>
 
                             {canSend && sessionId && (
-                                <div className={styles.composer}>
-                                    <textarea
-                                        className={styles.composerInput}
-                                        placeholder="Escribe una respuesta…"
-                                        value={body}
-                                        maxLength={4000}
-                                        onChange={(e) => {
-                                            draftRevisionRef.current += 1;
-                                            setBody(e.target.value);
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter" && !e.shiftKey) {
-                                                e.preventDefault();
-                                                handleSend();
-                                            }
-                                        }}
-                                    />
-                                    <button className={`btn btn-primary ${styles.sendButton}`} disabled={!body.trim()} onClick={handleSend}>
+                                <div className={styles.composer} onKeyDown={(event) => {
+                                    if (event.key === "Escape" && replyTarget) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        cancelReply();
+                                    }
+                                }}>
+                                    <SessionWindowNotice window={sessionWindow} phone={contactPhone} />
+                                    {replyTarget && (
+                                        <div className={styles.replyComposer} role="status" aria-label="Mensaje citado">
+                                            <div className={styles.replyPreview} id="inbox-reply-preview">
+                                                <strong>Respondiendo a {replyTarget.authorLabel}</strong>
+                                                <span>{replyTarget.excerpt || `[${replyTarget.payload_type}]`}</span>
+                                            </div>
+                                            <button type="button" className={styles.cancelReply}
+                                                aria-label="Cancelar respuesta citada" title="Cancelar (Escape)"
+                                                onClick={cancelReply}>×</button>
+                                        </div>
+                                    )}
+                                    <div className={styles.composerField}>
+                                        <textarea
+                                            ref={composerRef}
+                                            className={styles.composerInput}
+                                            rows={1}
+                                            aria-label="Respuesta al cliente"
+                                            aria-describedby={[
+                                                sessionWindow.state !== "open" ? "inbox-session-window" : null,
+                                                body.length > 3600 ? "inbox-composer-count" : null,
+                                                replyTarget ? "inbox-reply-preview" : null,
+                                            ].filter(Boolean).join(" ") || undefined}
+                                            disabled={!windowCanSend}
+                                            placeholder="Escribe una respuesta…"
+                                            value={body}
+                                            maxLength={COMPOSER_MAX_LENGTH}
+                                            onChange={(e) => {
+                                                draftRevisionRef.current += 1;
+                                                setBody(e.target.value);
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+                                                    e.preventDefault();
+                                                    handleSend();
+                                                }
+                                            }}
+                                        />
+                                        {body.length > 3600 && (
+                                            <span
+                                                id="inbox-composer-count"
+                                                className={`${styles.composerCount} ${body.length >= 3800 ? styles.composerCountWarning : ""}`}
+                                                aria-label={`${body.length} de ${COMPOSER_MAX_LENGTH} caracteres`}
+                                            >
+                                                {body.length}/{COMPOSER_MAX_LENGTH}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <button className={`btn btn-primary ${styles.sendButton}`} disabled={!windowCanSend || !body.trim()} onClick={handleSend}>
                                         <Icon.Send s={15} c="currentColor" />
                                         Enviar
                                     </button>

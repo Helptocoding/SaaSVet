@@ -1,0 +1,106 @@
+{
+  "status": "PASS",
+  "scope": "WA-RPL-01 local schema/application validation",
+  "backend_unique_pass": 19,
+  "new_cases": 14,
+  "affected_cases": 5,
+  "results": {
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_database_still_rejects_a_dangling_reference": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_foreign_target_rejected_by_service_and_normal_save": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_hidden_and_discarded_target_remains_valid_history": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_missing_or_malformed_target_rejected": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_nullable_default_preserves_unquoted_messages": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_quote_accepts_both_directions_and_reverse_relation": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_same_account_other_contact_rejected": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_same_org_other_account_rejected": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_same_thread_across_closed_and_current_episodes": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_schema_has_one_reply_index_and_nullable_protected_field": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_self_fk_does_not_replace_application_tenant_validation": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_target_cannot_be_deleted_but_reply_can": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_model.MessageReplyModelTests.test_unknown_thread_scope_cannot_resolve_a_quote": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_models.ChannelAccountRoutingTests.test_external_account_id_is_globally_unique": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_models.MessageDedupTests.test_duplicate_inbound_wamid_rejected_by_db_constraint": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_models.MessageDedupTests.test_duplicate_inbound_wamid_rejected_by_full_clean": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_models.MessageDedupTests.test_inbound_without_wamid_is_allowed_multiple_times": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_models.MessageDedupTests.test_same_wamid_on_outbound_is_allowed": {
+      "status": "passed",
+      "receipt": "backend-new.json"
+    },
+    "apps.channels.tests.test_replies_migration.MessageReplyMigrationTests.test_m2_preserves_existing_rows_and_legacy_writers": {
+      "status": "passed",
+      "receipt": "backend-compat.json"
+    }
+  },
+  "source_sha256": {
+    "backend/apps/channels/models.py": "e2c9eee8cd9c0982f1c6b444d1b87f1bfd7aca1d70221d671bb3d1b1139ba024",
+    "backend/apps/channels/replies.py": "3690001a66b808d6c1d9ba2bff13cf968f3b39c79d3653f672682bb14f22a9c4",
+    "backend/apps/channels/migrations/0016_message_reply_to.py": "106dd700978308bb86c4ec3895708856f3b2c1716ed8e84621d01cb2ca4c8bd6",
+    "backend/apps/channels/tests/test_replies_model.py": "a713f5e00b21f4be3da30bd03893147ccbfef9c01589810eb573874169b477a9",
+    "backend/apps/channels/tests/test_replies_migration.py": "3eb1009a2dbbc99f09f16e4d66a5b206152af6e15aae040a02a8716654063c11",
+    "docs/CIERRE-INBOX-WHATSAPP.md": "8054bc6f51b75ee0256bb9ba6735a557aac41268f95df64855c29021d5b0c021",
+    "docs/plan-implementacion-whatsapp-inbox-2026-08-22.md": "da6f42c419ed0eb4fdbb9e936246ed2df66c0074243da09626c52243202f478b",
+    "docs/modules/agent.md": "3ef65f549ff61a78e5f101a187b4765e73bdb8c3ca5cc792d5403ab026d1f340",
+    "CHANGELOG.md": "439da258fec5c4e122c8958bcb083aa9a57e9aa2bdef890a9a1757bed4d58c29"
+  },
+  "migration_sql": "migration-initial.sql",
+  "working_database_migrated": false,
+  "ordinary_and_preview_database_migration": "M2 not applied",
+  "real_reception_meta": "POSTPONED_PENDING",
+  "next_task": "WA-RPL-02",
+  "diff_check": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "warning: in the working copy of 'backend/apps/channels/models.py', LF will be replaced by CRLF the next time Git touches it\n"
+  }
+}

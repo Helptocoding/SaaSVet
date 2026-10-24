@@ -214,6 +214,20 @@ shred -u /home/deploy/restore/vet.dump 2>/dev/null || rm -f /home/deploy/restore
 
 ## 9. Levantar la aplicación
 
+**Gate adicional si existe Inbox/media:** antes de abrir tráfico o arrancar
+workers que puedan descargar archivos, completar la
+[validación de restauración de media](../compliance/cierre-b2-whatsapp-2026-10-22.md).
+Mantener cerrados proxy de adjuntos, webhooks y descargas durante la intervención;
+apagar solo `INBOX_MEDIA_ENABLED` no revoca por sí mismo el acceso a archivos ready.
+Recuperar el registro de revocaciones/ARCO independiente del dump y reaplicarlo
+con su organización y UUID; conservar timestamps originales de expiración y
+retirar trabajos que pudieran descargar otra vez un objeto revocado.
+Después ejecutar purga/reconciliación autorizadas, comprobar 410 para expirados/
+revocados y aislamiento entre clínicas, y registrar el resultado del simulacro.
+Si no se puede acreditar esa reaplicación, no reabrir el servicio de media. Las
+auditorías financieras de este runbook no acreditan esta garantía. Ver también
+[procedimiento ARCO](../compliance/arco.md#61-procedimiento-manual-de-cancelación-de-media).
+
 ```bash
 cd /home/deploy/apps/SaaSVet
 # release corre migrate (no-op si el dump ya estaba al día) + collectstatic + seed_permissions
@@ -277,3 +291,19 @@ VPS nuevo → hardening + docker + rclone + age
    → smoke healthz/readyz + conteos
    → borrar private key del VPS + rotar secretos + re-instalar crons
 ```
+
+
+### Actualización 23-10-2026: política y herramientas de medios
+
+La [política definida por el usuario](../decisions/2026-10-22-inbox-media-retention-policy.md)
+fija 180 días y purga operativa verificada en hasta siete días tras expirar.
+Usar el [procedimiento vigente de medios](../runbooks/inbox-media.md), con ledger
+independiente del dump, `INBOX_MEDIA_ACCESS_HOLD=True`, workers/webhooks detenidos,
+`inbox_media_ops restore-check --workers-stopped`, mantenimiento y comprobación
+de inventario del proveedor antes de autorizar tráfico. El comando no reabre
+tráfico. ARCO anticipado usa `inbox_media_ops revoke`: ledger duradero primero,
+fencing/estado DB después; no borrar la key antes de verificar la purga.
+
+Responsable y canal de alertas quedan pendientes operativos no bloqueantes por
+decisión expresa del usuario; no registrar entrega/atención como comprobadas.
+Los incidentes de purga que superan siete días sí mantienen el cierre pendiente.

@@ -25,3 +25,6 @@ nightly_anchor_audit: python manage.py audit_anchor_integrity --json
 # JWT blacklist + outstanding token cleanup. ADR p20 — sin esto las
 # tablas crecen lineales con cada login/refresh/change-password.
 nightly_flush_jwt: python manage.py flushexpiredtokens
+# Inbox binary expiry/reconciliation + orphan spool cleanup (p60 D-1/D-2).
+# Inert until INBOX_MEDIA_ENABLED=True; uses the existing job mechanism.
+nightly_inbox_media: python manage.py maintain_inbox_media --batch 100 --max-batches 10

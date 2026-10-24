@@ -1,0 +1,24 @@
+--- a/backend/apps/agent/tests/test_contracts.py
++++ b/backend/apps/agent/tests/test_contracts.py
+@@ -42,7 +42,10 @@
+     def test_fields_match_snapshot(self):
+         fields = sorted(f.name for f in dataclasses.fields(ToolOutcome))
+         self.assertEqual(fields, [
+-            'client_error', 'data', 'detail', 'ok', 'summary',
++            'client_error', 'completeness', 'cursor', 'data', 'detail',
++            'effects', 'error_kind', 'has_more', 'kind', 'observed_at',
++            'operation_key', 'origin', 'partial_effects', 'retryable',
++            'scope', 'summary', 'validated',
+         ])
+ 
+     def test_a_tool_cannot_write_copy_nor_end_a_turn(self):
+@@ -92,7 +95,8 @@
+     def test_fields_match_snapshot(self):
+         fields = sorted(f.name for f in ConversationGoal._meta.fields)
+         self.assertEqual(fields, [
+-            'asked', 'attempts_failed', 'authorization_message', 'blocked_reason', 'closed_at',
++            'asked', 'attempts_failed', 'authorization_message', 'binding_revision',
++            'blocked_reason', 'bound_appointment', 'bound_owner', 'bound_pet', 'closed_at',
+             'closed_reason', 'conversation', 'created_at', 'created_by', 'id',
+             'is_active', 'last_progress_at', 'low_confidence', 'missing',
+             'name', 'operation_assessment', 'organization', 'return_to',

@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "labels": [
+    "apps.agent.tests.test_inbox_session_window",
+    "apps.agent.tests.test_inbox_threads.AgentProcessingTests",
+    "apps.agent.tests.test_inbox_threads.ArchivedThreadTests",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_regular_payload_and_current_metadata_remain_compatible",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_window_queries_and_materialization_are_bounded",
+    "apps.agent.tests.test_inbox_retry.InboxRetryTests.test_window_closed_or_unknown_returns_call_without_changes",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_window_closed_after_claim_blocks_admission"
+  ],
+  "elapsed_s": 295.40563680000196,
+  "test_database": "test_inbox_win01_d8e7a4398a1f",
+  "test_database_remains": false
+}

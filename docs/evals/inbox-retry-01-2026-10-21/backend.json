@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "labels": [
+    "apps.agent.tests.test_inbox_retry",
+    "apps.agent.tests.test_inbox_message_author",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_regular_payload_and_current_metadata_remain_compatible",
+    "apps.agent.tests.test_inbox_thread_around.ThreadAroundTests.test_window_queries_and_materialization_are_bounded",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_known_retry_has_backoff_new_token_and_limit",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_pending_with_prior_external_evidence_is_quarantined",
+    "apps.agent.tests.test_b4_sender.B4SenderTests.test_nonpending_states_are_never_selected",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_wins_race_with_uncertain_finalize",
+    "apps.agent.tests.test_b4_sender.B4StatusTests.test_failed_delivery_never_erases_acceptance_or_read"
+  ],
+  "elapsed_s": 659.2406988000002,
+  "test_database": "test_inbox_retry01_618b4b0458fb",
+  "test_database_remains": false
+}

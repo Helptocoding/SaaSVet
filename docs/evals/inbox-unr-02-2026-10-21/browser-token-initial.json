@@ -1,0 +1,22 @@
+{
+  "status": "FAIL",
+  "synthetic_api": true,
+  "controlled_focus_visibility": true,
+  "error": "Locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for get_by_role(\"button\", name=\"Ana\")\n",
+  "measurements": [],
+  "requests": [
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "me/",
+      "body": null
+    },
+    {
+      "actor": "a",
+      "method": "GET",
+      "path": "v1/dashboard/activation/",
+      "body": null
+    }
+  ],
+  "page_errors": []
+}

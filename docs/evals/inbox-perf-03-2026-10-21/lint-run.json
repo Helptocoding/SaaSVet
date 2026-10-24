@@ -1,0 +1,19 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "src/pages/inbox/index.jsx",
+    "src/pages/inbox/inboxSync.js",
+    "src/pages/inbox/inboxSync.test.js",
+    "src/pages/inbox/index.sync.test.jsx",
+    "src/pages/inbox/useThreadHistory.js",
+    "src/api/inbox.js",
+    "--format=json",
+    "--output-file=C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\inbox-perf-03-2026-10-21\\lint.json"
+  ],
+  "exit_code": 0,
+  "sentry_upload_disabled": true,
+  "working_database_migrated": false
+}

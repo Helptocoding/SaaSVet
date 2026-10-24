@@ -1,0 +1,706 @@
+{
+  "scenario": "base",
+  "window_utc": [
+    "2026-10-23T03:55:44.857220+00:00",
+    "2026-10-23T04:00:44.857220+00:00"
+  ],
+  "postgresql_process_ids": [
+    {
+      "pid": 51232,
+      "backend_pid": 52940,
+      "role": "planner-1",
+      "scenario": "base"
+    },
+    {
+      "pid": 11880,
+      "backend_pid": 43628,
+      "role": "planner-2",
+      "scenario": "base"
+    },
+    {
+      "pid": 5268,
+      "backend_pid": 55004,
+      "role": "sender",
+      "scenario": "base"
+    }
+  ],
+  "inbound_count": 360,
+  "outbound_count": 137,
+  "healthy_claim": {
+    "count": 60,
+    "p95_seconds": 11.57264,
+    "max_seconds": 14.334091,
+    "missing": 0
+  },
+  "safety_dispatch": {
+    "count": 20,
+    "p95_seconds": 2.957768,
+    "max_seconds": 2.957768
+  },
+  "outbox_dispatch": {
+    "count": 137,
+    "p95_seconds": 2.560056,
+    "max_seconds": 6.811526,
+    "missing": 0
+  },
+  "queue_samples": [
+    {
+      "second": 0,
+      "pending_inbound": 1,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 5,
+      "pending_inbound": 6,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 10,
+      "pending_inbound": 13,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 15,
+      "pending_inbound": 17,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 20,
+      "pending_inbound": 22,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 25,
+      "pending_inbound": 24,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 30,
+      "pending_inbound": 25,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 35,
+      "pending_inbound": 28,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 40,
+      "pending_inbound": 32,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 45,
+      "pending_inbound": 34,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 50,
+      "pending_inbound": 39,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 55,
+      "pending_inbound": 40,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 60,
+      "pending_inbound": 41,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 65,
+      "pending_inbound": 44,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 70,
+      "pending_inbound": 49,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 75,
+      "pending_inbound": 52,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 80,
+      "pending_inbound": 58,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 85,
+      "pending_inbound": 60,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 90,
+      "pending_inbound": 62,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 95,
+      "pending_inbound": 64,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 100,
+      "pending_inbound": 69,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 105,
+      "pending_inbound": 72,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 110,
+      "pending_inbound": 75,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 115,
+      "pending_inbound": 78,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 120,
+      "pending_inbound": 80,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 125,
+      "pending_inbound": 84,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 130,
+      "pending_inbound": 89,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 135,
+      "pending_inbound": 92,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 140,
+      "pending_inbound": 97,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 145,
+      "pending_inbound": 100,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 150,
+      "pending_inbound": 102,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 155,
+      "pending_inbound": 105,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 165,
+      "pending_inbound": 109,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 170,
+      "pending_inbound": 120,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 175,
+      "pending_inbound": 123,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 180,
+      "pending_inbound": 123,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 185,
+      "pending_inbound": 127,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 190,
+      "pending_inbound": 132,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 195,
+      "pending_inbound": 136,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 200,
+      "pending_inbound": 140,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 205,
+      "pending_inbound": 143,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 215,
+      "pending_inbound": 149,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 220,
+      "pending_inbound": 155,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 225,
+      "pending_inbound": 157,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 230,
+      "pending_inbound": 161,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 235,
+      "pending_inbound": 165,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 240,
+      "pending_inbound": 167,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 245,
+      "pending_inbound": 170,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 250,
+      "pending_inbound": 175,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 255,
+      "pending_inbound": 178,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 260,
+      "pending_inbound": 184,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 265,
+      "pending_inbound": 186,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 270,
+      "pending_inbound": 188,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 275,
+      "pending_inbound": 191,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 280,
+      "pending_inbound": 196,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 285,
+      "pending_inbound": 198,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 290,
+      "pending_inbound": 203,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 295,
+      "pending_inbound": 206,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 300,
+      "pending_inbound": 208,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 305,
+      "pending_inbound": 211,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 310,
+      "pending_inbound": 216,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 315,
+      "pending_inbound": 219,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 320,
+      "pending_inbound": 225,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 325,
+      "pending_inbound": 227,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "generator_events": {
+    "sent": [
+      33,
+      33,
+      330
+    ],
+    "safety": 22,
+    "duplicates": 0,
+    "errors": []
+  },
+  "turnwork_status": [
+    {
+      "status": "COMPLETED",
+      "count": 174
+    }
+  ],
+  "outbound_status": [
+    {
+      "status": "pending",
+      "count": 1
+    },
+    {
+      "status": "sent",
+      "count": 155
+    }
+  ],
+  "max_active_per_org_observed": 1,
+  "max_pending_inbound_observed": 227,
+  "max_outbound_attempts": 1,
+  "gates": {
+    "healthy_claim_p95_le_10": false,
+    "safety_dispatch_p95_le_5": true,
+    "outbox_dispatch_p95_le_5": true
+  },
+  "technical_pass": false,
+  "fixture_organization_ids": [
+    1,
+    2,
+    3
+  ],
+  "profile_version": "profile-beta-1-v1",
+  "warmup_seconds": 30,
+  "measurement_seconds": 300,
+  "smoke_only": false
+}

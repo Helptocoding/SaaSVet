@@ -1,0 +1,18 @@
+{
+  "decision": "PENDING",
+  "date_local": "2026-10-14",
+  "cause": "El monitor detuvo full el 2026-10-14 a las 07:10:53 UTC porque Windows disponía de 1,42 GiB de RAM, por debajo de la reserva autorizada de 2 GiB. Hay 353 PASS parciales, cero FAIL/ERROR registrados y 2.978 IDs sin recibo; no existe recibo completo de full. Los nueve bloques anteriores aprobaron. Frontend, seguridad, auditorías advisory y las cinco variantes PROFILE permanecen NOT_EXECUTED. La incidencia invalida la aceptación integral sin demostrar un fallo del producto.",
+  "stop_receipt": "STOP.json",
+  "command_receipt": "blocks/full.command.json",
+  "resource_receipt": "monitor-full.json",
+  "host_available_bytes_at_stop": 1525739520,
+  "host_reserve_bytes": 2147483648,
+  "guest_available_bytes_at_stop": 7305519104,
+  "disk_available_bytes_at_stop": 7489024000,
+  "full_partial_pass": 353,
+  "full_selected": 3331,
+  "full_missing": 2978,
+  "formal_reruns": 0,
+  "candidate_tree": "196aceb4f5f234c086b96d8e8af93787613f3c25",
+  "product_failure_attributed": false
+}

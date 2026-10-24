@@ -1,0 +1,91 @@
+{
+  "schema": "b9i-wsl-r3-incident-classification-v1",
+  "state": "PENDING",
+  "phase": "b3",
+  "classification": "ENVIRONMENT_HARNESS_DEPENDENCY_VISIBILITY",
+  "product_failure_attributed": false,
+  "raw_runner_result": {
+    "tests": 42,
+    "failures": 3,
+    "errors": 0,
+    "exit_code": 3,
+    "passed": 39
+  },
+  "failed_ids": [
+    "apps.agent.tests.test_b3_processes.B3ProcessTests.test_dup_01_two_processes_compete_for_one_lease",
+    "apps.agent.tests.test_b3_processes.B3ProcessTests.test_dur_01_killed_process_restarted_worker_recovers_same_work",
+    "apps.agent.tests.test_b3_processes.B3ProcessTests.test_llm_timeout_runs_outside_transaction_and_commits_fallback"
+  ],
+  "original_observation": "All three B3 subprocess cases ended with EOF instead of B3_READY at ready(), before the tested claim/crash/timeout operations.",
+  "diagnostic_observation": "The original test selects sys._base_executable. The private base interpreter cannot resolve django or psycopg; import django alone raises ModuleNotFoundError. The campaign venv resolves both.",
+  "causal_assessment": "Dependency visibility is an established environment incompatibility sufficient to prevent these child processes from reaching their readiness marker. It supports PENDING for the B3 contract, without attributing a product contract violation.",
+  "limitation": "Original child stderr was discarded by candidate cleanup; the import-only post-stop diagnostic is separate evidence, not a recovered original child traceback.",
+  "evidence": [
+    "STOP.json",
+    "blocks/b3.results.json",
+    "blocks/b3.ids.jsonl",
+    "blocks/b3.command.log",
+    "base-interpreter-diagnostic.json",
+    "diagnostics/base_interpreter_probe.py"
+  ],
+  "clock_or_resource_incident_detected": false,
+  "monitors": {
+    "b0": {
+      "samples": 127,
+      "max_absolute_skew_seconds": 1.4342017493618187e-06,
+      "minimum_host_available_bytes": 3891417088,
+      "minimum_guest_available_bytes": 7350104064,
+      "minimum_backing_disk_available_bytes": 4416376832
+    },
+    "b3": {
+      "samples": 296,
+      "max_absolute_skew_seconds": 3.666861175588565e-06,
+      "minimum_host_available_bytes": 3626020864,
+      "minimum_guest_available_bytes": 7337697280,
+      "minimum_backing_disk_available_bytes": 4376010752
+    },
+    "billing-schema": {
+      "samples": 4,
+      "max_absolute_skew_seconds": 1.841585799411405e-07,
+      "minimum_host_available_bytes": 6319190016,
+      "minimum_guest_available_bytes": 7449919488,
+      "minimum_backing_disk_available_bytes": 4453724160
+    },
+    "directed": {
+      "samples": 948,
+      "max_absolute_skew_seconds": 3.7985494827808e-05,
+      "minimum_host_available_bytes": 3638734848,
+      "minimum_guest_available_bytes": 7232671744,
+      "minimum_backing_disk_available_bytes": 4442173440
+    },
+    "django-check": {
+      "samples": 3,
+      "max_absolute_skew_seconds": 7.734570317552425e-07,
+      "minimum_host_available_bytes": 6243618816,
+      "minimum_guest_available_bytes": 7461715968,
+      "minimum_backing_disk_available_bytes": 4451930112
+    },
+    "migrate": {
+      "samples": 111,
+      "max_absolute_skew_seconds": 1.4872043720970396e-06,
+      "minimum_host_available_bytes": 3847471104,
+      "minimum_guest_available_bytes": 7374577664,
+      "minimum_backing_disk_available_bytes": 4450619392
+    },
+    "migration-drift": {
+      "samples": 3,
+      "max_absolute_skew_seconds": 3.4305685403523967e-07,
+      "minimum_host_available_bytes": 6235492352,
+      "minimum_guest_available_bytes": 7462596608,
+      "minimum_backing_disk_available_bytes": 4451713024
+    }
+  },
+  "sealed_files": 91,
+  "seal_checks_completed": 15,
+  "sealed_files_mismatches": [],
+  "product_sources_changed": false,
+  "formal_reruns": 0,
+  "product_fixture_workload_timing_or_gate_changes": false,
+  "remaining_blocks": "NOT_EXECUTED",
+  "new_campaign": "Requires a new decision and a pre-seal environment assembly compatible with the candidate subprocess interpreter; no automatic fix or retry in this campaign."
+}

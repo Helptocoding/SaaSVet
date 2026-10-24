@@ -1,0 +1,221 @@
+--- native-r9/run_campaign.py
++++ native/run_campaign.py
+@@ -32,8 +32,8 @@
+ def verify(label,*,require_awake=True):
+     validate_clock_control()
+     validate_references()
+-    from case_resumption import validate_case_references
+-    validate_case_references()
++    from frontend_resumption import validate_frontend_references
++    validate_frontend_references()
+     integrity(label)
+     dependencies=json.loads((EVIDENCE/'dependency-files.json').read_text(encoding='utf-8'))
+     changed=[p for p,h in dependencies['files'].items() if not Path(p).is_file() or sha256(Path(p).read_bytes())!=h]
+@@ -57,92 +57,73 @@
+ def seal():
+     if (EVIDENCE/'preflight.json').exists() or (EVIDENCE/'STOP.json').exists():
+         raise RuntimeError('Preflight already decided; cannot silently restart campaign')
+-    assert json.loads((EVIDENCE/'environment-ready.json').read_text(encoding='utf-8'))['state']=='READY_FOR_SEAL'
+-    assert json.loads((EVIDENCE/'interpreter-preflight.json').read_text(encoding='utf-8'))['state']=='PASS'
+-    assert json.loads((EVIDENCE/'native-preflight.json').read_text(encoding='utf-8'))['state']=='PASS'
+-    assert json.loads((EVIDENCE/'launcher-validation.json').read_text(encoding='utf-8'))['state']=='PASS'
++    for name, state in [('environment-ready.json','READY_FOR_SEAL'),
++        ('interpreter-preflight.json','PASS'),('native-preflight.json','PASS'),
++        ('launcher-validation.json','PASS'),('backend-reference-validation.json','PASS'),
++        ('frontend-resumption-validation.json','PASS'),
++        ('diagnostics/preserved-contract-checks.json','PASS'),
++        ('diagnostics/composite-validator-checks.json','PASS_VALIDATOR_CHECKS')]:
++        assert json.loads((EVIDENCE/name).read_text(encoding='utf-8'))['state']==state, name
+     validate_clock_control()
+-    assert json.loads((EVIDENCE/'diagnostics/fixture-clock-focused-check.json').read_text(encoding='utf-8'))['state']=='PASS'
+-    discovery=json.loads((EVIDENCE/'discovery.json').read_text(encoding='utf-8'))
+-    assert discovery['counts']['directed']==87 and not discovery['missing_directed']
+-    assert not any(discovery['loader_errors'].values()) and not any(discovery['duplicates'].values())
+     from full_partition import validate_partition
+     validate_partition()
+     validate_current_inputs()
+     validate_references()
+-    # Validate adapter syntax and Django's runner resolution without running a test.
+-    for p in EVIDENCE.glob('*.py'):
+-        compile(p.read_text(encoding='utf-8'),str(p),'exec')
+-    sys.path.insert(0,str(EVIDENCE))
+-    import recorded_suite
+-    from django.test.utils import get_runner
+-    from django.conf import settings
+-    for name in ('RecordedB0Runner','RecordedB3Runner','RecordedB4Runner','RecordedB5Runner','RecordedFullRunner'):
+-        resolved=get_runner(settings,'recorded_suite.'+name)
+-        assert resolved is getattr(recorded_suite,name)
+-    diff=''.join(difflib.unified_diff((OLD/'recorded_suite.py').read_text(encoding='utf-8').splitlines(True),
++    from frontend_resumption import validate_frontend_references
++    validate_frontend_references()
++    for path in EVIDENCE.glob('*.py'):
++        compile(path.read_text(encoding='utf-8'),str(path),'exec')
++    adapter_diff=''.join(difflib.unified_diff(
++        (EVIDENCE.with_name('b9-correction-20261020-native-r9')/'recorded_suite.py').read_text(encoding='utf-8').splitlines(True),
+         (EVIDENCE/'recorded_suite.py').read_text(encoding='utf-8').splitlines(True),
+-        fromfile='previous-prepared-adapter',tofile='native-windows-receipt-adapter'))
+-    (EVIDENCE/'receipt-adapter.diff').write_text(diff,encoding='utf-8')
++        fromfile='native-r9/recorded_suite.py',tofile='native-r10/recorded_suite.py'))
++    (EVIDENCE/'receipt-adapter.diff').write_text(adapter_diff,encoding='utf-8',newline='\n')
+     save('adapter-validation.json',{'syntax':'PASS','django_runner_resolution':'PASS',
+-        'candidate_runner_sources_unchanged':True,'critical_guards_preserved_by_super':True,
+-        'change':'Native Windows orchestration; unchanged five-group receipt adapter and assertions',
+-        'application_tests_executed':False})
++        'backend_application_tests_executed':False,'backend_results_origin':'REFERENCED_COMPLETED_R9',
++        'change':'Only one exactly filtered frontend case; eight original execution/partition functions preserved',
++        'all_original_guards_preserved':True})
+     required_names=[
+-        'case-resumption-authorization.json','case-resumption-manifest.json','case-resumption-validation.json',
+-        'RESUMPTION-PROPOSAL.md','prepared-runtime-references.json','runtime-handoff-supplement.json',
+-        'snapshot-resumption-authorization.json','snapshot-equivalence.json','case-resumption-inputs.json',
+-        'snapshot-correction.diff','resumption.json',
+-        'baseline-resumption-authorization.json','baseline-equivalence.json',
+-        'baseline-correction.diff','baseline-proposal-analysis.json',
+-        'authorization.json','candidate.json','correction.diff','resource-policy.json',
+-        'scope-manifest.json','PLAN.md','assembly.json','candidate-sources.json',
+-        'toolchain.json','python-environment.json','dependency-files.json','interpreter-preflight.json',
+-        'private-python-copy.json','frontend-layout.json','security-history.json','resumption.json',
+-        'install-cache-retirement.json','operational-lifetime-amendment.json',
+-        'composite-amendment.json','reuse-manifest.json','reuse-validation.json',
+-        'fixture-clock-authorization.json','fixture-resumption-amendment.json',
+-        'diagnostics/verify_fixture_clock.py','diagnostics/fixture-clock-focused-check.json',
+-        'diagnostics/close_acceptance.py','diagnostics/composite-validator-checks.json',
+-        'diagnostics/preserved-contract-checks.json',
+-        'launcher-validation.json','downloads.json','audit-toolchain.json','postgresql-preflight.json',
+-        'profile-compatibility.json','campaign-adaptation.json','effective-configuration.json',
+-        'code-selection.json','full-partition-contract.json','full-partition.json',
+-        'awake-request/control.json','clock-preflight.json','native-preflight.json',
+-        'environment-ready.json','discovery.json','receipt-adapter.diff','adapter-validation.json']
+-    paths=[*EVIDENCE.glob('*.py'),*[EVIDENCE/n for n in required_names],
++        'frontend-resumption-authorization.json','frontend-equivalence.json','frontend-proposal-analysis.json',
++        'frontend-correction.diff','completed-reference-manifest.json','backend-reference-validation.json',
++        'frontend-resumption-manifest.json','frontend-resumption-validation.json',
++        'frontend-retained-pass-selected.json','frontend-remainder-selected.json','frontend-full-selected.json',
++        'authorization.json','candidate.json','correction.diff','resource-policy.json','scope-manifest.json',
++        'PLAN.md','assembly.json','candidate-sources.json','toolchain.json','python-environment.json',
++        'dependency-files.json','interpreter-preflight.json','private-python-copy.json','frontend-layout.json',
++        'security-history.json','install-cache-retirement.json','operational-lifetime-amendment.json',
++        'runtime-handoff-supplement.json','prepared-runtime-references.json','resumption.json',
++        'composite-amendment.json','pre-patch-current-integrity.json','previous-completion-integrity-reference.json',
++        'diagnostics/preserved-contract-checks.json','diagnostics/composite-validator-checks.json',
++        'diagnostics/frontend-fixture-ast-check.json','diagnostics/frontend-fixture-original.jsx',
++        'diagnostics/verify_frontend_equivalence.py','diagnostics/verify_frontend_equivalence.cjs',
++        'diagnostics/close_acceptance.py','launcher-validation.json','downloads.json','audit-toolchain.json',
++        'postgresql-preflight.json','profile-compatibility.json','campaign-adaptation.json',
++        'effective-configuration.json','code-selection.json','full-partition-contract.json','full-partition.json',
++        'awake-request/control.json','clock-preflight.json','native-preflight.json','environment-ready.json',
++        'discovery.json','receipt-adapter.diff','adapter-validation.json']
++    paths=[*EVIDENCE.glob('*.py'),*[EVIDENCE/name for name in required_names],
+         *EVIDENCE.glob('*-selected.json'),RTK,PYTHON,Path(sys._base_executable),NODE,PNPM,
+-        WORK/'gitleaks/gitleaks.exe',
+-        *[PG/name for name in ('postgres.exe','initdb.exe','pg_ctl.exe','psql.exe')],
+-        *[p for p in PG.glob('*') if p.suffix.lower() in ('.exe','.dll')],
++        WORK/'gitleaks/gitleaks.exe',*[p for p in PG.glob('*') if p.suffix.lower() in ('.exe','.dll')],
+         DATA/'postgresql.conf',DATA/'pg_hba.conf']
+-    # These supplementary references are included when prepared; required inputs are never filtered out.
+-    supplementary={}
+     for name in ('prior-focused-verification.json','base-python-environment.json'):
+-        path=EVIDENCE/name
+-        supplementary[name]=path.is_file()
+-        if path.exists():paths.append(path)
++        if (EVIDENCE/name).exists():paths.append(EVIDENCE/name)
+     paths=list(dict.fromkeys(paths))
+     missing=[str(p) for p in paths if not p.is_file()]
+-    if missing:
+-        stop('PENDING','seal','Required native evaluator/toolchain inputs absent',missing=missing)
++    if missing:stop('PENDING','seal','Required native evaluator/toolchain inputs absent',missing=missing)
+     save('evaluation-seal.json',{'candidate_sha':SHA,'platform':'windows-native',
+         'files':{str(p):sha256(p.read_bytes()) for p in paths},
+-        'supplementary_reference_inputs':supplementary,
+         'candidate_manifest_sha256':sha256((EVIDENCE/'candidate-sources.json').read_bytes())})
+     verify('preflight')
+     observation=budget()
+     save('preflight.json',{'state':'PASS' if observation['ready'] else 'PENDING',
+-        'candidate_sha':SHA,'exact_git_files':3332,'directed_ids':87,'full_ids':discovery['counts']['full'],
+-        'resource_budget':{'suite_estimate_not_reserved':3*GIB,'admission_floor':2*GIB,
+-            'memory_reserve':2*GIB,'prior_5_gib_admission_waived_by_user':True,'backing_disk_reserve':GIB},
+-        'resources':observation,'no_formal_application_tests_yet':True,
+-        'prior_focused_verification_reference':'prior-focused-verification.json',
+-        'formal_runs_per_block_max':1,'profile_runs_per_scenario_max':1,'platform':'windows-native',
+-        'host_clock_configuration_unchanged':True,'runtime_and_lock_changes':False,
+-        'resource_policy':'USER_AMENDED_ADMISSION_HEADROOM',
+-        'evidence_mode':'COMPOSITE_ACCEPTANCE','continuous_campaign_claimed':False,
+-        'historical_pass_blocks_referenced':13})
++        'candidate_sha':SHA,'exact_git_files':3332,'retained_backend_ids':3331,
++        'retained_frontend_PASS':354,'new_frontend_cases':1,
++        'resource_budget':{'admission_floor':2*GIB,'memory_reserve':2*GIB,
++            'prior_5_gib_admission_waived_by_user':True,'backing_disk_reserve':GIB},
++        'resources':observation,'formal_runs_per_new_block_max':1,'profile_runs_per_scenario_max':1,
++        'platform':'windows-native','host_clock_configuration_unchanged':True,
++        'runtime_and_lock_changes':False,'evidence_mode':'COMPOSITE_ACCEPTANCE',
++        'continuous_campaign_claimed':False,'historical_backend_limit_accepted':True})
+     if not observation['ready']:
+         stop('PENDING','preflight','Insufficient resources for frozen budget',resources=observation)
+     print('PREFLIGHT_PASS',flush=True)
+@@ -269,50 +250,23 @@
+ 
+ def run_all():
+     seal()
+-    if not reuse_block('directed'):
+-        code=execute('directed',[PYTHON,'-B','-m','apps.agent.tests.run_b9a_acceptance','--suite','targeted',
+-            '--database','test_b8b_b9i_directed','--ids-file',EVIDENCE/'directed-selected.json','--output',BLOCKS/'directed'])
+-        check_suite('directed',code)
+-    checks=[('django-check',['check']),('migration-drift',['makemigrations','--check','--dry-run']),
+-        ('migrate',['migrate','--no-input']),('billing-schema',['audit_billing_schema','--json'])]
+-    if any(not is_reused(label) for label,_ in checks):
+-        create_db('test_b9i_checks')
+-    for label,args in checks:
+-        if reuse_block(label):
++    for label in REQUIRED:
++        if label in ('frontend-test','frontend-smoke-urls','security'):
+             continue
+-        code=execute(label,[PYTHON,'-B','manage.py',*args],env={'DATABASE_URL':f'postgresql://b9e@127.0.0.1:{PORT}/test_b9i_checks'})
+-        if code: stop('PENDING_CLASSIFICATION',label,'Blocking command nonzero; inspect validity before decision',exit_code=code)
+-        gate(label)
+-    for kind in ('b0','b3','b4','b5'):
+-        if reuse_block(kind):
+-            continue
+-        code=execute(kind,[PYTHON,'-B',EVIDENCE/'recorded_suite.py',kind,'test_b9i_'+kind],
+-            env={'B9I_SUITE':kind,'B9I_ID_JOURNAL':str(BLOCKS/(kind+'.ids.jsonl')),
+-                'B9I_SUITE_RECEIPT':str(BLOCKS/(kind+'.results.json'))})
+-        check_suite(kind,code)
+-    from full_partition import validate_partition, aggregate_full
+-    for group in validate_partition()['groups']:
+-        label = group['label']
+-        if reuse_block(label):
+-            continue
+-        if label == 'full-general':
+-            tail = 'full-general-remainder'
+-            code = execute(tail, [PYTHON, '-B', EVIDENCE/'run_remainder.py'],
+-                env={'B9I_SUITE': tail, 'B9I_ID_JOURNAL': str(BLOCKS/(tail+'.ids.jsonl')),
+-                     'B9I_SUITE_RECEIPT': str(BLOCKS/(tail+'.results.json'))})
+-            check_suite(tail, code)
+-            code = execute('full-general-assemble', [PYTHON, '-B', EVIDENCE/'case_resumption.py', 'assemble'])
+-            if code:
+-                stop('PENDING', label, 'Case evidence assembly invalid', exit_code=code)
+-            check_suite(label, 0)
+-            continue
+-        code = execute(label, [PYTHON, '-B', EVIDENCE/'recorded_suite.py', label, group['database']],
+-            env={'B9I_SUITE': label, 'B9I_ID_JOURNAL': str(BLOCKS/(label+'.ids.jsonl')),
+-                 'B9I_SUITE_RECEIPT': str(BLOCKS/(label+'.results.json'))})
+-        check_suite(label, code)
+-    aggregate_full()
+-    check_suite('full', 0)
+-    for task in ('build','test','lint','smoke:urls'):
++        assert read_block(label)['state']=='PASS',label
++        save('referenced-block-'+label+'.json',{'state':'REFERENCED_PASS','label':label,
++            'provenance':provenance(label),'application_tests_executed_here':False})
++        print('BLOCK_REFERENCED '+label,flush=True)
++    code=execute('frontend-test-remainder',[PYTHON,'-B',EVIDENCE/'frontend_resumption.py','run'],cwd=TREE/'frontend')
++    if code:stop('PENDING_CLASSIFICATION','frontend-test-remainder','Selected frontend case nonzero; preserve traces',exit_code=code)
++    code=execute('frontend-test-assemble',[PYTHON,'-B',EVIDENCE/'frontend_resumption.py','assemble'],cwd=REPO)
++    if code:stop('PENDING','frontend-test-assemble','Frontend case evidence assembly invalid',exit_code=code)
++    logical=json.loads((BLOCKS/'frontend-tests.json').read_text(encoding='utf-8'))
++    assert logical['logical_aggregate'] is True
++    gate('frontend-test',tests=355,retained_PASS=354,new_PASS=1,
++        command_reference='frontend-test-assemble.command.json',
++        historical_command_exit_1_preserved=True)
++    for task in ('lint','smoke:urls'):
+         label='frontend-'+task.replace(':','-')
+         args=[NODE,PNPM,'run',task]
+         if task=='test':args+=['--reporter=default','--reporter=json','--outputFile='+str(BLOCKS/'frontend-tests.json')]

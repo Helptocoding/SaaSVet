@@ -1,0 +1,45 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ❯ src/pages/inbox/index.assignment.test.jsx (10 tests | 1 failed) 5421ms
+     ✓ asigna el episodio vigente, refresca e informa sin borrar el borrador  1270ms
+     ✓ oculta la acción sin permiso claim  319ms
+     ✓ no permite asignar una conversación archivada 233ms
+     × el turno activo deshabilita asignar como Tomar/Liberar 219ms
+     ✓ el fallo mantiene elección y borrador para corregir o reintentar  696ms
+     ✓ doble submit bloquea acciones simultáneas  624ms
+     ✓ cambiar de hilo cancela el directorio sin trasladar la selección  506ms
+     ✓ un POST tardío no refresca ni anuncia el hilo anterior  608ms
+     ✓ una respuesta de otra sesión del mismo hilo también invalida el POST  392ms
+     ✓ mantiene el contrato de Tomar y Liberar al compartir el guard  541ms
+ ✓ src/pages/inbox/ThreadAssignment.test.jsx (8 tests) 1629ms
+     ✓ carga el directorio solo al abrir y envía el UUID elegido  954ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/inbox/index.assignment.test.jsx > WA-ASN-01 — cabecera y transiciones > el turno activo deshabilita asignar como Tomar/Liberar
+Error: expect(element).toBeDisabled()
+
+Received element is not disabled:
+  <button
+  aria-expanded="false"
+  class="btn btn-secondary btn-xs"
+  type="button"
+/>
+ ❯ src/pages/inbox/index.assignment.test.jsx:73:68
+     71|         api.getThreadMessages.mockResolvedValue({ ...packet("Ana"), ag…
+     72|         render(<Inbox />); await flush(); await selectConversation();
+     73|         expect(screen.getByRole("button", { name: "Asignar a…" })).toB…
+       |                                                                    ^
+     74|     });
+     75|     it("el fallo mantiene elección y borrador para corregir o reintent…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 17 passed (18)
+   Start at  21:29:31
+   Duration  39.02s (transform 1.82s, setup 1.75s, import 4.96s, tests 7.05s, environment 16.17s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-asn-01-2026-10-21/vitest-new.json

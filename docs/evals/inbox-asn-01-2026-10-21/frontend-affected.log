@@ -1,0 +1,17 @@
+
+ RUN  v4.1.8 C:/Users/LAP/Desktop/VeterinariaSaaS/frontend
+
+ ✓ src/pages/inbox/index.test.jsx (93 tests | 87 skipped) 5641ms
+     ✓ allows the current human owner to explicitly acknowledge a new queued case  2243ms
+     ✓ active: explica el turno y habilita Tomar y acusar recibo al terminar  658ms
+     ✓ human_active: explica el turno y habilita Liberar al terminar  847ms
+     ✓ muestra el indicador sin conceder permiso para tomar o liberar  518ms
+     ✓ no hereda el indicador de otro hilo ni de la fila antigua  826ms
+     ✓ un hilo archivado no muestra turno ni acciones aunque la lista esté desactualizada  536ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed | 87 skipped (93)
+   Start at  21:33:39
+   Duration  39.87s (transform 4.60s, setup 1.82s, import 8.82s, tests 5.64s, environment 16.51s)
+
+JSON report written to C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/inbox-asn-01-2026-10-21/vitest-affected.json

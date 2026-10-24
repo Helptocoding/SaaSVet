@@ -1,0 +1,23 @@
+{
+  "state": "PENDING",
+  "phase": "directed",
+  "cause": "Resource margin unavailable before block",
+  "no_rerun": true,
+  "resources": {
+    "guest": {
+      "utc": "2026-10-12T02:44:32Z",
+      "physical_available": 7581896704,
+      "physical_total": 8252506112,
+      "disk_available": 4329627648,
+      "linux_virtual_disk_available": 1017105936384
+    },
+    "host": {
+      "utc": "2026-10-12T02:44:33Z",
+      "physical_total": 17031217152,
+      "physical_available": 3867492352,
+      "page_available": 4329918464
+    },
+    "ready": false
+  },
+  "block_executed": false
+}

@@ -1,0 +1,25 @@
+{
+  "kind": "backend",
+  "labels": [
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_assignment_moves_incremental_list_and_transcript",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_closed_conversation_stays_closed",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_committed_structured_audit_contains_ids_only",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_directory_minimal_scoped_strict_and_bounded_queries",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_foreign_conversation_and_invalid_uuid_are_404",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_foreign_and_missing_target_indistinguishable_404",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_inactive_target_rejected",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_invalid_target_body_is_400",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_reassign_other_staff_and_self_are_allowed",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_revoked_permission_after_directory_load_rejected",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_rollback_has_no_assignment_or_audit",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_same_assignment_is_idempotent",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_service_account_rejected_even_with_send",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentTests.test_target_without_send_or_db_role_rejected",
+    "apps.agent.tests.test_inbox_assignment.InboxAssignmentRaceTests"
+  ],
+  "working_database_migrated": false,
+  "test_database": "test_inbox_asn01_6c2381db0590",
+  "test_database_remains": false,
+  "exit_code": 1,
+  "elapsed_s": 277.31621910000104
+}

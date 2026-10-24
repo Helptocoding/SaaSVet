@@ -1,0 +1,28 @@
+--- native-r5/run_campaign.py
++++ native/run_campaign.py
+@@ -60,6 +60,7 @@
+     assert json.loads((EVIDENCE/'native-preflight.json').read_text(encoding='utf-8'))['state']=='PASS'
+     assert json.loads((EVIDENCE/'launcher-validation.json').read_text(encoding='utf-8'))['state']=='PASS'
+     validate_clock_control()
++    assert json.loads((EVIDENCE/'diagnostics/fixture-clock-focused-check.json').read_text(encoding='utf-8'))['state']=='PASS'
+     discovery=json.loads((EVIDENCE/'discovery.json').read_text(encoding='utf-8'))
+     assert discovery['counts']['directed']==87 and not discovery['missing_directed']
+     assert not any(discovery['loader_errors'].values()) and not any(discovery['duplicates'].values())
+@@ -92,6 +93,8 @@
+         'private-python-copy.json','frontend-layout.json','security-history.json','resumption.json',
+         'install-cache-retirement.json','operational-lifetime-amendment.json',
+         'composite-amendment.json','reuse-manifest.json','reuse-validation.json',
++        'fixture-clock-authorization.json','fixture-resumption-amendment.json',
++        'diagnostics/verify_fixture_clock.py','diagnostics/fixture-clock-focused-check.json',
+         'diagnostics/close_acceptance.py','diagnostics/composite-validator-checks.json',
+         'diagnostics/preserved-contract-checks.json',
+         'launcher-validation.json','downloads.json','audit-toolchain.json','postgresql-preflight.json',
+@@ -131,7 +134,7 @@
+         'host_clock_configuration_unchanged':True,'runtime_and_lock_changes':False,
+         'resource_policy':'USER_AMENDED_ADMISSION_HEADROOM',
+         'evidence_mode':'COMPOSITE_ACCEPTANCE','continuous_campaign_claimed':False,
+-        'historical_pass_blocks_referenced':11})
++        'historical_pass_blocks_referenced':13})
+     if not observation['ready']:
+         stop('PENDING','preflight','Insufficient resources for frozen budget',resources=observation)
+     print('PREFLIGHT_PASS',flush=True)

@@ -1,0 +1,38 @@
+--- native-r2/finalize_preflight.py
++++ native/finalize_preflight.py
+@@ -11,7 +11,7 @@
+     assert not (EVIDENCE / 'evaluation-seal.json').exists()
+     assert not (EVIDENCE / 'STOP.json').exists()
+     assert json.loads((EVIDENCE / 'native-preflight.json').read_text())['state'] == 'PASS'
+-    prior = EVIDENCE.with_name('b9-correction-20261015-native-r1')
++    prior = EVIDENCE.with_name('b9-correction-20261016-native-r2')
+     changes = []
+     for path in sorted(EVIDENCE.glob('*.py')):
+         source = path.read_text(encoding='utf-8')
+@@ -21,7 +21,7 @@
+         previous = prior / path.name
+         baseline = previous.read_text(encoding='utf-8') if previous.exists() else ''
+         diff = ''.join(difflib.unified_diff(baseline.splitlines(True), source.splitlines(True),
+-            fromfile='native-r1/' + path.name, tofile='native/' + path.name))
++            fromfile='native-r2/' + path.name, tofile='native/' + path.name))
+         if diff:
+             target = EVIDENCE / 'native-adaptation-diffs' / (path.name + '.diff')
+             target.parent.mkdir(exist_ok=True)
+@@ -48,7 +48,7 @@
+             '2 GiB host RAM, 1 GiB backing disk and 1 second clock limits'],
+         'native_adaptations': [
+             'Private verified CPython 3.13.2 copy, with only locked third-party packages',
+-            'Private PostgreSQL 16.15 cluster on loopback port 35486',
++            'Private PostgreSQL 16.15 cluster on loopback port 35487',
+             'Private Node 20.20.2, pnpm 9.15.9 and Windows Gitleaks 8.18.4',
+             'Frozen frontend lockfile, hoisted layout, package copy import mode',
+             'Windows process ownership, resource API and local wall/monotonic observation',
+@@ -56,7 +56,7 @@
+             'Native imports and UTF-8/LF receipts in evaluator helpers',
+             'Read-only original Git history plus separate corrected-test scope for security'],
+         'resumption_reference': 'resumption.json',
+-        'previous_native_preparation': '../b9-correction-20261015-native-r1/native-preflight.json',
++        'previous_native_preparation': '../b9-correction-20261016-native-r2/native-preflight.json',
+         'source_diffs': 'native-adaptation-diffs', 'helper_sources': changes})
+     assembly = json.loads((EVIDENCE / 'assembly.json').read_text())
+     assembly['phase'] = 'ASSEMBLED_NOT_EXECUTED'

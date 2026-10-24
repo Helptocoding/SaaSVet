@@ -1,0 +1,74 @@
+{
+  "state": "RECORDED_BEFORE_FORMAL_EXECUTION",
+  "helpers": {
+    "capture_wsl.py": {
+      "sha256": "648482b42f04119a43f1c43e20f6ceeb771cdf58207a007eda5a5b409f9af189",
+      "prior_sha256": null
+    },
+    "cleanup_linux.py": {
+      "sha256": "3462582cff09db211e1a91a74d467220c306fbdf8ed7d209ba4101d3ee1febcb",
+      "prior_sha256": null
+    },
+    "deliver_wsl.py": {
+      "sha256": "af2ead665ed034f40fdfcad841d3e9f193f0da758edaf81411b12a54197d0523",
+      "prior_sha256": "af2ead665ed034f40fdfcad841d3e9f193f0da758edaf81411b12a54197d0523",
+      "diff": ""
+    },
+    "discover_candidate.py": {
+      "sha256": "5e30f6deec93275937bbead3750c2bad3a746e76a39aaddd9f7f71bb68011063",
+      "prior_sha256": "5e30f6deec93275937bbead3750c2bad3a746e76a39aaddd9f7f71bb68011063",
+      "diff": ""
+    },
+    "host_resources.py": {
+      "sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "prior_sha256": "42048e1094bce28c38c2e9808c08b0584153e574a015f7aebf08a4aa68e5a083",
+      "diff": ""
+    },
+    "initialize_campaign.py": {
+      "sha256": "32ed3741cdfb3dd1e47ce91d5c7f5beb2292d9c3c2fe94b078efc3e76da9dac4",
+      "prior_sha256": null
+    },
+    "launch_campaign.py": {
+      "sha256": "bf06c62ddf22361edc4faa4a461023ec4c737b24215fe47765b4251db22bc2f6",
+      "prior_sha256": "340da52c06c6dc8957649dd31f35410c71c0766a08ca901a8aaeefb1e4459969",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261011/launch_campaign.py\n+++ b9-integral-acceptance-1947726-wsl-20261011-r2/launch_campaign.py\n@@ -22,7 +22,15 @@\n     save('corrected-launcher-validation.json',result)\n     print(json.dumps(result),flush=True)\n elif __name__=='__main__':\n-    from run_campaign import run_all\n+    from run_campaign import run_all, StopCampaign\n     if (EVIDENCE/'STOP.json').exists():\n         raise RuntimeError('Campaign stopped. Corrected bootstrap does not authorize a new campaign.')\n-    run_all()\n+    try:\n+        run_all()\n+    except StopCampaign:\n+        raise SystemExit(2)\n+    except Exception as exc:\n+        save('controller-incident.json', {'type': type(exc).__name__, 'message': str(exc)})\n+        if not (EVIDENCE / 'STOP.json').exists():\n+            save('STOP.json', {'state': 'PENDING', 'phase': 'controller', 'cause': str(exc), 'no_rerun': True})\n+        raise\n"
+    },
+    "prepare_wsl.py": {
+      "sha256": "fb1a3518ef853db20095011c331a0718977aa1393042ed81aa22f4efc73ff2ba",
+      "prior_sha256": "bb6c5157f94b0c39365f35112826cad8406b294693203312d6bb7942ac37358a",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261011/prepare_wsl.py\n+++ b9-integral-acceptance-1947726-wsl-20261011-r2/prepare_wsl.py\n@@ -19,7 +19,7 @@\n REPO = EVIDENCE.parents[2]\n OLD = REPO / 'docs/evals/b9-integral-acceptance-1947726'\n SHA = '194772677ca4e9fe1a1dec7f4dafa48396a6c583'\n-WORK = Path('/home/lap/b9i-wsl-1947726-20261011')\n+WORK = Path('/home/lap/b9i-wsl-1947726-20261011-r2')\n TREE = WORK / 'src'\n RTK = WORK / 'tools/rtk'\n PYTHON = WORK / 'venv/bin/python'\n@@ -170,15 +170,7 @@\n     if mismatch:\n         raise RuntimeError('Candidate export differs from Git blobs')\n     shutil.copy2(OLD/'scope-manifest.json', EVIDENCE/'scope-manifest.json')\n-    for name in ('discover_candidate.py','recorded_suite.py'):\n-        source=(OLD/name).read_text().replace('35459','35479')\n-        (EVIDENCE/name).write_text(source,encoding='utf-8')\n-    plan=(OLD/'PLAN.md').read_text()\n-    (EVIDENCE/'PLAN.md').write_text('# B9E — nueva campaña Linux/WSL2 para 1947726\\n\\n'\n-        'Autorización: el usuario aceptó la alternativa WSL2 y ordenó «realizalo». '\n-        'La campaña Windows permanece cerrada y preservada. Se conservan el candidato, '\n-        'el alcance, los gates y los límites del plan fuente. Sin commit, push ni activación.\\n\\n'\n-        +plan[plan.index('## Objetivo y alcance acordado'):],encoding='utf-8')\n+    # Helpers and authorized plan are prepared before assembly, then sealed.\n     print('ASSEMBLED: '+str(len(files))+' exact Git blobs',flush=True)\n \n def runtimes():\n"
+    },
+    "preseal.py": {
+      "sha256": "a4b58292587e89cc8913041f6e3c11c58254a05844c4584784840b0eae44a3ec",
+      "prior_sha256": null
+    },
+    "recorded_suite.py": {
+      "sha256": "4d6012a72e6253d2aef1fc6fc3cee5520d21dbc9c25603489bffec448db907ca",
+      "prior_sha256": "4d6012a72e6253d2aef1fc6fc3cee5520d21dbc9c25603489bffec448db907ca",
+      "diff": ""
+    },
+    "restore_wsl.py": {
+      "sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "prior_sha256": "5dae84e014a15246dbcb317d2bb5bd54da73d72bd4452559f98e8d428581e065",
+      "diff": ""
+    },
+    "run_campaign.py": {
+      "sha256": "57a715d8816f6e5aebe31df0f528328a066f190f5b81b76444ca6fdf66b15cf6",
+      "prior_sha256": "128872fc8ba00396b5f21ac551ec2e8c50e92f4dd85bfe5a74b2d97784486a4e",
+      "diff": "--- b9-integral-acceptance-1947726-wsl-20261011/run_campaign.py\n+++ b9-integral-acceptance-1947726-wsl-20261011-r2/run_campaign.py\n@@ -63,6 +63,9 @@\n         'change':'Django receives an import path; record subtest failures without changing assertions',\n         'application_tests_executed':False})\n     paths=[*EVIDENCE.glob('*.py'),EVIDENCE/'scope-manifest.json',EVIDENCE/'PLAN.md',\n+        EVIDENCE/'candidate-sources.json',EVIDENCE/'assembly.json',EVIDENCE/'authorization.json',\n+        EVIDENCE/'assembly-adaptations.json',\n+        EVIDENCE/'adapter-lineage.json',\n         EVIDENCE/'effective-configuration.json',EVIDENCE/'toolchain.json',EVIDENCE/'python-environment.json',\n         EVIDENCE/'profile-compatibility.json',*EVIDENCE.glob('*-selected.json'),\n         PYTHON,Path(sys._base_executable),NODE,PNPM,WORK/'gitleaks/gitleaks',\n@@ -216,7 +219,7 @@\n         result=json.loads(path.read_text())\n         if result.get('smoke_only') is not False or result.get('warmup_seconds')!=30 or result.get('measurement_seconds')!=300 or not result.get('gates'):\n             stop('PENDING',label,'PROFILE contract metadata invalid')\n-        if not all(value is True for value in result['gates'].values()):\n+        if result.get('technical_pass') is not True or not all(value is True for value in result['gates'].values()):\n             gate(label,'FAIL',gates=result['gates']);stop('FAIL',label,'PROFILE applicable gate violated',gates=result['gates'])\n         gate(label,gates=result['gates'])\n     save('technical-completion.json',{'state':'PASS','candidate_sha':SHA,'activation':'PENDING_ACTIVATION_REQUIREMENTS'})\n"
+    },
+    "stage_wsl.py": {
+      "sha256": "ed97fd113ab745c62a9f61e772358806ee930ac489f950b329bc09583d53b530",
+      "prior_sha256": "ed97fd113ab745c62a9f61e772358806ee930ac489f950b329bc09583d53b530",
+      "diff": ""
+    }
+  },
+  "candidate_sources_changed": false,
+  "fixtures_workload_timing_or_thresholds_changed": false,
+  "directed_original_runner_configuration": {
+    "entrypoint": "apps.agent.tests.run_b9a_acceptance -> run_b8e_acceptance",
+    "local_postgresql_guard": "preserved",
+    "password_hasher": "Original runner prepends MD5PasswordHasher only within isolated directed test process",
+    "critical_regression_runners": "super methods preserve original guards"
+  }
+}

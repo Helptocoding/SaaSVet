@@ -1,0 +1,43 @@
+{
+  "formal_controller_invocations": 1,
+  "formal_controller_final_receipt_valid": false,
+  "formal_block_runs": 10,
+  "formal_reruns": 0,
+  "complete_backend_suite_receipts": 5,
+  "backend_test_id_observations": 2930,
+  "complete_gate_test_id_observations": 251,
+  "complete_gate_unique_ids": 251,
+  "unique_ids_across_complete_and_partial_blocks": 2723,
+  "overlapping_observations": 207,
+  "partial_full_outcomes": {
+    "PASS": 2666,
+    "FAIL": 10,
+    "ERROR": 1,
+    "SKIP": 2
+  },
+  "partial_full_unique_ids": 2679,
+  "full_final_totals": null,
+  "blocking_gates_passed": [
+    "directed",
+    "django-check",
+    "migration-drift",
+    "migrate",
+    "billing-schema",
+    "b0",
+    "b3",
+    "b4",
+    "b5"
+  ],
+  "interrupted_block": "full",
+  "remaining_blocks": "NOT_EXECUTED",
+  "profile_runs": 0,
+  "discovered_counts_not_execution": {
+    "directed": 87,
+    "full": 3331,
+    "b0": 17,
+    "b3": 42,
+    "b4": 68,
+    "b5": 37
+  },
+  "prior_campaign_results_transferred_to_r9": false
+}

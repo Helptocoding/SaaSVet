@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\docs\evals\inbox-phase3-2026-10-22\check_browser.py", line 139, in <module>
+    expect(thumbnail).to_be_focused()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\sync_api\_generated.py", line 21168, in to_be_focused
+    self._sync(self._impl_obj.to_be_focused(timeout=timeout))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_sync_base.py", line 115, in _sync
+    return task.result()
+           ~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_assertions.py", line 786, in to_be_focused
+    await self._expect_impl(
+    ...<5 lines>...
+    )
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_assertions.py", line 85, in _expect_impl
+    raise AssertionError(
+        f"{out_message}\nActual value: {actual}{error_message} {format_call_log(result.get('log'))}"
+    )
+AssertionError: Locator expected to be focused
+Actual value: inactive 
+Call log:
+  - Expect "to_be_focused" with timeout 5000ms
+  - waiting for locator("[data-server-message-id=\"1\"]").get_by_role("button", name="Ampliar imagen")
+    9 × locator resolved to <button type="button" aria-label="Ampliar imagen" class="_mediaThumbnail_llzt7_691">…</button>
+      - unexpected value "inactive"
+
