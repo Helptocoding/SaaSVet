@@ -482,6 +482,27 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'next_due_date': 'La fecha de próxima dosis debe ser posterior a la fecha de aplicación.'
             })
+
+        # Inmutabilidad post-cierre. Un registro vacunal es hijo de la consulta
+        # y hereda su cierre: después, solo se anota. Sin esto seguían siendo
+        # editables el paciente, quién aplicó la vacuna y la fecha — en un
+        # documento que esta misma app describe como retenido 5 años, y sin
+        # dejar rastro. La consulta de referencia es la YA GUARDADA, no la que
+        # trae el payload: si no, bastaría re-apuntar `medical_record` a una
+        # consulta abierta para esquivar el cierre de la original.
+        if self.instance is not None:
+            from .policies import assert_post_close_edit_allowed
+            request = self.context.get('request')
+            assert request is not None, (
+                "VaccineRecordSerializer requiere 'request' en el context para "
+                "resolver el actor de la inmutabilidad post-cierre."
+            )
+            assert_post_close_edit_allowed(
+                request.user,
+                self.instance.medical_record,
+                changed_fields=data.keys(),
+                request=request,
+            )
         return data
 
 

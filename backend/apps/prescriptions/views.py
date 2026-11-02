@@ -6,6 +6,9 @@ from rest_framework.decorators import api_view, permission_classes
 
 from apps.core.permissions import HybridPermission, make_permission
 from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_public_id
+# La inmutabilidad post-cierre la define el dominio dueño de la consulta. Mismo
+# precedente que `inventory/views.py`, que ya consume estas policies.
+from apps.medical_records.policies import assert_can_modify_medical_record
 
 from .models import Prescription, PrescriptionItem
 from .serializers import PrescriptionSerializer, PrescriptionItemWriteSerializer
@@ -84,6 +87,14 @@ class PrescriptionItemCreateView(generics.CreateAPIView):
             Prescription.objects.for_organization(self.request.user.organization),
             self.kwargs['prescription_pk'],
         )
+        # Inmutabilidad post-cierre: bloqueo DURO, no lista blanca. Añadir un
+        # medicamento después de cerrar la consulta no tiene vía legítima, y
+        # además ensancha el tope que limita la dispensación (el cap se calcula
+        # sobre PrescriptionItem.quantity). Mismo guard que usan los cargos
+        # clínicos; esta vista nunca se conectó a él (auditoría run-1).
+        assert_can_modify_medical_record(
+            self.request.user, prescription.medical_record, self.request,
+        )
         serializer.save(prescription=prescription)
 
 
@@ -96,6 +107,13 @@ class PrescriptionItemDeleteView(generics.DestroyAPIView):
         prescription = resolve_public_id(
             Prescription.objects.for_organization(self.request.user.organization),
             self.kwargs['prescription_pk'],
+        )
+        # Inmutabilidad post-cierre: retirar un medicamento de una receta ya
+        # entregada destruye la trazabilidad farmacológica que motivó quitar el
+        # DELETE de la receta completa (NOM-046). Se comprueba al RESOLVER, de
+        # modo que cubre también cualquier método futuro de esta vista.
+        assert_can_modify_medical_record(
+            self.request.user, prescription.medical_record, self.request,
         )
         return get_object_or_404(
             PrescriptionItem,

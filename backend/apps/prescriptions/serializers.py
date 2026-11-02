@@ -143,6 +143,26 @@ class PrescriptionSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "Esta consulta ya tiene una receta. Editá la existente."
                 )
+
+        # Inmutabilidad post-cierre. La receta es documento legal entregado al
+        # paciente y su cantidad acota cuánto se puede dispensar, así que tras
+        # cerrar la consulta solo se anota. Cubre también `items`, que `update`
+        # reemplaza: sin esto, un PATCH posterior al cierre podía reescribir lo
+        # prescrito —y con ello ensanchar el tope de dispensación— sin rastro.
+        # Se evalúa contra la consulta YA GUARDADA, no contra la del payload.
+        if self.instance is not None:
+            from apps.medical_records.policies import assert_post_close_edit_allowed
+            request = self.context.get('request')
+            assert request is not None, (
+                "PrescriptionSerializer requiere 'request' en el context para "
+                "resolver el actor de la inmutabilidad post-cierre."
+            )
+            assert_post_close_edit_allowed(
+                request.user,
+                self.instance.medical_record,
+                changed_fields=attrs.keys(),
+                request=request,
+            )
         return attrs
 
     def create(self, validated_data):

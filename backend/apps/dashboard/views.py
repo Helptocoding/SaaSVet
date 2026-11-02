@@ -39,13 +39,38 @@ FALLBACK_WARN_PERCENT = 5.0
 
 
 class IsAdminSaaS(permissions.BasePermission):
-    message = "Solo ADMIN_SAAS puede consultar este endpoint."
+    """Operador de plataforma: superuser Y staff Y role=ADMIN_SAAS.
+
+    Las tres condiciones, no solo el rol (auditoría run-1, unidad comodín).
+    `analytics_health` es el único endpoint cross-tenant de lectura del SaaS:
+    acepta `?org=<id>` y, SIN ese parámetro, consulta todas las organizaciones
+    a la vez (`org_filter = Q()`). Comprobar únicamente `role` hacía que el
+    aislamiento de esa ruta dependiera de que nadie creara jamás un ADMIN_SAAS
+    sin `is_superuser` — p. ej. un técnico de soporte con el rol y sin
+    superuser leería los volúmenes de cualquier clínica.
+
+    No era explotable por API: ninguna ruta escribe `User.role`
+    (`CreateEmployeeSerializer` restringe sus choices a ADMIN/VET/ASSISTANT,
+    `UserSerializer` se usa solo como salida y no existe vista de
+    actualización de staff). Se endurece porque esa ausencia de camino es
+    una propiedad del código de hoy, no un invariante declarado.
+
+    Predicado idéntico a `apps.platform.permissions.IsPlatformOperator`, que
+    NO se importa aquí a propósito: `platform` es la frontera cross-tenant y
+    `dashboard` no debe depender de ella. La duplicación la vigila
+    `tests/test_platform_predicate_parity.py`, que importa ambas en test.
+    """
+
+    message = "Solo operadores de plataforma."
 
     def has_permission(self, request, view):
+        user = request.user
+        if not (user and user.is_authenticated):
+            return False
         return bool(
-            request.user
-            and request.user.is_authenticated
-            and getattr(request.user, 'role', None) == 'ADMIN_SAAS'
+            user.is_superuser
+            and user.is_staff
+            and getattr(user, 'role', None) == 'ADMIN_SAAS'
         )
 
 

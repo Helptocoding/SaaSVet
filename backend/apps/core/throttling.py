@@ -102,8 +102,19 @@ class LoginUserRateThrottle(ExtendedRateThrottle):
         return caches['throttle_login']
 
     def get_cache_key(self, request, view):
-        ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
-        ip = ip.split(',')[0].strip()
+        # `get_ident` (BaseThrottle) respeta REST_FRAMEWORK['NUM_PROXIES']: con
+        # 1 salto confiable devuelve el elemento de más a la DERECHA de
+        # X-Forwarded-For — el que escribe el proxy — y cae a REMOTE_ADDR si no
+        # hay cabecera.
+        #
+        # Antes aquí se leía HTTP_X_FORWARDED_FOR a mano y se tomaba el valor de
+        # más a la IZQUIERDA, que es justo el segmento que un cliente puede
+        # fijar libremente si la cabecera se añade en vez de reemplazarse. Como
+        # la clave es `ip_username`, una IP distinta era un cupo nuevo para el
+        # mismo usuario: el límite de 5/15min se evadía rotando la cabecera.
+        # Ver auditoría run-1,
+        # core/throttling/login-key-trusts-unvalidated-forwarded-for.
+        ip = self.get_ident(request) or ''
         username = (request.data or {}).get('username', '').strip().lower()
 
         if not username:

@@ -91,6 +91,60 @@ def assert_can_modify_medical_record(user, medical_record, request=None) -> None
         raise PermissionDenied("La consulta está cerrada")
 
 
+# Campos que un hijo de una consulta CERRADA sigue admitiendo. Solo la
+# anotación: es la vía de anulación que documentan VaccineRecordDetailView
+# ("para anular un registro creado por error, usar PATCH") y
+# PrescriptionDetailView ("para anular, PATCH notes"). Todo lo demás —el
+# paciente, quién lo hizo, la fecha, la consulta a la que pertenece— queda
+# congelado al cerrar.
+POST_CLOSE_EDITABLE_FIELDS = frozenset({'notes'})
+
+
+def assert_post_close_edit_allowed(user, medical_record, changed_fields, request=None,
+                                   allowed=POST_CLOSE_EDITABLE_FIELDS) -> None:
+    """Congela la identidad clínica de un hijo cuando su consulta está cerrada.
+
+    Existe porque la inmutabilidad post-cierre se aplicaba a mano, vista por
+    vista, con `assert_can_modify_charges` (cargos) y
+    `assert_can_modify_medical_record` (vitales) — y el registro vacunal y la
+    receta nunca se conectaron a ninguna de las dos. Quedaban editables, tras
+    cerrar el expediente y sin dejar rastro, el paciente al que pertenece una
+    vacunación, quién la aplicó y en qué fecha (auditoría run-1, hallazgo
+    medical_records/post-close-immutability-missing-on-vaccine-and-prescription-records).
+
+    No bloquea la mutación entera a propósito: hacerlo eliminaría la única vía
+    de corrección de un documento que ambas vistas describen como retenido
+    legalmente (NOM-007/NOM-046, cinco años). La regla real es más estrecha y
+    es la que se impone aquí: después del cierre se puede anotar, no reescribir.
+
+    `medical_record=None` no restringe nada: un registro sin consulta asociada
+    no hereda un cierre que no existe.
+    """
+    from rest_framework.exceptions import PermissionDenied
+
+    if medical_record is None:
+        return
+
+    if medical_record.organization_id != user.organization_id:
+        if request:
+            log_ownership_denied(user=user, medical_record=medical_record, request=request)
+        raise PermissionDenied("No puedes modificar consultas fuera de tu organización")
+
+    if medical_record.status != medical_record.Status.CLOSED:
+        return
+
+    forbidden = sorted(set(changed_fields) - set(allowed))
+    if not forbidden:
+        return
+
+    if request:
+        log_closed_denied(user=user, medical_record=medical_record, request=request)
+    raise PermissionDenied(
+        "La consulta está cerrada: solo se puede editar la nota "
+        f"({', '.join(sorted(allowed))}). Campos rechazados: {', '.join(forbidden)}."
+    )
+
+
 def assert_can_modify_charges(user, medical_record, request) -> None:
     """
     Lanza PermissionDenied si el usuario no puede modificar cargos del registro.
