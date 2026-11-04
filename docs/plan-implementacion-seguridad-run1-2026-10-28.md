@@ -20,8 +20,69 @@ El cuerpo del plan se conserva como se escribió; esta tabla dice qué quedó he
 | 5 · Tests de regresión | **Hecha** | 7 módulos nuevos. Varios gates son **estáticos y no de comportamiento**, a propósito: los defectos eran omisiones, y una prueba sobre una sola vista no impide que una vista nueva repita el olvido. |
 | 6 · Suspendido hasta que haya entorno | **Sigue suspendido** | Y la causa empeoró: el servidor no está en servicio y no se puede reconectar. |
 | 7 · Mejoras sin prisa | **No aplicadas** | Se les sumó el endurecimiento de CI identificado en la Fase 4: SHA-256 del binario de gitleaks, acciones por SHA, `pip-audit` fijado. |
+| **8 · Re-auditoría del traspaso** | **Hecha; remediaciones aplicadas sin commit** (enmienda 2026-11-04) | 5 hallazgos confirmados (1 alta, 1 media, 3 baja), los 5 remediados con prueba de regresión. Ver §Enmienda — Fase 8, abajo. Absorbe el cierre de expediente clínico de la Fase 4. |
 
-**Por qué el cierre de expediente clínico sigue diferido, y es una razón distinta de las otras dos:** sus archivos están dentro del conjunto divergente del trabajo «orden 2» en vuelo. Auditarlo ahora sería auditar un cambio a medio hacer y no el commit al que están ancladas las conclusiones de la auditoría.
+**El cierre de expediente clínico ya no está bloqueado.** Estaba diferido porque sus archivos caían en el trabajo «orden 2» en vuelo; ese trabajo quedó commiteado en `929b6ae`. Pasa a ejecutarse dentro de la Fase 8, no en la 4.
+
+---
+
+## Enmienda — Fase 8: re-auditoría del traspaso (2026-11-04)
+
+### Por qué existe
+
+Este plan se escribió contra `8886604`. Encima hay ahora dos commits: `9c2a613` (remediaciones de esta auditoría) y `929b6ae` (el trabajo «orden 2/4», 170 archivos y ~8 700 líneas, recibido a medias y commiteado al traspasarse). La obligación de re-auditar ese trabajo estaba registrada en `run-metadata.json` —*«todo archivo de esa lista debe re-auditarse cuando el trabajo concurrente se estabilice»*— pero **no tenía fase**. Esta enmienda se la da. No sustituye ninguna fase anterior.
+
+### Qué cambió en la superficie de ataque
+
+Cinco rutas nuevas, **todas en `apps/platform`**, la capa cross-tenant de mayor privilegio:
+
+| Ruta | Riesgo a comprobar |
+|---|---|
+| `physical-deletions/preview/` | Qué revela el preview sobre otra organización; quién puede pedirlo |
+| `physical-deletions/execute/` | **Irreversible.** Firma, caducidad, un solo uso, impacto revalidado, actor |
+| `organizations/<uuid:pk>/history/` | Exposición del historial de estado de un tenant |
+| `organizations/<uuid:pk>/<str:action>/` | **Acción despachada desde el path**: ¿lista blanca cerrada? |
+| `organizations/<uuid:organization_id>/<str:kind>/<uuid:pk>/<str:action>/` | Acción **y tipo** desde el path, con `organization_id` de la URL: ¿lista blanca, y el objeto pertenece a esa org? |
+
+Más cuatro modelos nuevos (`ImportConflict`, `StockReceptionReceipt`, `OrganizationStateAudit`, `PhysicalDeletionReceipt`), la semántica de **archivado** que sustituye al borrado tenant de Owner/Pet, los guards de borrado de `deletion_guards.py`, y `subject_snapshot` como nuevo lugar donde vive la identidad del tenant.
+
+### Unidades, por orden
+
+1. **8.1 · Borrado físico de plataforma** — preview/execute, `PhysicalDeletionReceipt`, `deletion_guards`. Primero porque es lo único irreversible.
+   **Hecha (2026-11-04): un hallazgo confirmado, severidad media, sin remediar todavía.** `_inspect` enumera referencias con `_meta.related_objects`, que excluye las FK con `related_name='+'`; cinco FK del módulo `agent` hacia Owner/Pet son invisibles. Las cuatro SET_NULL se anulan en silencio al borrar, saltándose el chequeo de preservación de identidad y el digest de impacto, y reescriben una `ConversationOperation` B7A inmutable que después ya no valida contra su propio digest. Reproducido con una operación real. Lo demás resiste: doble autorización, confirmación firmada con TTL que liga actor+objetivo+motivo+impacto, un solo uso garantizado por UNIQUE en base, idempotencia bajo advisory lock, impacto re-inspeccionado bajo lock. Nota menor: las cuatro vistas nuevas de platform no tienen throttle, a diferencia de crear organización y resetear contraseña.
+2. **8.2 · Transiciones de estado de organización** — las dos rutas `<str:action>`, `OrganizationStateAudit`, efectos de `is_active=False` sobre login y API del tenant.
+   **Hecha (2026-11-04): un hallazgo confirmado, severidad ALTA, sin remediar todavía.** El acceso HTTP se corta bien en las tres puertas (login tras validar contraseña, refresh antes de rotar, y cada petición JWT/sesión), y las dos rutas `<str:action>` tienen lista blanca cerrada. Pero el selector de candidatos del worker no excluye organizaciones inactivas antes de su `LIMIT 3`, y ordena por el claim más antiguo: una org desactivada nunca vuelve a ser reclamada y sube al frente. Con **tres** clínicas desactivadas cuyos clientes siguen escribiendo, el agente deja de atender a **todas** las clínicas activas, en silencio y de forma persistente. Reproducido por la ruta real con caso de control (2 inactivas: atiende; 3: cero procesados). El webhook sigue ingiriendo para orgs desactivadas porque solo comprueba la cuenta de canal. El sender tiene la misma forma, no reproducido y acotado.
+3. **8.3 · Archivado de pacientes** — `change_archive_state`, que una mascota archivada no reaparezca ni reciba escrituras, aislamiento.
+   **Hecha (2026-11-04): un hallazgo confirmado, severidad baja, sin remediar todavía.** El servicio está bien acotado: todo filtrado por organización, orden de locks Organization→Owner→Pet compatible con citas, el dueño de la mascota se revalida con el lock tomado, y se bloquea si hay citas o consultas abiertas. Pero el resolvedor de identidad por teléfono cuenta solo clientes **activos**, así que archivar libera la clave; si mientras tanto se da de alta otro cliente con ese teléfono, **restaurar** al archivado deja dos expedientes activos con el mismo número, porque restaurar no pasa por el lock ni comprueba la clave. INV-C falla en cerrado (devuelve ambiguo, no vincula mal), pero el teléfono deja de funcionar en todas las vías de identidad. Reproducido con los servicios reales. Nota de endurecimiento: la autorización se escribe a mano con `role == 'ADMIN'` en vez de pasar por RBAC; es más estricta, no más laxa, y las acciones `archive`/`restore` solo exigen `IsAuthenticated` y delegan todo en el servicio.
+4. **8.4 · Cierre de expediente clínico** (antes unidad 11 de la Fase 4) — `medical_records/services.py`, `subject_snapshot`, `vet_*_at_close`.
+   **Hecha (2026-11-04): una regresión funcional confirmada (severidad baja, no es vulnerabilidad) y una hipótesis refutada.** El cierre resiste: recibo idempotente (que revierte entero si el permiso falla, y que rechaza a un actor distinto), fila bloqueada, permiso bajo lock, y anchor + cita + Checkout en una transacción. `subject_snapshot` y los `vet_*_at_close` no son escribibles desde ningún serializer. Hipótesis refutada: que `assign-patient` dejara la identidad de la mascota genérica congelada en el expediente; el trigger `0041` lo hace imposible. Pero ese mismo trigger rechaza la escritura de `assign-patient`, que no actualiza el snapshot: **vincular el paciente real a una atención sin cita da 500 en cuanto hay consulta abierta** (con control: sin consulta, 200). No queda estado incoherente, la transacción revierte. Ningún test cubría esa combinación. Es el único escritor con ese patrón.
+5. **8.5 · Unidades rancias** — 12 (platform), 18 y 4 (billing), 20 (rutas hijas): repetir sus comprobaciones contra `929b6ae` y re-anclar los cuatro registros rechazados cuyos archivos cambiaron.
+   **Hecha (2026-11-04): los cuatro rechazos se sostienen, re-anclados; un hallazgo nuevo de severidad baja.** Platform: las siete vistas (cuatro nuevas) exigen `IsPlatformOperator` y ningún código RBAC, así que el comodín `*.*` del ADMIN de clínica sigue sin alcanzarlas. Billing: `unit_price` sigue siendo de solo lectura y sale del catálogo; el filtro `?owner=` de cobros ahora también busca en `subject_snapshot`, pero sobre un queryset ya acotado por organización. Rutas hijas: el padre se resuelve con `for_organization`, el hijo se filtra por ese padre y el `service` del body se compara con la organización bajo lock. PDF: todos los campos de usuario, incluidas las identidades congeladas nuevas, pasan por `safe_pdf_text`. Pacientes: `owner_id`, `is_active` y `archived_at` son de solo lectura y la referencia se resuelve por organización. **Hallazgo nuevo:** `reprice` de un cargo clínico no comprueba que la consulta siga abierta. Después del cierre responde 200 con el precio nuevo, pero el Checkout (y la Invoice que salga de él) sigue cobrando el precio viejo, porque la línea se congeló al cerrar y nada la vuelve a materializar. Si algo la rematerializara, saldrían dos líneas para un solo servicio. Reproducido con los servicios reales. Solo lo puede hacer un ADMIN.
+
+**Fase 8 completa.** Siguen las remediaciones, en orden de severidad: 8.2 (alta), 8.1 (media), y después 8.3, 8.4, `reprice` y throttle en las vistas nuevas de platform.
+
+### Remediaciones de la Fase 8 (2026-11-04, sin commit)
+
+Cada una con prueba de regresión que **falla sobre el código sin arreglar** y pasa con él.
+
+| Hallazgo | Cambio | Prueba |
+|---|---|---|
+| 8.2 (alta) | Worker y sender filtran `organization__is_active` **antes** del `LIMIT`; el «ceder a una org menos atendida» ignora las desactivadas; el lote del sender queda ordenado. | `agent/tests/test_inactive_org_starvation.py`. Reprodujo además el bloqueo del **sender**, que en 8.2 había quedado sin reproducir. |
+| 8.1 (media) | El inspector recorre todas las relaciones entrantes, también las ocultas; las no soportadas bloquean. | `platform/tests/test_physical_deletion_hidden_refs.py`, con gate estático. |
+| Throttle platform | Corrección a la nota de 8.1: no estaban sin límite, solo tenían el global por usuario (500/h). Ahora `platform_physical_deletion` 30/h y `platform_lifecycle` 60/h. | `platform/tests/test_platform_throttles.py` (gate). |
+| 8.3 (baja) | Restaurar toma el lock de teléfono antes que las filas (el orden de las altas), revalida bajo lock y responde `409 owner_exists` / `owner_ambiguous`. | `patients/tests/test_restore_phone_identity.py` |
+| 8.4 (baja) | **Decisión de producto: excepción del genérico.** Migración `billing.0043` (solo reemplaza la función del trigger) que permite reescribir el snapshot únicamente si el anterior es la mascota genérica de la misma organización y la consulta está abierta (o es la receta de una consulta abierta). `assign-patient` escribe paciente + snapshot en la consulta y en su receta. Addendum en ADR-001. | `appointments/tests/test_assign_patient_open_record.py`, incluidos los límites del trigger. Reversa de la migración verificada. |
+| `reprice` (baja) | Bloquea la fila del expediente, exige consulta abierta y rechaza si el ciclo ya está congelado en la cuenta. | `billing/tests/test_reprice_open_record_only.py` |
+
+Verificación conjunta: core (gates de scoping, URL y calendario), prescriptions, appointments, billing, medical_records, platform y patients en verde (729 tests); suites del agente que ejercen los selectores, 265 en verde; `makemigrations --check` sin cambios. **La migración `0043` no se ha aplicado a ningún entorno real.** Al desplegar, aplicarla junto con el código de `assign-patient`: sin ella, ese endpoint sigue dando 500 con consulta abierta.
+
+### Lo que ya se tocó durante el traspaso, y no cuenta como auditoría
+
+Al cerrar las pruebas rojas del traspaso se leyó y modificó parte de esta superficie: el guard invertido de `?pet=`, la autorización de purga de la demo, `authorize_physical_deletion`, y dos entradas del baseline de scoping. Eso fue **trabajo de arreglo**, guiado por pruebas que fallaban, no una revisión adversarial. Se registra como evidencia parcial, no como cobertura.
+
+### Mismas limitaciones que el resto
+
+Un solo revisor, sin verificación independiente, sin sandbox. Esta fase añade cobertura; no corrige el método.
 
 **Lo que ninguna fase de este plan arregla:** la corrida sigue siendo de **un solo revisor**, sin verificación independiente y sin ejecución en sandbox. Eso no es cobertura que falte: es una propiedad del método con el que se obtuvo todo lo anterior. Está en `REPORT.md` §9.5.
 

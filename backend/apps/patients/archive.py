@@ -8,6 +8,7 @@ from apps.appointments.models import Appointment
 from apps.medical_records.models import MedicalRecord
 from apps.organizations.models import Organization
 from .models import Owner, Pet
+from .services import OwnerAmbiguous, OwnerExists, _lock_dedup_key, identity_queryset
 
 
 class ArchiveBlocked(APIException):
@@ -38,8 +39,46 @@ def _check_open(org, pets):
         raise ArchiveBlocked('Resuelve citas pendientes y consultas abiertas antes de archivar.')
 
 
+def _restore_phone_key(organization_id, kind, public_id, archive):
+    """Clave de teléfono que una restauración de cliente vuelve a ocupar.
+
+    Se lee SIN lock porque el lock de deduplicación tiene que tomarse antes que
+    cualquier lock de fila: es el orden de las altas (advisory → Organization →
+    Owner). Quien la usa revalida bajo lock que no haya cambiado.
+    """
+    if kind != 'owner' or archive:
+        return None
+    row = (Owner.all_objects.filter(organization_id=organization_id, public_id=public_id)
+           .values('phone_normalized', 'is_generic').first())
+    if row is None or row['is_generic']:
+        return None
+    return row['phone_normalized']
+
+
+def _assert_phone_key_free(org, owner, key):
+    """Restaurar vuelve a hacer visible el teléfono del cliente para INV-C.
+
+    Archivar libera la clave (el resolvedor solo ve clientes activos). Si
+    mientras tanto otro cliente la ocupó, restaurar fabricaría un duplicado
+    que INV-C obliga a tratar como ambiguo en todas las vías de identidad
+    (audit run-1, hallazgo 8.3). Mismo contrato que `change_owner_phone`:
+    409 `owner_exists` con el candidato, u `owner_ambiguous`; la decisión de
+    cuál expediente es el correcto es de una persona.
+    """
+    if not key:
+        return
+    others = list(identity_queryset(org).filter(phone_normalized=key).exclude(pk=owner.pk)[:2])
+    if len(others) > 1:
+        raise OwnerAmbiguous(len(others))
+    if others:
+        raise OwnerExists(others[0])
+
+
 @transaction.atomic
 def change_archive_state(*, actor, organization_id, kind, public_id, archive):
+    restore_key = _restore_phone_key(organization_id, kind, public_id, archive)
+    if restore_key:
+        _lock_dedup_key(organization_id, restore_key)
     # Orden global compatible con appointments.creation: Organization → Owner → Pet.
     org = Organization.objects.select_for_update().get(pk=organization_id)
     _authorize(actor, org)
@@ -66,6 +105,11 @@ def change_archive_state(*, actor, organization_id, kind, public_id, archive):
                     is_active=False, archived_at=now, archived_by=actor,
                 )
         elif not owner.is_active:
+            if owner.phone_normalized != restore_key:
+                # El teléfono cambió entre la lectura y el lock: la clave que
+                # se serializó ya no es la que se ocuparía.
+                raise ArchiveBlocked('El cliente cambió mientras se restauraba; vuelve a intentarlo.')
+            _assert_phone_key_free(org, owner, restore_key)
             Owner.all_objects.filter(pk=owner.pk).update(
                 is_active=True, archived_at=None, archived_by=None,
             )

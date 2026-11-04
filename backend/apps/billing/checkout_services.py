@@ -617,10 +617,24 @@ def reprice_clinical_charge(source, user, *, new_unit_price, reason, expected_qu
     )
     if replay:
         return ClinicalChargeEntry.all_objects.get(pk=receipt.response_data['entry_id'])
+    # Same rule as every other clinical charge mutation: only while the
+    # consultation is open. At close the active cycle is frozen into a
+    # ClinicalChargeSnapshot/CheckoutItem that nothing re-materializes, so a
+    # later reprice answered 200 while the bill kept the old price (audit
+    # run-1, phase 8.5). Record row first, then the entry: the order the
+    # views use around record_clinical_charge_delta.
+    from apps.medical_records.models import MedicalRecord
+    status = (MedicalRecord.all_objects.select_for_update()
+              .filter(pk=data['medical_record'].pk)
+              .values_list('status', flat=True).first())
+    if status != MedicalRecord.Status.OPEN:
+        raise ValidationError('No se pueden cambiar precios de una consulta cerrada.')
     source_filter = {f"medical_record_{data['source_kind']}": source}
     old = ClinicalChargeEntry.all_objects.select_for_update().get(
         lifecycle='active', **source_filter,
     )
+    if ClinicalChargeSnapshot.all_objects.filter(entry=old).exists():
+        raise ValidationError('Este cargo ya se congeló en la cuenta; corrígelo desde Cobros.')
     quantity = Decimal(str(expected_quantity))
     if old.current_quantity != quantity or quantity <= 0:
         raise ValidationError({'expected_quantity': 'La cantidad clínica cambió; recarga.'})

@@ -342,6 +342,11 @@ REST_FRAMEWORK = {
         # Más holgado que staff_password_reset (5/h) — ADMIN_SAAS puede
         # atender múltiples clínicas en una misma sesión de soporte.
         'platform_password_reset': '20/hour',
+        # Orden 2 (audit run-1, fase 8.1): borrado físico irreversible.
+        # Preview + execute = 2 llamadas por borrado.
+        'platform_physical_deletion': '30/hour',
+        # Activar/desactivar organización y archivar/restaurar sujetos.
+        'platform_lifecycle': '60/hour',
         'support_message': '10/hour',
         # ADR p20: self-service password change. Throttle modesto para
         # disuadir brute-force del current_password — el endpoint requiere

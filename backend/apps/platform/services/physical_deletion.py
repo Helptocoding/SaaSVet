@@ -5,6 +5,7 @@ from uuid import UUID
 
 from django.core import signing
 from django.db import connection, transaction
+from django.db.models import ForeignObjectRel
 from django.http import Http404
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 
@@ -75,6 +76,20 @@ def _get_target(org, target_type, target_id, *, lock=False):
     return target
 
 
+def _reverse_relations(model):
+    """Every relation pointing INTO `model`, hidden ones included.
+
+    `_meta.related_objects` omits non-m2m relations declared with
+    `related_name='+'`, yet Django's Collector still applies their on_delete
+    (it walks hidden relations). Inspecting only `related_objects` let
+    SET_NULL references be nulled silently, outside the identity-preservation
+    check and the impact digest, and let PROTECT ones surface as a raw
+    ProtectedError (audit run-1, finding 8.1).
+    """
+    return [f for f in model._meta.get_fields(include_hidden=True)
+            if isinstance(f, ForeignObjectRel)]
+
+
 def _inspect(org, target, target_type):
     blockers = set()
     state = {'target': str(target.public_id), 'is_active': target.is_active,
@@ -96,7 +111,7 @@ def _inspect(org, target, target_type):
                                                object_id=str(target.pk)).exists():
         blockers.add('unsupported_reference')
     impact = {}
-    for relation in target._meta.related_objects:
+    for relation in _reverse_relations(type(target)):
         field = relation.field
         if not field.many_to_one and not field.one_to_one:
             blockers.add('unsupported_reference')

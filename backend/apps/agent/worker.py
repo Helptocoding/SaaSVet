@@ -66,17 +66,24 @@ def _pending_conversation_candidates(now=None, excluded=()):
         available_at__gt=clock, available_at__lte=clock + timedelta(seconds=1))
         .exclude(semantic_type=Message.SEMANTIC_SAFETY_SIGNAL)
         .order_by().values('organization_id').distinct())
-    upcoming = (Organization.objects.filter(pk__in=upcoming_org_ids)
+    # A deactivated org is never claimed (durable claim refuses it), so it must
+    # not make an active org yield either: that wait would never be repaid.
+    upcoming = (Organization.objects.filter(pk__in=upcoming_org_ids, is_active=True)
         .exclude(pk=OuterRef('organization_id'))
         .alias(upcoming_busy=Exists(durable.active_org_work(OuterRef('pk'))),
                upcoming_last_claim=Subquery(latest_org))
         .filter(upcoming_busy=False)
         .filter(Q(upcoming_last_claim__isnull=True) |
                 Q(upcoming_last_claim__lt=OuterRef('org_last_claim'))))
-    # Exclude busy orgs before ranking/limit. Keep one conversation per org
+    # Exclude busy AND deactivated orgs before ranking/limit. A deactivated org
+    # is refused at claim time and its last claim never advances, so left in
+    # the ranking it rises to the front and three of them fill the LIMIT,
+    # starving every active clinic (audit run-1, finding 8.2).
+    # Keep one conversation per org
     # so a competing planner's miss can fall through to another org. Prefer
     # least recently claimed orgs using existing durable history, not a cursor.
     return (Conversation.objects.filter(due | Q(pk__in=incoming)).exclude(pk__in=excluded)
+        .filter(organization__is_active=True)
         .alias(org_busy=Exists(durable.active_org_work(OuterRef('organization_id'))))
         .filter(org_busy=False)
         .annotate(org_last_claim=Subquery(latest), org_candidate=Window(RowNumber(),

@@ -325,8 +325,14 @@ def send_pending_outbound(batch=20, provider_factory=get_provider, now=None):
         raise RuntimeError('Sender must not be called inside a database transaction')
     batch = max(1, min(int(batch), MAX_BATCH))
     recover_expired(batch)
+    # Deactivated orgs are refused by claim_message; filtering them before the
+    # LIMIT keeps their backlog from occupying the whole batch and starving
+    # active clinics (audit run-1, finding 8.2). Ordered so the batch is
+    # deterministic instead of whatever order the planner returns.
     candidates = list(Message.objects.filter(direction='out', status='pending')
         .filter(Q(next_attempt_at__isnull=True) | Q(next_attempt_at__lte=Now()))
+        .filter(organization__is_active=True)
+        .order_by('pk')
         .values('pk', 'organization_id', 'channel_account_id')[:batch])
     for candidate in candidates:
         claim = claim_message(candidate['pk'], organization_id=candidate['organization_id'],

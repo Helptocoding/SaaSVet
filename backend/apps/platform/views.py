@@ -25,6 +25,8 @@ User = get_user_model()
 
 class PhysicalDeletionPreviewView(APIView):
     permission_classes = [IsPlatformOperator]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'platform_physical_deletion'
 
     def post(self, request):
         from rest_framework import serializers
@@ -43,6 +45,8 @@ class PhysicalDeletionPreviewView(APIView):
 
 class PhysicalDeletionExecuteView(APIView):
     permission_classes = [IsPlatformOperator]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'platform_physical_deletion'
 
     def post(self, request):
         from rest_framework import serializers
@@ -105,6 +109,8 @@ class PlatformOrganizationHistoryView(APIView):
 
 class PlatformOrgStateView(APIView):
     permission_classes = [IsPlatformOperator]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'platform_lifecycle'
 
     def post(self, request, pk, action):
         from apps.organizations.models import Organization
@@ -122,6 +128,8 @@ class PlatformOrgStateView(APIView):
 
 class PlatformSubjectArchiveView(APIView):
     permission_classes = [IsPlatformOperator]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'platform_lifecycle'
 
     def post(self, request, organization_id, kind, pk, action):
         from apps.organizations.models import Organization
