@@ -109,10 +109,8 @@ PERMISSION_CODES = [
     "staff.reset_password",
 
     # Organización
-    "organization.list",
     "organization.retrieve",
     "organization.update",
-    "organization.create",
 
     # Dashboard
     "dashboard.view",

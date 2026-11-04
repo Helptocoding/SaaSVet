@@ -22,6 +22,11 @@
 
 set -euo pipefail
 
+# Dumps en claro contienen PII: nada de lo que cree este proceso es legible por
+# grupo u otros. Va antes de crear cualquier archivo. No cambia lo ya existente:
+# para eso, el chmod de BACKUP_DIR de abajo falla cerrado.
+umask 077
+
 LOG_TAG=predeploy
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/deploy-lib.sh
@@ -40,7 +45,7 @@ if [ "$(_service_health postgres)" != "healthy" ]; then
 fi
 
 mkdir -p "$BACKUP_DIR"
-chmod 700 "$BACKUP_DIR" 2>/dev/null || true
+chmod 700 "$BACKUP_DIR" || { err "cannot restrict $BACKUP_DIR to 0700 — refusing to write dumps there."; exit 1; }
 
 OUT="$BACKUP_DIR/vet-predeploy-$SHA.dump"
 log "pre-deploy snapshot → $OUT  (DB state BEFORE deploying $SHA)"

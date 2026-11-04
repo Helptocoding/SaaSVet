@@ -72,10 +72,12 @@ saaslyvet.com, www.saaslyvet.com {
 		#   - Google Fonts kept (already used by index.html).
 		#   - Sentry connect-src whitelist covers ingest endpoint.
 		#   - data: img-src allows inline favicons / generated avatars.
+		#   - media-src blob: is for the <audio>/<video> of Inbox MediaBubble,
+		#     fetched with the JWT and played through URL.createObjectURL.
 		#   - 'unsafe-inline' on style-src is required by Google Fonts'
 		#     injected <style> blocks; mitigated by absence of script
 		#     'unsafe-inline'.
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.ingest.us.sentry.io https://*.ingest.sentry.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.ingest.us.sentry.io https://*.ingest.sentry.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
 
 		# Hide upstream identity.
 		-Server

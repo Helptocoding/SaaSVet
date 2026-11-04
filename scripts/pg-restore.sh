@@ -73,7 +73,9 @@ sha256_of() {
 # .dump, or a 0600 temp holding the decrypted plaintext for a .dump.age.
 RESTORE_SRC="$DUMP_FILE"
 DECRYPTED_TMP=""
-cleanup() { [ -n "$DECRYPTED_TMP" ] && rm -f "$DECRYPTED_TMP"; }
+# `if`, not `[ ... ] && ...`: under `set -e` a false test as the last command of an
+# EXIT trap replaces the exit status with 1, even after `exit 0`.
+cleanup() { if [ -n "$DECRYPTED_TMP" ]; then rm -f "$DECRYPTED_TMP"; fi; }
 trap cleanup EXIT INT TERM
 
 case "$DUMP_FILE" in

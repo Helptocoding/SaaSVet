@@ -65,7 +65,7 @@ BACKUP_DIR=/var/backups/vet
 # las tablas token_blacklist_outstandingtoken + token_blacklist_blacklistedtoken
 # crecen lineales con cada login / refresh / change-password.
 # ---------------------------------------------------------------------------
-0 4 * * *   cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py flushexpiredtokens >> /var/log/vet-cron.log 2>&1
+0 4 * * *   cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm --no-deps backend python manage.py flushexpiredtokens >> /var/log/vet-cron.log 2>&1
 
 # ---------------------------------------------------------------------------
 # 06:30 Monterrey local = 12:30 UTC diario — Analytics snapshot ayer (ADR p10).
@@ -73,19 +73,19 @@ BACKUP_DIR=/var/backups/vet
 # si CUALQUIER org falla — wire alerta en exit != 0.
 # Corre tras el cierre del día calendario MX anterior (ya pasó medianoche local).
 # ---------------------------------------------------------------------------
-30 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py build_daily_metrics >> /var/log/vet-cron.log 2>&1
+30 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm --no-deps backend python manage.py build_daily_metrics >> /var/log/vet-cron.log 2>&1
 
 # ---------------------------------------------------------------------------
 # 06:35 Monterrey local = 12:35 UTC diario — Anchor integrity audit (corre
 # DESPUÉS del snapshot). Exit 0 OK | 1 unresolved provenance | 2 invariant
 # violation (P1, page on this).
 # ---------------------------------------------------------------------------
-35 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py audit_anchor_integrity --json >> /var/log/vet-anchor.log 2>&1
+35 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm --no-deps backend python manage.py audit_anchor_integrity --json >> /var/log/vet-anchor.log 2>&1
 
 # 06:45 Monterrey = 12:45 UTC — media Inbox: purga 180 días, reconciliación
 # y spool huérfano. Inerte con INBOX_MEDIA_ENABLED=False. Antes de instalar:
 # gates p60 y lifecycle físico B2 validados; runbook inbox-media.md.
-45 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py maintain_inbox_media --batch 100 --max-batches 10 >> /var/log/vet-inbox-media.log 2>&1
+45 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm --no-deps backend python manage.py maintain_inbox_media --batch 100 --max-batches 10 >> /var/log/vet-inbox-media.log 2>&1
 
 # ---------------------------------------------------------------------------
 # Cada 30 min (:10 y :40) — Reset del tenant demo (ADR p49). Acotado a la org
@@ -97,7 +97,7 @@ BACKUP_DIR=/var/backups/vet
 # Recuperación si empieza a fallar: ADR p49 §12 (deshabilitar cron, reset manual,
 # auditorías --org, rehabilitar).
 # ---------------------------------------------------------------------------
-10,40 * * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py seed_demo_clinic --reset --yes >> /var/log/vet-cron.log 2>&1 && { [ -z "$HEALTHCHECK_DEMO_RESET_URL" ] || curl -fsS -m 10 "$HEALTHCHECK_DEMO_RESET_URL" > /dev/null; }
+10,40 * * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm --no-deps backend python manage.py seed_demo_clinic --reset --yes >> /var/log/vet-cron.log 2>&1 && { [ -z "$HEALTHCHECK_DEMO_RESET_URL" ] || curl -fsS -m 10 "$HEALTHCHECK_DEMO_RESET_URL" > /dev/null; }
 
 # ---------------------------------------------------------------------------
 # Cada hora (minuto 15) — disk usage alert. Si /, /var/lib/docker o
@@ -133,4 +133,4 @@ BACKUP_DIR=/var/backups/vet
 # Inbox: observar/escalar sin I/O binario ni reintentos de purga, mismo cron.
 # Umbral 24h, detección en el siguiente tick (<=15 min si cron funciona).
 # Responsable/canal pendientes NO BLOQUEANTES: decisión del usuario 23-10-2026.
-*/15 * * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py maintain_inbox_media --alerts-only --batch 500 --max-batches 1 >> /var/log/vet-inbox-media.log 2>&1
+*/15 * * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm --no-deps backend python manage.py maintain_inbox_media --alerts-only --batch 500 --max-batches 1 >> /var/log/vet-inbox-media.log 2>&1

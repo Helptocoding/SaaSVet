@@ -160,12 +160,12 @@ Corre las auditorías contra la DB restaurada — el estándar de oro:
 ```bash
 DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/vet_restore_test" \
 docker compose -f docker-compose.prod.yml --env-file .env.prod \
-  run --rm -e DATABASE_URL -e DB_CONN_MAX_AGE=0 backend \
+  run --rm --no-deps -e DATABASE_URL -e DB_CONN_MAX_AGE=0 backend \
   python manage.py audit_anchor_integrity --json        # exit 0 esperado
 
 DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/vet_restore_test" \
 docker compose -f docker-compose.prod.yml --env-file .env.prod \
-  run --rm -e DATABASE_URL -e DB_CONN_MAX_AGE=0 backend \
+  run --rm --no-deps -e DATABASE_URL -e DB_CONN_MAX_AGE=0 backend \
   python manage.py audit_payment_ledger_integrity --json # exit 0 esperado
 ```
 

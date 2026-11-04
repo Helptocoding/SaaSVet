@@ -28,7 +28,7 @@
 #
 # Exit codes:
 #   0  RESTORE VERIFIED (restore + every health check passed)
-#   1  precondition failure
+#   1  precondition failure (including postgres not available)
 #   2  restore failed
 #   3  one or more health checks failed
 #
@@ -74,8 +74,17 @@ set +a
 
 compose() { docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"; }
 
+# Un simulacro no levanta servicios: `--no-deps` evita arrancar dependencias, pero
+# no comprueba nada. Si postgres no responde, se aborta sin intentar iniciarlo.
+compose exec -T postgres pg_isready -q -U "$POSTGRES_USER" -d postgres || {
+  err "postgres is not available — start it first; this drill will not."
+  exit 1
+}
+
 TMP_DL=""
-cleanup() { [ -n "$TMP_DL" ] && rm -rf "$TMP_DL"; }
+# `if`, not `[ ... ] && ...`: under `set -e` a false test as the last command of an
+# EXIT trap replaces the exit status with 1, even after `exit 0`.
+cleanup() { if [ -n "$TMP_DL" ]; then rm -rf "$TMP_DL"; fi; }
 trap cleanup EXIT INT TERM
 
 # ---------------------------------------------------------------------------
@@ -166,13 +175,15 @@ log "  info: paid invoices=${PAID:-?}  payment events=${PAYM:-?}"
 #    DATABASE_URL is exported into THIS process and passed through with `-e
 #    DATABASE_URL` (no value on argv) → the password never hits the arg list.
 #    DB_CONN_MAX_AGE=0 avoids leaking a pooled connection from a one-shot run.
+#    --no-deps: backend depends on `release`, and without it every drill would
+#    re-run migrate/collectstatic/seed_permissions against the LIVE database.
 # ---------------------------------------------------------------------------
 export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${PGHOST:-postgres}:${PGPORT:-5432}/${TARGET_DB}"
 
 run_audit() {
   local cmd="$1"
   log "running $cmd against $TARGET_DB ..."
-  if compose run --rm -e DATABASE_URL -e DB_CONN_MAX_AGE=0 backend \
+  if compose run --rm --no-deps -e DATABASE_URL -e DB_CONN_MAX_AGE=0 backend \
        python manage.py "$cmd" --json; then
     log "  OK  $cmd exit 0"
   else

@@ -122,13 +122,13 @@ COMPOSE_FILE=/home/deploy/apps/SaaSVet/docker-compose.prod.yml \
 /home/deploy/apps/SaaSVet/scripts/pg-backup.sh
 
 # JWT cleanup
-cd /home/deploy/apps/SaaSVet && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py flushexpiredtokens
+cd /home/deploy/apps/SaaSVet && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm --no-deps backend python manage.py flushexpiredtokens
 
 # Snapshot ayer (idempotente, safe re-run)
-cd /home/deploy/apps/SaaSVet && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py build_daily_metrics
+cd /home/deploy/apps/SaaSVet && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm --no-deps backend python manage.py build_daily_metrics
 
 # Anchor audit
-cd /home/deploy/apps/SaaSVet && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py audit_anchor_integrity --json
+cd /home/deploy/apps/SaaSVet && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm --no-deps backend python manage.py audit_anchor_integrity --json
 ```
 
 Verificar exit codes:
@@ -234,7 +234,7 @@ Cada check tiene su propio schedule + grace en healthchecks.io. Si no recibe pin
 | `permission denied` en log file | Logs creados como root, cron corre como `deploy` | Re-aplicar §3 chown |
 | `docker: command not found` en cron output | `PATH` no incluye `/usr/bin` (donde vive docker) | Verificar línea `PATH=` al inicio del crontab |
 | backup duplica timestamp | Cron disparó 2x (raro, ej. systemd timer + cron) | `crontab -l | grep pg-backup` debe ser 1 sola línea |
-| `build_daily_metrics` exit 2 random | 1 org tiene anchors corruptos | `docker compose ... run --rm backend python manage.py audit_anchor_integrity` para el detalle |
+| `build_daily_metrics` exit 2 random | 1 org tiene anchors corruptos | `docker compose ... run --rm --no-deps backend python manage.py audit_anchor_integrity` para el detalle |
 | journalctl vacuum requiere password sudo | sudo NOPASSWD no configurado | `sudo visudo` y agregar `deploy ALL=(ALL) NOPASSWD: /usr/bin/journalctl` (acotado a este binario) |
 
 ---
@@ -243,7 +243,9 @@ Cada check tiene su propio schedule + grace en healthchecks.io. Si no recibe pin
 
 ### `run --rm backend` vs `exec backend`
 
-Los 3 manage commands usan `docker compose run --rm backend python manage.py X` (spawn fresh container) en vez de `exec backend python manage.py X` (corre dentro del backend ya activo). Justificación:
+Los crons pasan `--no-deps`: `backend` depende de `release`, y sin el flag cada corrida relanzaría `migrate`, `collectstatic` y `seed_permissions` contra la base viva. Con el flag no se arranca ningún servicio; si postgres está caído, el comando falla con exit distinto de cero y el cron lo registra.
+
+Los 3 manage commands usan `docker compose run --rm --no-deps backend python manage.py X` (spawn fresh container) en vez de `exec backend python manage.py X` (corre dentro del backend ya activo). Justificación:
 
 - **run --rm**: container nuevo cada vez. Aislado de issues del backend running (OOM, conexiones DB stale, etc.). Overhead ~5-10s spawn time. Salida limpia.
 - **exec**: usa el backend ya healthy. Sin spawn overhead. Pero si backend está reiniciando o degraded, el cron falla. Y el output va mezclado con gunicorn logs.
@@ -285,9 +287,9 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm release
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d backend
 
 # Cada uno individualmente:
-docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py flushexpiredtokens
-docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py build_daily_metrics
-docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py audit_anchor_integrity --json
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm --no-deps backend python manage.py flushexpiredtokens
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm --no-deps backend python manage.py build_daily_metrics
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm --no-deps backend python manage.py audit_anchor_integrity --json
 
 BACKUP_DIR=/tmp/test bash scripts/pg-backup.sh
 ```

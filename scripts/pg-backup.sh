@@ -48,6 +48,11 @@
 
 set -euo pipefail
 
+# Dumps en claro contienen PII: nada de lo que cree este proceso es legible por
+# grupo u otros. Va antes de crear cualquier archivo. No cambia lo ya existente:
+# para eso, el chmod de BACKUP_DIR de abajo falla cerrado.
+umask 077
+
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/vet}"
 COMPOSE_DIR="${COMPOSE_DIR:-/opt/vet/app}"
 ENV_FILE="${ENV_FILE:-$COMPOSE_DIR/.env.prod}"
@@ -136,7 +141,7 @@ elif [ "$ENCRYPT" = "optional" ] && ! command -v age >/dev/null 2>&1; then
 fi
 
 mkdir -p "$BACKUP_DIR"
-chmod 700 "$BACKUP_DIR" 2>/dev/null || true
+chmod 700 "$BACKUP_DIR" || { err "cannot restrict $BACKUP_DIR to 0700 — refusing to write dumps there."; exit 1; }
 
 TS=$(date -u +%Y%m%dT%H%M%SZ)
 DUMP_FILE="$BACKUP_DIR/vet-$TS.dump"

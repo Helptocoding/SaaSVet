@@ -413,10 +413,10 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-# IDs públicos — apagar cuando el frontend esté actualizado a public_id:
-#   ALLOW_LEGACY_ID_LOOKUP=False en Railway (sin deploy de código)
-# True mientras dure la transición frontend → public_id
-ALLOW_LEGACY_ID_LOOKUP = config('ALLOW_LEGACY_ID_LOOKUP', default=True, cast=bool)
+# Lookup por PK entero en URLs (transición a public_id, ADR p18). Apagado por
+# defecto: un despliegue sin la variable no debe aceptar PKs. Encenderlo solo como
+# rollback explícito: ALLOW_LEGACY_ID_LOOKUP=True.
+ALLOW_LEGACY_ID_LOOKUP = config('ALLOW_LEGACY_ID_LOOKUP', default=False, cast=bool)
 
 ROOT_URLCONF = 'config.urls'
 
