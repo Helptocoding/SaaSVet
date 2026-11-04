@@ -87,6 +87,13 @@ class LoginRateThrottle(ExtendedRateThrottle, AnonRateThrottle):
         return caches['throttle_login']
 
 
+class TokenLogoutThrottle(ExtendedRateThrottle, AnonRateThrottle):
+    """Limita el logout por IP, en un bucket propio: cerrar sesión no debe gastar
+    los intentos de login. Fail-open con la cache `default`: el cliente cierra la
+    sesión local de todos modos, y solo se puede revocar un token que se posee."""
+    scope = 'token_logout'
+
+
 class LoginUserRateThrottle(ExtendedRateThrottle):
     """
     Limita intentos de login por IP+username combinados.

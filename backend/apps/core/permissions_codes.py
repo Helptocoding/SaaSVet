@@ -157,6 +157,55 @@ PERMISSION_CODES = [
 ]
 
 # ---------------------------------------------------------------------------
+# Política de cada código frente al comodín "*.*" (auditoría run-1, H-1)
+# ---------------------------------------------------------------------------
+# Todo código del catálogo debe estar en exactamente un grupo; un test falla si
+# aparece uno sin clasificar, así que añadir un código obliga a decidir si el ADMIN
+# de clínica debe recibirlo por el comodín.
+#
+#   ADMIN_WILDCARD_ORDINARY: operación ordinaria de la clínica.
+#   ADMIN_WILDCARD_SENSITIVE: el ADMIN los recibe por contrato, pero mueven dinero,
+#     acceso o identidad. Es una lista revisada, no una restricción en ejecución.
+#   WILDCARD_EXCLUDED: el comodín NO los concede (`_is_allowed`): exigen asignación
+#     explícita al rol. Es donde va un código exclusivo de plataforma. Un superuser
+#     sigue pasando, porque no se evalúa por comodín. Hoy vacío: ningún código actual
+#     es exclusivo de plataforma, ya que esas vistas usan `IsPlatformOperator`.
+ADMIN_WILDCARD_ORDINARY = frozenset({
+    "appointment.list", "appointment.retrieve", "appointment.create",
+    "appointment.create_walkin", "appointment.update", "appointment.destroy",
+    "medicalrecord.list", "medicalrecord.retrieve", "medicalrecord.create",
+    "medicalrecord.update", "medicalrecord.close", "medicalrecord.vitals.create",
+    "medicalrecord.vitals.list", "medicalrecord.summary.retrieve",
+    "vaccinerecord.list", "vaccinerecord.retrieve", "vaccinerecord.create",
+    "vaccinerecord.update",
+    "invoice.list", "invoice.retrieve", "invoice.create", "invoice.pay",
+    "checkout.prescription_decide", "checkout.estimate.issue", "checkout.dispute.open",
+    "billing.rx_dispense",
+    "service.list", "service.retrieve", "service.create", "service.update", "service.destroy",
+    "patient.list", "patient.retrieve", "patient.create", "patient.update", "patient.destroy",
+    "owner.list", "owner.retrieve", "owner.create", "owner.update", "owner.destroy",
+    "inventory.list", "inventory.retrieve", "inventory.create", "inventory.update",
+    "prescription.list", "prescription.retrieve", "prescription.create", "prescription.destroy",
+    "staff.list", "organization.retrieve",
+    "dashboard.view", "dashboard.summary",
+    "cashsession.list", "cashsession.retrieve", "cashsession.open", "cashsession.close",
+    "cashmovement.list", "cashmovement.create",
+    "import.list", "import.retrieve", "import.create",
+    "notification.list", "notification.retrieve", "notification.seen",
+    "agentinbox.view", "agentinbox.claim", "agentinbox.send",
+})
+ADMIN_WILDCARD_SENSITIVE = frozenset({
+    "invoice.destroy", "invoice.post_unpaid", "invoice.replace", "invoice.replace_adjust",
+    "invoice.replace_manage", "invoice.replace_waive", "invoice.void_terminal",
+    "billing.clinical_charge.reprice", "billing.refund",
+    "checkout.dispute.resolve", "collection.resolve",
+    "staff.create", "staff.destroy", "staff.reset_password",
+    "organization.update", "import.commit", "dashboard.financial.view",
+    "agentinbox.config", "agentinbox.identity_verify",
+})
+WILDCARD_EXCLUDED = frozenset()
+
+# ---------------------------------------------------------------------------
 # Permisos estáticos por rol (fallback cuando no hay roles en DB)
 # ---------------------------------------------------------------------------
 PERMISSIONS = {

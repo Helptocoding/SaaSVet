@@ -345,6 +345,7 @@ REST_FRAMEWORK = {
         'user': '500/hour',
         'login': '5/15min',
         'login_by_user': '5/15min',
+        'token_logout': '60/hour',
         'vitals': '60/hour',
         # Platform-wide provisioning — operación cara + privilegiada.
         # ScopedRateThrottle por actor (ADMIN_SAAS) en PlatformOrgCreateView.

@@ -957,6 +957,8 @@ FETCH_USER         /me/ fail                         → LOGIN
 - El callback del timer usa `fetch()` nativo (no axios) para evitar el interceptor 401.
 - Chequea `isLoggingOut()` antes de aplicar tokens — previene revival de sesión recién terminada (race logout/refresh). Ver ADR p22.
 
+**Cierre de sesión:** `useAuth().logout` envía el refresh a `POST /api/token/logout/` (blacklist) antes de limpiar el almacenamiento, sin esperar respuesta: si falla, la sesión local se cierra igual. Las rutas internas (refresh fallido, `/me/` rechazado) cierran sin llamar al endpoint. **El access token sigue siendo válido hasta expirar (15 min)**: revoca el refresh, no la sesión entera.
+
 **Control de acceso:**
 - `permissions` como `Set` (desde el array retornado por `/api/me/`).
 - Helpers memoizados: `can(permCode)`, `canAny(codes)`, `canAll(codes)`.

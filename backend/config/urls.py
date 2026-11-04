@@ -42,6 +42,7 @@ from apps.organizations.views import (
     OrganizationConfigurationView,
 )
 from rest_framework_simplejwt.views import (
+    TokenBlacklistView,
     TokenObtainPairView,
     TokenRefreshView,
 )
@@ -49,7 +50,7 @@ from apps.users.serializers import EmailOrUsernameTokenObtainPairSerializer
 from rest_framework.permissions import AllowAny
 import logging
 from apps.core.mixins import NoStoreResponseMixin
-from apps.core.throttling import LoginRateThrottle, LoginUserRateThrottle
+from apps.core.throttling import LoginRateThrottle, LoginUserRateThrottle, TokenLogoutThrottle
 from apps.core.sanitize import sanitize_text
 
 _login_logger = logging.getLogger('django')
@@ -164,6 +165,17 @@ class PublicTokenRefreshView(NoStoreResponseMixin, TokenRefreshView):
                              'detail': 'Organización desactivada.'}, status=403)
         return super().post(request, *args, **kwargs)
 
+class PublicTokenLogoutView(NoStoreResponseMixin, TokenBlacklistView):
+    """Revoca el refresh recibido. Sin autenticación por access token, que puede
+    haber expirado: la prueba de posesión es el propio refresh, y un token de otro
+    tipo o ya revocado responde 401.
+
+    El access token sigue siendo válido hasta expirar (15 min): JWT sin estado.
+    Revocarlo exigiría una lista consultada en cada petición, fuera de este alcance."""
+    permission_classes = [AllowAny]
+    throttle_classes = [TokenLogoutThrottle]
+
+
 router = DefaultRouter()
 router.register(r'pets', PetViewSet, basename='patient')
 router.register(r'owners', OwnerViewSet, basename='owner')
@@ -203,6 +215,7 @@ urlpatterns = [
     path('api/appointments/', include('apps.appointments.urls')),
     path('api/token/', ThrottledTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', PublicTokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/logout/', PublicTokenLogoutView.as_view(), name='token_logout'),
     path('api/', include(router.urls)),
     path('api/me/', MeView.as_view()),
     path('api/staff/', StaffListView.as_view(), name='staff-list'),

@@ -21,7 +21,7 @@ from django.core.cache import cache
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
-from .permissions_codes import PERMISSIONS, PERMISSION_CODES
+from .permissions_codes import PERMISSIONS, PERMISSION_CODES, WILDCARD_EXCLUDED
 from .demo_reset import DEMO_RESET_FLAG_KEY
 
 logger = logging.getLogger(__name__)
@@ -241,17 +241,18 @@ def _resolve_required(request, view) -> str | None:
 def _is_allowed(required: str, allowed: list) -> bool:
     """
     Evalúa si `required` está cubierto por `allowed`.
-    Soporta wildcards: "*.*" (global) y "resource.*" (por recurso).
+    Soporta wildcards: "*.*" (global) y "resource.*" (por recurso). Un código de
+    WILDCARD_EXCLUDED solo lo concede su asignación explícita.
     """
     if not required:
         return True
+    if required in allowed:
+        return True
+    if required in WILDCARD_EXCLUDED:
+        return False
 
     resource = required.split(".")[0]
-    return (
-        "*.*" in allowed
-        or f"{resource}.*" in allowed
-        or required in allowed
-    )
+    return "*.*" in allowed or f"{resource}.*" in allowed
 
 
 def _get_cached_permissions(user) -> "set | None":

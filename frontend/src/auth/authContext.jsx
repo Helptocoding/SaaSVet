@@ -35,6 +35,23 @@ export const AuthProvider = ({ children }) => {
         setPermissions(new Set());
     }, []);
 
+    // Cierre pedido por el usuario. Las rutas internas (refresh fallido, /me/
+    // rechazado) usan `logout` a secas: su token ya no sirve y no hay nada que
+    // revocar. Se envía antes de limpiar el almacenamiento, sin esperar respuesta:
+    // si la llamada falla, la sesión local se cierra igual.
+    const signOut = useCallback(() => {
+        const refresh = getItem("refresh_token");
+        if (refresh) {
+            fetch(`${API_BASE}token/logout/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refresh }),
+                keepalive: true,
+            }).catch(() => {});
+        }
+        logout();
+    }, [logout]);
+
     const scheduleTokenRefresh = useCallback((accessToken) => {
         if (refreshTimerRef.current) {
             clearTimeout(refreshTimerRef.current);
@@ -271,7 +288,7 @@ export const AuthProvider = ({ children }) => {
                 user,
                 initializing,
                 login,
-                logout,
+                logout: signOut,
                 setUserData,
                 refreshUser,
                 isAuthenticated,

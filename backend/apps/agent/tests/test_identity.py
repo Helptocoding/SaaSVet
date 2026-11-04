@@ -3,6 +3,7 @@ test_identity.py — É-F1 PR-11: verificación de identidad tolerante (UX-03).
 """
 from datetime import timedelta
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -119,12 +120,51 @@ class RematchBlockedClearingTests(TestCase):
         )
         self.assertFalse(contact.auto_rematch_blocked)
 
-    def test_link_self_registered_clears_the_flag(self):
+    def test_link_self_registered_refuses_a_reset_contact(self):
+        # Contrato cambiado a propósito (Fase 7, H-7): antes bajaba el flag y
+        # confiaba en que el caller lo hubiera comprobado.
         contact = self._blocked_contact()
+        with self.assertRaises(identity.IdentityLinkRefused):
+            identity.link_self_registered(contact, self.owner)
+        contact.refresh_from_db()
+        self.assertIsNone(contact.owner_id)
+        self.assertTrue(contact.auto_rematch_blocked)
+        self.assertEqual(contact.verification_level,
+                         ContactIdentity.VERIFICATION_PHONE_MATCH)
+
+    def test_link_self_registered_refuses_an_owner_of_another_organization(self):
+        other = Organization.objects.create(name="Otra", timezone="UTC")
+        foreign = Owner.objects.create(organization=other, name="Ana Torres",
+                                       phone="5511229901")
+        contact = ContactIdentity.objects.create(
+            organization=self.org, external_id="5215511229902",
+            verification_level=ContactIdentity.VERIFICATION_UNKNOWN)
+        with self.assertRaises(identity.IdentityLinkRefused):
+            identity.link_self_registered(contact, foreign)
+        contact.refresh_from_db()
+        self.assertIsNone(contact.owner_id)
+
+    def test_link_self_registered_rejects_a_stale_instance_after_a_reset(self):
+        contact = ContactIdentity.objects.create(
+            organization=self.org, external_id="5215511229903",
+            verification_level=ContactIdentity.VERIFICATION_UNKNOWN)
+        stale = ContactIdentity.objects.get(pk=contact.pk)
+        contact.auto_rematch_blocked = True
+        contact.save(update_fields=['auto_rematch_blocked'])
+        with self.assertRaises(ValidationError):
+            identity.link_self_registered(stale, self.owner)
+        contact.refresh_from_db()
+        self.assertIsNone(contact.owner_id)
+        self.assertTrue(contact.auto_rematch_blocked)
+
+    def test_link_self_registered_still_links_an_eligible_contact(self):
+        contact = ContactIdentity.objects.create(
+            organization=self.org, external_id="5215511229904",
+            verification_level=ContactIdentity.VERIFICATION_UNKNOWN)
         identity.link_self_registered(contact, self.owner)
         contact.refresh_from_db()
         self.assertEqual(contact.owner_id, self.owner.pk)
-        self.assertFalse(contact.auto_rematch_blocked)
+        self.assertEqual(contact.linked_via, ContactIdentity.LINKED_SELF_REGISTER)
 
     def test_link_family_clears_the_flag(self):
         contact = self._blocked_contact()

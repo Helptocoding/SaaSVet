@@ -213,6 +213,10 @@ def owner_digits_match(owner, answer):
     return bool(phone) and len(given) >= 4 and phone[-4:] == given[-4:]
 
 
+class IdentityLinkRefused(Exception):
+    """Un vínculo automático violaría una invariante de identidad."""
+
+
 def link_self_registered(contact, owner):
     """Vincula el contacto al owner resuelto por su propia alta de cliente.
 
@@ -228,18 +232,19 @@ def link_self_registered(contact, owner):
     `Owner.objects.get_or_create(phone=...)`, así que `owner` puede ser un
     registro EXISTENTE reutilizado por coincidencia de teléfono, no uno
     nuevo (auditoría OCR 2026-08-08, ver Item 1 del plan). Por eso este
-    módulo YA NO decide por sí solo si es seguro vincular: el caller
-    (`tools.commit_register_new_client_and_pet`) es responsable de no
-    invocar esta función cuando `contact.auto_rematch_blocked` es `True`
-    (contacto reseteado — el `Owner` reutilizado sí tiene expediente previo,
-    exactamente el que un ADMIN acaba de desvincular).
+    módulo rechaza un contacto con `auto_rematch_blocked` (contacto reseteado:
+    el `Owner` reutilizado sí tiene expediente previo, exactamente el que un
+    ADMIN acaba de desvincular) y un `Owner` de otra organización.
 
-    Precondición (no verificada aquí, la garantiza el único caller): al
-    llegar a este punto, `contact.auto_rematch_blocked` ya vale `False` —
-    o porque el contacto nunca fue reseteado, o porque el caller superó su
-    propio guard. Bajarlo aquí es entonces una operación idempotente sobre
-    un valor que ya era `False`, nunca la primera línea de defensa.
+    La regla vive aquí y no solo en el caller para que una segunda vía no tenga
+    que redescubrirla. Una instancia obsoleta (reset posterior a la lectura) la
+    rechaza el CAS de `authorization_revision` al guardar. Bajar el flag más
+    abajo es idempotente: si se llega ahí, ya valía `False`.
     """
+    if contact.auto_rematch_blocked:
+        raise IdentityLinkRefused('auto_rematch_blocked')
+    if owner.organization_id != contact.organization_id:
+        raise IdentityLinkRefused('organization_mismatch')
     contact.owner = owner
     contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
     contact.verified_at = timezone.now()
