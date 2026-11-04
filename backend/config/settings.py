@@ -57,9 +57,21 @@ if _SENTRY_DSN and not _SENTRY_DISABLED:
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ENVIRONMENT = config('ENVIRONMENT', default='dev')  # dev | staging | production
+
+# SECRET_KEY falla cerrado: sin clave (ausente o vacía) el proceso no arranca,
+# salvo con DEBUG=True, donde se genera una clave aleatoria por proceso. Nunca
+# una clave fija en el repo: con ella cualquiera firma JWT y sesiones.
+SECRET_KEY = config('SECRET_KEY', default='')
+if not SECRET_KEY:
+    if not DEBUG:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            'SECRET_KEY no está definida. Defínela en el entorno o en backend/.env.'
+        )
+    from django.core.management.utils import get_random_secret_key
+    SECRET_KEY = get_random_secret_key()
 # P1-5 A5: versión desplegada, expuesta por /api/version/ y usada como release
 # de Sentry. GIT_SHA lo setea el deploy con `git rev-parse --short HEAD`.
 GIT_SHA = config('GIT_SHA', default='')
