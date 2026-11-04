@@ -5,6 +5,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 from tempfile import TemporaryDirectory
@@ -36,6 +37,15 @@ class MediaDatabaseRestoreDrill(MediaFixtures, TransactionTestCase):
         with connection.cursor() as cursor:
             cursor.execute('SELECT current_database()')
             self.assertEqual(cursor.fetchone()[0], database['NAME'])
+        # A newer pg_dump writes settings an older server rejects (17+ emits
+        # `SET transaction_timeout`), so the restore below would fail with no
+        # visible cause. Say what is wrong instead.
+        version = subprocess.run([PG_DUMP, '--version'], capture_output=True, text=True, timeout=30)
+        client_major = int(re.search(r'(\d+)(?:\.\d+)?', version.stdout).group(1))
+        server_major = connection.pg_version // 10000
+        self.assertLessEqual(client_major, server_major,
+            f'pg_dump {client_major} is newer than PostgreSQL server {server_major}; '
+            'use client tools matching the server major version')
         self.build()
         with TemporaryDirectory(prefix='inbox-restore-drill-') as folder:
             root = Path(folder)

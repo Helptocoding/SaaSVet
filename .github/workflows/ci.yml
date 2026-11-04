@@ -26,7 +26,12 @@ jobs:
   # ---------------------------------------------------------------------------
   backend:
     name: backend (tests + migrations)
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: the media restore drill runs the runner's
+    # pg_dump/pg_restore against the postgres:16 service (same major as prod).
+    # ubuntu-26.04 ships a newer client whose dumps emit
+    # `SET transaction_timeout`, which PostgreSQL 16 rejects. Bump this together
+    # with the service image and docker-compose.prod.yml.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
