@@ -145,6 +145,10 @@ class CrossPathCreationRacesTests(TransactionTestCase):
             })
             return r.status_code, r.json()
 
-        with mock.patch('django.utils.timezone.now', return_value=now_local):
+        # El serializer importa `now` directamente (`from django.utils.timezone
+        # import now`): parchear solo el módulo dejaba su guard de fecha pasada
+        # con el reloj real, y el test fallaba si CI corría después de las 12 UTC.
+        with mock.patch('django.utils.timezone.now', return_value=now_local), \
+                mock.patch('apps.appointments.serializers.now', return_value=now_local):
             results = self._race(plain, walk_in)
         self._assert_business_outcome(results, expected_active=1)

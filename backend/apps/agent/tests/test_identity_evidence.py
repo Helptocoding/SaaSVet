@@ -24,6 +24,7 @@ from apps.agent.models import (
 from apps.channels.models import ChannelAccount, Message
 from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
+from apps.platform.deletion_guards import authorize_physical_deletion
 
 
 class EvidenceTestCase(TestCase):
@@ -180,7 +181,8 @@ class ModelClaimTests(EvidenceTestCase):
                               identity_evidence.SealedPetEvidence)
 
     def test_an_owner_without_pets_has_no_factor(self):
-        self.pet.delete()
+        with authorize_physical_deletion(self.pet):
+            self.pet.delete()
         resolution = self._resolve("Luna")
         self.assertIsInstance(resolution, identity_evidence.NoEvidence)
         self.assertEqual(resolution.reason, 'owner sin mascotas')

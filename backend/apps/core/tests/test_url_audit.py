@@ -32,19 +32,9 @@ ALLOWED_INT_PATTERNS = (
     re.compile(r'prescriptions/<str:[A-Za-z_][A-Za-z0-9_]*>/items/<int:pk>'),
     # InvoiceItem (child interno bajo Invoice UUID parent) — Día 6 audit F12
     re.compile(r'billing/invoices/<str:[A-Za-z_][A-Za-z0-9_]*>/items/<int:pk>'),
-    # channels.Message (child interno bajo Conversation UUID parent) — WA-RETRY-01.
-    # Revisado 2026-11-02: este gate llevaba rojo en la rama desde que se añadió
-    # la ruta de reintento, porque el scan dispara con cualquier `<int:`, no solo
-    # con `<int:pk>`. `Message` NO es un modelo público: no tiene `public_id` ni
-    # hereda PublicIdMixin, de modo que no existe un UUID al que migrar la ruta.
-    # Lo que sí hay es el padre: `conversations/<str:pk>/` se resuelve contra la
-    # organización del request y el servicio de reintento acota AMBAS consultas a
-    # esa organización bajo lock, así que un message_id ajeno no es alcanzable.
-    # Mismo criterio que los tres children de arriba.
-    re.compile(
-        r'conversations/<str:[A-Za-z_][A-Za-z0-9_]*>/messages/'
-        r'<int:[A-Za-z_][A-Za-z0-9_]*>/retry'
-    ),
+    # channels.Message (WA-RETRY-01) NO va aquí: un patrón suelto aceptaría la
+    # ruta en cualquier archivo y con cualquier handler. Su excepción vive en
+    # INTERNAL_MESSAGE_RETRY_ROUTE, atada a agent/urls.py y a views.retry_message.
 )
 
 
