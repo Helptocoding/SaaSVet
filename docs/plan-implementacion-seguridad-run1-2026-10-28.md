@@ -2,12 +2,12 @@
 
 **Fecha**: 2026-10-28
 **Origen**: auditoría de seguridad `run-1` sobre el commit `8886604` (`~/security-audit-skill/SaaSVet/run-1/`)
-**Estado**: **ejecutado casi por completo** — ver el estado por fase abajo (actualizado 2026-10-31)
+**Estado**: **ejecutado casi por completo** — ver el estado por fase abajo (actualizado 2026-11-04)
 **Alcance de ejecución**: **100 % local**. Ninguna tarea de este plan requiere acceso al VPS.
 
 ---
 
-## Estado por fase (2026-10-31)
+## Estado por fase (actualizado 2026-11-04)
 
 El cuerpo del plan se conserva como se escribió; esta tabla dice qué quedó hecho. Donde discrepen, manda la tabla.
 
@@ -16,11 +16,11 @@ El cuerpo del plan se conserva como se escribió; esta tabla dice qué quedó he
 | 1 · Correcciones de código | **Hecha** | Las tres aplicadas. Al corregir `AGENT_TOKEN_ENC_KEY` aparecieron **dos instancias más de la misma clase** (`AGENT_LLM_MAX_RETRIES`, `AGENT_LLM_RETRY_DELAY_SECONDS`), que es por lo que el gate nuevo es de tolerancia cero sin baseline. |
 | 2 · Unidad `blocked` de billing | **Hecha, sin hallazgo** | Las preguntas de concurrencia e idempotencia se resolvieron a favor del código en tres capas independientes: lock del agregado, invariante de estado posterior al lock y constraints de BD. Un ítem de exactitud documental registrado como endurecimiento. |
 | 3 · Huecos acotados | **Hecha** | Cinco de seis cerrados limpios. Produjo **dos hallazgos confirmados**, ambos ya remediados y con regresión. V-6 quedó parcial y se cerró en la Fase 4. |
-| 4 · Unidades diferidas | **Parcial: 5 de 8** | Cerradas: devoluciones, caja, inventario/lotes, parser de importación y CI/dependencias/release. **Sin hallazgo confirmado en ninguna.** Quedan tres: cliente navegador, código de los scripts de respaldo y cierre de expediente clínico. |
+| 4 · Unidades diferidas | **Hecha: 8 de 8** (2026-11-04) | Devoluciones, caja, inventario/lotes, parser de importación, CI/dependencias/release y cliente navegador, **sin hallazgo confirmado**; cierre de expediente clínico, auditado dentro de la Fase 8. **Scripts de respaldo: un hallazgo (baja)**, que la lectura inicial no vio y apareció al ejecutarlos; remediado en `1d13389`. Endurecimientos nuevos en §7 (H-12 a H-15). |
 | 5 · Tests de regresión | **Hecha** | 7 módulos nuevos. Varios gates son **estáticos y no de comportamiento**, a propósito: los defectos eran omisiones, y una prueba sobre una sola vista no impide que una vista nueva repita el olvido. |
 | 6 · Suspendido hasta que haya entorno | **Sigue suspendido** | Y la causa empeoró: el servidor no está en servicio y no se puede reconectar. |
-| 7 · Mejoras sin prisa | **No aplicadas** | Se les sumó el endurecimiento de CI identificado en la Fase 4: SHA-256 del binario de gitleaks, acciones por SHA, `pip-audit` fijado. |
-| **8 · Re-auditoría del traspaso** | **Hecha; remediaciones aplicadas sin commit** (enmienda 2026-11-04) | 5 hallazgos confirmados (1 alta, 1 media, 3 baja), los 5 remediados con prueba de regresión. Ver §Enmienda — Fase 8, abajo. Absorbe el cierre de expediente clínico de la Fase 4. |
+| 7 · Mejoras sin prisa | **En curso** (2026-11-04) | Lote 1 aplicado en `1d13389`: H-9, H-10, H-13, H-14, H-15 y CI (SHA-256 de gitleaks, acciones por SHA, `pip-audit` fijado). Ver el estado de cada mejora en §7. |
+| **8 · Re-auditoría del traspaso** | **Hecha y remediada** (enmienda 2026-11-04) | 5 hallazgos confirmados (1 alta, 1 media, 3 baja), los 5 remediados con prueba de regresión en `0afea53`, integrado en `develop` (`7b6ed82`); CI verde en `b1c75ec`. Ver §Enmienda — Fase 8, abajo. Absorbe el cierre de expediente clínico de la Fase 4. |
 
 **El cierre de expediente clínico ya no está bloqueado.** Estaba diferido porque sus archivos caían en el trabajo «orden 2» en vuelo; ese trabajo quedó commiteado en `929b6ae`. Pasa a ejecutarse dentro de la Fase 8, no en la 4.
 
@@ -59,9 +59,9 @@ Más cuatro modelos nuevos (`ImportConflict`, `StockReceptionReceipt`, `Organiza
 5. **8.5 · Unidades rancias** — 12 (platform), 18 y 4 (billing), 20 (rutas hijas): repetir sus comprobaciones contra `929b6ae` y re-anclar los cuatro registros rechazados cuyos archivos cambiaron.
    **Hecha (2026-11-04): los cuatro rechazos se sostienen, re-anclados; un hallazgo nuevo de severidad baja.** Platform: las siete vistas (cuatro nuevas) exigen `IsPlatformOperator` y ningún código RBAC, así que el comodín `*.*` del ADMIN de clínica sigue sin alcanzarlas. Billing: `unit_price` sigue siendo de solo lectura y sale del catálogo; el filtro `?owner=` de cobros ahora también busca en `subject_snapshot`, pero sobre un queryset ya acotado por organización. Rutas hijas: el padre se resuelve con `for_organization`, el hijo se filtra por ese padre y el `service` del body se compara con la organización bajo lock. PDF: todos los campos de usuario, incluidas las identidades congeladas nuevas, pasan por `safe_pdf_text`. Pacientes: `owner_id`, `is_active` y `archived_at` son de solo lectura y la referencia se resuelve por organización. **Hallazgo nuevo:** `reprice` de un cargo clínico no comprueba que la consulta siga abierta. Después del cierre responde 200 con el precio nuevo, pero el Checkout (y la Invoice que salga de él) sigue cobrando el precio viejo, porque la línea se congeló al cerrar y nada la vuelve a materializar. Si algo la rematerializara, saldrían dos líneas para un solo servicio. Reproducido con los servicios reales. Solo lo puede hacer un ADMIN.
 
-**Fase 8 completa.** Siguen las remediaciones, en orden de severidad: 8.2 (alta), 8.1 (media), y después 8.3, 8.4, `reprice` y throttle en las vistas nuevas de platform.
+**Fase 8 completa y remediada.** Las notas «sin remediar todavía» de arriba describen el estado al auditar; las cinco correcciones y el throttle de platform están en la tabla siguiente.
 
-### Remediaciones de la Fase 8 (2026-11-04, sin commit)
+### Remediaciones de la Fase 8 (2026-11-04, commit `0afea53`)
 
 Cada una con prueba de regresión que **falla sobre el código sin arreglar** y pasa con él.
 
@@ -75,6 +75,16 @@ Cada una con prueba de regresión que **falla sobre el código sin arreglar** y 
 | `reprice` (baja) | Bloquea la fila del expediente, exige consulta abierta y rechaza si el ciclo ya está congelado en la cuenta. | `billing/tests/test_reprice_open_record_only.py` |
 
 Verificación conjunta: core (gates de scoping, URL y calendario), prescriptions, appointments, billing, medical_records, platform y patients en verde (729 tests); suites del agente que ejercen los selectores, 265 en verde; `makemigrations --check` sin cambios. **La migración `0043` no se ha aplicado a ningún entorno real.** Al desplegar, aplicarla junto con el código de `assign-patient`: sin ella, ese endpoint sigue dando 500 con consulta abierta.
+
+### Integración en `develop` y CI (2026-11-04)
+
+La rama `codex/e4-capacity-scheduling` (`9c2a613`, `929b6ae`, `0afea53`) se integró en `develop` con el merge `7b6ed82`. En el mismo paso:
+
+- **`bbfe016`** — `SECRET_KEY` falla cerrado: sin clave el proceso no arranca, salvo con `DEBUG=True`, que genera una aleatoria por proceso. Sustituye un default fijo que dos commits locales de `develop` habían introducido y que nunca llegaron al remoto; esos commits se rehicieron sin el `backend/.env` que también incluían.
+- **`9129f5f`** — tres pruebas rojas tras el merge: la excepción de URL de reintento quedó duplicada (se conserva la estricta), una prueba borraba una `Pet` sin `authorize_physical_deletion`, y una carrera de citas dependía de la hora del reloj real porque el serializer importa `now` directamente.
+- **`b1c75ec`** — el job de backend queda fijado en `ubuntu-24.04`. `ubuntu-latest` pasó a 26.04, cuyo `pg_dump` emite `SET transaction_timeout`, que PostgreSQL 16 (CI y producción) rechaza; el simulacro de restauración de media fallaba sin causa visible. Ahora además afirma que el cliente no es más nuevo que el servidor.
+
+CI de `develop` verde en `b1c75ec` (backend, frontend y gitleaks).
 
 ### Lo que ya se tocó durante el traspaso, y no cuenta como auditoría
 
@@ -331,6 +341,8 @@ No se pierden; se retoman cuando exista servidor.
 
 No bloquean nada. Reducen el coste de los errores futuros.
 
+**Estado (2026-11-04).** Hechas: H-9, H-10, H-13, H-14, H-15 (`1d13389`) y H-2 (ya estaba en `9c2a613`). Pendientes del lote aprobado: H-4, H-7, H-12 y H-1 reducida. Diferidas: H-3, H-1 completa, H-8 (el token queda en la etapa `builder`, que se descarta: solo persiste en la caché del host que construye, no en la imagen final como decía la tabla). Descartada: H-5 (`_download_url` es el único consumidor y ya es estricto; un guard compartido sería abstracción prematura). H-11 espera decisión del dueño. `pip-audit` y `pnpm audit` siguen solo avisando.
+
 | ID | Mejora | Evidencia | Esfuerzo |
 |---|---|---|---|
 | **H-1** | Retirar el comodín `*.*` del ADMIN de clínica (corte Fase 4 del RBAC). Hoy cualquier código de permiso nuevo se le concede sin revisión | `core/permissions_codes.py:169` | 1-2 d |
@@ -343,6 +355,10 @@ No bloquean nada. Reducen el coste de los errores futuros.
 | **H-9** | Apagar `ALLOW_LEGACY_ID_LOOKUP` (hoy `True` por defecto). No cruza tenant, pero mantiene vivo el lookup por PK entero más de lo necesario | `config/settings.py:346` | 2 h + verificar consumidores |
 | **H-10** | Retirar códigos de permiso sin consumidor (`organization.create`, `organization.list`) | `core/permissions_codes.py:112-115` | 15 min |
 | **H-11** | Borrar e ignorar basura local no trackeada: `CON`, `nul`, `backend/nul`, `_pdf_preview/`, `reports/`, `gemini/`, `svgcomponentes/` | raíz del repo | 15 min |
+| **H-12** | Revocar el refresh en el servidor al cerrar sesión (endpoint de logout que lo ponga en blacklist). Hoy el logout es solo local y un refresh robado antes sigue valiendo hasta 7 días | `frontend/src/auth/authContext.jsx:27`, sin ruta de logout en `config/urls.py` | 2 h |
+| **H-13** | `restore-drill.sh`: `compose run --no-deps backend`. Sin el flag, cada simulacro relanza `release` (migrate, collectstatic, seed_permissions) contra la base viva | `scripts/restore-drill.sh:175` | 15 min |
+| **H-14** | `umask 077` en los scripts de respaldo, en vez de depender del `chmod 700 ... \|\| true` del directorio | `scripts/pg-backup.sh:138-139`, `scripts/pre-deploy-backup.sh` | 15 min |
+| **H-15** | Añadir `media-src 'self' blob:` a la CSP del frontend (funcional: el audio y video del Inbox usan `blob:`). Verificar en navegador | `infra/Caddyfile` | 15 min |
 
 ### Deuda estructural de fondo
 
