@@ -475,7 +475,7 @@ def checkout_estimate_pdf(request, pk):
     from reportlab.platypus import Paragraph
     from apps.core.pdf import (
         CONTENT_WIDTH, build_styles, data_table, get_theme_for_organization,
-        pdf_filename, render_branded_pdf, safe_pdf_text, section, title_block,
+        pdf_filename, render_branded_pdf, pdf_markup, section, title_block,
         totals_table,
     )
 
@@ -490,14 +490,14 @@ def checkout_estimate_pdf(request, pk):
     flow = title_block(
         st, title='Estimado comercial',
         meta_lines=[
-            f"Checkout: {safe_pdf_text(snapshot.get('checkout_public_id', ''))}",
-            f"Versión: {snapshot.get('checkout_version', '')}",
+            f"Checkout: {pdf_markup(snapshot.get('checkout_public_id', ''))}",
+            f"Versión: {pdf_markup(snapshot.get('checkout_version', ''))}",
         ],
     )
     flow += section(st, theme, 'Ítems')
     rows = [
         [
-            Paragraph(safe_pdf_text(row.get('description', ''))[:120], st['cell']),
+            Paragraph(pdf_markup(row.get('description', ''), max_length=120), st['cell']),
             row.get('quantity', ''), _fmt_money(Decimal(row.get('unit_price', '0'))),
             _fmt_money(Decimal(row.get('subtotal', '0'))),
         ]
@@ -949,7 +949,7 @@ def invoice_pdf(request, pk):
     from apps.core.datetime_utils import utc_to_local
     from apps.core.pdf import (
         CONTENT_WIDTH, build_styles, data_table, get_theme_for_organization,
-        info_card, pdf_filename, render_branded_pdf, safe_pdf_text,
+        info_card, pdf_filename, render_branded_pdf, pdf_markup,
         section, title_block, totals_table,
     )
 
@@ -970,8 +970,8 @@ def invoice_pdf(request, pk):
         return local.strftime('%d/%m/%Y %H:%M') if local else ''
 
     meta_lines = [
-        f"Estado: <b>{_STATUS_LABEL.get(invoice.status, invoice.status)}</b> &nbsp;·&nbsp; "
-        f"Tipo: {_TYPE_LABEL.get(invoice.invoice_type, invoice.invoice_type)}",
+        f"Estado: <b>{pdf_markup(_STATUS_LABEL.get(invoice.status, invoice.status))}</b> &nbsp;·&nbsp; "
+        f"Tipo: {pdf_markup(_TYPE_LABEL.get(invoice.invoice_type, invoice.invoice_type))}",
         f"Creado: {fmt_dt(invoice.created_at)}",
     ]
     if invoice.posted_at:
@@ -989,15 +989,15 @@ def invoice_pdf(request, pk):
     old_owner = identity(invoice, 'owner')
     old_pet = identity(invoice, 'pet')
     client_pairs = [
-        ("Dueño", safe_pdf_text(old_owner.get('name') or (invoice.owner.name if invoice.owner_id else 'Desconocido'))),
-        ("Teléfono", safe_pdf_text(old_owner.get('phone') or (invoice.owner.phone if invoice.owner_id else ''))),
+        ("Dueño", pdf_markup(old_owner.get('name') or (invoice.owner.name if invoice.owner_id else 'Desconocido'))),
+        ("Teléfono", pdf_markup(old_owner.get('phone') or (invoice.owner.phone if invoice.owner_id else ''))),
     ]
     if old_pet or invoice.pet_id:
         pet = invoice.pet if invoice.pet_id else None
         client_pairs += [
-            ("Mascota", safe_pdf_text(old_pet.get('name') or (pet.name if pet else 'Desconocido'))),
-            ("Especie", safe_pdf_text(old_pet.get('species') or (pet.species if pet else ''))),
-            ("Raza", safe_pdf_text(old_pet.get('breed') or (pet.breed if pet else ''))),
+            ("Mascota", pdf_markup(old_pet.get('name') or (pet.name if pet else 'Desconocido'))),
+            ("Especie", pdf_markup(old_pet.get('species') or (pet.species if pet else ''))),
+            ("Raza", pdf_markup(old_pet.get('breed') or (pet.breed if pet else ''))),
         ]
     flow += info_card(st, theme, client_pairs, columns=3)
 
@@ -1009,7 +1009,7 @@ def invoice_pdf(request, pk):
     else:
         for it in items:
             rows.append([
-                Paragraph(safe_pdf_text(it.description)[:120], st['cell']),
+                Paragraph(pdf_markup(it.description, max_length=120), st['cell']),
                 f"{it.quantity:g}",
                 _fmt_money(it.unit_price),
                 _fmt_money(it.subtotal),
@@ -1031,13 +1031,13 @@ def invoice_pdf(request, pk):
     if invoice.status == 'paid' and invoice.payment_method:
         flow.append(Spacer(1, 0.4 * cm))
         flow.append(Paragraph(
-            f"<b>Método de pago:</b> {_PAYMENT_LABEL.get(invoice.payment_method, invoice.payment_method)}",
+            f"<b>Método de pago:</b> {pdf_markup(_PAYMENT_LABEL.get(invoice.payment_method, invoice.payment_method))}",
             st['body'],
         ))
 
     if invoice.notes:
         flow += section(st, theme, "Notas")
-        flow.append(Paragraph(safe_pdf_text(invoice.notes).replace('\n', '<br/>'), st['body']))
+        flow.append(Paragraph(pdf_markup(invoice.notes, linebreaks=True), st['body']))
 
     # Una factura anulada debe distinguirse a simple vista.
     watermark = {'voided': 'ANULADO'}.get(invoice.status)

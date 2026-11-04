@@ -507,7 +507,7 @@ def medical_record_pdf(request, pk):
     from apps.core.pdf import (
         CONTENT_WIDTH, build_styles, data_table, get_theme_for_organization,
         info_card, numbered_item, pdf_filename, render_branded_pdf,
-        safe_pdf_text, section, title_block,
+        pdf_markup, section, title_block,
     )
 
     record = resolve_public_id(
@@ -549,9 +549,9 @@ def medical_record_pdf(request, pk):
         vet_name = (record.vet_name_at_close or 'Desconocido') if vet is None else (
             f"{vet.first_name} {vet.last_name}".strip() or vet.username)
         specialty = record.vet_specialty_at_close if vet is None else vet.specialty
-        spec = f" &nbsp;·&nbsp; {safe_pdf_text(specialty)}" if specialty else ""
+        spec = f" &nbsp;·&nbsp; {pdf_markup(specialty)}" if specialty else ""
         flow += section(st, theme, "Veterinario")
-        flow.append(Paragraph(f"{safe_pdf_text(vet_name)}{spec}", st['body']))
+        flow.append(Paragraph(f"{pdf_markup(vet_name)}{spec}", st['body']))
 
     from apps.core.subject_history import identity
     old_pet = identity(record, 'pet')
@@ -559,14 +559,14 @@ def medical_record_pdf(request, pk):
     pet = record.pet if record.pet_id else None
     flow += section(st, theme, "Paciente")
     patient_pairs = [
-        ("Nombre", safe_pdf_text(old_pet.get('name') or (pet.name if pet else 'Desconocido'))),
-        ("Especie", safe_pdf_text(old_pet.get('species') or (pet.species if pet else ''))),
-        ("Raza", safe_pdf_text(old_pet.get('breed') or (pet.breed if pet else ''))),
+        ("Nombre", pdf_markup(old_pet.get('name') or (pet.name if pet else 'Desconocido'))),
+        ("Especie", pdf_markup(old_pet.get('species') or (pet.species if pet else ''))),
+        ("Raza", pdf_markup(old_pet.get('breed') or (pet.breed if pet else ''))),
     ]
     if old_owner or (pet and pet.owner_id):
         patient_pairs += [
-            ("Dueño", safe_pdf_text(old_owner.get('name') or (pet.owner.name if pet else 'Desconocido'))),
-            ("Teléfono", safe_pdf_text(old_owner.get('phone') or (pet.owner.phone if pet else ''))),
+            ("Dueño", pdf_markup(old_owner.get('name') or (pet.owner.name if pet else 'Desconocido'))),
+            ("Teléfono", pdf_markup(old_owner.get('phone') or (pet.owner.phone if pet else ''))),
         ]
     flow += info_card(st, theme, patient_pairs, columns=3)
 
@@ -577,12 +577,12 @@ def medical_record_pdf(request, pk):
     )
     if motivo:
         flow += section(st, theme, "Motivo de consulta")
-        flow.append(Paragraph(safe_pdf_text(motivo), st['body']))
+        flow.append(Paragraph(pdf_markup(motivo), st['body']))
 
     if assessment and assessment.history:
         flow += section(st, theme, "Historia clínica")
         flow.append(Paragraph(
-            safe_pdf_text(assessment.history).replace('\n', '<br/>'), st['body'],
+            pdf_markup(assessment.history, linebreaks=True), st['body'],
         ))
 
     last_vital = None
@@ -619,8 +619,8 @@ def medical_record_pdf(request, pk):
         if abnormal:
             flow += section(st, theme, "Exploración física")
             rows = [
-                [Paragraph(safe_pdf_text(str(s)), st['cell']),
-                 Paragraph(safe_pdf_text(f or 'Alterado'), st['cell'])]
+                [Paragraph(pdf_markup(str(s)), st['cell']),
+                 Paragraph(pdf_markup(f or 'Alterado'), st['cell'])]
                 for s, f in abnormal
             ]
             flow += data_table(
@@ -631,19 +631,19 @@ def medical_record_pdf(request, pk):
     if record.diagnosis:
         flow += section(st, theme, "Diagnóstico")
         flow.append(Paragraph(
-            safe_pdf_text(record.diagnosis).replace('\n', '<br/>'), st['body'],
+            pdf_markup(record.diagnosis, linebreaks=True), st['body'],
         ))
 
     if assessment and assessment.differentials:
         flow += section(st, theme, "Diagnósticos diferenciales")
         flow.append(Paragraph(
-            safe_pdf_text(assessment.differentials).replace('\n', '<br/>'), st['body'],
+            pdf_markup(assessment.differentials, linebreaks=True), st['body'],
         ))
 
     if record.treatment:
         flow += section(st, theme, "Tratamiento")
         flow.append(Paragraph(
-            safe_pdf_text(record.treatment).replace('\n', '<br/>'), st['body'],
+            pdf_markup(record.treatment, linebreaks=True), st['body'],
         ))
 
     if assessment and assessment.recheck_date:
@@ -655,21 +655,21 @@ def medical_record_pdf(request, pk):
     if surgery:
         flow += section(st, theme, "Informe quirúrgico")
         sg_pairs = [
-            ("Tipo", safe_pdf_text(surgery.get_surgery_type_display())),
+            ("Tipo", pdf_markup(surgery.get_surgery_type_display())),
             ("ASA", "ASA " + surgery.asa_class + ("E" if surgery.asa_emergency else "")),
-            ("Anestesia", safe_pdf_text(surgery.get_anesthesia_type_display())),
+            ("Anestesia", pdf_markup(surgery.get_anesthesia_type_display())),
         ]
         if surgery.wound_class:
-            sg_pairs.append(("Herida", safe_pdf_text(surgery.get_wound_class_display())))
+            sg_pairs.append(("Herida", pdf_markup(surgery.get_wound_class_display())))
         flow += info_card(st, theme, sg_pairs, columns=3)
         if surgery.preop_diagnosis:
-            flow.append(Paragraph("<b>Dx prequirúrgico:</b> " + safe_pdf_text(surgery.preop_diagnosis), st['body']))
-        flow.append(Paragraph("<b>Procedimiento:</b> " + safe_pdf_text(surgery.procedure).replace('\n', '<br/>'), st['body']))
+            flow.append(Paragraph("<b>Dx prequirúrgico:</b> " + pdf_markup(surgery.preop_diagnosis), st['body']))
+        flow.append(Paragraph("<b>Procedimiento:</b> " + pdf_markup(surgery.procedure, linebreaks=True), st['body']))
         if surgery.findings:
-            flow.append(Paragraph("<b>Hallazgos:</b> " + safe_pdf_text(surgery.findings).replace('\n', '<br/>'), st['body']))
+            flow.append(Paragraph("<b>Hallazgos:</b> " + pdf_markup(surgery.findings, linebreaks=True), st['body']))
         if surgery.complications:
-            flow.append(Paragraph("<b>Complicaciones:</b> " + safe_pdf_text(surgery.complications), st['body']))
-        flow.append(Paragraph("<b>Indicaciones postoperatorias:</b> " + safe_pdf_text(surgery.postop_instructions).replace('\n', '<br/>'), st['body']))
+            flow.append(Paragraph("<b>Complicaciones:</b> " + pdf_markup(surgery.complications), st['body']))
+        flow.append(Paragraph("<b>Indicaciones postoperatorias:</b> " + pdf_markup(surgery.postop_instructions, linebreaks=True), st['body']))
         if surgery.suture_removal_date:
             flow.append(Paragraph("<b>Retiro de puntos:</b> " + surgery.suture_removal_date.strftime('%d/%m/%Y'), st['body']))
 
@@ -678,7 +678,7 @@ def medical_record_pdf(request, pk):
     if emergency:
         flow += section(st, theme, "Informe de urgencia")
         em_pairs = [
-            ("Triage", safe_pdf_text(emergency.get_triage_level_display())),
+            ("Triage", pdf_markup(emergency.get_triage_level_display())),
             ("Llegada", fmt_dt(emergency.arrived_at)),
             ("Hora triage", fmt_dt(emergency.triage_at)),
         ]
@@ -688,12 +688,12 @@ def medical_record_pdf(request, pk):
         abc = ("A: " + emergency.get_airway_status_display()
                + " · B: " + emergency.get_breathing_status_display()
                + " · C: " + emergency.get_circulation_status_display())
-        flow.append(Paragraph("<b>Evaluación rápida (ABC):</b> " + safe_pdf_text(abc), st['body']))
-        flow.append(Paragraph("<b>Problema principal:</b> " + safe_pdf_text(emergency.chief_complaint), st['body']))
-        flow.append(Paragraph("<b>Acciones de estabilización:</b> " + safe_pdf_text(emergency.stabilization_actions).replace('\n', '<br/>'), st['body']))
+        flow.append(Paragraph("<b>Evaluación rápida (ABC):</b> " + pdf_markup(abc), st['body']))
+        flow.append(Paragraph("<b>Problema principal:</b> " + pdf_markup(emergency.chief_complaint), st['body']))
+        flow.append(Paragraph("<b>Acciones de estabilización:</b> " + pdf_markup(emergency.stabilization_actions, linebreaks=True), st['body']))
         if emergency.response:
-            flow.append(Paragraph("<b>Respuesta:</b> " + safe_pdf_text(emergency.response), st['body']))
-        flow.append(Paragraph("<b>Estado al egreso:</b> " + safe_pdf_text(emergency.get_discharge_status_display()), st['body']))
+            flow.append(Paragraph("<b>Respuesta:</b> " + pdf_markup(emergency.response), st['body']))
+        flow.append(Paragraph("<b>Estado al egreso:</b> " + pdf_markup(emergency.get_discharge_status_display()), st['body']))
         if emergency.reassessment_date:
             flow.append(Paragraph("<b>Revaloración:</b> " + emergency.reassessment_date.strftime('%d/%m/%Y'), st['body']))
 
@@ -701,7 +701,7 @@ def medical_record_pdf(request, pk):
     if services:
         flow += section(st, theme, "Servicios aplicados")
         rows = [
-            [Paragraph(safe_pdf_text(s.service.name if s.service_id else "-"), st['cell']),
+            [Paragraph(pdf_markup(s.service.name if s.service_id else "-"), st['cell']),
              f"{s.quantity:g}"]
             for s in services
         ]
@@ -716,8 +716,8 @@ def medical_record_pdf(request, pk):
         rows = []
         for p in products:
             pres = p.presentation
-            prod_name = safe_pdf_text(pres.product.name if pres and pres.product_id else "-")
-            pres_name = safe_pdf_text(pres.name if pres else "-")
+            prod_name = pdf_markup(pres.product.name if pres and pres.product_id else "-")
+            pres_name = pdf_markup(pres.name if pres else "-")
             rows.append([
                 Paragraph(prod_name, st['cell']),
                 Paragraph(pres_name, st['cell']),
@@ -731,7 +731,7 @@ def medical_record_pdf(request, pk):
     if record.notes:
         flow += section(st, theme, "Notas")
         flow.append(Paragraph(
-            safe_pdf_text(record.notes).replace('\n', '<br/>'), st['body'],
+            pdf_markup(record.notes, linebreaks=True), st['body'],
         ))
 
     prescription = getattr(record, 'prescription', None)
@@ -741,18 +741,18 @@ def medical_record_pdf(request, pk):
             first_pres = next(iter(item.product.presentations.all()), None)
             unit = first_pres.get_base_unit_display() if first_pres else ""
             item_title = (
-                f"{safe_pdf_text(item.product.name)} — "
-                f"{item.quantity:g} {safe_pdf_text(unit)}"
+                f"{pdf_markup(item.product.name)} — "
+                f"{item.quantity:g} {pdf_markup(unit)}"
             ).rstrip()
-            detail_parts = [f"Dosis: {safe_pdf_text(item.dose)}"]
+            detail_parts = [f"Dosis: {pdf_markup(item.dose)}"]
             if item.duration:
-                detail_parts.append(f"Duración: {safe_pdf_text(item.duration)}")
+                detail_parts.append(f"Duración: {pdf_markup(item.duration)}")
             if item.instructions:
-                detail_parts.append(f"Instrucciones: {safe_pdf_text(item.instructions)}")
+                detail_parts.append(f"Instrucciones: {pdf_markup(item.instructions)}")
             flow += numbered_item(st, i, item_title, detail_parts)
         if prescription.notes:
             flow.append(Paragraph(
-                f"Notas de receta: {safe_pdf_text(prescription.notes)}",
+                f"Notas de receta: {pdf_markup(prescription.notes)}",
                 st['note_italic'],
             ))
 

@@ -13,6 +13,7 @@ importen todo desde un solo lugar.
 """
 from apps.core.pdf_utils import (  # noqa: F401
     pdf_filename,
+    pdf_markup,
     safe_filename_segment,
     safe_pdf_text,
 )

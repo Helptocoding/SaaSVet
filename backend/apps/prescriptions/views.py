@@ -144,7 +144,7 @@ def prescription_pdf(request, pk):
     from apps.core.datetime_utils import utc_to_local
     from apps.core.pdf import (
         build_styles, get_theme_for_organization, info_card, numbered_item,
-        pdf_filename, render_branded_pdf, safe_pdf_text, section,
+        pdf_filename, render_branded_pdf, pdf_markup, section,
         signature_block, title_block,
     )
 
@@ -178,23 +178,23 @@ def prescription_pdf(request, pk):
 
     flow += section(st, theme, "Paciente")
     patient_pairs = [
-        ("Nombre", safe_pdf_text(old_pet.get('name') or (pet.name if pet else 'Desconocido'))),
-        ("Especie", safe_pdf_text(old_pet.get('species') or (pet.species if pet else ''))),
-        ("Raza", safe_pdf_text(old_pet.get('breed') or (pet.breed if pet else ''))),
+        ("Nombre", pdf_markup(old_pet.get('name') or (pet.name if pet else 'Desconocido'))),
+        ("Especie", pdf_markup(old_pet.get('species') or (pet.species if pet else ''))),
+        ("Raza", pdf_markup(old_pet.get('breed') or (pet.breed if pet else ''))),
     ]
     if old_owner or (pet and pet.owner_id):
         patient_pairs += [
-            ("Propietario", safe_pdf_text(old_owner.get('name') or (pet.owner.name if pet else 'Desconocido'))),
-            ("Teléfono", safe_pdf_text(old_owner.get('phone') or (pet.owner.phone if pet else ''))),
+            ("Propietario", pdf_markup(old_owner.get('name') or (pet.owner.name if pet else 'Desconocido'))),
+            ("Teléfono", pdf_markup(old_owner.get('phone') or (pet.owner.phone if pet else ''))),
         ]
     flow += info_card(st, theme, patient_pairs, columns=3)
 
     if vet or prescription.medical_record.status == 'closed':
         specialty = (prescription.medical_record.vet_specialty_at_close
                      if prescription.medical_record.status == 'closed' else vet.specialty)
-        spec = f" &nbsp;·&nbsp; {safe_pdf_text(specialty)}" if specialty else ""
+        spec = f" &nbsp;·&nbsp; {pdf_markup(specialty)}" if specialty else ""
         flow += section(st, theme, "Veterinario")
-        flow.append(Paragraph(f"{safe_pdf_text(vet_name)}{spec}", st['body']))
+        flow.append(Paragraph(f"{pdf_markup(vet_name)}{spec}", st['body']))
 
     flow += section(st, theme, "Medicamentos")
     items_qs = prescription.items.select_related('product').prefetch_related('product__presentations').all()
@@ -202,26 +202,26 @@ def prescription_pdf(request, pk):
         first_pres = next(iter(item.product.presentations.all()), None)
         unit = first_pres.get_base_unit_display() if first_pres else ''
         item_title = (
-            f"{safe_pdf_text(item.product.name)} — "
-            f"{item.quantity:g} {safe_pdf_text(unit)}"
+            f"{pdf_markup(item.product.name)} — "
+            f"{item.quantity:g} {pdf_markup(unit)}"
         ).rstrip()
-        details = [f"Dosis: {safe_pdf_text(item.dose)}"]
+        details = [f"Dosis: {pdf_markup(item.dose)}"]
         if item.duration:
-            details.append(f"Duración: {safe_pdf_text(item.duration)}")
+            details.append(f"Duración: {pdf_markup(item.duration)}")
         if item.instructions:
-            details.append(f"Instrucciones: {safe_pdf_text(item.instructions)}")
+            details.append(f"Instrucciones: {pdf_markup(item.instructions)}")
         flow += numbered_item(st, i, item_title, details)
 
     if prescription.notes:
         flow += section(st, theme, "Notas")
         flow.append(Paragraph(
-            safe_pdf_text(prescription.notes).replace('\n', '<br/>'), st['body'],
+            pdf_markup(prescription.notes, linebreaks=True), st['body'],
         ))
 
     if vet or prescription.medical_record.status == 'closed':
         flow += signature_block(
-            st, theme, safe_pdf_text(vet_name),
-            [safe_pdf_text(specialty)] if specialty else (),
+            st, theme, pdf_markup(vet_name),
+            [pdf_markup(specialty)] if specialty else (),
         )
 
     buffer = BytesIO()

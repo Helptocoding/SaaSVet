@@ -3,8 +3,9 @@ Flowables reutilizables para los documentos del SaaS.
 
 Cada función devuelve una lista de flowables lista para anexar al story.
 Ninguna toca la base de datos: los views deciden el contenido, el tema decide
-la apariencia. Las celdas/valores que vienen de datos de usuario deben llegar
-ya saneados con ``safe_pdf_text`` (responsabilidad del caller).
+la apariencia. Estas funciones construyen `Paragraph`, que interpreta marcado: los
+datos de usuario deben llegar ya pasados por ``pdf_markup`` (responsabilidad del
+caller, vigilada por `test_pdf_markup_injection`).
 """
 from reportlab.lib import colors
 from reportlab.lib.units import cm
