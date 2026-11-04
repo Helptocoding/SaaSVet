@@ -322,7 +322,8 @@ def _append_conflict(result, conflict):
         result['conflicts_high'] += 1
     else:
         result['conflicts_uncertain'] += 1
-    result['conflicts'].append(conflict)
+    from .conflict_reports import append_conflict
+    append_conflict(result, conflict)
 
 
 # INV-C: el desenlace `owner_ambiguous` es el MISMO en las tres pasadas
@@ -444,14 +445,66 @@ def validate_job(job):
     return _validate_owner_pet_job(job)
 
 
+class ImportAlreadyCommitted(Exception):
+    """El job ya estaba confirmado cuando se tomó su lock."""
+
+
+class ImportHasBlockingErrors(Exception):
+    def __init__(self, count):
+        self.count = count
+
+
+@transaction.atomic
 def commit_job(job, created_by=None):
     """Punto de entrada de commit: despacha por el entity_type del job.
+
     `created_by` se propaga al inventario para auditar StockMovement.created_by;
-    owner_pet lo ignora (paridad con su comportamiento histórico)."""
-    if job.entity_type == ImportJob.ENTITY_INVENTORY:
-        from .services_inventory import commit_inventory_job
-        return commit_inventory_job(job, created_by=created_by)
-    return _commit_owner_pet_job(job)
+    owner_pet lo ignora (paridad con su comportamiento histórico).
+
+    **Un solo disparo, garantizado aquí y no en la vista.** Bloquea la fila del
+    job y reconfirma su estado DENTRO de esta transacción, y escribe el estado
+    final también aquí. Antes el estado se comprobaba en la vista ANTES de
+    llamar a este servicio y se escribía DESPUÉS, así que los dos quedaban
+    separados por toda la duración de la importación: dos peticiones solapadas
+    pasaban ambas el filtro y escribían dos veces. En inventario eso duplicaba
+    el producto y aplicaba su stock inicial dos veces para las filas sin
+    `internal_code`, que no tienen unicidad en base que las atrape — y de forma
+    silenciosa, porque los movimientos y `stock_quantity` quedaban consistentes
+    entre sí y `audit_stock_integrity` reconciliaba limpio.
+
+    Reproducido en la auditoría run-1 (2 productos y stock 20 para un archivo
+    que declaraba 10) y verificado cerrado con la misma sonda. La garantía vive
+    aquí, no en la vista, porque es un cambio de estado de dominio: cualquier
+    otro llamador futuro —un comando, un worker de reintentos— la hereda.
+
+    Lanza `ImportAlreadyCommitted` si al tomar el lock el job ya estaba
+    confirmado; la vista lo traduce a 409.
+    """
+    locked = ImportJob.objects.select_for_update().get(pk=job.pk)
+    if locked.status == ImportJob.STATUS_COMMITTED:
+        raise ImportAlreadyCommitted()
+    blocking_count = len((locked.result or {}).get('blocking', []))
+    if blocking_count:
+        raise ImportHasBlockingErrors(blocking_count)
+
+    from .conflict_reports import collect
+
+    def run_commit():
+        if locked.entity_type == ImportJob.ENTITY_INVENTORY:
+            from .services_inventory import commit_inventory_job
+            return commit_inventory_job(locked, created_by=created_by)
+        return _commit_owner_pet_job(locked)
+
+    result = collect(locked, run_commit)
+
+    locked.result = result
+    locked.status = ImportJob.STATUS_COMMITTED
+    locked.save(update_fields=['result', 'status', 'updated_at'])
+    # Sincroniza la instancia del caller para que serialice el estado real sin
+    # obligarle a un refresh_from_db.
+    job.result = result
+    job.status = ImportJob.STATUS_COMMITTED
+    return result
 
 
 def _validate_owner_pet_job(job):
@@ -693,6 +746,16 @@ def _commit_owner_pet_job(job):
     imported_at = timezone.now().isoformat()
 
     with transaction.atomic():
+        # El importador conserva la transacción de todo el job. Coordinar con
+        # archive/deactivate antes del primer write (Organization → Owner → Pet)
+        # y revalidar cada Owner que pudo venir del índice leído antes del lock.
+        from apps.patients.creation import (PetCreationRejected, lock_organization,
+                                            lock_creation_scope)
+        from rest_framework.exceptions import ValidationError as ApiValidationError
+        try:
+            org = lock_organization(org.pk)
+        except PetCreationRejected as exc:
+            raise ApiValidationError({'organization': 'La clínica no está activa.'}) from exc
         for i, row in enumerate(job.rows, start=1):
             data, extras = _project_row(columns, job.mapping, row, imported_at)
             owner_extra = extras.get('owner.extra', [])
@@ -866,6 +929,7 @@ def _commit_owner_pet_job(job):
             # --- Crear el pet en su propio savepoint ---
             try:
                 with transaction.atomic():
+                    lock_creation_scope(org.pk, owner.pk)
                     Pet.objects.create(
                         organization=org,
                         owner=owner,

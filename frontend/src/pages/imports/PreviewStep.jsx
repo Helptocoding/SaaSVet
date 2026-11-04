@@ -3,6 +3,7 @@ import Pagination from "../../components/Pagination";
 import { groupImportIssues } from "./groupImportIssues";
 import { getEntityConfig } from "./entityConfig";
 import s from "./imports.module.css";
+import ConflictPages from "./ConflictPages";
 
 const PAGE_SIZE = 25;
 
@@ -218,6 +219,7 @@ const PreviewStep = ({
     committing,
     canCommit,
     entityType = "owner_pet",
+    jobPublicId,
 }) => {
     const cfg = getEntityConfig(entityType);
     const labelByKey = useMemo(() => {
@@ -289,7 +291,7 @@ const PreviewStep = ({
             <div className={s.statusBar}>
                 <div className={s.statusBarTitle}>Revisa antes de importar</div>
                 <div className={s.statusBarSub}>
-                    Esta es una simulación — todavía no se ha guardado nada.
+                    Esta es una simulación — todavía no se han importado registros.
                 </div>
                 <div className={s.statusPills}>
                     {createdTotal > 0 && (
@@ -488,6 +490,8 @@ const PreviewStep = ({
                     )}
                 </div>
             )}
+
+            <ConflictPages key={r.conflict_report?.version} publicId={jobPublicId} report={r.conflict_report} highTotal={conflictsHighTotal} uncertainTotal={conflictsUncertainTotal} />
 
             {/* ── Descarga CSV ── */}
             {(blocking.length > 0 || warnings.length > 0) && (

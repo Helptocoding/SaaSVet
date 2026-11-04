@@ -61,6 +61,22 @@ class SenderFixture:
 
 
 class B4SenderTests(SenderFixture, TransactionTestCase):
+    def test_disabled_organization_keeps_queue_without_provider_admission(self):
+        Organization.objects.filter(pk=self.org.pk).update(is_active=False)
+        factory = self.factory()
+        sender.send_pending_outbound(provider_factory=factory)
+        factory.assert_not_called()
+        self.assertEqual(self.state(), 'pending')
+        self.assertIsNone(self.message.send_admitted_at)
+
+    def test_deactivation_between_claim_and_admission_preserves_unsent_message(self):
+        claim = self.claim()
+        self.assertIsNotNone(claim)
+        Organization.objects.filter(pk=self.org.pk).update(is_active=False)
+        self.assertIsNone(sender.admit_dispatch(claim))
+        self.assertEqual(self.state(), 'pending')
+        self.assertIsNone(self.message.send_admitted_at)
+
     def test_send_01_individual_durable_claim_and_single_admission(self):
         other = self.outbound()
         claim = self.claim()

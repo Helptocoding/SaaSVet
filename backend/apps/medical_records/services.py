@@ -1,26 +1,146 @@
 """
-Services de medical_records: efectos de dominio con lock/atomicidad.
-
-Materializacion de los protocolos clinicos al cerrar la consulta. El writer de
-`closed_at` sigue en views.py (deuda A3); estas funciones son efectos-de-cierre
-mas, invocados dentro del mismo `transaction.atomic()`.
+Services de medical_records: cierre autoritativo y protocolos bajo lock/atomicidad.
 
 PRINCIPIO (binding, ADR p50): un protocolo NUNCA modifica MedicalRecord; solo
 crea o actualiza sus PROPIOS registros de dominio (VaccineRecord,
 ConsultationAssessment, ...). El scratchpad `consultation_draft` es borrador de
 UI; los registros materializados son la fuente de verdad.
 
-Despacho por `consultation_type` con `if/elif` incremental. Cuando llegue el 3er
-protocolo (Cirugia) se extrae un registry backend de materializadores
-`{type: fn}` y un `close_medical_record_service()` (ver
-docs/plan-implementacion-protocolos-clinicos-2026-07-09.md, Slice C). No abstraer
-antes de tiempo.
+El cierre escribe el anchor y los efectos clínicos/comerciales en una transacción.
 """
 import logging
 
 from .models import ConsultationAssessment, MedicalRecord
 
 logger = logging.getLogger("medical_records.events")
+
+
+def _warn_if_late_closed_at(organization, closed_at):
+    """Warn-only: bucket clínico congelado (ADR p17)."""
+    from apps.analytics.services import is_bucket_frozen
+    from apps.core.datetime_utils import org_today_local
+
+    closed_date = org_today_local(organization, now=closed_at)
+    if not is_bucket_frozen('clinical', closed_date, organization):
+        return
+    today = org_today_local(organization)
+    logging.getLogger('analytics.events').warning(
+        'ANCHOR_LATE_ARRIVAL',
+        extra={
+            'event': 'ANCHOR_LATE_ARRIVAL',
+            'anchor_field': 'closed_at',
+            'anchor_value_iso': closed_at.isoformat(),
+            'bucket_date_local_iso': closed_date.isoformat(),
+            'frozen_threshold_days': 2,
+            'age_days': max(0, (today - closed_date).days),
+            'organization_id': organization.pk,
+            'writer': 'close_medical_record',
+            'metric_class': 'clinical',
+        },
+    )
+
+
+def close_medical_record_service(request, pk):
+    """Cierre único: receipt → expediente → protocolo → anchor → cita → Checkout.
+
+    Se conserva el orden de locks y el replay anterior; las excepciones revierten
+    también el snapshot del veterinario. La view solo adapta la respuesta HTTP.
+    """
+    from django.db import transaction
+    from django.utils import timezone
+    from rest_framework.exceptions import PermissionDenied, ValidationError
+    from apps.billing.checkout_services import (
+        _claim_receipt, _complete_receipt,
+        get_or_create_primary_checkout_for_medical_record,
+    )
+    from apps.appointments.services import complete_appointment_on_record_close
+    from apps.core.sanitize import sanitize_text
+    from apps.core.views import resolve_public_id
+    from .policies import can_close_medical_record, log_ownership_denied
+
+    with transaction.atomic():
+        idempotency_key = (
+            request.headers.get('X-Idempotency-Key')
+            or request.data.get('idempotency_key')
+            or f'close:{pk}:actor:{request.user.pk}'
+        )
+        receipt, replay = _claim_receipt(
+            organization=request.user.organization, user=request.user,
+            command_kind='close_medical_record', idempotency_key=idempotency_key,
+            payload={'medical_record': str(pk)}, aggregate_type='medical_record',
+            aggregate_public_id=str(pk),
+        )
+        record = resolve_public_id(
+            MedicalRecord.objects.select_for_update().filter(
+                organization=request.user.organization,
+            ), pk,
+        )
+        if replay:
+            return record
+        if record.status == MedicalRecord.Status.CLOSED:
+            logger.info('MEDICAL_RECORD_CLOSE_IDEMPOTENT', extra={
+                'user_id': request.user.id, 'organization_id': request.user.organization_id,
+                'medical_record_id': record.id, 'endpoint': request.path,
+                'method': request.method,
+            })
+            _complete_receipt(receipt, medical_record_id=record.pk,
+                              medical_record_public_id=str(record.public_id), result='already_closed')
+            return record
+        if not can_close_medical_record(request.user, record):
+            log_ownership_denied(user=request.user, medical_record=record, request=request)
+            raise PermissionDenied('No puedes finalizar esta consulta')
+
+        if record.consultation_type != MedicalRecord.ConsultationType.EMERGENCY and not (
+            sanitize_text(record.diagnosis or '', max_length=400).strip()
+        ):
+            logger.warning('MEDICAL_RECORD_CLOSE_VALIDATION_FAILED', extra={
+                'record_id': str(record.public_id), 'field': 'diagnosis',
+                'user_id': request.user.id, 'organization_id': request.user.organization_id,
+            })
+            raise ValidationError({'diagnosis': 'El diagnóstico es obligatorio.'})
+        treatment_exempt = {
+            MedicalRecord.ConsultationType.VACCINE,
+            MedicalRecord.ConsultationType.SURGERY,
+            MedicalRecord.ConsultationType.EMERGENCY,
+        }
+        if record.consultation_type not in treatment_exempt and not (
+            sanitize_text(record.treatment or '', max_length=400).strip()
+        ):
+            logger.warning('MEDICAL_RECORD_CLOSE_VALIDATION_FAILED', extra={
+                'record_id': str(record.public_id), 'field': 'treatment',
+                'user_id': request.user.id, 'organization_id': request.user.organization_id,
+            })
+            raise ValidationError({'treatment': 'El tratamiento es obligatorio.'})
+
+        apply_consultation_draft_on_close(record, request)
+        record.status = MedicalRecord.Status.CLOSED
+        record.closed_at = timezone.now()
+        record.closed_at_source = 'service'
+        record.closed_by = request.user
+        vet = record.veterinarian
+        name = f'{vet.first_name} {vet.last_name}'.strip() if vet else ''
+        if vet and vet.organization_id == record.organization_id and name:
+            record.vet_public_id_at_close = vet.public_id
+            record.vet_name_at_close = name
+            record.vet_specialty_at_close = vet.specialty
+            record.vet_snapshot_source = 'captured'
+            record.vet_snapshot_recorded_at = record.closed_at
+        record.save(update_fields=[
+            'status', 'closed_at', 'closed_at_source', 'closed_by',
+            'vet_public_id_at_close', 'vet_name_at_close', 'vet_specialty_at_close',
+            'vet_snapshot_source', 'vet_snapshot_recorded_at',
+        ])
+        complete_appointment_on_record_close(record.appointment, request.user)
+        get_or_create_primary_checkout_for_medical_record(record, owner=request.user)
+        _warn_if_late_closed_at(record.organization, record.closed_at)
+        logger.info('MEDICAL_RECORD_CLOSED', extra={
+            'user_id': request.user.id, 'organization_id': request.user.organization_id,
+            'medical_record_id': record.id, 'endpoint': request.path,
+            'method': request.method,
+        })
+        _complete_receipt(receipt, medical_record_id=record.pk,
+                          medical_record_public_id=str(record.public_id), result='closed')
+        return record
 
 
 def apply_consultation_draft_on_close(medical_record, request):

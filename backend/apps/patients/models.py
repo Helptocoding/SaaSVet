@@ -9,6 +9,9 @@ SPECIES_CHOICES = ['canino', 'felino', 'equino', 'ave', 'reptil', 'exótico', 'o
 
 class Owner(PublicIdMixin, OrganizationalModel):
     name = models.CharField(max_length=255)
+    archived_at = models.DateTimeField(null=True, blank=True, editable=False)
+    archived_by = models.ForeignKey('users.User', on_delete=models.SET_NULL,
+                                    null=True, blank=True, related_name='+', editable=False)
     # blank=True para soportar migración de clínicas: archivos viejos vienen sin
     # teléfono (Sprint import, Ajuste #1). El OwnerSerializer sigue exigiendo 10
     # dígitos en el alta manual (UI) — solo el importador, que crea vía .save()
@@ -79,6 +82,7 @@ class Owner(PublicIdMixin, OrganizationalModel):
             ),
         ]
         constraints = [
+            models.UniqueConstraint(fields=['id', 'organization'], name='owner_id_org_ref'),
             models.UniqueConstraint(
                 fields=['organization'],
                 condition=models.Q(is_generic=True),
@@ -119,6 +123,9 @@ class Pet(PublicIdMixin, OrganizationalModel):
     )
 
     name = models.CharField(max_length=255)
+    archived_at = models.DateTimeField(null=True, blank=True, editable=False)
+    archived_by = models.ForeignKey('users.User', on_delete=models.SET_NULL,
+                                    null=True, blank=True, related_name='+', editable=False)
     # blank=True para migración de clínicas: expedientes viejos a veces no traen
     # especie (Sprint import). '' = especie pendiente también en alta manual.
     species = models.CharField(max_length=100, blank=True, default='')
@@ -155,6 +162,7 @@ class Pet(PublicIdMixin, OrganizationalModel):
             GinIndex(OpClass('legacy_id', name='gin_trgm_ops'), name='pet_legacy_trgm'),
         ]
         constraints = [
+            models.UniqueConstraint(fields=['id', 'organization'], name='pet_id_org_ref'),
             models.UniqueConstraint(
                 fields=['organization'],
                 condition=models.Q(is_generic=True),

@@ -144,6 +144,8 @@ def claim_turn(conversation_id, *, eligible_at=None):
         if org is None:
             _concurrency_event('deferred')
             return None
+        if not org.is_active:
+            return None
         conv = (Conversation.objects.select_for_update(skip_locked=True, of=('self',))
                 .select_related('organization', 'channel_account', 'contact')
                 .filter(pk=conversation_id, organization_id=org_id).first())

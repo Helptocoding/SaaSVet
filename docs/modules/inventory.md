@@ -1,8 +1,18 @@
 # Modulo: Inventario
 
+> Orden 4 en curso: el orden de stock y valor en la tabla utiliza los mismos helpers que las columnas. Estado y límites de verificación en [expediente](../remediaciones/orden-4/README.md).
+
+> Avance local: el alta manual positiva usa `apply_stock_movement` dentro de la transacción, y los serializers normalizan el alias de presentación. Migraciones y demás caminos siguen sujetos a los límites del expediente.
+
+> Alta de presentación adicional: el stock positivo también entra mediante el writer en unidades base; para productos con lotes debe usarse recepción identificada. El PATCH de presentación rechaza asignaciones directas de stock.
+
+> Recepción de lotes admite `X-Idempotency-Key` UUID: la misma operación, actor, presentación y payload validado devuelve el receipt confirmado; cambios incompatibles devuelven 409. Sin cabecera conserva el comportamiento anterior. El wizard guarda la operación para reintentar tras recarga; la pérdida total del almacenamiento local sigue pendiente de reconciliación autoritativa. Ver [expediente](../remediaciones/orden-4/README.md).
+
 > **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo.
 
 ## Objetivo
+
+**Orden 2 (28-10-2026):** `StockMovement.product` y `.presentation` son PROTECT: ni borrar Product ni borrar Presentation puede eliminar filas del ledger. `MedicalRecordProduct.medical_record` es PROTECT; borrar expediente no devuelve stock ni borra consumo. El alias de archivo de Pet/Owner no crea movimientos.
 
 El modulo gestiona el catalogo de productos, sus presentaciones (formatos comerciales), el stock en unidades base y los movimientos de inventario.
 

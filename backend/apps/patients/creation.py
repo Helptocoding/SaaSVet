@@ -62,6 +62,8 @@ def lock_organization(organization_id: int):
     org = _share(Organization, pk=organization_id)
     if org is None:
         raise PetCreationRejected('entity_scope')
+    if not org.is_active:
+        raise PetCreationRejected('entity_inactive')
     return org
 
 

@@ -28,8 +28,9 @@ export const getPresentationByBarcode = (barcode) =>
 
 // Recepción de mercancía multi-lote (B1). data = { supplier_name?, received_at?, lots: [{lot_number, expiry_date?, quantity}] }.
 // Solo para productos con tracks_lots; el backend valida y convierte por conversion_factor.
-export const receiveStock = (presentationPublicId, data) =>
-    api.post(`inventory/presentations/${presentationPublicId}/receive/`, data).then(r => r.data);
+export const receiveStock = (presentationPublicId, data, operationId) =>
+    api.post(`inventory/presentations/${presentationPublicId}/receive/`, data,
+        operationId ? { headers: { "X-Idempotency-Key": operationId } } : {}).then(r => r.data);
 
 // Lotes de un producto (orden FEFO). params: { with_stock: 'true' } para solo con saldo.
 export const getProductLots = (productPublicId, params = {}) =>

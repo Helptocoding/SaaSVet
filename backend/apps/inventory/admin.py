@@ -15,7 +15,13 @@ class PresentationAdmin(TenantAwareAdmin):
     list_display = ['product', 'name', 'base_unit', 'stock', 'min_stock', 'sale_price', 'organization']
     list_filter = ['base_unit', 'organization']
     search_fields = ['name', 'product__name']
-    readonly_fields = ['product']
+    # quantity es el alias legacy; el admin edita solo el factor comercial.
+    readonly_fields = ['product', 'quantity']
+
+    def save_model(self, request, obj, form, change):
+        if not change or 'conversion_factor' in form.changed_data:
+            obj.quantity = obj.conversion_factor
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(StockMovement)

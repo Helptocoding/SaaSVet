@@ -93,21 +93,17 @@ saaslyvet.com, www.saaslyvet.com {
 
 	# -----------------------------------------------------------------------
 	# Django admin — Capa 8 / HIGH H4.
-	# Uncomment + populate `admin_allowed_ips` to lock /admin/* to your
-	# office/VPN IPs. With it commented, /admin/* is reachable from any IP
-	# (Django session auth still required — but visibility = attack surface).
+	# La lista de IPs permitidas YA NO vive aquí: se movió DENTRO del
+	# `handle /{$DJANGO_ADMIN_URL:...}*` de más abajo, y se configura con
+	# DJANGO_ADMIN_ALLOWED_IPS (fail-closed por defecto).
+	#
+	# El bloque comentado que estaba aquí restringía `/admin/*` LITERAL, que
+	# ya devuelve 404 incondicional más abajo. Descomentarlo habría dado falsa
+	# seguridad: el admin real vive en el slug de DJANGO_ADMIN_URL, no en
+	# `/admin`. Definía además un matcher `@admin_allowed_ips` que nunca usaba.
+	# Retirado para que no vuelva a leerse como "el control está disponible,
+	# solo hay que descomentarlo".
 	# -----------------------------------------------------------------------
-	# @admin_allowed_ips {
-	# 	remote_ip 203.0.113.42/32 198.51.100.0/24
-	# }
-	# @admin path /admin/* /admin
-	# handle @admin {
-	# 	@blocked not remote_ip 203.0.113.42/32 198.51.100.0/24
-	# 	handle @blocked {
-	# 		respond "Not Found" 404
-	# 	}
-	# 	reverse_proxy backend:8000
-	# }
 
 	# -----------------------------------------------------------------------
 	# Static Django assets (admin CSS, DRF browsable API) — served directly
@@ -169,6 +165,36 @@ saaslyvet.com, www.saaslyvet.com {
 	# REGLA: el slug de producción NO debe empezar con 'admin' — el handler de
 	# 404 literal de abajo captura `/admin*` y lo bloquearía.
 	handle /{$DJANGO_ADMIN_URL:__admin_disabled__}* {
+		# -------------------------------------------------------------------
+		# Lista de IPs permitidas (Capa 8 / HIGH H4). Va AQUÍ, dentro del
+		# handle del slug real, y no en un bloque aparte sobre `/admin/*`:
+		# ese path ya devuelve 404 incondicional más abajo, así que una
+		# restricción sobre él no protegería nada. El admin vive en el slug.
+		#
+		# Por qué hace falta: el login del admin es una vista Django plana, no
+		# DRF, así que NINGÚN throttle del proyecto lo cubre — el límite de
+		# 5/15min protege /api/token/, no este formulario. Y una sesión de
+		# superusuario rodea `for_organization`, del que depende todo el
+		# aislamiento entre clínicas. Auditoría run-1,
+		# infra/caddy/django-admin-exposed-without-ip-allowlist-or-login-throttle.
+		#
+		# FAIL-CLOSED: el default `0.0.0.0/32` no coincide con ningún cliente
+		# real, así que sin configurar DJANGO_ADMIN_ALLOWED_IPS el admin queda
+		# inalcanzable (404). Mismo criterio que el slug `__admin_disabled__`.
+		# Para habilitarlo, en .env.prod:
+		#     DJANGO_ADMIN_ALLOWED_IPS=203.0.113.42/32 198.51.100.0/24
+		# Dejarla SIN DEFINIR si no se usa — definida y vacía puede abortar el
+		# arranque de Caddy por `remote_ip` sin argumentos.
+		#
+		# `remote_ip` es correcto mientras Caddy sea el borde (termina TLS). Si
+		# algún día se pone un CDN delante, cambiar a `client_ip` + configurar
+		# `trusted_proxies`, o esto comparará contra la IP del CDN.
+		# -------------------------------------------------------------------
+		@admin_blocked not remote_ip {$DJANGO_ADMIN_ALLOWED_IPS:0.0.0.0/32}
+		handle @admin_blocked {
+			respond "Not Found" 404
+		}
+
 		reverse_proxy backend:8000 {
 			header_up X-Forwarded-For   {remote_host}
 			header_up X-Forwarded-Proto {scheme}

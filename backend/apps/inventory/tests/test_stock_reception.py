@@ -6,6 +6,8 @@ find-or-create por (product, lot_number, expiry); conversión por conversion_fac
 bloqueo en productos sin tracks_lots.
 """
 from decimal import Decimal
+from uuid import uuid4
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -65,6 +67,57 @@ class ReceptionSetupMixin:
 
     def _receive_url(self):
         return f'/api/inventory/presentations/{self.presentation.public_id}/receive/'
+
+
+class ReceptionIdempotencyTests(ReceptionSetupMixin, TestCase):
+    def test_replay_conflict_and_distinct_operation(self):
+        payload = {'lots': [{'lot_number': 'SYN', 'quantity': '2'}]}
+        key = str(uuid4())
+        first = self.client.post(self._receive_url(), payload, format='json', HTTP_X_IDEMPOTENCY_KEY=key)
+        self.assertEqual(first.status_code, 200, first.data)
+        replay = self.client.post(self._receive_url(), payload, format='json', HTTP_X_IDEMPOTENCY_KEY=key)
+        self.assertEqual(replay.status_code, 200, replay.data)
+        self.assertEqual(first.data, replay.data)
+        conflict = self.client.post(self._receive_url(), {'lots': [{'lot_number': 'SYN', 'quantity': '3'}]}, format='json', HTTP_X_IDEMPOTENCY_KEY=key)
+        self.assertEqual(conflict.status_code, 409)
+        second = self.client.post(self._receive_url(), payload, format='json', HTTP_X_IDEMPOTENCY_KEY=str(uuid4()))
+        self.assertEqual(second.status_code, 200, second.data)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, Decimal('4'))
+        self.assertEqual(StockLot.objects.get(product=self.product).quantity_on_hand, Decimal('4'))
+        self.assertEqual(StockMovement.objects.filter(product=self.product, created_by=self.admin).count(), 2)
+
+    def test_other_actor_or_organization_cannot_read_receipt(self):
+        key = str(uuid4())
+        payload = {'lots': [{'lot_number': 'SYN', 'quantity': '2'}]}
+        response = self.client.post(self._receive_url(), payload, format='json', HTTP_X_IDEMPOTENCY_KEY=key)
+        self.assertEqual(response.status_code, 200)
+        colleague = User.objects.create_user(username='colleague-receipt', password='synthetic', organization=self.org, role='ADMIN')
+        UserRole.objects.get_or_create(user=colleague, role=self.roles['ADMIN'])
+        self.client.force_authenticate(colleague)
+        response = self.client.post(self._receive_url(), payload, format='json', HTTP_X_IDEMPOTENCY_KEY=key)
+        self.assertEqual(response.status_code, 409)
+        self.assertNotIn('lots', response.data)
+        other = Organization.objects.create(name='Other synthetic')
+        roles = _seed_roles(other)
+        outsider = User.objects.create_user(username='outsider-receipt', password='synthetic', organization=other, role='ADMIN')
+        UserRole.objects.get_or_create(user=outsider, role=roles['ADMIN'])
+        self.client.force_authenticate(outsider)
+        response = self.client.post(self._receive_url(), payload, format='json', HTTP_X_IDEMPOTENCY_KEY=key)
+        self.assertEqual(response.status_code, 404)
+        self.assertNotIn('lots', response.data)
+
+    def test_failure_before_commit_leaves_no_receipt_or_stock(self):
+        from apps.inventory.models import StockReceptionReceipt
+        key = str(uuid4())
+        payload = {'lots': [{'lot_number': 'SYN', 'quantity': '2'}]}
+        with patch('apps.inventory.services.receive_stock', side_effect=ValidationError('fallo sintético')):
+            response = self.client.post(self._receive_url(), payload, format='json', HTTP_X_IDEMPOTENCY_KEY=key)
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(StockReceptionReceipt.objects.filter(operation_id=key).exists())
+        self.assertFalse(StockMovement.objects.filter(product=self.product).exists())
+        response = self.client.post(self._receive_url(), payload, format='json', HTTP_X_IDEMPOTENCY_KEY=key)
+        self.assertEqual(response.status_code, 200, response.data)
 
 
 class ReceiveServiceTests(ReceptionSetupMixin, TestCase):

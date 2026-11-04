@@ -4,6 +4,7 @@ from datetime import date
 from apps.core.datetime_utils import org_today_local
 
 from django.db import transaction
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, status
@@ -37,45 +38,6 @@ from .serializers import (
 events_logger = logging.getLogger("medical_records.events")
 
 
-def _warn_if_late_closed_at(organization, closed_at):
-    """
-    Late-arrival observability for MedicalRecord.closed_at (ADR p17 Día 5,
-    warn-only phase).
-
-    Emits an ``ANCHOR_LATE_ARRIVAL`` warning on the ``analytics.events``
-    logger when ``closed_at`` falls in a bucket already considered frozen
-    for the ``clinical`` metric class. Side-effect free if the bucket is
-    still in the open window.
-
-    TEMPORAL: this helper lives in ``views.py`` because there is no
-    ``medical_records/services.py::close_medical_record_service()`` yet
-    (ADR p9 violation acknowledged in ADR p17 §Deuda). When that service
-    exists, this helper migrates there.
-    """
-    from apps.analytics.services import is_bucket_frozen
-    from apps.core.datetime_utils import org_today_local
-
-    closed_date = org_today_local(organization, now=closed_at)
-    if not is_bucket_frozen('clinical', closed_date, organization):
-        return
-    today = org_today_local(organization)
-    age_days = max(0, (today - closed_date).days)
-    logging.getLogger('analytics.events').warning(
-        'ANCHOR_LATE_ARRIVAL',
-        extra={
-            'event': 'ANCHOR_LATE_ARRIVAL',
-            'anchor_field': 'closed_at',
-            'anchor_value_iso': closed_at.isoformat(),
-            'bucket_date_local_iso': closed_date.isoformat(),
-            'frozen_threshold_days': 2,
-            'age_days': age_days,
-            'organization_id': organization.pk,
-            'writer': 'close_medical_record',
-            'metric_class': 'clinical',
-        },
-    )
-
-
 class MedicalRecordPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
@@ -102,18 +64,63 @@ class MedicalRecordListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
         )
 
         if pet_lookup:
-            # Día 6 Fase 3: resolver Pet por public_id antes del filtro
+            from uuid import UUID
+            from django.db.models import Q
             from apps.patients.models import Pet
-            pet = resolve_public_id(Pet.objects.for_organization(org), pet_lookup)
-            queryset = queryset.filter(pet=pet)
+            try:
+                pet_uuid = str(UUID(str(pet_lookup)))
+            except (ValueError, TypeError):
+                # No es un UUID: puede ser un id legacy. resolve_public_id lo
+                # valida dentro de la organización y lanza 404 si no existe.
+                pet = resolve_public_id(Pet.all_objects.filter(organization=org), pet_lookup)
+                pet_uuid = str(pet.public_id)
+
+            # La identidad se verifica SIEMPRE contra esta organización, también
+            # cuando el valor ya venía con forma de UUID.
+            #
+            # Antes el `try` devolvía el UUID parseado y saltaba la verificación,
+            # de modo que ésta solo corría en el camino del `except` — el único
+            # donde no puede importar. Un UUID válido de OTRA clínica parseaba
+            # bien, no se verificaba, y caía al filtro de abajo: como el queryset
+            # ya es `for_organization(org)`, no devolvía expedientes ajenos, pero
+            # respondía 200 con lista vacía donde un UUID inexistente responde
+            # 404. Esa diferencia es un oráculo de existencia cross-tenant, y el
+            # invariante del proyecto lo prohíbe por nombre: «cross-tenant
+            # retorna 404, nunca []» (docs/system-reference.md §3.1). Lo cazó
+            # `test_day6_invariants.test_cross_tenant_pet_returns_404` con
+            # `200 != 404`.
+            #
+            # Se admite la mascota VIVA de la organización y también la que solo
+            # existe como sujeto histórico: `subject_snapshot` se busca sobre el
+            # queryset ya acotado por organización, así que encontrarlo ahí es
+            # prueba de pertenencia. Resolver únicamente contra `Pet` vivo
+            # rompería la continuidad histórica.
+            scoped = queryset.filter(Q(pet__public_id=pet_uuid) |
+                                     Q(subject_snapshot__pet__uuid=pet_uuid))
+            if not (
+                Pet.all_objects.filter(organization=org, public_id=pet_uuid).exists()
+                or scoped.exists()
+            ):
+                raise Http404('No existe una mascota con ese identificador.')
+            queryset = scoped
 
         return queryset.order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(
-            organization=self.request.user.organization,
-            veterinarian=self.request.user
-        )
+        from apps.organizations.models import Organization
+        from apps.patients.models import Owner, Pet
+        from rest_framework.exceptions import ValidationError
+        with transaction.atomic():
+            org = Organization.objects.select_for_update().get(pk=self.request.user.organization_id)
+            pet_id = serializer.validated_data['pet'].pk
+            owner_id = Pet.all_objects.filter(pk=pet_id, organization=org).values_list(
+                'owner_id', flat=True,
+            ).first()
+            owner = Owner.all_objects.select_for_update().filter(pk=owner_id, organization=org).first()
+            pet = Pet.all_objects.select_for_update().filter(pk=pet_id, organization=org).first()
+            if not org.is_active or not owner or not owner.is_active or not pet or not pet.is_active:
+                raise ValidationError({'pet': 'La mascota o su cliente no están activos.'})
+            serializer.save(organization=org, veterinarian=self.request.user, pet=pet)
 
 
 class MedicalRecordDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.RetrieveUpdateDestroyAPIView):
@@ -179,13 +186,18 @@ class MedicalRecordByPetView(TenantQueryMixin, generics.ListAPIView):
         # Día 6 Fase 1: resolver Pet por public_id ANTES del filtro
         # (anexo seguridad — evita enumeration por PK secuencial)
         from apps.patients.models import Pet
-        pet = resolve_public_id(
-            Pet.objects.for_organization(self.request.user.organization),
-            self.kwargs['pet_public_id'],
-        )
+        pet_uuid = self.kwargs['pet_public_id']
+        from uuid import UUID
+        from django.db.models import Q
+        try:
+            pet_uuid = str(UUID(str(pet_uuid)))
+        except (ValueError, TypeError):
+            pet = resolve_public_id(Pet.all_objects.filter(organization=self.request.user.organization),
+                                    pet_uuid)
+            pet_uuid = str(pet.public_id)
         return MedicalRecord.objects.for_organization(
             self.request.user.organization
-        ).filter(pet=pet).select_related(
+        ).filter(Q(pet__public_id=pet_uuid) | Q(subject_snapshot__pet__uuid=pet_uuid)).select_related(
             'pet', 'veterinarian', 'appointment', 'prescription'
         ).prefetch_related(
             'products_used__presentation__product',
@@ -390,12 +402,15 @@ class MedicalRecordSummaryView(generics.GenericAPIView):
             .first()
         )
 
+        from apps.core.subject_history import identity
+        prior_pet = identity(mr, 'pet')
+        live_pet = mr.pet if mr.pet_id else None
         data = {
             "patient": {
-                "name": mr.pet.name,
-                "species": mr.pet.species,
-                "breed": mr.pet.breed,
-                "birth_date": mr.pet.birth_date,
+                "name": prior_pet.get('name') or (live_pet.name if live_pet else 'Desconocido'),
+                "species": prior_pet.get('species') or (live_pet.species if live_pet else ''),
+                "breed": prior_pet.get('breed') or (live_pet.breed if live_pet else ''),
+                "birth_date": prior_pet.get('birth_date') or (live_pet.birth_date if live_pet else None),
             },
             "last_vitals": {
                 "weight": weight,
@@ -422,163 +437,9 @@ class MedicalRecordSummaryView(generics.GenericAPIView):
 @api_view(['POST'])
 @permission_classes([make_permission("medicalrecord.close")])
 def close_medical_record(request, pk):
-    with transaction.atomic():
-        # El cierre es un comando durable. La clave estable por actor mantiene
-        # compatibilidad con clientes anteriores al header y, a la vez, evita
-        # repetir materialización clínica/comercial ante retries de red.
-        from apps.billing.checkout_services import _claim_receipt, _complete_receipt
-        idempotency_key = (
-            request.headers.get('X-Idempotency-Key')
-            or request.data.get('idempotency_key')
-            or f'close:{pk}:actor:{request.user.pk}'
-        )
-        receipt, replay = _claim_receipt(
-            organization=request.user.organization,
-            user=request.user,
-            command_kind='close_medical_record',
-            idempotency_key=idempotency_key,
-            payload={'medical_record': str(pk)},
-            aggregate_type='medical_record',
-            aggregate_public_id=str(pk),
-        )
-        medical_record = resolve_public_id(
-            MedicalRecord.objects.select_for_update().filter(
-                organization=request.user.organization,
-            ),
-            pk,
-        )
-
-        if replay:
-            return Response(MedicalRecordDetailSerializer(
-                medical_record, context={"request": request},
-            ).data)
-
-        # Idempotencia PRIMERO: una consulta ya cerrada retorna 200 sin re-validar
-        # ni re-checar ownership. can_close_medical_record() devuelve False para
-        # registros CLOSED (refleja "acción disponible" para el botón del Timeline),
-        # así que checarlo antes bloqueaba el cierre idempotente con 403. El queryset
-        # ya está scopeado a la organización y el permiso `medicalrecord.close` lo
-        # gatea permission_classes → el no-op idempotente es seguro (mismo-tenant,
-        # con permiso, sobre datos que ese usuario ya puede leer con un GET).
-        if medical_record.status == MedicalRecord.Status.CLOSED:
-            events_logger.info(
-                "MEDICAL_RECORD_CLOSE_IDEMPOTENT",
-                extra={
-                    "user_id": request.user.id,
-                    "organization_id": request.user.organization_id,
-                    "medical_record_id": medical_record.id,
-                    "endpoint": request.path,
-                    "method": request.method,
-                },
-            )
-            _complete_receipt(
-                receipt,
-                medical_record_id=medical_record.pk,
-                medical_record_public_id=str(medical_record.public_id),
-                result='already_closed',
-            )
-            return Response(MedicalRecordDetailSerializer(medical_record, context={"request": request}).data)
-
-        if not can_close_medical_record(request.user, medical_record):
-            log_ownership_denied(user=request.user, medical_record=medical_record, request=request)
-            raise PermissionDenied("No puedes finalizar esta consulta")
-
-        # Validación de campos requeridos para cierre. El diagnóstico es obligatorio
-        # salvo en Urgencia (diagnóstico presuntivo permitido — el protocolo captura
-        # triage/ABC/egreso; diseño A3). Delegación al protocolo activo.
-        diagnosis = sanitize_text(medical_record.diagnosis or '', max_length=400)
-        if (medical_record.consultation_type != MedicalRecord.ConsultationType.EMERGENCY
-                and not diagnosis.strip()):
-            events_logger.warning(
-                "MEDICAL_RECORD_CLOSE_VALIDATION_FAILED",
-                extra={
-                    "record_id": str(medical_record.public_id),
-                    "field": "diagnosis",
-                    "user_id": request.user.id,
-                    "organization_id": request.user.organization_id,
-                },
-            )
-            raise ValidationError({"diagnosis": "El diagnóstico es obligatorio."})
-
-        # El tratamiento del MedicalRecord no es obligatorio para protocolos que
-        # capturan su plan en su propio registro: Vacuna (VaccineRecord) y
-        # Cirugía (SurgeryRecord.postop_instructions). Delegación de validación al
-        # protocolo activo (diseño A3).
-        _treatment_exempt = {
-            MedicalRecord.ConsultationType.VACCINE,
-            MedicalRecord.ConsultationType.SURGERY,
-            MedicalRecord.ConsultationType.EMERGENCY,
-        }
-        if medical_record.consultation_type not in _treatment_exempt:
-            treatment = sanitize_text(medical_record.treatment or '', max_length=400)
-            if not treatment.strip():
-                events_logger.warning(
-                    "MEDICAL_RECORD_CLOSE_VALIDATION_FAILED",
-                    extra={
-                        "record_id": str(medical_record.public_id),
-                        "field": "treatment",
-                        "user_id": request.user.id,
-                        "organization_id": request.user.organization_id,
-                    },
-                )
-                raise ValidationError({"treatment": "El tratamiento es obligatorio."})
-
-        # Protocolos clínicos (ADR p50): materializa los registros de dominio
-        # capturados en el scratchpad consultation_draft (hoy solo Vacuna →
-        # VaccineRecord), dentro del MISMO atomic. Finalizar es una sola operación:
-        # o se cierra la consulta Y se crea el registro legal, o nada. El frontend
-        # NO hace un POST aparte. Un protocolo NUNCA muta MedicalRecord (principio
-        # binding). Draft inválido → ValidationError → rollback del cierre.
-        from .services import apply_consultation_draft_on_close
-        apply_consultation_draft_on_close(medical_record, request)
-
-        # El materializador puede agregar insumos clínicos al checkout. Ese
-        # delta es una mutación válida mientras el expediente sigue abierto;
-        # cerrar primero haría que record_clinical_charge_delta lo rechazara.
-        # El estado legal se sella solo después de materializar el protocolo.
-        medical_record.status = MedicalRecord.Status.CLOSED
-        medical_record.closed_at = timezone.now()
-        medical_record.closed_at_source = 'service'
-        medical_record.closed_by = request.user
-        medical_record.save(update_fields=[
-            'status', 'closed_at', 'closed_at_source', 'closed_by',
-        ])
-
-        # Sincroniza la agenda: cerrar la consulta finaliza la cita vinculada
-        # (in_progress→done). Cross-domain vía service (no mutar Appointment
-        # directamente desde medical_records). No-op si no hay cita o si la
-        # cita no está en in_progress. NO toca Invoice/pagos.
-        from apps.appointments.services import complete_appointment_on_record_close
-        complete_appointment_on_record_close(medical_record.appointment, request.user)
-
-        # El cierre crea la preparación comercial, nunca una Invoice draft.
-        # Se ejecuta después de materializar protocolos para que cualquier
-        # insumo clínico generado por ellos quede incluido en el snapshot.
-        from apps.billing.checkout_services import get_or_create_primary_checkout_for_medical_record
-        get_or_create_primary_checkout_for_medical_record(medical_record, owner=request.user)
-
-        # Late-arrival observability (ADR p17 Día 5, warn-only).
-        # Call lives inside the active transaction so the log only emits
-        # if commit succeeds (a rollback unwinds before the helper runs).
-        _warn_if_late_closed_at(medical_record.organization, medical_record.closed_at)
-
-        events_logger.info(
-            "MEDICAL_RECORD_CLOSED",
-            extra={
-                "user_id": request.user.id,
-                "organization_id": request.user.organization_id,
-                "medical_record_id": medical_record.id,
-                "endpoint": request.path,
-                "method": request.method,
-            },
-        )
-        _complete_receipt(
-            receipt,
-            medical_record_id=medical_record.pk,
-            medical_record_public_id=str(medical_record.public_id),
-            result='closed',
-        )
-        return Response(MedicalRecordDetailSerializer(medical_record, context={"request": request}).data)
+    from .services import close_medical_record_service
+    medical_record = close_medical_record_service(request, pk)
+    return Response(MedicalRecordDetailSerializer(medical_record, context={"request": request}).data)
 
 
 class VaccineRecordListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
@@ -595,7 +456,7 @@ class VaccineRecordListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
         if pet_lookup:
             # Día 6 Fase 3: resolver Pet por public_id antes del filtro
             from apps.patients.models import Pet
-            pet = resolve_public_id(Pet.objects.for_organization(org), pet_lookup)
+            pet = resolve_public_id(Pet.all_objects.filter(organization=org), pet_lookup)
             qs = qs.filter(pet=pet)
         return qs
 
@@ -683,24 +544,29 @@ def medical_record_pdf(request, pk):
     flow = []
     flow += title_block(st, title=f"Consulta #{record.id}", meta_lines=meta_lines)
 
-    if record.veterinarian_id:
-        vet = record.veterinarian
-        vet_name = f"{vet.first_name} {vet.last_name}".strip() or vet.username
-        spec = f" &nbsp;·&nbsp; {safe_pdf_text(vet.specialty)}" if getattr(vet, 'specialty', '') else ""
+    if record.status == MedicalRecord.Status.CLOSED or record.veterinarian_id:
+        vet = record.veterinarian if record.status != MedicalRecord.Status.CLOSED else None
+        vet_name = (record.vet_name_at_close or 'Desconocido') if vet is None else (
+            f"{vet.first_name} {vet.last_name}".strip() or vet.username)
+        specialty = record.vet_specialty_at_close if vet is None else vet.specialty
+        spec = f" &nbsp;·&nbsp; {safe_pdf_text(specialty)}" if specialty else ""
         flow += section(st, theme, "Veterinario")
         flow.append(Paragraph(f"{safe_pdf_text(vet_name)}{spec}", st['body']))
 
-    pet = record.pet
+    from apps.core.subject_history import identity
+    old_pet = identity(record, 'pet')
+    old_owner = identity(record, 'owner')
+    pet = record.pet if record.pet_id else None
     flow += section(st, theme, "Paciente")
     patient_pairs = [
-        ("Nombre", safe_pdf_text(pet.name)),
-        ("Especie", safe_pdf_text(pet.species)),
-        ("Raza", safe_pdf_text(pet.breed or '')),
+        ("Nombre", safe_pdf_text(old_pet.get('name') or (pet.name if pet else 'Desconocido'))),
+        ("Especie", safe_pdf_text(old_pet.get('species') or (pet.species if pet else ''))),
+        ("Raza", safe_pdf_text(old_pet.get('breed') or (pet.breed if pet else ''))),
     ]
-    if pet.owner_id:
+    if old_owner or (pet and pet.owner_id):
         patient_pairs += [
-            ("Dueño", safe_pdf_text(pet.owner.name)),
-            ("Teléfono", safe_pdf_text(pet.owner.phone)),
+            ("Dueño", safe_pdf_text(old_owner.get('name') or (pet.owner.name if pet else 'Desconocido'))),
+            ("Teléfono", safe_pdf_text(old_owner.get('phone') or (pet.owner.phone if pet else ''))),
         ]
     flow += info_card(st, theme, patient_pairs, columns=3)
 
@@ -901,7 +767,7 @@ def medical_record_pdf(request, pk):
 
     created_local = utc_to_local(org, record.created_at)
     filename = pdf_filename(
-        'consulta', record.id, pet.name,
+        'consulta', record.id, old_pet.get('name') or (pet.name if pet else 'paciente-historico'),
         created_local.date() if created_local else None,
     )
     response = HttpResponse(buffer.read(), content_type='application/pdf')

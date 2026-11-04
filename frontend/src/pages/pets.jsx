@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { getPets, getPet, getPetStats, createPet, updatePet, deletePet } from "../api/pets";
+import { getPets, getPet, getPetStats, getOwners, createPet, updatePet, deletePet, restorePet, archiveOwner, restoreOwner } from "../api/pets";
 import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
 import { getMedicalRecords } from "../api/medicalRecords";
@@ -180,7 +180,7 @@ const PetModal = ({ form, setForm, editing, onSubmit, onClose, formErrors }) => 
 );
 
 // ─── Pet Card ─────────────────────────────────────────────────────────────────
-const PetCard = ({ pet, onSelect, onEdit, onDelete }) => {
+const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, onArchiveOwner, canArchive, canArchiveOwner }) => {
     const age = calcAge(pet.birth_date);
     const ageGroup = getAgeGroup(pet.birth_date);
     const accent = speciesAccent(pet);
@@ -193,7 +193,7 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete }) => {
         <div
             className="card card-hover"
             style={{ cursor: "pointer", padding: "18px 20px" }}
-            onClick={onSelect}
+            onClick={pet.is_active ? onSelect : undefined}
         >
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "14px" }}>
@@ -258,13 +258,22 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete }) => {
 
             {/* Actions */}
             <div style={{ display: "flex", gap: "6px" }} onClick={e => e.stopPropagation()}>
-                <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => onEdit(pet)}>
-                    <Icon.Edit s={13} /> Editar
-                </button>
-                <button className="btn btn-danger btn-sm" onClick={() => onDelete(pet.public_id)}>
-                    <Icon.Trash s={13} />
-                </button>
+                {pet.is_active ? <>
+                    <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => onEdit(pet)}>
+                        <Icon.Edit s={13} /> Editar
+                    </button>
+                    {canArchive && <button className="btn btn-secondary btn-sm" onClick={() => onDelete(pet.public_id)}>
+                        Archivar
+                    </button>}
+                </> : canArchive && <button className="btn btn-secondary btn-sm" onClick={() => onRestore(pet.public_id)}>
+                    Restaurar
+                </button>}
             </div>
+            {pet.is_active && canArchiveOwner && !pet.owner?.is_generic && (
+                <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); onArchiveOwner(pet.owner.public_id); }}>
+                    Archivar cliente
+                </button>
+            )}
         </div>
     );
 };
@@ -276,6 +285,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
     // las reglas de hooks; se guarda contra pet nulo dentro del effect.
     const [vaccines, setVaccines] = useState([]);
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- limpiar el panel al deseleccionar mascota
         if (!pet?.public_id) { setVaccines([]); return; }
         let active = true;
         (async () => {
@@ -581,6 +591,11 @@ const Pets = () => {
     const [fetching, setFetching] = useState(false); // cambio de página/filtro
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(25);
+    const [showArchived, setShowArchived] = useState(false);
+    const [archiveSaving, setArchiveSaving] = useState(false);
+    const [archivedOwners, setArchivedOwners] = useState([]);
+    const [ownerPage, setOwnerPage] = useState(1);
+    const [ownerCount, setOwnerCount] = useState(0);
     const [reloadKey, setReloadKey] = useState(0);  // fuerza refetch tras mutación
 
     // Stats de TODA la clínica (no de la página) — alimentan los stat-cards.
@@ -619,6 +634,7 @@ const Pets = () => {
         const t = setTimeout(() => {
             setDebouncedSearch(search.trim());
             setPage(1);
+            setOwnerPage(1);
         }, 350);
         return () => clearTimeout(t);
     }, [search]);
@@ -628,6 +644,7 @@ const Pets = () => {
         if (!token) return;
         let cancelled = false;
         const params = { page, page_size: pageSize };
+        if (showArchived) params.archived = 'true';
         if (debouncedSearch) params.search = debouncedSearch;
         if (filterSpecies !== "all") params.species = filterSpecies;
         if (filterSex !== "all") params.sex = filterSex;
@@ -644,13 +661,26 @@ const Pets = () => {
             .catch(err => { if (!cancelled) toast.error(apiError(err, "No se pudieron cargar las mascotas")); })
             .finally(() => { if (!cancelled) { setLoading(false); setFetching(false); } });
         return () => { cancelled = true; };
-    }, [token, page, pageSize, debouncedSearch, filterSpecies, filterSex, filterAge, reloadKey]);
+    }, [token, page, pageSize, debouncedSearch, filterSpecies, filterSex, filterAge, showArchived, reloadKey]);
 
     const loadStats = () => {
         // Falla suave: si /stats/ no responde, los cards muestran 0 (no bloquea la lista).
         getPetStats().then(setStats).catch(() => {});
     };
     useEffect(() => { if (token) loadStats(); }, [token]);
+
+    useEffect(() => {
+        if (!token || !showArchived || !can('owner.destroy')) return;
+        let cancelled = false;
+        getOwners({ archived: 'true', page: ownerPage, page_size: 50,
+            ...(debouncedSearch ? { search: debouncedSearch } : {}) })
+            .then(data => { if (!cancelled) {
+                setArchivedOwners(toList(data));
+                setOwnerCount(typeof data?.count === 'number' ? data.count : toList(data).length);
+            } })
+            .catch(err => { if (!cancelled) toast.error(apiError(err, 'No se pudieron cargar los clientes archivados')); });
+        return () => { cancelled = true; };
+    }, [token, showArchived, ownerPage, debouncedSearch, reloadKey, can]);
 
     // Citas de la semana (solo conteo) vía status-breakdown — sin traer filas.
     useEffect(() => {
@@ -759,24 +789,75 @@ const Pets = () => {
     }, [token, searchParams]);
 
     const handleDelete = async (id) => {
+        if (archiveSaving) return;
         const ok = await confirm({
-            title: "Eliminar mascota",
-            message: "Se eliminará la mascota y todo su historial clínico. Esta acción no se puede deshacer.",
-            confirmText: "Eliminar",
-            dangerMode: true,
+            title: "Archivar mascota",
+            message: "Se ocultará de nuevas citas y ventas. El historial y los cobros se conservarán.",
+            confirmText: "Archivar",
         });
         if (!ok) return;
+        setArchiveSaving(true);
         try {
             await toast.promise(deletePet(token, id), {
-                loading: 'Eliminando...',
-                success: 'Mascota eliminada',
-                error: 'Error al eliminar la mascota'
+                loading: 'Archivando...',
+                success: 'Mascota archivada',
+                error: (err) => apiError(err, 'No se pudo archivar la mascota'),
             });
             if (selectedPet?.public_id === id) closePanel();
             reload();
         } catch {
             // Manejado por toast
+        } finally {
+            setArchiveSaving(false);
         }
+    };
+
+    const handleRestore = async (id) => {
+        if (archiveSaving) return;
+        setArchiveSaving(true);
+        try {
+            await toast.promise(restorePet(id), {
+                loading: 'Restaurando...', success: 'Mascota restaurada',
+                error: (err) => apiError(err, 'No se pudo restaurar la mascota'),
+            });
+            reload();
+        } catch {
+            // Manejado por toast
+        } finally {
+            setArchiveSaving(false);
+        }
+    };
+
+    const handleOwnerArchive = async (id) => {
+        if (archiveSaving) return;
+        const ok = await confirm({ title: 'Archivar cliente',
+            message: 'También se archivarán sus mascotas activas. Los cobros y documentos se conservarán.',
+            confirmText: 'Archivar cliente' });
+        if (!ok) return;
+        setArchiveSaving(true);
+        try {
+            await toast.promise(archiveOwner(id), {
+                loading: 'Archivando cliente...', success: 'Cliente y mascotas archivados',
+                error: err => apiError(err, 'No se pudo archivar el cliente'),
+            });
+            closePanel(); reload();
+        } catch {
+            // Manejado por toast
+        } finally { setArchiveSaving(false); }
+    };
+
+    const handleOwnerRestore = async (id) => {
+        if (archiveSaving) return;
+        setArchiveSaving(true);
+        try {
+            await toast.promise(restoreOwner(id), {
+                loading: 'Restaurando cliente...', success: 'Cliente restaurado; restaura sus mascotas individualmente',
+                error: err => apiError(err, 'No se pudo restaurar el cliente'),
+            });
+            reload();
+        } catch {
+            // Manejado por toast
+        } finally { setArchiveSaving(false); }
     };
 
     const handleClose = () => {
@@ -869,6 +950,10 @@ const Pets = () => {
 
             {/* Filter bar */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
+                {can('patient.destroy') && <button className="btn btn-secondary btn-sm"
+                    onClick={() => { setShowArchived(value => !value); setPage(1); setOwnerPage(1); }}>
+                    {showArchived ? 'Ver activas' : 'Ver archivadas'}
+                </button>}
                 {/* Search */}
                 <div className="searchBar" style={{ flex: "1 1 220px", maxWidth: "300px" }}>
                     <span className="search-icon" aria-hidden="true"><Icon.Search s={14} /></span>
@@ -1002,13 +1087,14 @@ const Pets = () => {
                 ) : (
                     <EmptyState
                         icon={Icon.PawPrint}
-                        title="Todavía no tienes pacientes"
-                        body="Agrega tus pacientes manualmente o importa tu archivo anterior."
+                        title={showArchived ? 'No hay mascotas archivadas' : 'Todavía no tienes pacientes'}
+                        body={showArchived ? 'Las mascotas archivadas aparecerán aquí para restaurarlas.' : 'Agrega tus pacientes manualmente o importa tu archivo anterior.'}
                         actions={[
+                            showArchived ? null :
                             can("import.create") && !user?.is_demo
                                 ? { label: "Importar Excel", onClick: () => navigate("/imports"), variant: "secondary" }
                                 : null,
-                            can("patient.create")
+                            !showArchived && can("patient.create")
                                 ? { label: "Agregar paciente", onClick: () => { setEditing(null); setForm(EMPTY_FORM); setShowModal(true); }, variant: "primary" }
                                 : null,
                         ]}
@@ -1017,6 +1103,19 @@ const Pets = () => {
             )}
 
             {/* Cards view */}
+            {showArchived && can('owner.destroy') && archivedOwners.length > 0 && (
+                <section aria-label="Clientes archivados" className="card">
+                    <h2>Clientes archivados</h2>
+                    <p>Restaurar un cliente no restaura sus mascotas.</p>
+                    {archivedOwners.map(owner => <div key={owner.public_id} className="table-footer">
+                        <span>{owner.name}</span>{' '}
+                        <button className="btn btn-secondary btn-sm" disabled={archiveSaving}
+                            onClick={() => handleOwnerRestore(owner.public_id)}>Restaurar cliente</button>
+                    </div>)}
+                    <Pagination page={ownerPage} count={ownerCount} pageSize={50}
+                        onPage={setOwnerPage} fetching={fetching} />
+                </section>
+            )}
             {view === "cards" && pets.length > 0 && (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(272px, 1fr))", gap: "14px" }}>
                     {pets.map(pet => (
@@ -1026,6 +1125,10 @@ const Pets = () => {
                             onSelect={() => openPanel(pet)}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
+                            onRestore={handleRestore}
+                            onArchiveOwner={handleOwnerArchive}
+                            canArchive={can('patient.destroy')}
+                            canArchiveOwner={can('owner.destroy')}
                         />
                     ))}
                 </div>
@@ -1048,7 +1151,7 @@ const Pets = () => {
                             {pets.map((pet) => {
                                 const accent = speciesAccent(pet);
                                 return (
-                                    <tr key={pet.public_id} style={{ cursor: "pointer" }} onClick={() => openPanel(pet)}>
+                                    <tr key={pet.public_id} style={{ cursor: pet.is_active ? "pointer" : "default" }} onClick={pet.is_active ? () => openPanel(pet) : undefined}>
                                         <td>
                                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                                 <div style={{
@@ -1080,12 +1183,12 @@ const Pets = () => {
                                         </td>
                                         <td onClick={e => e.stopPropagation()}>
                                             <div style={{ display: "flex", gap: "6px" }}>
-                                                <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(pet)}>
-                                                    <Icon.Edit s={13} /> Editar
-                                                </button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(pet.public_id)}>
-                                                    <Icon.Trash s={13} />
-                                                </button>
+                                                {pet.is_active ? <>
+                                                    <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(pet)}>
+                                                        <Icon.Edit s={13} /> Editar
+                                                    </button>
+                                                    {can('patient.destroy') && <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(pet.public_id)}>Archivar</button>}
+                                                </> : can('patient.destroy') && <button className="btn btn-secondary btn-sm" onClick={() => handleRestore(pet.public_id)}>Restaurar</button>}
                                             </div>
                                         </td>
                                     </tr>

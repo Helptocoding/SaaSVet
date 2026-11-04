@@ -1,5 +1,9 @@
 # Modulo: Importador CSV/Excel
 
+> Orden 4 en curso: importación devuelve `demo_account_restricted` para el 403 del guard demo. El reporte paginado tiene implementación y pruebas parciales; ver [expediente](../remediaciones/orden-4/README.md).
+
+`GET /api/imports/<public_id>/conflicts/` acepta `page_size` 1–100 (50 por defecto), `version` y `cursor` firmado. Responde `version`, `total`, `available`, `complete`, `results`, `next_cursor`; un cursor requiere versión. Un reporte sustituido devuelve 409 `conflict_report_changed`; cursor inválido devuelve 400; job de otra clínica devuelve 404. Resultados legacy se convierten desde su JSON persistido bajo lock sin consultar el catálogo; `complete=false` indica detalles históricos faltantes. `validate` guarda reporte/metadatos del job pero no escribe datos de dominio.
+
 > **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo · ADR p43 (decisión de arquitectura).
 
 ## Objetivo
@@ -14,6 +18,14 @@ Boundary clave: el importador **escribe `Owner`/`Pet` vía `.save()` directo**, 
 pasa por los serializers manuales (`OwnerSerializer`/`PetSerializer`). Es la razón de
 `Owner.phone = blank=True`, `Pet.species = blank=True` y de los campos `legacy_id` /
 `extra_data` en `patients` (datos históricos ≠ datos nuevos). Ver `modules/patients.md`.
+
+**Orden 2:** el commit de `owner_pet` toma lock compartido de Organization durante
+la transacción del job y revalida cada Owner bajo lock antes de insertar Pet. Una
+organización desactivada devuelve error y no crea sujetos; archive/deactivate
+espera a terminar el commit o el commit encuentra el estado inactivo y no
+reutiliza una validación obsoleta. `legacy_id`/`extra_data` no forman parte del
+snapshot mínimo de documentos: un sujeto importado con esos metadatos no es
+elegible para la API física excepcional hasta que exista conservación específica.
 
 ## Modelo: ImportJob
 

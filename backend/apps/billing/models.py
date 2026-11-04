@@ -31,6 +31,7 @@ class Service(PublicIdMixin, OrganizationalModel):
 
 
 class Invoice(PublicIdMixin, OrganizationalModel):
+    subject_snapshot = models.JSONField(default=dict, blank=True, editable=False)
     STATUS_CHOICES = (
         ('posted', 'Emitida'),
         ('paid', 'Pagada'),
@@ -68,12 +69,12 @@ class Invoice(PublicIdMixin, OrganizationalModel):
     )
     owner = models.ForeignKey(
         'patients.Owner',
-        on_delete=models.PROTECT,
-        related_name='invoices'
+        on_delete=models.SET_NULL,
+        related_name='invoices', null=True, blank=True,
     )
     pet = models.ForeignKey(
         'patients.Pet',
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name='invoices',
         null=True,
         blank=True,
@@ -147,6 +148,8 @@ class Invoice(PublicIdMixin, OrganizationalModel):
         org = self.organization_id
         if self._state.adding and not self.checkout_id:
             raise ValidationError('Toda factura nueva debe emitirse desde un Checkout.')
+        if self._state.adding and not self.owner_id:
+            raise ValidationError('Toda factura nueva requiere un cliente.')
         if org and self.owner_id and self.owner.organization_id != org:
             raise ValidationError("El propietario no pertenece a la misma organizacion que la factura.")
         if org and self.pet_id and self.pet.organization_id != org:
@@ -161,6 +164,10 @@ class Invoice(PublicIdMixin, OrganizationalModel):
         # documento financiero emitido y debe nacer con su anchor de emisión.
         if self.posted_at is None:
             self.posted_at = timezone.now()
+        if self._state.adding and self.owner_id and not self.subject_snapshot:
+            from apps.core.subject_history import snapshot
+            self.subject_snapshot = snapshot(organization=self.organization,
+                                             owner=self.owner, pet=self.pet if self.pet_id else None)
         super().save(*args, **kwargs)
 
     def recalculate_totals(self):
@@ -395,6 +402,7 @@ class ClinicalChargeSnapshot(OrganizationalModel):
 
 
 class Checkout(PublicIdMixin, OrganizationalModel):
+    subject_snapshot = models.JSONField(default=dict, blank=True, editable=False)
     ORIGIN_CHOICES = (('consultation', 'Consulta'), ('direct_sale', 'Venta directa'))
     KIND_CHOICES = (('primary_consultation', 'Consulta primaria'), ('prescription_supplement', 'Suplemento'), ('direct_sale', 'Venta directa'), ('replacement', 'Reemplazo'))
     LIFECYCLE_CHOICES = (('open', 'Abierto'), ('completed', 'Completado'), ('abandoned', 'Abandonado'))
@@ -404,8 +412,10 @@ class Checkout(PublicIdMixin, OrganizationalModel):
     medical_record = models.ForeignKey('medical_records.MedicalRecord', on_delete=models.PROTECT, null=True, blank=True, related_name='checkouts')
     replaces_invoice = models.OneToOneField('billing.Invoice', on_delete=models.PROTECT, null=True, blank=True, related_name='replacement_checkout')
     owner = models.ForeignKey('users.User', on_delete=models.PROTECT, related_name='owned_checkouts', null=True, blank=True)
-    customer = models.ForeignKey('patients.Owner', on_delete=models.PROTECT, related_name='checkouts')
-    pet = models.ForeignKey('patients.Pet', on_delete=models.PROTECT, related_name='checkouts', null=True, blank=True)
+    customer = models.ForeignKey('patients.Owner', on_delete=models.SET_NULL,
+                                 related_name='checkouts', null=True, blank=True)
+    pet = models.ForeignKey('patients.Pet', on_delete=models.SET_NULL,
+                            related_name='checkouts', null=True, blank=True)
     lifecycle = models.CharField(max_length=20, choices=LIFECYCLE_CHOICES, default='open')
     completion_kind = models.CharField(max_length=30, choices=COMPLETION_CHOICES, null=True, blank=True)
     version = models.PositiveIntegerField(default=1)
@@ -421,6 +431,13 @@ class Checkout(PublicIdMixin, OrganizationalModel):
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     notes = models.TextField(blank=True)
 
+    def save(self, *args, **kwargs):
+        if self._state.adding and self.customer_id and not self.subject_snapshot:
+            from apps.core.subject_history import snapshot
+            self.subject_snapshot = snapshot(organization=self.organization,
+                                             owner=self.customer, pet=self.pet if self.pet_id else None)
+        super().save(*args, **kwargs)
+
     def recalculate_totals(self):
         raw_subtotal = (
             CheckoutItem.all_objects.filter(checkout=self, is_active=True)
@@ -433,6 +450,8 @@ class Checkout(PublicIdMixin, OrganizationalModel):
         )
 
     def clean(self):
+        if self._state.adding and not self.customer_id:
+            raise ValidationError('Un Checkout nuevo requiere cliente.')
         if self.customer_id and self.customer.organization_id != self.organization_id:
             raise ValidationError('El cliente no pertenece a la organización del Checkout.')
         if self.pet_id and self.pet.organization_id != self.organization_id:
@@ -448,6 +467,7 @@ class Checkout(PublicIdMixin, OrganizationalModel):
 
     class Meta:
         constraints = [
+            models.UniqueConstraint(fields=['id', 'organization'], name='checkout_id_org_ref'),
             models.UniqueConstraint(fields=('organization', 'medical_record', 'kind'), condition=models.Q(kind='primary_consultation', is_active=True), name='billing_checkout_one_primary_per_record'),
             models.CheckConstraint(condition=(~models.Q(kind='replacement') | models.Q(replaces_invoice__isnull=False)), name='billing_replacement_has_source_invoice'),
         ]
@@ -1078,7 +1098,9 @@ class InvoiceItem(OrganizationalModel):
 
 
 class InvoiceAuditLog(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='audit_logs')
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, related_name='audit_logs')
+    # UUID público del documento; permanece estable aunque cambien los lectores.
+    invoice_public_id = models.UUIDField(editable=False)
     previous_status = models.CharField(max_length=20, blank=True)
     new_status = models.CharField(max_length=20)
     changed_by = models.ForeignKey(
@@ -1086,6 +1108,11 @@ class InvoiceAuditLog(models.Model):
     )
     notes = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self._state.adding and self.invoice_id:
+            self.invoice_public_id = self.invoice.public_id
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ['created_at']

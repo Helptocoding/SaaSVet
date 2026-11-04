@@ -8,6 +8,16 @@ recortado ('' si vacía). Filas completamente vacías se descartan.
 Caps duros (sin workers — un archivo grande NO debe bloquear el worker gunicorn):
     MAX_FILE_BYTES = 5 MB · MAX_ROWS = 2000 · MAX_COLUMNS = 50.
 Excederlos ⇒ ImportParseError con mensaje accionable (no truncado silencioso).
+
+Los topes se aplican MIENTRAS SE LEE, no después: `_finalize` consume un
+iterable perezoso y corta en la fila MAX_ROWS + 1 (ver su docstring). Hasta la
+auditoría run-1 ambos parsers materializaban el archivo completo primero, así
+que el único control efectivo era MAX_FILE_BYTES y esta nota describía una
+defensa que el código no tenía.
+
+Lo que este módulo NO acota: la tabla de cadenas compartidas de un .xlsx, que
+openpyxl carga al abrir el libro. Queda acotada por MAX_FILE_BYTES sobre el
+archivo comprimido, no por MAX_ROWS.
 """
 import csv
 import datetime
@@ -39,7 +49,19 @@ def _cell_to_str(value):
 
 
 def _finalize(columns, raw_rows):
-    """Normaliza ancho, descarta filas vacías, aplica caps."""
+    """Normaliza ancho, descarta filas vacías, aplica caps.
+
+    `raw_rows` es un ITERABLE PEREZOSO, y eso es parte del contrato de
+    seguridad, no un detalle (auditoría run-1,
+    `imports/parsers/row-cap-applied-after-full-materialization`): antes los
+    dos parsers materializaban el archivo completo ANTES de llamar aquí, de
+    modo que `MAX_ROWS` nunca llegaba a dispararse y el tope que el módulo
+    declara no era el que imponía. Al consumirse perezosamente, el `raise` de
+    abajo corta la lectura en la fila MAX_ROWS + 1 y el resto del archivo no
+    se convierte nunca en objetos de Python.
+
+    Quien llame con una lista deshace esa garantía sin que nada falle.
+    """
     columns = [c.strip() for c in columns]
     if not columns or all(c == '' for c in columns):
         raise ImportParseError("El archivo no tiene encabezados de columna.")
@@ -94,10 +116,14 @@ def _parse_csv(data: bytes):
             delimiter = ';'
 
     reader = csv.reader(io.StringIO(text), delimiter=delimiter)
-    all_rows = [row for row in reader]
-    if not all_rows:
+    # El encabezado se consume suelto y el resto se pasa PEREZOSAMENTE: el
+    # tope de filas corta la lectura en vez de aplicarse después (ver
+    # _finalize). `csv.reader` ya es un iterador; materializarlo era el
+    # defecto.
+    header = next(reader, None)
+    if header is None:
         raise ImportParseError("El archivo CSV está vacío.")
-    return _finalize(all_rows[0], all_rows[1:])
+    return _finalize(header, reader)
 
 
 def _parse_xlsx(data: bytes):
@@ -124,9 +150,15 @@ def _parse_xlsx(data: bytes):
     except StopIteration:
         raise ImportParseError("El archivo de Excel está vacío.")
     columns = [_cell_to_str(c) for c in header]
-    raw_rows = list(rows_iter)
-    wb.close()
-    return _finalize(columns, raw_rows)
+    # `rows_iter` se pasa SIN materializar: list() anulaba el read_only=True de
+    # arriba y convertía el archivo entero en objetos antes de que el tope de
+    # filas pudiera actuar. El cierre va en `finally` porque el lector
+    # perezoso de openpyxl deja de servir filas una vez cerrado el libro, así
+    # que ahora hay que cerrarlo DESPUÉS de consumirlo.
+    try:
+        return _finalize(columns, rows_iter)
+    finally:
+        wb.close()
 
 
 def parse_file(uploaded_file):

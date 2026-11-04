@@ -7,6 +7,7 @@ from apps.core.models import OrganizationalModel, PublicIdMixin
 
 
 class MedicalRecord(PublicIdMixin, OrganizationalModel):
+    subject_snapshot = models.JSONField(default=dict, blank=True, editable=False)
     class Status(models.TextChoices):
         OPEN = 'open', 'Abierta'
         CLOSED = 'closed', 'Cerrada'
@@ -17,7 +18,8 @@ class MedicalRecord(PublicIdMixin, OrganizationalModel):
         SURGERY   = 'surgery',   'Cirugía'
         EMERGENCY = 'emergency', 'Emergencia'
 
-    pet = models.ForeignKey(Pet, on_delete=models.PROTECT, related_name='medical_records')
+    pet = models.ForeignKey(Pet, on_delete=models.SET_NULL, null=True, blank=True,
+                            related_name='medical_records')
     veterinarian = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='medical_records', null=True, blank=True)
     appointment = models.ForeignKey("appointments.Appointment", on_delete=models.SET_NULL, null=True, blank=True, related_name='medical_record')
     # Cadena de episodio (A3): un encuentro puede originarse de otro
@@ -66,10 +68,22 @@ class MedicalRecord(PublicIdMixin, OrganizationalModel):
         default='service', editable=False,
     )
     closed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='closed_medical_records')
+    vet_public_id_at_close = models.UUIDField(null=True, blank=True, editable=False)
+    vet_name_at_close = models.CharField(max_length=255, blank=True, default='', editable=False)
+    vet_specialty_at_close = models.CharField(max_length=100, blank=True, default='', editable=False)
+    vet_snapshot_source = models.CharField(
+        max_length=16, default='unknown', editable=False,
+        choices=(('captured', 'Capturado al cierre'),
+                 ('reconstructed', 'Reconstruido desde usuario actual'),
+                 ('unknown', 'Sin fuente')),
+    )
+    vet_snapshot_recorded_at = models.DateTimeField(null=True, blank=True, editable=False)
     # created_at, updated_at heredados de OrganizationalModel
 
     def clean(self):
         org = self.organization_id
+        if self._state.adding and not self.pet_id:
+            raise ValidationError('Una consulta nueva requiere mascota.')
         if org and self.pet_id and self.pet.organization_id != org:
             raise ValidationError("La mascota no pertenece a la misma organizacion que el registro medico.")
         if org and self.veterinarian_id and self.veterinarian.organization_id != org:
@@ -88,6 +102,9 @@ class MedicalRecord(PublicIdMixin, OrganizationalModel):
                 "MedicalRecord no puede quedar 'closed' sin closed_at. "
                 "Usa medical_records/views.py::close_medical_record."
             )
+        if self._state.adding and self.pet_id and not self.subject_snapshot:
+            from apps.core.subject_history import snapshot
+            self.subject_snapshot = snapshot(organization=self.organization, pet=self.pet)
         super().save(*args, **kwargs)
 
     @property
@@ -122,6 +139,7 @@ class MedicalRecord(PublicIdMixin, OrganizationalModel):
                          name="idx_mr_org_status_created"),
         ]
         constraints = [
+            models.UniqueConstraint(fields=['id', 'organization'], name='medicalrecord_id_org_ref'),
             # Event-authority invariant (analytics): si status='closed',
             # closed_at NO puede ser NULL. Bloquea bypasses tipo
             # `mr.status='closed'; mr.save()` desde shell o queryset.update().
@@ -406,7 +424,7 @@ class VitalSigns(OrganizationalModel):
     en importaciones o carga tardía de datos.
     """
     medical_record   = models.ForeignKey(
-        MedicalRecord, on_delete=models.CASCADE, related_name='vital_signs'
+        MedicalRecord, on_delete=models.PROTECT, related_name='vital_signs'
     )
     weight           = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     temperature      = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
@@ -437,7 +455,7 @@ class MedicalRecordService(OrganizationalModel):
     """
     medical_record = models.ForeignKey(
         MedicalRecord,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='services_used',
     )
     service = models.ForeignKey(

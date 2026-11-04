@@ -11,6 +11,8 @@ Este documento describe exclusivamente el runtime actual. Los documentos fechado
 que describen `Invoice draft → confirmed → paid/cancelled` son evidencia histórica,
 no contratos ejecutables.
 
+**Orden 2 (28-10-2026):** Invoice nunca es objetivo físico: `InvoiceAuditLog.invoice` PROTECT y UUID de documento estable. `Invoice.owner/.pet` y `Checkout.customer/.pet` permiten separación **solo** por la API física de plataforma si se conserva `subject_snapshot` v1, documento settled y sin deuda; el PDF, detalle y filtros leen nombre/UUID históricos sin ofrecer un selector vivo. `Invoice.clean()` sigue exigiendo Checkout y cliente al crear; claves compuestas `(id, organization_id)` más FKs relacionales y triggers PostgreSQL de `billing.0038/.0041` cubren INSERT, UPDATE y cambio de padres aun con bulk/raw SQL. El Checkout previo a archivo mantiene su obligación y la Invoice posted existente se puede pagar después de archivar. El borrado normal de Invoice continúa bloqueado.
+
 ## 1. Responsabilidad y límites
 
 Billing separa cuatro hechos con ciclos de vida distintos:

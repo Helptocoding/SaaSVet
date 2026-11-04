@@ -2,8 +2,13 @@
 Tests de cierre de consultas médicas y bloqueo cuando status=closed.
 """
 import datetime
+from io import BytesIO
+from importlib import import_module
 
+from django.apps import apps
 from django.utils import timezone
+from django.db.models.deletion import ProtectedError
+from django.db import transaction
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -11,8 +16,8 @@ from apps.appointments.models import Appointment, AppointmentStatusChange
 from apps.billing.models import Service
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
-from apps.inventory.models import Presentation, Product
-from apps.medical_records.models import MedicalRecord
+from apps.inventory.models import Presentation, Product, StockMovement
+from apps.medical_records.models import MedicalRecord, VitalSigns
 from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
 from apps.users.models import User
@@ -82,6 +87,86 @@ class CloseMedicalRecordTests(APITestCase):
         self.assertEqual(mr.status, MedicalRecord.Status.CLOSED)
         self.assertIsNotNone(mr.closed_at)
         self.assertEqual(mr.closed_by, self.vet_a)
+
+    def test_close_captures_vet_identity_once_even_after_rename_and_replay(self):
+        self.vet_a.first_name = 'Eva'
+        self.vet_a.last_name = 'Original'
+        self.vet_a.specialty = 'Cirugía'
+        self.vet_a.save(update_fields=['first_name', 'last_name', 'specialty'])
+        mr = self._make_record()
+        self.client.force_authenticate(self.vet_a)
+        first = self.client.post(self._close_url(mr.pk))
+        self.assertEqual(first.status_code, 200)
+        mr.refresh_from_db()
+        recorded_at = mr.vet_snapshot_recorded_at
+        self.assertEqual(mr.vet_snapshot_source, 'captured')
+        self.assertEqual(mr.vet_public_id_at_close, self.vet_a.public_id)
+        self.vet_a.last_name = 'Nuevo'
+        self.vet_a.save(update_fields=['last_name'])
+        replay = self.client.post(self._close_url(mr.pk))
+        self.assertEqual(replay.status_code, 200)
+        self.assertEqual(replay.data['veterinarian_name'], 'Eva Original')
+        from pypdf import PdfReader
+        pdf = self.client.get(f'/api/medical-records/{mr.public_id}/pdf/')
+        self.assertEqual(pdf.status_code, 200)
+        text = '\n'.join(page.extract_text() for page in PdfReader(BytesIO(pdf.content)).pages)
+        self.assertIn('Eva Original', text)
+        self.assertNotIn('Eva Nuevo', text)
+        mr.refresh_from_db()
+        self.assertEqual(mr.vet_snapshot_recorded_at, recorded_at)
+
+    def test_vitals_protect_record_even_on_instance_delete(self):
+        mr = self._make_record()
+        VitalSigns.objects.create(medical_record=mr, weight='4.50')
+        with self.assertRaises(ProtectedError):
+            mr.delete()
+        self.assertTrue(MedicalRecord.all_objects.filter(pk=mr.pk).exists())
+
+    def test_closed_record_without_child_still_cannot_be_collected(self):
+        mr = self._make_closed()
+        with self.assertRaises(ProtectedError), transaction.atomic():
+            mr.delete()
+        with self.assertRaises(ProtectedError), transaction.atomic():
+            MedicalRecord.all_objects.filter(pk=mr.pk).delete()
+        self.assertTrue(MedicalRecord.all_objects.filter(pk=mr.pk).exists())
+
+    def test_historical_stock_movement_blocks_record_even_after_active_line_gone(self):
+        mr = self._make_record()
+        product = Product.objects.create(organization=self.org_a, name='Traza', internal_code='TRACE-1')
+        presentation = Presentation.objects.create(organization=self.org_a, product=product,
+            name='Pieza', base_unit='unit', sale_price='10')
+        movement = StockMovement.objects.create(organization=self.org_a, presentation=presentation,
+            product=product, medical_record=mr, movement_type='out', quantity='1')
+        with self.assertRaises(ProtectedError), transaction.atomic():
+            mr.delete()
+        movement.refresh_from_db()
+        self.assertEqual(movement.medical_record_id, mr.pk)
+        self.assertTrue(MedicalRecord.all_objects.filter(pk=mr.pk).exists())
+
+    def test_reconstruction_distinguishes_known_unknown_and_never_rewrites_anchor(self):
+        known = self._make_closed()
+        missing = self._make_closed()
+        MedicalRecord.all_objects.filter(pk=missing.pk).update(veterinarian=None)
+        self.vet_a.first_name = 'Nombre actual'
+        self.vet_a.last_name = 'Recuperable'
+        self.vet_a.save(update_fields=['first_name', 'last_name'])
+        original_close = known.closed_at
+        backfill = import_module(
+            'apps.medical_records.migrations.0026_vet_close_snapshot'
+        ).reconstruct_known_vets
+        backfill(apps, None)
+        known.refresh_from_db()
+        missing.refresh_from_db()
+        self.assertEqual(known.vet_snapshot_source, 'reconstructed')
+        self.assertEqual(known.vet_name_at_close, 'Nombre actual Recuperable')
+        self.assertEqual(known.closed_at, original_close)
+        self.assertGreaterEqual(known.vet_snapshot_recorded_at, original_close)
+        self.assertEqual(missing.vet_snapshot_source, 'unknown')
+        self.assertIsNone(missing.vet_snapshot_recorded_at)
+        stamp = known.vet_snapshot_recorded_at
+        backfill(apps, None)
+        known.refresh_from_db()
+        self.assertEqual(known.vet_snapshot_recorded_at, stamp)
 
     def test_close_already_closed_is_idempotent_200(self):
         mr = self._make_closed()

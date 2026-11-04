@@ -136,7 +136,8 @@ class PhoneKeyDerivationTests(OwnerPhoneIdentityBase):
                 organization=self.org, name="Ana", phone=raw,
             )
             self.assertEqual(owner.phone_normalized, PHONE, raw)
-            owner.delete()
+            # El borrado físico cotidiano ya no es un cleanup disponible;
+            # el TestCase revierte los owners sintéticos al terminar.
 
     def test_key_is_null_without_ten_digits(self):
         owner = Owner.objects.create(organization=self.org, name="Sin tel", phone='')

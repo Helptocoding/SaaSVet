@@ -726,10 +726,16 @@ class InvoiceListCreateView(BillingOrganizationMixin, generics.ListAPIView):
         paid_to = parse_date(self.request.query_params.get('paid_to', ''))
 
         if owner_lookup:
-            # Día 6 Fase 3: resolver Owner por public_id antes del filtro
+            from uuid import UUID
             from apps.patients.models import Owner
-            owner = resolve_public_id(Owner.objects.for_organization(org), owner_lookup)
-            queryset = queryset.filter(owner=owner)
+            from django.db.models import Q
+            try:
+                owner_uuid = str(UUID(str(owner_lookup)))
+            except (ValueError, TypeError):
+                owner_uuid = str(resolve_public_id(
+                    Owner.all_objects.filter(organization=org), owner_lookup).public_id)
+            queryset = queryset.filter(Q(owner__public_id=owner_uuid) |
+                                       Q(subject_snapshot__owner__uuid=owner_uuid))
         # pet_id removed — no longer exposed as standalone param
         if invoice_status:
             if invoice_status not in VALID_INVOICE_STATUSES:
@@ -979,16 +985,19 @@ def invoice_pdf(request, pk):
     flow += title_block(st, title=f"Cobro #{invoice.id}", meta_lines=meta_lines)
 
     flow += section(st, theme, "Cliente")
+    from apps.core.subject_history import identity
+    old_owner = identity(invoice, 'owner')
+    old_pet = identity(invoice, 'pet')
     client_pairs = [
-        ("Dueño", safe_pdf_text(invoice.owner.name) if invoice.owner_id else ''),
-        ("Teléfono", safe_pdf_text(invoice.owner.phone) if invoice.owner_id else ''),
+        ("Dueño", safe_pdf_text(old_owner.get('name') or (invoice.owner.name if invoice.owner_id else 'Desconocido'))),
+        ("Teléfono", safe_pdf_text(old_owner.get('phone') or (invoice.owner.phone if invoice.owner_id else ''))),
     ]
-    if invoice.pet_id:
-        pet = invoice.pet
+    if old_pet or invoice.pet_id:
+        pet = invoice.pet if invoice.pet_id else None
         client_pairs += [
-            ("Mascota", safe_pdf_text(pet.name)),
-            ("Especie", safe_pdf_text(pet.species)),
-            ("Raza", safe_pdf_text(pet.breed or '')),
+            ("Mascota", safe_pdf_text(old_pet.get('name') or (pet.name if pet else 'Desconocido'))),
+            ("Especie", safe_pdf_text(old_pet.get('species') or (pet.species if pet else ''))),
+            ("Raza", safe_pdf_text(old_pet.get('breed') or (pet.breed if pet else ''))),
         ]
     flow += info_card(st, theme, client_pairs, columns=3)
 
@@ -1046,7 +1055,7 @@ def invoice_pdf(request, pk):
     created_local = utc_to_local(org, invoice.created_at)
     filename = pdf_filename(
         'factura', invoice.id,
-        invoice.pet.name if invoice.pet_id else 'sin-mascota',
+        old_pet.get('name') or (invoice.pet.name if invoice.pet_id else 'sin-mascota'),
         created_local.date() if created_local else None,
     )
     response = HttpResponse(buffer.read(), content_type='application/pdf')

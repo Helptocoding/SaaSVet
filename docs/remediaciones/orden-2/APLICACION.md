@@ -1,0 +1,11 @@
+# Guía futura de aplicación y reversión
+
+Esta guía **no autoriza** aplicar migraciones a la base habitual ni tocar VPS. En la presente ejecución solo se migraron y probaron bases descartables aisladas. El cierre del orden 1 permanece como está.
+
+1. Antes de cualquier aplicación futura, elegir ambiente y base explícitos, revisar el diff/plan de migraciones y el estado de datos (FKs cruzadas, respaldos, snapshots faltantes); no heredar `.env` ni DATABASE_URL habitual. Si hay datos inconsistentes, clasificar y preservar: no inventar padres ni usar `--fake`/reset para pasar constraints.
+2. Desplegar esquema compatible y lectores antes de habilitar separación física: PROTECT y `InvoiceAuditLog.invoice_public_id` (`billing.0036`, obligatorio en `.0042`), vet snapshot (`medical_records.0026`, después de `users.0007`), snapshots clínicos y financieros (`medical_records.0028`, `prescriptions.0008`, `billing.0039`), claves/FKs tenant (`billing.0037/.0038`) y nullabilidad posterior (`medical_records.0029`, `prescriptions.0009`, `billing.0040`). `billing.0041` verifica inmutabilidad. Las migraciones existentes de otros órdenes no se editaron.
+3. Repetir gates de `check`, drift, `audit_billing_schema`, `audit_anchor_integrity`, `audit_payment_ledger_integrity`, `audit_stock_integrity` en el destino realmente aprobado; ejecutar pruebas de factura/receta/cita/worker. Una organización provisionada suele tener Settings, roles y genéricos y no es target físico vacío.
+4. El rollback de `billing.0041` (trigger de snapshot) se probó en base aislada sin separaciones físicas. Revertir `billing.0040`, `medical_records.0029` o `prescriptions.0009` para volver a exigir FKs no nulas **debe bloquearse si ya hay referencias separadas**. Ni revertir migración ni revertir código recupera una fila borrada físicamente; se requiere plan de restauración aprobado con documento histórico, no creación de genéricos.
+5. Conservar recibos de API física fuera del FK del target, nunca registrar tokens de confirmación, cuerpos clínicos, dumps o PII adicional en el expediente. Una confirmación caduca en 300 s y no autoriza repetir operación con otra key.
+
+**Sin despliegue, SSH, proveedor, cambios de VPS, uso de base habitual, commit, push ni PR en este encargo.**

@@ -11,16 +11,26 @@ Cobertura por FK:
 - VaccineRecord.pet        — borrar Pet con vaccines PROTECTed
 - Prescription.pet         — borrar Pet con prescriptions PROTECTed
 
-Smoke positivo: borrar parent sin children debe funcionar (no falsos
-positivos por bug en handler).
+Smoke positivo: un parent SIN children debe poder borrarse, para que un bug en
+el handler que convirtiera todo en 409 no pasara desapercibido entre los tests
+negativos de arriba.
+
+Ese smoke cambió de vía, no de propósito: desde que el borrado físico de
+Owner/Pet/Organization es exclusivo de la API de plataforma
+(`apps.platform.deletion_guards`), un `.delete()` directo se rechaza siempre. La
+propiedad se prueba ahora por las dos caras — el ORM ordinario RECHAZA y la vía
+sancionada PERMITE cuando no hay children — más que la autorización cubre
+exactamente una fila y no abre la veda para sus vecinas.
 """
 from decimal import Decimal
 
+from django.db import transaction
 from django.db.models import ProtectedError
 from django.test import TestCase
 
 from apps.medical_records.models import MedicalRecord, VaccineRecord
 from apps.organizations.models import Organization
+from apps.platform.deletion_guards import authorize_physical_deletion
 from apps.patients.models import Owner, Pet
 from apps.prescriptions.models import Prescription, PrescriptionItem
 from apps.users.models import User
@@ -75,18 +85,67 @@ class CascadeLockdownTests(TestCase):
 
     # --- Smoke positivos (no falsos positivos) ---
 
-    def test_delete_owner_without_pets_succeeds(self):
+    def _refuses_delete(self, obj):
+        """Afirma que el ORM ordinario rechaza borrar `obj`, y deja seguir.
+
+        El atomic propio no es decoración: `Collector.delete()` abre el suyo con
+        `savepoint=False`, así que un ProtectedError lanzado desde `pre_delete`
+        marca la transacción del test y cualquier consulta posterior muere con
+        TransactionManagementError. Este envoltorio aporta el savepoint que
+        falta, y por eso se puede comprobar después que la fila sobrevivió —
+        que es la mitad que de verdad importa de la aserción.
+        """
+        with self.assertRaises(ProtectedError):
+            with transaction.atomic():
+                obj.delete()
+
+    # El smoke positivo sigue siendo necesario —un handler con un bug que
+    # convirtiera TODO en 409 pasaría los tests negativos de arriba— pero ya no
+    # se expresa con un `.delete()` directo: el borrado físico de Owner/Pet pasó
+    # a ser exclusivo de la API de plataforma
+    # (`apps.platform.deletion_guards`). Así que la propiedad se prueba por las
+    # dos caras: el ORM ordinario lo RECHAZA, y la vía sancionada lo PERMITE
+    # cuando no hay children que proteger.
+
+    def test_ordinary_orm_delete_of_a_childless_owner_is_refused(self):
         org = Organization.objects.create(name="Org Clean", timezone="UTC")
         owner = Owner.objects.create(name="Own Empty", phone="555", organization=org)
-        owner.delete()
+        self._refuses_delete(owner)
+        self.assertTrue(Owner.objects.filter(pk=owner.pk).exists())
+
+    def test_sanctioned_delete_of_a_childless_owner_succeeds(self):
+        """Éste es el smoke anti-falso-positivo: sin children, se puede borrar."""
+        org = Organization.objects.create(name="Org Clean", timezone="UTC")
+        owner = Owner.objects.create(name="Own Empty", phone="555", organization=org)
+        with authorize_physical_deletion(owner):
+            owner.delete()
         self.assertFalse(Owner.objects.filter(pk=owner.pk).exists())
 
-    def test_delete_pet_without_records_succeeds(self):
+    def test_ordinary_orm_delete_of_a_childless_pet_is_refused(self):
         org = Organization.objects.create(name="Org Clean P", timezone="UTC")
         owner = Owner.objects.create(name="Own Empty P", phone="555", organization=org)
         pet = Pet.objects.create(name="P Empty", species="dog", owner=owner, organization=org)
-        pet.delete()
+        self._refuses_delete(pet)
+        self.assertTrue(Pet.objects.filter(pk=pet.pk).exists())
+
+    def test_sanctioned_delete_of_a_childless_pet_succeeds(self):
+        org = Organization.objects.create(name="Org Clean P", timezone="UTC")
+        owner = Owner.objects.create(name="Own Empty P", phone="555", organization=org)
+        pet = Pet.objects.create(name="P Empty", species="dog", owner=owner, organization=org)
+        with authorize_physical_deletion(pet):
+            pet.delete()
         self.assertFalse(Pet.objects.filter(pk=pet.pk).exists())
+
+    def test_authorization_covers_exactly_one_row(self):
+        """La autorización es por fila: no abre la veda para sus vecinos."""
+        org = Organization.objects.create(name="Org Clean N", timezone="UTC")
+        a = Owner.objects.create(name="Own A", phone="555", organization=org)
+        b = Owner.objects.create(name="Own B", phone="556", organization=org)
+        with authorize_physical_deletion(a):
+            self._refuses_delete(b)
+            a.delete()
+        self.assertFalse(Owner.objects.filter(pk=a.pk).exists())
+        self.assertTrue(Owner.objects.filter(pk=b.pk).exists())
 
 
 class ChildDocumentDeleteDisabledTests(TestCase):

@@ -5,6 +5,7 @@ from apps.core.datetime_utils import org_today_local
 from django.db.models import Count, Q
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -14,6 +15,7 @@ from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_publi
 
 from .models import Pet, Owner
 from .serializers import PetSerializer, OwnerSerializer
+from .archive import change_archive_state
 
 # Mapeo grupo de especie → patrón regex (datos sucios de importación: el catálogo
 # guarda 'canino'/'felino', pero archivos viejos traen 'Perro'/'PERRO'/'dog').
@@ -56,7 +58,15 @@ class PetViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
         # select_related('owner') elimina el N+1: PetSerializer anida
         # OwnerSerializer → sin esto, serializar N mascotas = 1 + N queries.
         # for_organization() SIEMPRE primero (invariante tenant), luego el join.
-        qs = Pet.objects.for_organization(org).select_related("owner")
+        archived = (self.action in ('restore', 'archive') or
+                    self.action == 'list' and self.request.query_params.get('archived') == 'true')
+        if archived and self.request.user.role != 'ADMIN':
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Solo el administrador puede consultar archivados.')
+        qs = (Pet.all_objects.filter(organization=org, is_active=False)
+              if archived and self.action == 'list' and self.request.query_params.get('archived') == 'true'
+              else Pet.all_objects.filter(organization=org) if archived
+              else Pet.objects.for_organization(org)).select_related('owner')
         qs = self._apply_filters(qs, org).order_by("name", "id")
 
         params = self.request.query_params
@@ -156,7 +166,21 @@ class PetViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
                 },
                 status=status.HTTP_409_CONFLICT,
             )
-        return super().destroy(request, *args, **kwargs)
+        change_archive_state(actor=request.user, organization_id=request.user.organization_id,
+                             kind='pet', public_id=instance.public_id, archive=True)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def archive(self, request, public_id=None):
+        pet = change_archive_state(actor=request.user, organization_id=request.user.organization_id,
+                                   kind='pet', public_id=public_id, archive=True)
+        return Response(self.get_serializer(pet).data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def restore(self, request, public_id=None):
+        pet = change_archive_state(actor=request.user, organization_id=request.user.organization_id,
+                                   kind='pet', public_id=public_id, archive=False)
+        return Response(self.get_serializer(pet).data)
 
     def get_serializer_context(self):
         return {'request': self.request}
@@ -183,7 +207,15 @@ class OwnerViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        qs = Owner.objects.for_organization(self.request.user.organization)
+        archived = (self.action in ('restore', 'archive') or
+                    self.action == 'list' and self.request.query_params.get('archived') == 'true')
+        if archived and self.request.user.role != 'ADMIN':
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Solo el administrador puede consultar archivados.')
+        qs = (Owner.all_objects.filter(organization=self.request.user.organization, is_active=False)
+              if archived and self.action == 'list' and self.request.query_params.get('archived') == 'true'
+              else Owner.all_objects.filter(organization=self.request.user.organization) if archived
+              else Owner.objects.for_organization(self.request.user.organization))
         p = self.request.query_params
         is_generic = p.get("is_generic", "").strip()
         if is_generic == "true":
@@ -237,7 +269,21 @@ class OwnerViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
                 },
                 status=status.HTTP_409_CONFLICT,
             )
-        return super().destroy(request, *args, **kwargs)
+        change_archive_state(actor=request.user, organization_id=request.user.organization_id,
+                             kind='owner', public_id=instance.public_id, archive=True)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def archive(self, request, public_id=None):
+        owner = change_archive_state(actor=request.user, organization_id=request.user.organization_id,
+                                     kind='owner', public_id=public_id, archive=True)
+        return Response(self.get_serializer(owner).data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def restore(self, request, public_id=None):
+        owner = change_archive_state(actor=request.user, organization_id=request.user.organization_id,
+                                     kind='owner', public_id=public_id, archive=False)
+        return Response(self.get_serializer(owner).data)
 
     def perform_create(self, serializer):
         serializer.save(

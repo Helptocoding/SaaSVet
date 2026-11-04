@@ -271,11 +271,14 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
 
 class InvoiceSerializer(serializers.ModelSerializer):
     items = InvoiceItemSerializer(many=True, read_only=True)
-    pet_name = serializers.CharField(source='pet.name', read_only=True)
+    pet_name = serializers.SerializerMethodField()
     # Día 6 B1: public_id de FKs embebidos para evitar PK en deep links
-    pet_public_id = serializers.UUIDField(source='pet.public_id', read_only=True, allow_null=True)
-    owner_name = serializers.CharField(source='owner.name', read_only=True)
-    owner_public_id = serializers.UUIDField(source='owner.public_id', read_only=True, allow_null=True)
+    pet_public_id = serializers.SerializerMethodField()
+    owner_name = serializers.SerializerMethodField()
+    owner_public_id = serializers.SerializerMethodField()
+    historical_owner_public_id = serializers.SerializerMethodField()
+    historical_pet_public_id = serializers.SerializerMethodField()
+    subject_snapshot_source = serializers.SerializerMethodField()
     appointment_public_id = serializers.UUIDField(source='appointment.public_id', read_only=True, allow_null=True)
     medical_record_public_id = serializers.UUIDField(source='medical_record.public_id', read_only=True, allow_null=True)
     # ADR p30: receta de la consulta vinculada — recepción dispensa sus ítems
@@ -302,8 +305,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'appointment', 'appointment_public_id',
             'medical_record', 'medical_record_public_id',
             'prescription_public_id',
-            'owner', 'owner_public_id', 'owner_name',
-            'pet', 'pet_public_id', 'pet_name',
+            'owner', 'owner_public_id', 'owner_name', 'historical_owner_public_id',
+            'pet', 'pet_public_id', 'pet_name', 'historical_pet_public_id',
+            'subject_snapshot_source',
             'status', 'payment_method', 'tax_rate',
             'subtotal', 'tax_amount', 'total',
             'due_at', 'credit_reason',
@@ -341,6 +345,31 @@ class InvoiceSerializer(serializers.ModelSerializer):
         if obj.created_by:
             return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
         return ''
+
+    def get_owner_name(self, obj):
+        from apps.core.subject_history import identity
+        return identity(obj, 'owner').get('name') or (obj.owner.name if obj.owner_id else 'Desconocido')
+
+    def get_pet_name(self, obj):
+        from apps.core.subject_history import identity
+        return identity(obj, 'pet').get('name') or (obj.pet.name if obj.pet_id else '')
+
+    def get_owner_public_id(self, obj):
+        return obj.owner.public_id if obj.owner_id and obj.owner.is_active else None
+
+    def get_pet_public_id(self, obj):
+        return obj.pet.public_id if obj.pet_id and obj.pet.is_active else None
+
+    def get_historical_owner_public_id(self, obj):
+        from apps.core.subject_history import identity
+        return identity(obj, 'owner').get('uuid')
+
+    def get_historical_pet_public_id(self, obj):
+        from apps.core.subject_history import identity
+        return identity(obj, 'pet').get('uuid')
+
+    def get_subject_snapshot_source(self, obj):
+        return (obj.subject_snapshot or {}).get('source', 'unknown')
 
     def get_credit_notes(self, obj):
         # Gateado por context: la lista NO lo pide → [] (sin N+1). El detalle
@@ -522,10 +551,12 @@ class CheckoutSerializer(serializers.ModelSerializer):
     preparation_readiness = serializers.SerializerMethodField()
     actions = serializers.SerializerMethodField()
     correction_status = serializers.SerializerMethodField()
-    customer_name = serializers.CharField(source='customer.name', read_only=True)
-    customer_public_id = serializers.UUIDField(source='customer.public_id', read_only=True)
-    pet_name = serializers.CharField(source='pet.name', read_only=True, allow_null=True)
-    pet_public_id = serializers.UUIDField(source='pet.public_id', read_only=True, allow_null=True)
+    customer_name = serializers.SerializerMethodField()
+    customer_public_id = serializers.SerializerMethodField()
+    pet_name = serializers.SerializerMethodField()
+    pet_public_id = serializers.SerializerMethodField()
+    historical_customer_public_id = serializers.SerializerMethodField()
+    historical_pet_public_id = serializers.SerializerMethodField()
     medical_record_public_id = serializers.UUIDField(source='medical_record.public_id', read_only=True, allow_null=True)
     invoice_public_id = serializers.SerializerMethodField()
     prescription_public_id = serializers.SerializerMethodField()
@@ -537,7 +568,8 @@ class CheckoutSerializer(serializers.ModelSerializer):
         fields = [
             'public_id', 'origin', 'kind', 'medical_record',
             'medical_record_public_id', 'lifecycle', 'completion_kind', 'version',
-            'owner', 'customer', 'customer_public_id', 'customer_name', 'pet',
+            'owner', 'customer', 'customer_public_id', 'customer_name',
+            'historical_customer_public_id', 'historical_pet_public_id', 'pet',
             'pet_public_id', 'pet_name', 'subtotal', 'tax_rate', 'tax_amount',
             'total', 'notes', 'correction_due_at', 'expires_at',
             'operational_hold', 'correction_status', 'invoice_public_id',
@@ -554,6 +586,28 @@ class CheckoutSerializer(serializers.ModelSerializer):
             cached = checkout_readiness_snapshot(obj)
             obj._billing_read_projection = cached
         return cached
+
+    def get_customer_name(self, obj):
+        from apps.core.subject_history import identity
+        return identity(obj, 'owner').get('name') or (obj.customer.name if obj.customer_id else 'Desconocido')
+
+    def get_pet_name(self, obj):
+        from apps.core.subject_history import identity
+        return identity(obj, 'pet').get('name') or (obj.pet.name if obj.pet_id else '')
+
+    def get_customer_public_id(self, obj):
+        return obj.customer.public_id if obj.customer_id and obj.customer.is_active else None
+
+    def get_pet_public_id(self, obj):
+        return obj.pet.public_id if obj.pet_id and obj.pet.is_active else None
+
+    def get_historical_customer_public_id(self, obj):
+        from apps.core.subject_history import identity
+        return identity(obj, 'owner').get('uuid')
+
+    def get_historical_pet_public_id(self, obj):
+        from apps.core.subject_history import identity
+        return identity(obj, 'pet').get('uuid')
 
     def get_preparation_readiness(self, obj):
         return self._read_projection(obj)['preparation_readiness']

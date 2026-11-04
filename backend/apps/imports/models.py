@@ -78,3 +78,16 @@ class ImportJob(PublicIdMixin, OrganizationalModel):
 
     def __str__(self):
         return f"ImportJob<{self.entity_type} {self.status} {self.original_filename}>"
+
+
+class ImportConflict(models.Model):
+    """Detalles de la versión vigente; su ciclo de vida pertenece al job."""
+    job = models.ForeignKey(ImportJob, on_delete=models.CASCADE, related_name='conflict_details')
+    row = models.PositiveIntegerField()
+    ordinal = models.PositiveIntegerField()
+    payload = models.JSONField()
+
+    class Meta:
+        ordering = ['row', 'ordinal']
+        constraints = [models.UniqueConstraint(fields=['job', 'ordinal'], name='import_conflict_job_ordinal_uniq')]
+        indexes = [models.Index(fields=['job', 'row', 'ordinal'], name='import_conflict_order_idx')]

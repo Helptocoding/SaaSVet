@@ -86,6 +86,33 @@ WHATSAPP_APP_SECRET = config('WHATSAPP_APP_SECRET', default='')
 # Token para ENVIAR (lo consume el sender en PR-5 vía
 # ChannelAccount.provider_credentials_ref → nombre de esta env var).
 WHATSAPP_ACCESS_TOKEN = config('WHATSAPP_ACCESS_TOKEN', default='')
+# Cifrado en reposo de los secretos guardados en DB (apps/channels/crypto.py).
+# Clave Fernet urlsafe-b64 de 32 bytes, INDEPENDIENTE de SECRET_KEY:
+#   - rotar la firma de JWT no debe invalidar los tokens del proveedor;
+#   - una fuga de SECRET_KEY no debe además descifrarlos.
+# Generar: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+#
+# Vacío = `_fernet()` deriva la clave de SECRET_KEY (modo DEGRADADO, sin
+# separación de claves). Ese fallback existía desde el principio, pero esta
+# línea faltaba: `crypto.py` lee el override con `getattr(settings, ...)`, así
+# que sin definirlo aquí la rama era inalcanzable y poner la variable en el
+# entorno no tenía efecto ni aviso (auditoría run-1, hallazgo
+# channels/crypto/agent-token-enc-key-setting-never-defined).
+AGENT_TOKEN_ENC_KEY = config('AGENT_TOKEN_ENC_KEY', default='')
+if ENVIRONMENT == 'production' and not AGENT_TOKEN_ENC_KEY:
+    # El modo degradado NO rompe nada, así que tiene que ser RUIDOSO o nadie lo
+    # ve. Mismo doble canal que el break-glass de cache más abajo: warnings.warn
+    # se filtra una vez por proceso y se pierde en el boot de gunicorn.
+    import sys as _sys
+    import warnings as _warnings
+    _enc_msg = (
+        "AGENT_TOKEN_ENC_KEY no configurado: los secretos en reposo se cifran "
+        "con una clave derivada de SECRET_KEY. Sin separación de claves, una "
+        "fuga de SECRET_KEY también los descifra, y rotarlo invalida los tokens "
+        "del proveedor ya guardados."
+    )
+    _warnings.warn(_enc_msg, RuntimeWarning)
+    _sys.stderr.write("[SEC] " + _enc_msg + "\n")
 # Base de la Graph API (overridable: sandbox/tests/bump de versión sin release).
 WHATSAPP_API_BASE_URL = config(
     'WHATSAPP_API_BASE_URL', default='https://graph.facebook.com/v20.0',
@@ -167,6 +194,17 @@ AGENT_SLOT_CONFIDENCE_THRESHOLD = config(
 
 AGENT_MAX_TOOLS_PER_TURN = config(
     'AGENT_MAX_TOOLS_PER_TURN', default=5, cast=int,
+)
+# Reintentos del planner ante fallo del proveedor. `planner.py` los lee con
+# getattr y los acota (retries a [0,3], delay a >=0), así que estos valores son
+# los MISMOS que su fallback: definirlos aquí no cambia comportamiento, solo
+# hace que la variable de entorno tenga efecto. Antes se leían de un setting
+# que nunca se definía, de modo que configurarlas no hacía nada — misma clase
+# de defecto que AGENT_TOKEN_ENC_KEY (auditoría run-1); el gate
+# test_settings_getattr_contract.py impide que vuelva a pasar.
+AGENT_LLM_MAX_RETRIES = config('AGENT_LLM_MAX_RETRIES', default=2, cast=int)
+AGENT_LLM_RETRY_DELAY_SECONDS = config(
+    'AGENT_LLM_RETRY_DELAY_SECONDS', default=0.0, cast=float,
 )
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 # El agente consume la API por loopback interno (AGENT_INTERNAL_API_URL, p.ej.
@@ -316,6 +354,11 @@ REST_FRAMEWORK = {
         # Más holgado que staff_password_reset (5/h) — ADMIN_SAAS puede
         # atender múltiples clínicas en una misma sesión de soporte.
         'platform_password_reset': '20/hour',
+        # Orden 2 (audit run-1, fase 8.1): borrado físico irreversible.
+        # Preview + execute = 2 llamadas por borrado.
+        'platform_physical_deletion': '30/hour',
+        # Activar/desactivar organización y archivar/restaurar sujetos.
+        'platform_lifecycle': '60/hour',
         'support_message': '10/hour',
         # ADR p20: self-service password change. Throttle modesto para
         # disuadir brute-force del current_password — el endpoint requiere
@@ -332,6 +375,24 @@ REST_FRAMEWORK = {
         'legal_accept': '30/hour',
     },
     'EXCEPTION_HANDLER': 'apps.core.exceptions.custom_exception_handler',
+    # Saltos de proxy CONFIABLES delante de la app. Caddy es el único
+    # (infra/Caddyfile: `header_up X-Forwarded-For {remote_host}` — sin prefijo
+    # `+`, así que REEMPLAZA la cabecera con la IP real del cliente).
+    #
+    # Por qué declararlo aquí y no dejarlo implícito: sin NUM_PROXIES, el
+    # `get_ident` de DRF usa TODA la cabecera X-Forwarded-For como identidad, y
+    # la cabecera la controla el cliente. Con NUM_PROXIES=1 toma `addrs[-1]`,
+    # el elemento de más a la derecha, que es el que escribe el proxy — un
+    # cliente que prepende valores no puede elegir su propio bucket de throttle.
+    # Sin cabecera, cae a REMOTE_ADDR.
+    #
+    # Esto es lo que impide que el límite de login (5/15min) se evada rotando
+    # una cabecera (auditoría run-1,
+    # core/throttling/login-key-trusts-unvalidated-forwarded-for). El reemplazo
+    # en Caddy sigue siendo necesario; la diferencia es que ahora el supuesto
+    # está DICHO en la aplicación y no depende de que nadie edite un bloque del
+    # proxy. Si algún día se añade otro salto confiable, este número sube.
+    'NUM_PROXIES': 1,
 }
 
 SIMPLE_JWT = {

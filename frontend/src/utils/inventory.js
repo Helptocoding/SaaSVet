@@ -40,6 +40,30 @@ export const stockStatus = (product) => {
     return { pct: Math.max(Math.min((stock / top) * 100, 100), 15), state: "ok", label: "Normal" };
 };
 
+// La tabla ordena con las mismas cantidades que muestra; los empates conservan
+// el orden de entrada gracias al sort estable de JavaScript.
+export const compareInventoryProducts = (a, b, column, direction) => {
+    let va, vb;
+    if (column === "name") {
+        va = a.name.toLowerCase(); vb = b.name.toLowerCase();
+    } else if (column === "stock") {
+        va = productStockQty(a); vb = productStockQty(b);
+    } else if (column === "price") {
+        va = parseFloat((a.presentation || {}).sale_price ?? 0) || 0;
+        vb = parseFloat((b.presentation || {}).sale_price ?? 0) || 0;
+    } else if (column === "value") {
+        va = productStockValue(a); vb = productStockValue(b);
+    } else if (column === "cat") {
+        va = a.category; vb = b.category;
+    } else if (column === "status") {
+        const order = { crit: 0, low: 1, ok: 2 };
+        va = order[stockStatus(a).state]; vb = order[stockStatus(b).state];
+    } else return 0;
+    if (va < vb) return direction === "asc" ? -1 : 1;
+    if (va > vb) return direction === "asc" ? 1 : -1;
+    return 0;
+};
+
 // Stock inicial capturado en el wizard de alta:
 //  - divide (multi): countQty × dividesCount (ej. 5 cajas × 100 = 500 piezas)
 //  - simple: countQty

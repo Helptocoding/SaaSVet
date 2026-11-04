@@ -28,6 +28,15 @@ export const deletePet = async (token, id) => {
     return res.data;
 };
 
+export const restorePet = (id) =>
+    api.post(`pets/${id}/restore/`).then(r => r.data);
+
+export const archiveOwner = (id) =>
+    api.post(`owners/${id}/archive/`).then(r => r.data);
+
+export const restoreOwner = (id) =>
+    api.post(`owners/${id}/restore/`).then(r => r.data);
+
 export const getOwners = (params = {}) =>
     api.get("owners/", { params }).then(r => r.data);
 

@@ -23,6 +23,131 @@ from apps.platform.services.platform_reset_password import platform_reset_passwo
 User = get_user_model()
 
 
+class PhysicalDeletionPreviewView(APIView):
+    permission_classes = [IsPlatformOperator]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'platform_physical_deletion'
+
+    def post(self, request):
+        from rest_framework import serializers
+        from apps.platform.services.physical_deletion import preview
+
+        class Payload(serializers.Serializer):
+            organization_id = serializers.UUIDField()
+            target_type = serializers.ChoiceField(choices=('owner', 'pet', 'organization'))
+            target_id = serializers.UUIDField()
+            reason = serializers.CharField(min_length=8, max_length=255, trim_whitespace=True)
+
+        data = Payload(data=request.data)
+        data.is_valid(raise_exception=True)
+        return Response(preview(actor=request.user, **data.validated_data))
+
+
+class PhysicalDeletionExecuteView(APIView):
+    permission_classes = [IsPlatformOperator]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'platform_physical_deletion'
+
+    def post(self, request):
+        from rest_framework import serializers
+        from apps.platform.services.physical_deletion import execute
+
+        class Payload(serializers.Serializer):
+            organization_id = serializers.UUIDField()
+            target_type = serializers.ChoiceField(choices=('owner', 'pet', 'organization'))
+            target_id = serializers.UUIDField()
+            reason = serializers.CharField(min_length=8, max_length=255, trim_whitespace=True)
+            confirmation = serializers.CharField(required=False)
+            idempotency_key = serializers.UUIDField()
+
+        data = Payload(data=request.data)
+        data.is_valid(raise_exception=True)
+        return Response(execute(actor=request.user, **data.validated_data))
+
+
+class PlatformOrganizationHistoryView(APIView):
+    permission_classes = [IsPlatformOperator]
+
+    def get(self, request, pk):
+        from apps.organizations.models import Organization
+        from apps.patients.models import Owner, Pet
+        from apps.billing.models import Invoice
+        from apps.medical_records.models import MedicalRecord
+        from rest_framework.exceptions import ValidationError
+        org = resolve_public_id(Organization.objects.all(), pk)
+        try:
+            page = int(request.query_params.get('page', '1'))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError({'page': 'Página inválida.'}) from exc
+        if not 1 <= page <= 100000:
+            raise ValidationError({'page': 'Página inválida.'})
+        offset = (page - 1) * 100
+        limit = offset + 100
+        return Response({
+            'organization_id': str(org.public_id), 'is_active': org.is_active,
+            'page': page, 'page_size': 100,
+            'archived_owners': [
+                {'public_id': str(owner.public_id), 'name': owner.name}
+                for owner in Owner.all_objects.filter(organization=org, is_active=False).order_by('pk')[offset:limit]
+            ],
+            'archived_pets': [
+                {'public_id': str(pet.public_id), 'name': pet.name}
+                for pet in Pet.all_objects.filter(organization=org, is_active=False).order_by('pk')[offset:limit]
+            ],
+            'invoices': [
+                {'public_id': str(invoice.public_id), 'status': invoice.status,
+                 'subject_snapshot': invoice.subject_snapshot}
+                for invoice in Invoice.all_objects.filter(organization=org).order_by('-pk')[offset:limit]
+            ],
+            'medical_records': [
+                {'public_id': str(record.public_id), 'status': record.status,
+                 'subject_snapshot': record.subject_snapshot}
+                for record in MedicalRecord.all_objects.filter(organization=org).order_by('-pk')[offset:limit]
+            ],
+        })
+
+
+class PlatformOrgStateView(APIView):
+    permission_classes = [IsPlatformOperator]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'platform_lifecycle'
+
+    def post(self, request, pk, action):
+        from apps.organizations.models import Organization
+        from apps.organizations.state import change_organization_state
+        from rest_framework.exceptions import ValidationError
+        if action not in ('deactivate', 'reactivate'):
+            raise ValidationError({'action': 'Acción inválida.'})
+        org = resolve_public_id(Organization.objects.all(), pk)
+        updated = change_organization_state(
+            actor=request.user, public_id=org.public_id,
+            active=action == 'reactivate', reason=request.data.get('reason'),
+        )
+        return Response({'public_id': str(updated.public_id), 'is_active': updated.is_active})
+
+
+class PlatformSubjectArchiveView(APIView):
+    permission_classes = [IsPlatformOperator]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'platform_lifecycle'
+
+    def post(self, request, organization_id, kind, pk, action):
+        from apps.organizations.models import Organization
+        from apps.patients.archive import change_archive_state
+        from apps.patients.serializers import OwnerSerializer, PetSerializer
+        from rest_framework.exceptions import ValidationError
+        if kind not in ('owners', 'pets') or action not in ('archive', 'restore'):
+            raise ValidationError({'action': 'Acción inválida.'})
+        org = resolve_public_id(Organization.objects.all(), organization_id)
+        subject = change_archive_state(
+            actor=request.user, organization_id=org.pk,
+            kind='owner' if kind == 'owners' else 'pet', public_id=pk,
+            archive=action == 'archive',
+        )
+        serializer = OwnerSerializer if kind == 'owners' else PetSerializer
+        return Response(serializer(subject, context={'request': request}).data)
+
+
 class PlatformOrgCreateView(APIView):
     """
     POST /api/platform/organizations/

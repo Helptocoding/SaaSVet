@@ -1,5 +1,7 @@
 # Módulo: Citas
 
+**Orden 2 (28-10-2026):** scheduled/confirmed/in_progress bloquean archivo de mascota/cliente incluso si la fecha de cita ya pasó; no se completan ni cancelan automáticamente. `appointments.creation` comparte locks de Organization→Owner→Pet con el archivo y rechaza organizaciones/sujetos inactivos. Cualquier cita existente sigue bloqueando el borrado físico de Pet mientras no tenga snapshot de conservación de cita implementado.
+
 **Última actualización**: 2026-09-07
 
 > **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).

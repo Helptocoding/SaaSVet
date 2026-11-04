@@ -522,12 +522,29 @@ def assign_patient(request, pk):
         appointment.pet = new_pet
         appointment.save(update_fields=['pet'])
 
+        # La consulta abierta (y su receta) siguen a la cita. Paciente e
+        # identidad congelada se escriben JUNTOS: billing.0041 rechaza una fila
+        # cuyo pet no coincida con subject_snapshot. La reescritura del
+        # snapshot solo está permitida porque el congelado es el GENÉRICO y la
+        # consulta está abierta (billing.0043); antes este update solo movía
+        # `pet` y el endpoint daba 500 (audit run-1, hallazgo 8.4).
+        from apps.core.subject_history import snapshot
         from apps.medical_records.models import MedicalRecord
-        MedicalRecord.objects.filter(
+        from apps.prescriptions.models import Prescription
+        open_record_ids = list(MedicalRecord.objects.filter(
             appointment=appointment,
             organization=appointment.organization,
             status=MedicalRecord.Status.OPEN,
-        ).update(pet=new_pet)
+        ).values_list('pk', flat=True))
+        if open_record_ids:
+            frozen = snapshot(organization=appointment.organization, pet=new_pet)
+            org = appointment.organization
+            MedicalRecord.objects.for_organization(org).filter(
+                pk__in=open_record_ids,
+            ).update(pet=new_pet, subject_snapshot=frozen)
+            Prescription.objects.for_organization(org).filter(
+                medical_record_id__in=open_record_ids,
+            ).update(pet=new_pet, subject_snapshot=frozen)
 
         AppointmentStatusChange.objects.create(
             appointment=appointment,

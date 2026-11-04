@@ -59,6 +59,7 @@ from apps.billing.checkout_services import (
 from apps.cash.models import CashSession, CashMovement
 from apps.core.models import Permission, Role
 from apps.core.permissions_codes import PERMISSION_CODES
+from apps.platform.deletion_guards import demo_purge_authorized
 from apps.platform.services.provision_organization import provision_organization
 
 from ._demo_data import (
@@ -755,8 +756,18 @@ class Command(BaseCommand):
             self._purge(org, full=True)
         self.stdout.write(self.style.WARNING(f"Org demo «{name}» eliminada por completo."))
 
+    @demo_purge_authorized
     def _purge(self, org, *, full):
-        """Borra los datos de la org demo en orden FK-seguro. Guard: is_demo."""
+        """Borra los datos de la org demo en orden FK-seguro. Guard: is_demo.
+
+        El decorador abre la autorización de borrado físico para ESTA
+        organización demo y solo durante esta llamada. Sin él, los guards de
+        preservación de `apps.platform.deletion_guards` rechazan borrar Invoice,
+        Prescription y los expedientes con evidencia — y el reset de la demo,
+        cuyo propósito entero es borrarlos, dejaba de funcionar. La preservación
+        sigue intacta para cualquier tenant real: la autorización se niega a
+        abrirse para una organización que no sea demo.
+        """
         if not org.is_demo:
             raise CommandError("Guard: la org objetivo NO tiene is_demo=True. Abortando.")
 

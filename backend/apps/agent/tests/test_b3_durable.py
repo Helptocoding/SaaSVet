@@ -36,6 +36,14 @@ class DurableTurnTests(TransactionTestCase):
         TurnWork.objects.filter(pk=witness.turn_work_id).update(
             lease_expires_at=timezone.now() - timedelta(seconds=1))
 
+    def test_inactive_organization_does_not_claim_or_consume_pending_input(self):
+        Organization.objects.filter(pk=self.org.pk).update(is_active=False)
+        self.assertIsNone(self.claim())
+        self.m1.refresh_from_db()
+        self.assertEqual(self.m1.status, Message.STATUS_PENDING)
+        self.assertIsNone(self.m1.turn_work_id)
+        self.assertFalse(TurnWork.objects.filter(organization=self.org).exists())
+
     def test_dur_01_reclaims_same_work_context_and_fences_old_token(self):
         m2 = self.inbound('m2')
         Message.objects.filter(conversation=self.conv).update(available_at=None)

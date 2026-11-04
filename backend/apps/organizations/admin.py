@@ -4,8 +4,9 @@ from .models import Organization
 
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'timezone', 'tax_rate', 'created_at')
+    list_display = ('name', 'is_active', 'timezone', 'tax_rate', 'created_at')
     search_fields = ('name',)
+    readonly_fields = ('is_active', 'deactivated_at', 'deactivated_by', 'deactivation_reason')
 
     # PR-4B / ADR p16: DELETE bloqueado en admin. User.organization es PROTECT
     # tras este sprint — un intento de borrar org desde admin levantaría

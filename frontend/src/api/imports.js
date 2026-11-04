@@ -20,6 +20,9 @@ export const listImports = () =>
 export const getImport = (publicId) =>
     api.get(`imports/${publicId}/`).then(r => r.data);
 
+export const getImportConflicts = (publicId, params) =>
+    api.get(`imports/${publicId}/conflicts/`, { params }).then(r => r.data);
+
 // Confirma el mapeo columna→campo (y opcionalmente la estrategia de duplicados).
 export const setMapping = (publicId, { mapping, dedup_strategy } = {}) => {
     const body = { mapping };

@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useConfirm } from "../components/useConfirm";
 import { apiError } from "../utils/apiError";
 import handleFormError from "../utils/handleFormError";
 import { toList } from "../utils/toList";
-import { stockStatus, productStockQty, productStockValue, computeInitialStock, fmt, fmtCur } from "../utils/inventory";
+import { stockStatus, productStockQty, productStockValue, compareInventoryProducts, computeInitialStock, fmt, fmtCur } from "../utils/inventory";
 import {
     getProducts, createProduct, updateProduct, deleteProduct,
     adjustStock, getUnitChoices, createPresentation, updatePresentation,
@@ -98,6 +98,16 @@ const TUTORIAL_STEPS = [
     },
 ];
 const TUTORIAL_KEY = "inventory_product_tutorial_seen";
+
+const subscribeReception = (notify) => {
+    window.addEventListener("storage", notify);
+    window.addEventListener("inventory-reception-change", notify);
+    return () => {
+        window.removeEventListener("storage", notify);
+        window.removeEventListener("inventory-reception-change", notify);
+    };
+};
+const receptionChanged = () => window.dispatchEvent(new Event("inventory-reception-change"));
 
 const newSalesPres = (unitLabel = "Unidad") => ({
     _localId: `sp_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -198,6 +208,26 @@ const Inventory = () => {
     const presSecondAutoRef = useRef({ nameEdited: false, cfEdited: false });
 
     const [saving, setSaving] = useState(false);
+    const [retryingReception, setRetryingReception] = useState(false);
+    const receptionKey = user?.organization_public_id && user?.id
+        ? `inventory-pending-reception:${user.organization_public_id}:${user.id}` : null;
+    const pendingRaw = useSyncExternalStore(subscribeReception, () => {
+        try {
+            return receptionKey ? localStorage.getItem(receptionKey) : null;
+        } catch {
+            return receptionKey ? "__storage_unavailable__" : null;
+        }
+    }, () => null);
+    const pendingReception = useMemo(() => {
+        try {
+            if (!pendingRaw) return null;
+            const pending = JSON.parse(pendingRaw);
+            return pending?.operationId && pending?.presentationId && pending?.payload
+                ? pending : { unavailable: true };
+        } catch {
+            return { unavailable: true };
+        }
+    }, [pendingRaw]);
     const [animatedTotalVal, setAnimatedTotalVal] = useState(0);
     const [isTotalValAnimating, setIsTotalValAnimating] = useState(false);
     const totalValFrameRef = useRef(null);
@@ -225,6 +255,22 @@ const Inventory = () => {
             setLotAlerts(await getLotAlerts({ days: 30 }));
         } catch {
             /* alertas informativas: silencioso */
+        }
+    };
+
+    const retryPendingReception = async () => {
+        if (!pendingReception || retryingReception) return;
+        setRetryingReception(true);
+        try {
+            await receiveStock(pendingReception.presentationId, pendingReception.payload, pendingReception.operationId);
+            localStorage.removeItem(receptionKey);
+            receptionChanged();
+            toast.success("Recepción confirmada.");
+            await loadAll();
+        } catch (err) {
+            toast.warning(`No se pudo confirmar la recepción: ${apiError(err)}. Conserva esta operación para reintentar.`);
+        } finally {
+            setRetryingReception(false);
         }
     };
 
@@ -388,31 +434,7 @@ const Inventory = () => {
             return true;
         });
 
-        list.sort((a, b) => {
-            let va, vb;
-            if (sortCol === "name") {
-                va = a.name.toLowerCase(); vb = b.name.toLowerCase();
-            } else if (sortCol === "stock") {
-                va = parseFloat((a.presentation || {}).stock ?? 0) || 0;
-                vb = parseFloat((b.presentation || {}).stock ?? 0) || 0;
-            } else if (sortCol === "price") {
-                va = parseFloat((a.presentation || {}).sale_price ?? 0) || 0;
-                vb = parseFloat((b.presentation || {}).sale_price ?? 0) || 0;
-            } else if (sortCol === "value") {
-                const aP = a.presentation || {};
-                va = (parseFloat(aP.sale_price ?? 0) || 0) * (parseFloat(aP.stock ?? 0) || 0);
-                const bP = b.presentation || {};
-                vb = (parseFloat(bP.sale_price ?? 0) || 0) * (parseFloat(bP.stock ?? 0) || 0);
-            } else if (sortCol === "cat") {
-                va = a.category; vb = b.category;
-            } else if (sortCol === "status") {
-                const order = { crit: 0, low: 1, ok: 2 };
-                va = order[stockStatus(a).state]; vb = order[stockStatus(b).state];
-            } else return 0;
-            if (va < vb) return sortDir === "asc" ? -1 : 1;
-            if (va > vb) return sortDir === "asc" ? 1 : -1;
-            return 0;
-        });
+        list.sort((a, b) => compareInventoryProducts(a, b, sortCol, sortDir));
         return list;
     }, [products, filterCategory, searchText, stockFilter, sortCol, sortDir]);
 
@@ -580,6 +602,10 @@ const Inventory = () => {
             tour.finish();
             return;
         }
+        if (!wizardEditing && wizardProduct.tracks_lots && pendingReception) {
+            toast.warning("Confirma primero la recepción pendiente antes de crear otra entrada por lotes.");
+            return;
+        }
         setSaving(true);
         setWizardErrors({});
         try {
@@ -682,6 +708,7 @@ const Inventory = () => {
 
                 // Primer lote (opcional) sobre la presentación base (cf=1 → cantidad = unidad base).
                 let stockMsg;
+                let receptionUnconfirmed = false;
                 if (isLots) {
                     const validLots = wizardLots
                         .map(l => ({
@@ -695,17 +722,28 @@ const Inventory = () => {
                             || (created.presentations || [])[0];
                         if (basePres) {
                             try {
-                                await receiveStock(basePres.public_id, {
+                                const payload = {
                                     supplier_name: wizardSupplier.trim(),
                                     lots: validLots,
-                                });
+                                };
+                                if (!receptionKey || !globalThis.crypto?.randomUUID) throw new Error("No fue posible conservar la identidad de recepción.");
+                                const pending = { productId: created.public_id, presentationId: basePres.public_id,
+                                    operationId: globalThis.crypto.randomUUID(), payload };
+                                localStorage.setItem(receptionKey, JSON.stringify(pending));
+                                receptionChanged();
+                                await receiveStock(basePres.public_id, payload, pending.operationId);
+                                localStorage.removeItem(receptionKey);
+                                receptionChanged();
                                 const total = validLots.reduce((a, l) => a + l.quantity, 0);
                                 stockMsg = ` Primer lote registrado: ${fmt(total)} ${stockLabel} en ${validLots.length} lote(s).`;
                             } catch (err) {
-                                toast.warning(`Producto creado, pero el primer lote no se registró: ${apiError(err, "regístralo en Entrada de stock")}.`);
+                                receptionUnconfirmed = true;
+                                toast.warning(`Producto creado; no se pudo confirmar la recepción: ${apiError(err, "error de conexión")}. Revisa los movimientos y lotes antes de intentar otra entrada.`);
                                 stockMsg = "";
                             }
                         } else {
+                            receptionUnconfirmed = true;
+                            toast.warning("Producto creado, pero no se encontró la presentación para recibir el lote. Revisa el producto antes de registrar stock.");
                             stockMsg = "";
                         }
                     } else {
@@ -717,7 +755,7 @@ const Inventory = () => {
 
                 if (failedPres.length) {
                     toast.warning(`Producto creado.${stockMsg} No se guardaron ${failedPres.length} presentación(es): ${failedPres.join(", ")}. Agrégalas desde edición.`);
-                } else {
+                } else if (!receptionUnconfirmed) {
                     toast.success(`Producto creado.${stockMsg}`);
                 }
             }
@@ -850,6 +888,17 @@ const Inventory = () => {
                     </div>
                 )}
             </div>
+
+            {pendingReception && can("inventory.update") && (
+                <div className={s.alertBar} role="status">
+                    <span>{pendingReception.unavailable
+                        ? "No se puede leer la recepción pendiente. Revisa movimientos y lotes antes de registrar otra entrada."
+                        : "Hay una recepción sin confirmar para un producto ya creado. Reintenta la misma operación antes de registrar otra entrada ambigua."}</span>
+                    {!pendingReception.unavailable && <button className="btn btn-secondary btn-sm" type="button" disabled={retryingReception} onClick={retryPendingReception}>
+                        {retryingReception ? "Confirmando…" : "Confirmar recepción pendiente"}
+                    </button>}
+                </div>
+            )}
 
             {/* ── Linear insights ── */}
             <section className={s.stats} aria-label="Resumen de inventario">

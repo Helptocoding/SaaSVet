@@ -6,6 +6,9 @@ from rest_framework.decorators import api_view, permission_classes
 
 from apps.core.permissions import HybridPermission, make_permission
 from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_public_id
+# La inmutabilidad post-cierre la define el dominio dueño de la consulta. Mismo
+# precedente que `inventory/views.py`, que ya consume estas policies.
+from apps.medical_records.policies import assert_can_modify_medical_record
 
 from .models import Prescription, PrescriptionItem
 from .serializers import PrescriptionSerializer, PrescriptionItemWriteSerializer
@@ -29,9 +32,16 @@ class PrescriptionListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
         pet_lookup = self.request.query_params.get('pet')
         if pet_lookup:
             # Día 6 Fase 3: resolver Pet por public_id antes del filtro
-            from apps.patients.models import Pet
-            pet = resolve_public_id(Pet.objects.for_organization(org), pet_lookup)
-            queryset = queryset.filter(pet=pet)
+            from django.db.models import Q
+            from uuid import UUID
+            try:
+                pet_uuid = str(UUID(str(pet_lookup)))
+            except (ValueError, TypeError):
+                from apps.patients.models import Pet
+                pet_uuid = str(resolve_public_id(
+                    Pet.all_objects.filter(organization=org), pet_lookup).public_id)
+            queryset = queryset.filter(Q(pet__public_id=pet_uuid) |
+                                       Q(subject_snapshot__pet__uuid=pet_uuid))
         return queryset
 
     def perform_create(self, serializer):
@@ -64,13 +74,19 @@ class PrescriptionByPetView(TenantQueryMixin, generics.ListAPIView):
     def get_queryset(self):
         # Día 6 Fase 1: resolver Pet por public_id antes del filtro
         from apps.patients.models import Pet
-        pet = resolve_public_id(
-            Pet.objects.for_organization(self.request.user.organization),
-            self.kwargs['pet_public_id'],
-        )
+        from django.db.models import Q
+        from uuid import UUID
+        pet_lookup = self.kwargs['pet_public_id']
+        try:
+            pet_uuid = str(UUID(str(pet_lookup)))
+        except (ValueError, TypeError):
+            pet_uuid = str(resolve_public_id(
+                Pet.all_objects.filter(organization=self.request.user.organization), pet_lookup,
+            ).public_id)
         return Prescription.objects.for_organization(
             self.request.user.organization
-        ).filter(pet=pet)
+        ).filter(Q(pet__public_id=pet_uuid) |
+                 Q(subject_snapshot__pet__uuid=pet_uuid))
 
 
 class PrescriptionItemCreateView(generics.CreateAPIView):
@@ -84,6 +100,14 @@ class PrescriptionItemCreateView(generics.CreateAPIView):
             Prescription.objects.for_organization(self.request.user.organization),
             self.kwargs['prescription_pk'],
         )
+        # Inmutabilidad post-cierre: bloqueo DURO, no lista blanca. Añadir un
+        # medicamento después de cerrar la consulta no tiene vía legítima, y
+        # además ensancha el tope que limita la dispensación (el cap se calcula
+        # sobre PrescriptionItem.quantity). Mismo guard que usan los cargos
+        # clínicos; esta vista nunca se conectó a él (auditoría run-1).
+        assert_can_modify_medical_record(
+            self.request.user, prescription.medical_record, self.request,
+        )
         serializer.save(prescription=prescription)
 
 
@@ -96,6 +120,13 @@ class PrescriptionItemDeleteView(generics.DestroyAPIView):
         prescription = resolve_public_id(
             Prescription.objects.for_organization(self.request.user.organization),
             self.kwargs['prescription_pk'],
+        )
+        # Inmutabilidad post-cierre: retirar un medicamento de una receta ya
+        # entregada destruye la trazabilidad farmacológica que motivó quitar el
+        # DELETE de la receta completa (NOM-046). Se comprueba al RESOLVER, de
+        # modo que cubre también cualquier método futuro de esta vista.
+        assert_can_modify_medical_record(
+            self.request.user, prescription.medical_record, self.request,
         )
         return get_object_or_404(
             PrescriptionItem,
@@ -127,11 +158,14 @@ def prescription_pdf(request, pk):
     theme = get_theme_for_organization(prescription.organization)
     st = build_styles(theme)
 
-    pet = prescription.pet
+    from apps.core.subject_history import identity
+    old_pet = identity(prescription, 'pet')
+    old_owner = identity(prescription, 'owner')
+    pet = prescription.pet if prescription.pet_id else None
     vet = prescription.veterinarian
-    vet_name = ""
-    if vet:
-        vet_name = f"{vet.first_name} {vet.last_name}".strip() or vet.username
+    vet_name = (prescription.medical_record.vet_name_at_close or 'Desconocido') if (
+        prescription.medical_record.status == 'closed') else (
+        f"{vet.first_name} {vet.last_name}".strip() or vet.username if vet else 'Desconocido')
 
     created_local = utc_to_local(prescription.organization, prescription.created_at)
 
@@ -144,19 +178,21 @@ def prescription_pdf(request, pk):
 
     flow += section(st, theme, "Paciente")
     patient_pairs = [
-        ("Nombre", safe_pdf_text(pet.name)),
-        ("Especie", safe_pdf_text(pet.species)),
-        ("Raza", safe_pdf_text(pet.breed or '')),
+        ("Nombre", safe_pdf_text(old_pet.get('name') or (pet.name if pet else 'Desconocido'))),
+        ("Especie", safe_pdf_text(old_pet.get('species') or (pet.species if pet else ''))),
+        ("Raza", safe_pdf_text(old_pet.get('breed') or (pet.breed if pet else ''))),
     ]
-    if pet.owner_id:
+    if old_owner or (pet and pet.owner_id):
         patient_pairs += [
-            ("Propietario", safe_pdf_text(pet.owner.name)),
-            ("Teléfono", safe_pdf_text(pet.owner.phone)),
+            ("Propietario", safe_pdf_text(old_owner.get('name') or (pet.owner.name if pet else 'Desconocido'))),
+            ("Teléfono", safe_pdf_text(old_owner.get('phone') or (pet.owner.phone if pet else ''))),
         ]
     flow += info_card(st, theme, patient_pairs, columns=3)
 
-    if vet:
-        spec = f" &nbsp;·&nbsp; {safe_pdf_text(vet.specialty)}" if vet.specialty else ""
+    if vet or prescription.medical_record.status == 'closed':
+        specialty = (prescription.medical_record.vet_specialty_at_close
+                     if prescription.medical_record.status == 'closed' else vet.specialty)
+        spec = f" &nbsp;·&nbsp; {safe_pdf_text(specialty)}" if specialty else ""
         flow += section(st, theme, "Veterinario")
         flow.append(Paragraph(f"{safe_pdf_text(vet_name)}{spec}", st['body']))
 
@@ -182,10 +218,10 @@ def prescription_pdf(request, pk):
             safe_pdf_text(prescription.notes).replace('\n', '<br/>'), st['body'],
         ))
 
-    if vet:
+    if vet or prescription.medical_record.status == 'closed':
         flow += signature_block(
             st, theme, safe_pdf_text(vet_name),
-            [safe_pdf_text(vet.specialty)] if vet.specialty else (),
+            [safe_pdf_text(specialty)] if specialty else (),
         )
 
     buffer = BytesIO()
@@ -198,7 +234,7 @@ def prescription_pdf(request, pk):
     buffer.seek(0)
 
     filename = pdf_filename(
-        'receta', prescription.id, pet.name,
+        'receta', prescription.id, old_pet.get('name') or (pet.name if pet else 'paciente-historico'),
         created_local.date() if created_local else None,
     )
     response = HttpResponse(buffer.read(), content_type='application/pdf')
