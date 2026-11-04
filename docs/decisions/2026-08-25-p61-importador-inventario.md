@@ -1,5 +1,7 @@
 # ADR p61: Importador de inventario (`entity_type=inventory`)
 
+> Continuación de orden 4 en curso: [expediente y estado](../remediaciones/orden-4/README.md); las deudas de este recibo describen el corte histórico.
+
 **Fecha**: 2026-08-25
 **Estado**: Aceptado — implementado
 **Documentos relacionados**:

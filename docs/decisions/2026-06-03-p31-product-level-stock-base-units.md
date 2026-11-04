@@ -1,5 +1,7 @@
 # ADR p31: Stock a nivel Product en unidades base (base_unit + conversion_factor)
 
+> Continuación de orden 4 en curso: [expediente y estado](../remediaciones/orden-4/README.md); este recibo histórico se conserva.
+
 **Fecha**: 2026-06-03  
 **Estado**: Aceptado — implementado  
 **Documentos relacionados**:

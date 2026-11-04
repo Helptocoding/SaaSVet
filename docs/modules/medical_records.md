@@ -4,6 +4,10 @@
 
 > **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
 
+> Orden 2 (28-10-2026): el cierre ahora lo ejecuta `services.close_medical_record_service` en una transacción; captura UUID/nombre/especialidad del veterinario al primer cierre. `vet_snapshot_source` distingue `captured`, `reconstructed` y `unknown`, con fecha real de registro. El serializer y PDF cerrados usan ese snapshot aunque el usuario cambie de nombre. Las notas históricas de esta página que sitúan el writer en la view describen el estado anterior a esta entrega.
+
+> `MedicalRecord.pet` puede separarse únicamente mediante la API física de plataforma tras validar snapshot v1 de identidad/tenant y ausencia de actividad abierta. `subject_snapshot` captura identidad de paciente/cliente al crear la consulta o reconstruye la fuente actual en upgrade con fecha real. Detalle, PDF y filtros históricos funcionan sin mascota viva; no devuelven selector de escritura de un sujeto eliminado. Servicios, productos y signos vitales PROTECT más guard `pre_delete` impiden borrar evidencia por instancia o collector. Un borrador abierto realmente vacío mantiene su DELETE existente.
+
 ## Objetivo
 
 El modulo de historial clinico registra el acto medico realizado sobre una mascota y conserva la trazabilidad minima necesaria para auditoria clinica.

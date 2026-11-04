@@ -176,12 +176,23 @@ def medical_record_has_clinical_content(record) -> bool:
         return True
     if (record.notes or "").strip():
         return True
+    if record.consultation_draft:
+        return True
     from apps.prescriptions.models import Prescription
+    from apps.billing.models import ClinicalChargeEntry, MedicalRecordBillingContext, Checkout
+    from apps.inventory.models import StockMovement
     return any([
         record.products_used.exists(),
         record.vaccine_records.exists(),
         record.services_used.exists(),
         record.vital_signs.exists(),
+        record.consultation_assessments.exists(),
+        record.surgery_records.exists(),
+        record.emergency_records.exists(),
+        ClinicalChargeEntry.all_objects.filter(medical_record=record).exists(),
+        MedicalRecordBillingContext.all_objects.filter(medical_record=record).exists(),
+        StockMovement.all_objects.filter(medical_record=record).exists(),
+        Checkout.all_objects.filter(medical_record=record).exists(),
         Prescription.objects.filter(medical_record=record).exists(),
     ])
 

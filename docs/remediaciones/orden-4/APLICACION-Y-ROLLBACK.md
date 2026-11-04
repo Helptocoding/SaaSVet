@@ -1,0 +1,11 @@
+# Aplicación y rollback — pendiente
+
+Se prepararon 0028 (ampliación 12/4) y 0029 (backfill solo de alias desde factor válido, con preflight). Se aplicaron exclusivamente al cluster sintético de orden 4; un upgrade desde 0027 con snapshots clínico y financiero sintéticos pasó. Falta probar factores inválidos y adaptar/verificar todos los writers antes de cualquier aplicación posterior. No reutilizar 0018 ni regularizar saldos en migraciones.
+
+El rollback del backfill es intencionalmente no-op; no restaura aliases antiguos incorrectos. Revertir schema a 10/2 puede perder precisión o fallar para valores nuevos y requiere diagnóstico y plan explícito antes de cualquier reducción. El futuro reporte de conflictos debe conservar datos legacy visibles hasta asegurar su conversión accesible; no regenerar detalle desde el catálogo. Ningún rollback debe borrar ledger ni restaurar saldos arbitrarios. Aplicación en base habitual o VPS no está autorizada por este expediente.
+
+La migración `imports.0003_importconflict` crea el detalle ligado al job. La conversión legacy es perezosa y atómica desde el resultado persistido; puede marcar detalle incompleto. `imports.0004_conflict_rollback_bridge` al revertirse restaura al JSON todos los detalles conservados y detiene la reversión si difiere el número publicado; no inventa detalles históricos faltantes. Antes de un eventual rollback se deben detener escritores de importación y verificar que 0004 esté aplicada; revertir directamente 0003 sin pasar por el puente perdería detalles posteriores a la muestra. La secuencia se probó solo en PostgreSQL sintético y no se autoriza su ejecución en otra base.
+
+Tras el downgrade completo y al volver a subir, `imports.0005_rehydrate_conflict_reports` reconstruye desde el JSON conservado y cambia la versión. Si encuentra tabla parcial o JSON insuficiente aborta en vez de inventar detalles. El ciclo completo se probó con 201 detalles e histórico incompleto. Mantener detenidos los escritores durante downgrade/upgrade.
+
+`inventory.0030_stock_reception_receipt` guarda evidencia idempotente. Revertirla elimina esa evidencia y haría inseguros reintentos antiguos: no revertirla sin resolver todas las recepciones pendientes y un procedimiento de conservación revisado; nunca compensar borrando movimientos ni saldos.

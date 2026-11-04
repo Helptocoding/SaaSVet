@@ -11,18 +11,28 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const getPets = vi.fn();
 const getPetStats = vi.fn();
 const createPet = vi.fn();
+const getOwners = vi.fn();
+const deletePet = vi.fn();
+const restorePet = vi.fn();
+const archiveOwner = vi.fn();
+const restoreOwner = vi.fn();
 vi.mock("../api/pets", () => ({
     getPets: (...a) => getPets(...a),
     getPetStats: (...a) => getPetStats(...a),
     createPet: (...a) => createPet(...a),
     getPet: vi.fn(() => Promise.resolve({})),
     updatePet: vi.fn(),
-    deletePet: vi.fn(),
+    deletePet: (...a) => deletePet(...a),
+    restorePet: (...a) => restorePet(...a),
+    getOwners: (...a) => getOwners(...a),
+    archiveOwner: (...a) => archiveOwner(...a),
+    restoreOwner: (...a) => restoreOwner(...a),
 }));
 vi.mock("../api/medicalRecords", () => ({ getMedicalRecords: vi.fn(() => Promise.resolve([])) }));
 vi.mock("../api/appointments", () => ({ getAppointments: vi.fn(() => Promise.resolve([])) }));
 vi.mock("../api/statusBreakdown", () => ({ getStatusBreakdown: vi.fn(() => Promise.resolve({ totals: {} })) }));
-vi.mock("../auth/authContext", () => ({ useAuth: () => ({ token: "tok", initializing: false, can: () => true }) }));
+const can = () => true;
+vi.mock("../auth/authContext", () => ({ useAuth: () => ({ token: "tok", initializing: false, can }) }));
 vi.mock("../components/useConfirm", () => ({ useConfirm: () => () => Promise.resolve(true) }));
 vi.mock("react-router-dom", () => ({
     useNavigate: () => vi.fn(),
@@ -65,6 +75,11 @@ beforeEach(() => {
     getPets.mockReset();
     getPetStats.mockReset();
     createPet.mockReset();
+    getOwners.mockReset().mockResolvedValue([]);
+    deletePet.mockReset().mockResolvedValue(null);
+    restorePet.mockReset().mockResolvedValue({ is_active: true });
+    archiveOwner.mockReset().mockResolvedValue({ is_active: false });
+    restoreOwner.mockReset().mockResolvedValue({ is_active: true });
     getPets.mockImplementation((params = {}) => Promise.resolve(envelope(params.page || 1, 60)));
     getPetStats.mockResolvedValue({ total: 60, caninos: 60, felinos: 0 });
     createPet.mockResolvedValue({ public_id: "new-pet" });
@@ -176,4 +191,33 @@ describe("Mascotas — empty state guiado", () => {
     await screen.findByText("Mascota 1-0");
     expect(screen.queryByText("Todavía no tienes pacientes")).toBeNull();
   });
+});
+
+describe('Archivo de mascotas y clientes', () => {
+    it('consulta archivadas solo al activar la vista y restaura desde la misma lista', async () => {
+        const archived = { ...makeRows(1, 1)[0], is_active: false };
+        getPets.mockImplementation(params => Promise.resolve(params.archived
+            ? { count: 1, results: [archived] }
+            : { count: 0, results: [] }));
+        getOwners.mockResolvedValue([{ public_id: 'owner-archived', name: 'Cliente archivado' }]);
+        render(<Pets />);
+        await screen.findByRole('button', { name: 'Ver archivadas' });
+        fireEvent.click(screen.getByRole('button', { name: 'Ver archivadas' }));
+        await waitFor(() => expect(getPets).toHaveBeenCalledWith(expect.objectContaining({ archived: 'true' })));
+        await screen.findByText('Cliente archivado');
+        fireEvent.click(screen.getByRole('button', { name: 'Restaurar cliente' }));
+        await waitFor(() => expect(restoreOwner).toHaveBeenCalledWith('owner-archived'));
+        fireEvent.click(screen.getByRole('button', { name: 'Restaurar' }));
+        await waitFor(() => expect(restorePet).toHaveBeenCalledWith(archived.public_id));
+        expect(deletePet).not.toHaveBeenCalled();
+    });
+
+    it('ofrece archivar sin afirmar que elimina la historia', async () => {
+        const row = { ...makeRows(1, 1)[0], is_active: true };
+        getPets.mockResolvedValue({ count: 1, results: [row] });
+        render(<Pets />);
+        await screen.findByText(row.name);
+        fireEvent.click(screen.getByRole('button', { name: 'Archivar' }));
+        await waitFor(() => expect(deletePet).toHaveBeenCalledWith('tok', row.public_id));
+    });
 });

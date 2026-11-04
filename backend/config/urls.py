@@ -104,6 +104,11 @@ class ThrottledTokenObtainPairView(NoStoreResponseMixin, TokenObtainPairView):
                 # Dejar pasar la respuesta — el próximo request fallará naturalmente.
                 return response
 
+            if user.organization_id and not user.organization.is_active:
+                from rest_framework.response import Response
+                return Response({'code': 'organization_inactive',
+                                 'detail': 'Organización desactivada.'}, status=403)
+
             if is_temp_password_expired(user):
                 _login_logger.warning(
                     "TEMP_PASSWORD_EXPIRED",
@@ -142,6 +147,22 @@ class PublicTokenRefreshView(NoStoreResponseMixin, TokenRefreshView):
     para una operación de credencial-equivalente."""
     permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle, LoginUserRateThrottle]
+
+    def post(self, request, *args, **kwargs):
+        # Comprobar antes de rotar/blacklistear el refresh anterior.
+        from django.contrib.auth import get_user_model
+        from rest_framework_simplejwt.tokens import RefreshToken
+        from rest_framework_simplejwt.exceptions import TokenError
+        from rest_framework.response import Response
+        try:
+            uid = RefreshToken(request.data.get('refresh', ''))['user_id']
+            user = get_user_model().objects.select_related('organization').get(pk=uid)
+        except (TokenError, KeyError, get_user_model().DoesNotExist):
+            return super().post(request, *args, **kwargs)
+        if user.organization_id and not user.organization.is_active:
+            return Response({'code': 'organization_inactive',
+                             'detail': 'Organización desactivada.'}, status=403)
+        return super().post(request, *args, **kwargs)
 
 router = DefaultRouter()
 router.register(r'pets', PetViewSet, basename='patient')

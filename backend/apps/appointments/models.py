@@ -136,6 +136,7 @@ class Appointment(PublicIdMixin, OrganizationalModel):
                          name="idx_appt_org_start_status"),
         ]
         constraints = [
+            models.UniqueConstraint(fields=['id', 'organization'], name='appointment_id_org_ref'),
             models.CheckConstraint(
                 condition=models.Q(end_time__gt=models.F('start_time')),
                 name="appointment_end_after_start",

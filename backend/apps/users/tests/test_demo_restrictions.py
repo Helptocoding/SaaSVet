@@ -79,6 +79,7 @@ class DemoChangePasswordBlockedTests(TestCase):
         self.client.force_authenticate(user=_user(org, role='VET', username='demovet'))
         res = self.client.post(CHANGE_PW, self._payload(), format='json')
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res.data['code'], 'permission_denied')
 
     def test_real_user_not_blocked_by_demo_guard(self):
         """Tenant real: el guard demo NO aplica → llega a la lógica normal

@@ -20,10 +20,10 @@ from .creation import (NAME_REGEX, create_pet, validate_name as _validate_name,
 class OwnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Owner
-        fields = ['id', 'public_id', 'name', 'phone', 'is_generic', 'legacy_id', 'extra_data']
+        fields = ['id', 'public_id', 'name', 'phone', 'is_generic', 'legacy_id', 'extra_data', 'is_active', 'archived_at']
         # extra_data = datos del sistema anterior (Fase D): read-only en la API
         # (lo escribe el importador, no la edición manual).
-        read_only_fields = ['public_id', 'is_generic', 'extra_data']
+        read_only_fields = ['public_id', 'is_generic', 'extra_data', 'is_active', 'archived_at']
         extra_kwargs = {
             'legacy_id': {'required': False, 'allow_blank': True},
         }
@@ -124,9 +124,9 @@ class PetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pet
-        fields = ['id', 'public_id', 'name', 'species', 'breed', 'birth_date', 'sex', 'color', 'owner', 'owner_id', 'owner_public_id', 'legacy_id', 'extra_data']
+        fields = ['id', 'public_id', 'name', 'species', 'breed', 'birth_date', 'sex', 'color', 'owner', 'owner_id', 'owner_public_id', 'legacy_id', 'extra_data', 'is_active', 'archived_at']
         # extra_data = datos del sistema anterior (Fase D): read-only en la API.
-        read_only_fields = ['public_id', 'extra_data']
+        read_only_fields = ['public_id', 'extra_data', 'is_active', 'archived_at']
         extra_kwargs = {
             'legacy_id': {'required': False, 'allow_blank': True},
             # Datos mínimos en alta manual (regla de producto piloto): la mascota

@@ -1,4 +1,5 @@
 import logging
+from django.http import HttpResponseForbidden
 
 from apps.core.models import clear_tenant_context, set_current_user
 from apps.core.request_context import (
@@ -71,6 +72,11 @@ class TenantMiddleware:
     def __call__(self, request):
         try:
             if request.user.is_authenticated:
+                # Sesiones Django (incluido admin): mismo gate que JWT previo.
+                # El operador de plataforma no tiene organization asignada.
+                if (request.user.organization_id and not
+                        request.user.organization.is_active):
+                    return HttpResponseForbidden('Organización desactivada.')
                 set_current_user(request.user)
             else:
                 set_current_user(None)

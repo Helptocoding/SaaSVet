@@ -186,6 +186,79 @@ class InventoryImportApiTests(_InventoryAPIBase, TestCase):
 
     ROW = 'Jeringa 3ml,JER-001,pieza,10,15.50'
 
+    def test_new_presentation_stock_uses_ledger_and_patch_cannot_assign_stock(self):
+        product = self._make_product('PRES-WRITER', 'Producto')
+        response = self.client.post(f'/api/inventory/products/{product.public_id}/presentations/', {
+            'name': 'Caja', 'base_unit': 'piece', 'quantity': '3',
+            'sale_price': '10', 'stock': '2',
+        }, format='json')
+        self.assertEqual(response.status_code, 201, response.data)
+        product.refresh_from_db()
+        self.assertEqual(product.stock_quantity, Decimal('6'))
+        pres = product.presentations.get(name='Caja')
+        self.assertEqual(pres.quantity, Decimal('3'))
+        self.assertEqual(pres.conversion_factor, Decimal('3'))
+        self.assertEqual(pres.stock, Decimal('2'))
+        movement = StockMovement.objects.get(product=product)
+        self.assertEqual(movement.quantity, Decimal('6'))
+        self.assertEqual(movement.created_by, self.admin)
+        response = self.client.patch(f'/api/inventory/presentations/{pres.public_id}/', {'stock': '5'}, format='json')
+        self.assertEqual(response.status_code, 400, response.data)
+        product.refresh_from_db()
+        self.assertEqual(product.stock_quantity, Decimal('6'))
+
+    def test_new_lot_tracked_presentation_rejects_unidentified_stock(self):
+        product = self._make_product('PRES-LOT', 'Producto con lotes')
+        product.tracks_lots = True
+        product.save(update_fields=['tracks_lots'])
+        response = self.client.post(f'/api/inventory/products/{product.public_id}/presentations/', {
+            'name': 'Caja', 'base_unit': 'piece', 'conversion_factor': '3',
+            'sale_price': '10', 'stock': '2',
+        }, format='json')
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertFalse(product.presentations.filter(name='Caja').exists())
+        self.assertFalse(StockMovement.objects.filter(product=product).exists())
+
+    def test_manual_stock_factors_zero_and_lots(self):
+        for factor in ('1', '3', '12', '0.125', '1.2345'):
+            with self.subTest(factor=factor):
+                response = self.client.post('/api/inventory/products/', {
+                    'name': 'Prueba ' + factor, 'internal_code': 'f' + factor,
+                    'presentation_input': {'name': 'Caja', 'base_unit': 'piece',
+                        'conversion_factor': factor, 'sale_price': '40',
+                        'stock': '2', 'min_stock': '1'},
+                }, format='json')
+                self.assertEqual(response.status_code, 201, response.data)
+                product = Product.objects.get(internal_code='f' + factor)
+                self.assertEqual(product.stock_quantity, Decimal('2') * Decimal(factor))
+                self.assertEqual(product.min_stock, Decimal(factor))
+                self.assertEqual(product.presentations.get().quantity, Decimal(factor))
+                self.assertEqual(StockMovement.objects.filter(product=product).count(), 1)
+        response = self.client.post('/api/inventory/products/', {
+            'name': 'Por lote', 'internal_code': 'LOT0', 'tracks_lots': True,
+            'presentation_input': {'base_unit': 'piece', 'sale_price': '10', 'stock': '0'},
+        }, format='json')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertFalse(StockMovement.objects.filter(product__internal_code='LOT0').exists())
+        response = self.client.post('/api/inventory/products/', {
+            'name': 'Por lote positivo', 'internal_code': 'LOT1', 'tracks_lots': True,
+            'presentation_input': {'base_unit': 'piece', 'sale_price': '10', 'stock': '1'},
+        }, format='json')
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertFalse(Product.objects.filter(internal_code='LOT1').exists())
+
+    def test_manual_writer_failure_rolls_back_catalog(self):
+        from unittest.mock import patch
+        with patch('apps.inventory.services.apply_stock_movement', side_effect=RuntimeError('synthetic failure')):
+            response = self.client.post('/api/inventory/products/', {
+                'name': 'Rollback', 'internal_code': 'ROLLBACK',
+                'presentation_input': {'base_unit': 'piece', 'sale_price': '10', 'stock': '1'},
+            }, format='json')
+        self.assertEqual(response.status_code, 500)
+        self.assertFalse(Product.objects.filter(internal_code='ROLLBACK').exists())
+        self.assertFalse(Presentation.objects.filter(product__internal_code='ROLLBACK').exists())
+        self.assertFalse(StockMovement.objects.filter(product__internal_code='ROLLBACK').exists())
+
     def test_upload_inventory_entity_accepted(self):
         pid = self._upload_ok(f'Producto,Código,Unidad,Existencia,Precio\n{self.ROW}\n')
         job = ImportJob.objects.get(public_id=pid)
@@ -269,10 +342,7 @@ class InventoryImportApiTests(_InventoryAPIBase, TestCase):
           Presentation.stock (dual-write ÷cf), conversion_factor, min_stock.
         - Presentation.quantity = conversion_factor SIEMPRE en importación
           (semántica 'alias' canónica, docs/modules/inventory.md + migración 0018).
-        - Deuda PREEXISTENTE documentada (no corregir en esta fase): el alta
-          manual (ProductSerializer.create) deja quantity=1 cuando el caller no
-          manda quantity explícito, aunque cf=3. El test lo fija para que una
-          corrección futura sea consciente."""
+        - El alta manual usa el mismo alias y registra una entrada auditable."""
         # Alta manual equivalente vía API.
         res = self.client.post('/api/inventory/products/', {
             'name': 'Paridad Manual',
@@ -309,13 +379,15 @@ class InventoryImportApiTests(_InventoryAPIBase, TestCase):
         self.assertEqual(imported.min_stock, manual.min_stock)
         # Contrato canónico del importador: quantity == cf (alias).
         self.assertEqual(imported_pres.quantity, Decimal('3'))
-        # Deuda preexistente del ALTA MANUAL (documentada, no corregir aquí):
-        # deja quantity=1 con cf=3.
-        self.assertEqual(manual_pres.quantity, Decimal('1'))
+        self.assertEqual(manual_pres.quantity, Decimal('3'))
         self.assertEqual(manual_pres.conversion_factor, Decimal('3'))
         # Proveniencia: única diferencia permitida entre rutas.
-        self.assertTrue(StockMovement.objects.filter(product=imported).exists())
-        self.assertFalse(StockMovement.objects.filter(product=manual).exists())
+        self.assertEqual(StockMovement.objects.filter(product=imported).count(), 1)
+        movement = StockMovement.objects.get(product=manual)
+        self.assertEqual(movement.quantity, Decimal('6'))
+        self.assertEqual(movement.quantity_unit, 'base')
+        self.assertEqual(movement.created_by, self.admin)
+        self.assertEqual(movement.reason, 'Stock inicial (alta manual)')
 
     def test_autocode_without_internal_code(self):
         pid = self._upload_ok(
@@ -609,16 +681,15 @@ class InventoryDedupAndRulesTests(_InventoryAPIBase, TestCase):
         upload = SimpleUploadedFile('inv.csv', f'{HEADER}\nx,y,piece,1,1\n'.encode(), content_type='text/csv')
         res = client.post('/api/imports/', {'entity_type': 'inventory', 'file': upload}, format='multipart')
         self.assertEqual(res.status_code, 403)
+        self.assertEqual(res.data['code'], 'permission_denied')
 
     def test_demo_account_blocked(self):
-        # El handler global canóniza PermissionDenied a code='permission_denied'
-        # (apps/core/exceptions.py:73 usa default_code); el contrato observable
-        # del bloqueo demo es 403 + mensaje genérico.
         self.org.is_demo = True
         self.org.save()
         upload = SimpleUploadedFile('inv.csv', f'{HEADER}\nx,y,piece,1,1\n'.encode(), content_type='text/csv')
         res = self.client.post('/api/imports/', {'entity_type': 'inventory', 'file': upload}, format='multipart')
         self.assertEqual(res.status_code, 403)
+        self.assertEqual(res.data['code'], 'demo_account_restricted')
 
     def test_xlsx_decimal_cells_parse_exact(self):
         import io

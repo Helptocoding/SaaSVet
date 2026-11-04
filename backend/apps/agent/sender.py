@@ -15,6 +15,7 @@ from django.db.models.functions import Now
 
 from apps.channels.delivery import DELIVERY_RANK, apply_evidence
 from apps.channels.models import Message
+from apps.organizations.models import Organization
 from apps.channels.providers import SendResult, get_provider, valid_provider_id
 from .durable import db_now
 from .models import Conversation, TurnWork
@@ -109,6 +110,10 @@ def claim_message(message_id, *, organization_id, channel_account_id):
         event('claim_conflict')
         return None
     with transaction.atomic():
+        org = Organization.objects.select_for_update(no_key=True, skip_locked=True).filter(
+            pk=organization_id, is_active=True).first()
+        if org is None:
+            return None  # Conservar pending; no intentar proveedor con org desactivada.
         conv = _lock_conv(candidate['conversation_id'], organization_id, skip_locked=True)
         if (conv is None and candidate['conversation_id'] is not None
                 and Conversation.objects.filter(pk=candidate['conversation_id'],
@@ -165,6 +170,15 @@ def claim_message(message_id, *, organization_id, channel_account_id):
 def admit_dispatch(claim):
     """One-use admission. A second invocation with the same token cannot send."""
     with transaction.atomic():
+        org = Organization.objects.select_for_update(no_key=True).filter(pk=claim.organization_id).first()
+        if org is None or not org.is_active:
+            # El claim anterior no fue admitido ni enviado: vuelve a pending sin
+            # tocar evidencia remota ni reintentar una salida incierta.
+            _rows(claim).filter(status='sending', send_admitted_at__isnull=True).update(
+                status='pending', send_token=None, send_started_at=None,
+                send_lease_until=None,
+            )
+            return None
         conv = _lock_conv(claim.conversation_id, claim.organization_id)
         message = _rows(claim).select_for_update().filter(status='sending',
             send_admitted_at__isnull=True, send_lease_until__gt=Now()).first()

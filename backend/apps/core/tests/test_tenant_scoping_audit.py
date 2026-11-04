@@ -91,6 +91,16 @@ BASELINE = {
     # el valor contra la fila ya bloqueada.
     ('appointments', 'services.py', 'Appointment', 'filter'),
     ('billing', 'serializers.py', 'InvoiceItem', 'filter'),
+    # Revisado 2026-11-02 (reporte de conflictos de importación): ImportConflict
+    # es `models.Model` PLANO y NO tiene campo `organization` — es un hijo de
+    # ImportJob por FK CASCADE. `for_organization` no es que se omita: no es
+    # invocable sobre él. Los dos accesos (`.delete()` al reemplazar el mapping
+    # y la consulta paginada del reporte) filtran por `job=job`, y ese job sale
+    # de `self.get_object()` sobre
+    # `ImportJob.objects.for_organization(request.user.organization)`. Es
+    # scoping por FK padre tenant-validado, el mismo criterio que la entrada de
+    # `agent.TurnWork` de arriba.
+    ('imports', 'views.py', 'ImportConflict', 'filter'),
     ('inventory', 'serializers.py', 'Product', 'filter'),
     ('inventory', 'serializers.py', 'PrescriptionItem', 'filter'),
     ('inventory', 'views.py', 'StockMovement', 'filter'),
@@ -100,6 +110,15 @@ BASELINE = {
     # Revisado 2026-07-15 (inventory/services.py:420): get_or_create con
     # organization= explícito en el lookup — tenant-scoped por construcción.
     ('inventory', 'services.py', 'StockLot', 'get_or_create'),
+    # Revisado 2026-11-02 (recibo idempotente de recepción de stock):
+    # StockReceptionReceipt es `models.Model` PLANO, así que tampoco expone
+    # `for_organization`. El get_or_create lleva
+    # `organization=request.user.organization` EXPLÍCITO en el lookup, de modo
+    # que no puede casar con la fila de otra clínica: un operation_id ajeno no
+    # se lee, se crea uno nuevo para la organización del actor. Lo respalda en
+    # base `UniqueConstraint(organization, operation_id)`. Mismo criterio que
+    # `StockLot.get_or_create` justo arriba.
+    ('inventory', 'views.py', 'StockReceptionReceipt', 'get_or_create'),
     # Revisados 2026-07-15: LegalAcceptance se filtra/crea por user, y un user
     # pertenece a exactamente una organización (invariante ADR p48). El scoping
     # viene del principal autenticado, no de un id del cliente.

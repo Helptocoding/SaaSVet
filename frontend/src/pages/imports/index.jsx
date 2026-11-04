@@ -213,6 +213,7 @@ const Imports = () => {
             {step === "preview" && job && (
                 <PreviewStep
                     result={job.result}
+                    jobPublicId={job.public_id}
                     fieldCatalog={job.field_catalog}
                     entityType={entityType}
                     onBack={() => setStep("mapping")}

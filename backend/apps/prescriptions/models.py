@@ -3,9 +3,10 @@ from apps.core.models import OrganizationalModel, PublicIdMixin
 
 
 class Prescription(PublicIdMixin, OrganizationalModel):
+    subject_snapshot = models.JSONField(default=dict, blank=True, editable=False)
     medical_record = models.OneToOneField(
         'medical_records.MedicalRecord',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='prescription'
     )
     veterinarian = models.ForeignKey(
@@ -17,10 +18,19 @@ class Prescription(PublicIdMixin, OrganizationalModel):
     )
     pet = models.ForeignKey(
         'patients.Pet',
-        on_delete=models.PROTECT,
-        related_name='prescriptions'
+        on_delete=models.SET_NULL,
+        related_name='prescriptions', null=True, blank=True,
     )
     notes = models.TextField(blank=True)
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self._state.adding and not self.pet_id:
+            raise ValidationError('Una receta nueva requiere mascota.')
+    def save(self, *args, **kwargs):
+        if self._state.adding and self.pet_id and not self.subject_snapshot:
+            from apps.core.subject_history import snapshot
+            self.subject_snapshot = snapshot(organization=self.organization, pet=self.pet)
+        super().save(*args, **kwargs)
     # created_at, updated_at heredados de OrganizationalModel
 
     class Meta:

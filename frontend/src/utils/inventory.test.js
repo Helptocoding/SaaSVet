@@ -2,11 +2,35 @@ import { describe, it, expect } from "vitest";
 import {
   productStockQty,
   productStockValue,
+  compareInventoryProducts,
   stockStatus,
   computeInitialStock,
   fmt,
   fmtCur,
 } from "./inventory";
+
+describe("orden de inventario según las columnas mostradas", () => {
+  const a = { name: "A", stock_quantity: 12, presentation: { stock: 12, conversion_factor: 12, sale_price: 120 } };
+  const b = { name: "B", stock_quantity: 6, presentation: { stock: 6, conversion_factor: 1, sale_price: 50 } };
+  const sort = (items, column, dir) => [...items].sort((x, y) => compareInventoryProducts(x, y, column, dir)).map(p => p.name);
+
+  it("ordena valores mostrados incluso con sombra divergente", () => {
+    expect([productStockValue(a), productStockValue(b)]).toEqual([120, 300]);
+    expect(sort([b, a], "value", "asc")).toEqual(["A", "B"]);
+    expect(sort([a, b], "value", "desc")).toEqual(["B", "A"]);
+    expect(sort([a, b], "stock", "asc")).toEqual(["B", "A"]);
+    expect(sort([b, a], "stock", "desc")).toEqual(["A", "B"]);
+  });
+
+  it("con sombras coherentes, cero, datos ausentes y empates mantiene el orden", () => {
+    const coherent = { ...a, presentation: { ...a.presentation, stock: 1 } };
+    const zero = { name: "C", stock_quantity: 0, presentation: { stock: 99, sale_price: 9 } };
+    const missing = { name: "D" };
+    expect(sort([b, coherent, zero, missing], "value", "asc")).toEqual(["C", "D", "A", "B"]);
+    expect(sort([b, coherent, zero, missing], "value", "desc")).toEqual(["B", "A", "C", "D"]);
+    expect(sort([b, coherent, zero, missing], "stock", "asc")).toEqual(["C", "D", "B", "A"]);
+  });
+});
 
 // Lógica derivada de inventario (extraída de pages/inventory.jsx, P1-4 B3).
 // Protege que un cambio visual en la página no rompa el cálculo de stock/valor.

@@ -23,7 +23,11 @@ from apps.billing.services import _warn_if_late_arrival
 from apps.billing.tests.factories import build_direct_sale_checkout
 from apps.core.datetime_utils import org_today_local
 from apps.medical_records.models import MedicalRecord
-from apps.medical_records.views import _warn_if_late_closed_at
+# `_warn_if_late_closed_at` vive en services.py, no en views.py: el cierre de
+# expediente se movió al servicio y la vista dejó de ser su dueña. El logger que
+# emite ('analytics.events') no cambió, así que las aserciones de abajo siguen
+# valiendo tal cual.
+from apps.medical_records.services import _warn_if_late_closed_at
 from apps.organizations.models import Organization, OrganizationSettings
 from apps.patients.models import Owner, Pet
 from apps.users.models import User

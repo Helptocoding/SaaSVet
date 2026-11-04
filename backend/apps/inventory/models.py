@@ -106,7 +106,7 @@ class Presentation(PublicIdMixin, OrganizationalModel):
     )
     name = models.CharField(max_length=255)
     base_unit = models.CharField(max_length=20, choices=UNIT_CHOICES)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    quantity = models.DecimalField(max_digits=12, decimal_places=4, default=1)
     sale_price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     min_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -152,6 +152,20 @@ class Presentation(PublicIdMixin, OrganizationalModel):
                 name="presentation_sale_price_positive",
             ),
         ]
+
+
+class StockReceptionReceipt(models.Model):
+    """Idempotency record for an explicitly identified lot reception."""
+    organization = models.ForeignKey('organizations.Organization', on_delete=models.PROTECT)
+    actor = models.ForeignKey('users.User', on_delete=models.PROTECT)
+    presentation = models.ForeignKey(Presentation, on_delete=models.PROTECT)
+    operation_id = models.UUIDField()
+    payload_hash = models.CharField(max_length=64)
+    result = models.JSONField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['organization', 'operation_id'], name='stock_reception_operation_unique')]
 
 
 class StockLot(PublicIdMixin, OrganizationalModel):
@@ -265,13 +279,13 @@ class StockMovement(OrganizationalModel):
 
     presentation = models.ForeignKey(
         Presentation,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='movements',
     )
     # ADR p31: product FK para movimientos en base_units
     product = models.ForeignKey(
         Product,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='stock_movements',
         null=True,
         blank=True,
@@ -349,7 +363,7 @@ class MedicalRecordProduct(OrganizationalModel):
 
     medical_record = models.ForeignKey(
         'medical_records.MedicalRecord',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='products_used',
     )
     presentation = models.ForeignKey(

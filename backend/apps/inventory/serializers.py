@@ -1,5 +1,5 @@
 import re
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from uuid import uuid4
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
@@ -31,7 +31,25 @@ def _validate_non_negative(value, field_name, label):
         raise serializers.ValidationError({field_name: f"{label} no puede ser negativo."})
 
 
-class PresentationSerializer(serializers.ModelSerializer):
+class PresentationAliasMixin:
+    def to_internal_value(self, data):
+        # Copiar antes de la validación evita confundir defaults del modelo con
+        # valores explícitos; también funciona en el serializer anidado parcial.
+        data = data.copy()
+        if 'quantity' in data and 'conversion_factor' not in data:
+            data['conversion_factor'] = data['quantity']
+        elif 'conversion_factor' in data and 'quantity' not in data:
+            data['quantity'] = data['conversion_factor']
+        result = super().to_internal_value(data)
+        if 'quantity' in result and 'conversion_factor' in result:
+            if result['quantity'] != result['conversion_factor']:
+                raise serializers.ValidationError({
+                    'quantity': 'Debe coincidir con el factor de conversión.'
+                })
+        return result
+
+
+class PresentationSerializer(PresentationAliasMixin, serializers.ModelSerializer):
     product = serializers.IntegerField(source='product_id', read_only=True)
     is_low_stock = serializers.BooleanField(read_only=True)
     base_unit_display = serializers.CharField(source='get_base_unit_display', read_only=True)
@@ -82,7 +100,7 @@ class PresentationSerializer(serializers.ModelSerializer):
         return value
 
 
-class PresentationCreateSerializer(serializers.ModelSerializer):
+class PresentationCreateSerializer(PresentationAliasMixin, serializers.ModelSerializer):
     """Serializer for adding a new presentation variant to an existing product."""
 
     name = serializers.CharField(required=False, allow_blank=True, default='')
@@ -114,6 +132,8 @@ class PresentationCreateSerializer(serializers.ModelSerializer):
 
     def validate_stock(self, value):
         _validate_non_negative(value, 'stock', 'El stock')
+        if self.instance is not None and value != self.instance.stock:
+            raise serializers.ValidationError('Usa el endpoint de ajuste de stock para modificar existencias.')
         return value
 
     def validate_min_stock(self, value):
@@ -169,8 +189,10 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         pres = data.get('presentation_input')
-        if not pres:
+        if not pres and self.instance is None:
             raise serializers.ValidationError("Se requiere al menos una presentación.")
+        if self.instance is None and pres and data.get('tracks_lots', False) and pres.get('stock', 0) > 0:
+            raise serializers.ValidationError({'presentation_input': {'stock': 'Recibe el stock mediante lotes identificados.'}})
         return data
 
     def validate_internal_code(self, value):
@@ -225,21 +247,28 @@ class ProductSerializer(serializers.ModelSerializer):
             if not data.get('name'):
                 data['name'] = product.name
 
-            pres = Presentation(product=product, organization=organization, **data)
+            initial_presentations = data.pop('stock', Decimal('0'))
+            cf = data.get('conversion_factor', Decimal('1'))
+            initial_stock = (initial_presentations * cf).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+            min_stock_base = (data.get('min_stock', Decimal('0')) * cf).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+            if initial_stock >= Decimal('10000000000') or min_stock_base >= Decimal('10000000000'):
+                raise serializers.ValidationError({'presentation_input': 'Stock o mínimo fuera de rango en unidades base.'})
+            if initial_presentations > 0 and initial_stock == 0:
+                raise serializers.ValidationError({'presentation_input': {'stock': 'El stock es demasiado pequeño en unidades base.'}})
+            pres = Presentation(product=product, organization=organization, stock=0, **data)
             pres.full_clean()
             Presentation.objects.bulk_create([pres])
 
-            # ADR p31: poblar Product.stock_quantity desde el stock inicial.
-            # bulk_create omite signals, por eso se hace aquí explícitamente.
-            from decimal import Decimal as _D
-            cf = _D(str(pres.conversion_factor))
-            initial_stock = _D(str(data.get('stock') or 0)) * cf
-            min_stock_base = _D(str(data.get('min_stock') or 0)) * cf
             Product.all_objects.filter(pk=product.pk).update(
                 base_unit=data.get('base_unit', ''),
-                stock_quantity=initial_stock,
                 min_stock=min_stock_base,
             )
+            if initial_stock > 0:
+                from .services import apply_stock_movement
+                apply_stock_movement(
+                    pres, initial_stock, 'in', organization,
+                    reason='Stock inicial (alta manual)', created_by=self.context['request'].user,
+                )
             product.refresh_from_db()
 
         return product

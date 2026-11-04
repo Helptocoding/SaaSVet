@@ -1,6 +1,4 @@
-"""
-Tests para eliminación de mascotas (Pet delete).
-"""
+"""DELETE cotidiano de mascotas es alias de archivo (orden 2)."""
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -47,8 +45,8 @@ class PetDeleteTests(APITestCase):
         self.assertIn("genérico", response.data["message"])
         self.assertTrue(Pet.objects.filter(pk=generic_pet.pk).exists())
 
-    def test_delete_pet_with_protected_relations_returns_409(self):
-        """Eliminar mascota con citas asociadas devuelve 409 vía ProtectedError handler."""
+    def test_delete_pet_with_open_appointment_returns_409(self):
+        """La actividad abierta bloquea archivo; una cita nunca se cancela sola."""
         self.auth(self.admin)
         owner = Owner.objects.create(
             name="Propietario Test",
@@ -77,15 +75,11 @@ class PetDeleteTests(APITestCase):
         response = self.client.delete(f"/api/pets/{pet.public_id}/")
 
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        # PR-4B: handler bounded — code/message canónicos + protected_count/sample
-        self.assertEqual(response.data["code"], "resource_has_dependencies")
-        self.assertIn("No se puede eliminar", response.data["message"])
-        self.assertIsInstance(response.data["protected_count"], int)
-        self.assertGreaterEqual(response.data["protected_count"], 1)
+        self.assertEqual(response.data["code"], "archive_blocked")
         self.assertTrue(Pet.objects.filter(pk=pet.pk).exists())
 
     def test_delete_pet_without_relations_returns_204(self):
-        """Eliminar mascota sin citas ni facturas devuelve 204."""
+        """DELETE compatible: 204, fila archivada y restaurable."""
         self.auth(self.admin)
         owner = Owner.objects.create(
             name="Propietario Test",
@@ -103,3 +97,4 @@ class PetDeleteTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Pet.objects.filter(pk=pet.pk).exists())
+        self.assertTrue(Pet.all_objects.filter(pk=pet.pk, is_active=False).exists())

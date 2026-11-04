@@ -54,6 +54,29 @@ class Organization(models.Model):
     arrival_instructions = models.TextField(blank=True, default='')
 
     is_demo = models.BooleanField(default=False, db_index=True)
+    # `db_default` no es decorativo en estas dos: son columnas REQUERIDAS
+    # añadidas a una tabla que ya existía. Sin default en base, un escritor
+    # anclado a un estado de esquema anterior omite la columna en su INSERT y
+    # recibe NotNullViolation — es decir, la migración deja de ser aditiva
+    # aunque se llame `preserve_*`. Lo cazaron dos ensayos de migración que
+    # existen justo para eso (`test_b4_migration`,
+    # `test_replies_migration::..._legacy_writers`): rebobinan `channels` a un
+    # estado viejo y crean una Organization con el modelo histórico, que no
+    # conoce estos campos.
+    #
+    # Misma trampa, aún latente, en otras columnas requeridas que el mismo
+    # trabajo añadió a tablas preexistentes: `Presentation.quantity`,
+    # `MedicalRecord.vet_name_at_close` / `vet_specialty_at_close` y los cuatro
+    # `subject_snapshot` (Invoice, Checkout, Prescription, MedicalRecord). No se
+    # tocaron porque ninguna prueba las ejercita todavía y un `db_default` sobre
+    # JSONField exige envolver el valor en `Value`; cuando se ejerciten, la
+    # regla a aplicar es ésta.
+    is_active = models.BooleanField(default=True, db_default=True, db_index=True)
+    deactivated_at = models.DateTimeField(null=True, blank=True, editable=False)
+    deactivated_by = models.ForeignKey('users.User', on_delete=models.SET_NULL,
+                                       null=True, blank=True, related_name='+', editable=False)
+    deactivation_reason = models.CharField(max_length=255, blank=True, default='',
+                                           db_default='', editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
@@ -147,7 +170,7 @@ class OrganizationSchedule(models.Model):
 class OrganizationTimezoneAudit(models.Model):
     organization = models.ForeignKey(
         Organization,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='timezone_audits',
     )
     old_timezone = models.CharField(max_length=64)
@@ -163,4 +186,13 @@ class OrganizationTimezoneAudit(models.Model):
 
     class Meta:
         ordering = ['-changed_at']
+
+
+class OrganizationStateAudit(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT,
+                                     related_name='state_audits')
+    actor = models.ForeignKey('users.User', on_delete=models.PROTECT)
+    active = models.BooleanField()
+    reason = models.CharField(max_length=255)
+    changed_at = models.DateTimeField(default=timezone.now)
 

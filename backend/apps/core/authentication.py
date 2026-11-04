@@ -38,6 +38,8 @@ class TenantJWTAuthentication(JWTAuthentication):
         # refresh tampoco siga emitiendo access tokens para la cuenta.
         if not user.is_active:
             raise AuthenticationFailed('Cuenta desactivada.', code='user_inactive')
+        if user.organization_id and not user.organization.is_active:
+            raise AuthenticationFailed('Organización desactivada.', code='organization_inactive')
 
         set_current_user(user)
         self._tag_sentry(user)

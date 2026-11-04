@@ -126,10 +126,12 @@ class VitalSignsSerializer(serializers.ModelSerializer):
 
 
 class MedicalRecordSerializer(serializers.ModelSerializer):
-    pet_name = serializers.CharField(source='pet.name', read_only=True)
+    pet_name = serializers.SerializerMethodField()
     # Día 6 B1: pet_public_id expuesto para que frontend reciba UUID en lugar
     # de PK al embedder MR. Evita filtrado ?pet=<pk> en query params.
-    pet_public_id = serializers.UUIDField(source='pet.public_id', read_only=True)
+    pet_public_id = serializers.SerializerMethodField()
+    historical_pet_public_id = serializers.SerializerMethodField()
+    subject_snapshot_source = serializers.SerializerMethodField()
     veterinarian_name = serializers.SerializerMethodField()
     appointment_date = serializers.SerializerMethodField()
     appointment_public_id = serializers.UUIDField(source='appointment.public_id', read_only=True, allow_null=True)
@@ -202,8 +204,10 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         model = MedicalRecord
         fields = [
             'id', 'public_id',
-            'pet', 'pet_name', 'pet_public_id',
-            'veterinarian', 'veterinarian_name',
+            'pet', 'pet_name', 'pet_public_id', 'historical_pet_public_id',
+            'subject_snapshot_source',
+            'veterinarian', 'veterinarian_name', 'vet_public_id_at_close',
+            'vet_snapshot_source', 'vet_snapshot_recorded_at', 'vet_specialty_at_close',
             'appointment', 'appointment_public_id', 'appointment_date',
             'consultation_type',
             'diagnosis', 'treatment', 'notes', 'weight', 'force_weight', 'created_at', 'updated_at',
@@ -214,11 +218,13 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             'latest_vitals',
             'consultation_assessment', 'surgery_record', 'emergency_record',
             'originated_from', 'originated_from_public_id',
-            'status', 'closed_at', 'closed_by',
+            'status', 'closed_at', 'closed_by', 'vet_public_id_at_close',
+            'vet_snapshot_source', 'vet_snapshot_recorded_at', 'vet_specialty_at_close',
             'can_modify_charges', 'can_close', 'can_delete',
         ]
         read_only_fields = [
-            'id', 'public_id', 'pet_public_id', 'appointment_public_id',
+            'id', 'public_id', 'pet_public_id', 'historical_pet_public_id',
+            'subject_snapshot_source', 'appointment_public_id',
             'prescription_public_id', 'invoice_public_id', 'invoice_status', 'checkout_public_id',
             'created_at', 'updated_at', 'prescription_id', 'invoice_id',
             'status', 'closed_at', 'closed_by',
@@ -296,9 +302,25 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         return vet
 
     def get_veterinarian_name(self, obj):
+        if obj.status == MedicalRecord.Status.CLOSED:
+            return obj.vet_name_at_close or 'Desconocido'
         if obj.veterinarian:
             return f"{obj.veterinarian.first_name} {obj.veterinarian.last_name}"
         return ""
+
+    def get_pet_name(self, obj):
+        from apps.core.subject_history import identity
+        return identity(obj, 'pet').get('name') or (obj.pet.name if obj.pet_id else 'Desconocido')
+
+    def get_pet_public_id(self, obj):
+        return obj.pet.public_id if obj.pet_id and obj.pet.is_active else None
+
+    def get_historical_pet_public_id(self, obj):
+        from apps.core.subject_history import identity
+        return identity(obj, 'pet').get('uuid')
+
+    def get_subject_snapshot_source(self, obj):
+        return (obj.subject_snapshot or {}).get('source', 'unknown')
 
     def get_appointment_date(self, obj):
         if obj.appointment:

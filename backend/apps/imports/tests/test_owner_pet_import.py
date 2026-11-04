@@ -185,6 +185,16 @@ class ImportApiTests(TestCase):
         self.assertEqual(pet.species, 'canino')
         self.assertEqual(pet.owner_id, owner.pk)
 
+    def test_commit_does_not_create_subjects_after_organization_deactivation(self):
+        pid = self._upload('Dueño,Teléfono,Mascota,Especie,Expediente\nPersona,8112345678,Luna,Perro,PRUEBA\n')
+        self._set_mapping(pid)
+        before = Owner.all_objects.filter(organization=self.org).count(), Pet.all_objects.filter(organization=self.org).count()
+        Organization.objects.filter(pk=self.org.pk).update(is_active=False)
+        response = self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertEqual((Owner.all_objects.filter(organization=self.org).count(),
+                          Pet.all_objects.filter(organization=self.org).count()), before)
+
     def test_owner_without_phone_is_imported(self):
         pid = self._upload('Dueño,Teléfono,Mascota,Especie,Expediente\nAna López,,Luna,Gato,00232\n')
         self._set_mapping(pid)

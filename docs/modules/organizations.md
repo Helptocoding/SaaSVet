@@ -6,6 +6,8 @@
 
 ## Objetivo
 
+**Orden 2 (28-10-2026):** Organization tiene `is_active`, fecha/actor/motivo de desactivación, y `OrganizationStateAudit` con FK PROTECT. Solo `ADMIN_SAAS` completo opera `POST /api/platform/organizations/<uuid>/deactivate|reactivate/` con `reason`; el tenant no puede editar estado en `/organizations/me/`. Login, refresh, JWT previo, sesiones Django y admisión del worker/sender se bloquean durante desactivación. Se conservan staff, sus flags individuales, trabajos pendientes y política de incertidumbre; reactivar no reactiva un usuario individualmente inactivo ni autonomía cerrada. `GET /api/platform/organizations/<uuid>/history/?page=N` permite a plataforma leer historial de tenant desactivado con scope. `OrganizationTimezoneAudit.organization` PROTECT; organización con configuración, roles, usuarios, genéricos, historia o auditoría no es target físico vacío.
+
 Gestiona las clinicas (tenants), sus usuarios y la configuracion operativa de cada una.
 
 ## Roles del sistema

@@ -132,6 +132,8 @@ def validate_creation(command, *, require_schedule=False, expected_timezone=None
     if not organizations:
         raise CreationRejected('entity_scope')
     org = organizations[0]
+    if not org.is_active:
+        raise CreationRejected('entity_inactive')
     if expected_timezone is not None and org.timezone != expected_timezone:
         raise CreationRejected('precondition_failed')
     schedules = _share_rows(OrganizationSchedule, organization_id=org.pk,

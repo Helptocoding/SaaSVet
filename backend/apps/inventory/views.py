@@ -1,8 +1,13 @@
 import logging
+import hashlib
+import json
+from uuid import UUID
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
+from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -215,8 +220,30 @@ def receive_presentation_stock(request, pk):
     serializer = StockReceptionSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
+    raw_operation = request.headers.get('X-Idempotency-Key')
+    operation_id = None
+    if raw_operation is not None:
+        try:
+            operation_id = UUID(raw_operation)
+        except (ValueError, TypeError, AttributeError):
+            raise ValidationError({'operation_id': 'Identificador de operación inválido.'})
+    payload = json.dumps(serializer.validated_data, cls=DjangoJSONEncoder, sort_keys=True, separators=(',', ':'))
+    digest = hashlib.sha256(payload.encode()).hexdigest()
+
     try:
         with transaction.atomic():
+            receipt = None
+            if operation_id is not None:
+                from .models import StockReceptionReceipt
+                receipt, created = StockReceptionReceipt.objects.get_or_create(
+                    organization=request.user.organization, operation_id=operation_id,
+                    defaults={'actor': request.user, 'presentation': presentation, 'payload_hash': digest},
+                )
+                if not created:
+                    if (receipt.actor_id != request.user.pk or receipt.presentation_id != presentation.pk
+                            or receipt.payload_hash != digest or receipt.result is None):
+                        return Response({'code': 'reception_operation_conflict', 'message': 'La operación no coincide con la recepción solicitada.'}, status=status.HTTP_409_CONFLICT)
+                    return Response(receipt.result)
             affected = receive_stock(
                 presentation=presentation,
                 lots=serializer.validated_data['lots'],
@@ -225,14 +252,16 @@ def receive_presentation_stock(request, pk):
                 received_at=serializer.validated_data.get('received_at'),
                 created_by=request.user,
             )
+            presentation.refresh_from_db()
+            result = {'presentation': PresentationSerializer(presentation).data,
+                      'lots': StockLotSerializer(affected, many=True).data}
+            if receipt is not None:
+                receipt.result = json.loads(json.dumps(result, cls=DjangoJSONEncoder))
+                receipt.save(update_fields=['result'])
     except DjValidationError as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    presentation.refresh_from_db()
-    return Response({
-        'presentation': PresentationSerializer(presentation).data,
-        'lots': StockLotSerializer(affected, many=True).data,
-    })
+    return Response(result)
 
 
 class ProductLotsView(TenantQueryMixin, generics.ListAPIView):
@@ -439,14 +468,24 @@ class PresentationCreateView(TenantQueryMixin, generics.CreateAPIView):
     resource_name = "inventory"
 
     def perform_create(self, serializer):
-        product = resolve_public_id(
-            Product.objects.for_organization(self.request.user.organization),
-            self.kwargs['product_pk'],
-        )
-        serializer.save(
-            product=product,
-            organization=self.request.user.organization,
-        )
+        from .services import apply_stock_movement
+        with transaction.atomic():
+            product = resolve_public_id(
+                Product.objects.for_organization(self.request.user.organization),
+                self.kwargs['product_pk'],
+            )
+            initial = serializer.validated_data['stock']
+            factor = serializer.validated_data.get('conversion_factor', Decimal('1'))
+            quantity = (initial * factor).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+            if initial > 0 and product.tracks_lots:
+                raise ValidationError({'stock': 'Recibe el stock mediante lotes identificados.'})
+            if initial > 0 and (quantity <= 0 or quantity >= Decimal('10000000000')):
+                raise ValidationError({'stock': 'Stock fuera de rango en unidades base.'})
+            pres = serializer.save(product=product, organization=self.request.user.organization, stock=0)
+            if quantity > 0:
+                apply_stock_movement(pres, quantity, 'in', self.request.user.organization,
+                                     reason='Stock inicial (alta de presentación)', created_by=self.request.user)
+                pres.refresh_from_db()
 
 
 class PresentationDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.RetrieveUpdateDestroyAPIView):
