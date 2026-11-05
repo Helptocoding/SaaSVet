@@ -1,7 +1,7 @@
 # ADR p63 — Concesiones explícitas para el ADMIN de clínica
 
 **Fecha**: 2026-11-04
-**Estado**: **PROPUESTO. No implementado.** H-1 sigue abierta y el despliegue no está autorizado. Decisiones registradas abajo; falta la aprobación explícita de los permisos sensibles y la evidencia de producción.
+**Estado**: **PROPUESTO. No implementado.** H-1 sigue abierta y el despliegue no está autorizado. Decisiones registradas abajo; falta confirmar la definición de «sensible» y los cinco casos ordinarios, y la evidencia de producción.
 **Origen**: auditoría de seguridad run-1, H-1 (`docs/plan-implementacion-seguridad-run1-2026-10-28.md`)
 
 ## Contexto
@@ -26,7 +26,9 @@ La lista **no se deriva** de `PERMISSION_CODES` ni de los grupos de clasificaci�
 | `organization.list` y `prescription.update` | Se incorporan: solo ADMIN, ordinarios |
 | `inventory.destroy` y `medicalrecord.destroy` | Se incorporan: solo ADMIN, sensibles |
 | `notification.retrieve` | Se retira |
-| Los 19 sensibles para el ADMIN | Recomendado; **falta aprobación explícita** |
+| Los 19 sensibles para el ADMIN | **Aprobado por el dueño, 2026-11-05**, conservando las condiciones de dominio |
+| Lista de endpoints críticos | **Aprobada por el dueño, 2026-11-05** |
+| Operaciones raras sin cubrir en 7 días | **Aprobado, 2026-11-05:** la ventana se amplía, sin tráfico sintético en producción |
 | `ADMIN_SAAS` con `*.*` | Se mantiene |
 | `*.*` en cualquier otro rol | No se admite como excepción implícita: bloquea el despliegue |
 | Los escritores de roles | Consumen una única fuente |
@@ -67,27 +69,27 @@ Los cuatro códigos deben estar en `PERMISSION_CODES` antes de que el seed inten
 
 **Decisión: se retira al implementar H-1**, y no se concede al ADMIN.
 
-Verificación final: el código aparece solo en `permissions_codes.py` y en este ADR, en todo el repositorio. Ninguna ruta lo exige ni ningún servicio o pantalla lo pide. **Límite:** una integración externa solo podría depender de él leyendo la lista de `/api/me/`; el repositorio no puede descartarlo, así que debe confirmarse con el dueño antes de retirarlo.
+Verificación final: el código aparece solo en `permissions_codes.py` y en este ADR, en todo el repositorio. Ninguna ruta lo exige ni ningún servicio o pantalla lo pide. Una integración externa solo podría depender de él leyendo la lista de `/api/me/`, algo que el repositorio no puede descartar. **El dueño confirmó el 2026-11-05 que puede retirarse.**
 
 El retiro actualiza `PERMISSION_CODES`, los grupos de clasificación, VET y ASSISTANT, los tests de partición y catálogo, y la documentación.
 
 ## Permisos sensibles: aprobación por grupo
 
-Solo el ADMIN tiene estos 19 hoy. Recomendación: el ADMIN es titular de todos los grupos, con **aprobación explícita pendiente del dueño del producto**. El análisis estático no puede demostrar esta decisión.
+Solo el ADMIN tiene estos 19 hoy. **El dueño del producto aprobó el 2026-11-05 que el ADMIN sea titular de todos los grupos.** Es una decisión de producto; el análisis estático no la demuestra.
 
 RBAC decide quién puede iniciar una operación, no si esa operación es válida. Las condiciones de cada grupo se conservan; este ADR no verificó que todas estén implementadas hoy, así que la columna es un requisito.
 
 | Área | Códigos | Qué permite | Condición que debe conservarse | Aprobación |
 |---|---|---|---|---|
-| Documentos de cobro | `invoice.destroy`, `invoice.void_terminal`, `invoice.replace`, `invoice.replace_adjust`, `invoice.replace_manage`, `invoice.replace_waive` | Eliminar, anular o sustituir documentos ya emitidos | Reglas de estado del documento y auditoría | Pendiente |
-| Crédito | `invoice.post_unpaid` | Emitir sin cobrar | Trazabilidad de la emisión sin cobro | Pendiente |
-| Dinero | `billing.refund`, `billing.clinical_charge.reprice`, `collection.resolve` | Devolver, cambiar precios de cargos clínicos, resolver cobranza | Validaciones de negocio y registro de devoluciones y ajustes | Pendiente |
-| Disputas | `checkout.dispute.resolve` | Resolver disputas | | Pendiente |
-| Personal | `staff.create`, `staff.destroy`, `staff.reset_password` | Altas, bajas y acceso de empleados | | Pendiente |
-| Organización | `organization.update` | Configuración de la clínica | | Pendiente |
-| Analítica | `dashboard.financial.view` | Ver datos financieros | | Pendiente |
-| Importación | `import.commit` | Escritura masiva de datos | Validaciones de integridad y organización; confirmación y registro de la ejecución | Pendiente |
-| Agente WhatsApp | `agentinbox.config`, `agentinbox.identity_verify` | Apagar el agente; vincular una identidad a un expediente | Controles de identidad y auditoría | Pendiente |
+| Documentos de cobro | `invoice.destroy`, `invoice.void_terminal`, `invoice.replace`, `invoice.replace_adjust`, `invoice.replace_manage`, `invoice.replace_waive` | Eliminar, anular o sustituir documentos ya emitidos | Reglas de estado del documento y auditoría | Aprobado |
+| Crédito | `invoice.post_unpaid` | Emitir sin cobrar | Trazabilidad de la emisión sin cobro | Aprobado |
+| Dinero | `billing.refund`, `billing.clinical_charge.reprice`, `collection.resolve` | Devolver, cambiar precios de cargos clínicos, resolver cobranza | Validaciones de negocio y registro de devoluciones y ajustes | Aprobado |
+| Disputas | `checkout.dispute.resolve` | Resolver disputas | | Aprobado |
+| Personal | `staff.create`, `staff.destroy`, `staff.reset_password` | Altas, bajas y acceso de empleados | | Aprobado |
+| Organización | `organization.update` | Configuración de la clínica | | Aprobado |
+| Analítica | `dashboard.financial.view` | Ver datos financieros | | Aprobado |
+| Importación | `import.commit` | Escritura masiva de datos | Validaciones de integridad y organización; confirmación y registro de la ejecución | Aprobado |
+| Agente WhatsApp | `agentinbox.config`, `agentinbox.identity_verify` | Apagar el agente; vincular una identidad a un expediente | Controles de identidad y auditoría | Aprobado |
 
 Con `inventory.destroy` y `medicalrecord.destroy` serán 21 sensibles.
 
@@ -109,7 +111,7 @@ Estos ordinarios quedan a confirmar con esa definición. No se propone moverlos 
 
 ## Matriz
 
-Filas del catálogo actual. Las concesiones sensibles del ADMIN quedan sujetas a su aprobación. Los cuatro códigos nuevos del hallazgo se añaden al implementar, y `notification.retrieve` se retira.
+Filas del catálogo actual. Las concesiones sensibles del ADMIN están aprobadas. Los cuatro códigos nuevos del hallazgo se añaden al implementar, y `notification.retrieve` se retira.
 
 | Código | Clase | ADMIN | VET | ASSISTANT | AGENT | Rutas que lo exigen | UI |
 |---|---|---|---|---|---|---|---|
@@ -295,7 +297,7 @@ Se añade, porque la ausencia de un evento no basta:
 2. **`UserRole` en base de datos:** todo usuario activo lo tiene. El log no alcanza: `user_has_permission` usa el mismo fallback sin emitir evento, y un usuario inactivo esos días no aparece.
 3. **Uso real del ADMIN:** los `required_permission` de `RBAC_ALLOWED_DB` con rol `ADMIN` están todos en la lista. Es la evidencia que responde a este cambio. El gate de fallback dice si los usuarios están migrados, no qué usa un administrador.
 
-### Endpoints críticos (propuesta, por aprobar)
+### Endpoints críticos (aprobados el 2026-11-05)
 
 | Área | Endpoints |
 |---|---|
@@ -311,11 +313,11 @@ Se añade, porque la ausencia de un evento no basta:
 | Notificaciones | `GET /api/v1/notifications/feed/`, `POST /api/v1/notifications/<key>/seen/` |
 | Agente WhatsApp, si está habilitado | `GET /api/inbox/threads/`, `POST /api/inbox/conversations/<id>/send/`, `POST /api/inbox/conversations/<id>/claim/`, `POST /api/inbox/conversations/<id>/verify-identity/`, `POST /api/inbox/conversations/<id>/authorize-identity/`, `PATCH /api/inbox/settings/` |
 
-Los 500 requests no sustituyen esta cobertura. Tres puntos que el gate debe resolver:
+Los 500 requests no sustituyen esta cobertura. Cómo se mide:
 
 - **El campo `endpoint` guarda `request.path`, con identificadores.** Medir cobertura exige normalizarlo contra el patrón de la ruta.
 - **Los eventos RBAC no ven todo.** `/api/token/`, `/api/token/refresh/` y `/api/me/` no aparecen entre las rutas con RBAC, así que su cobertura necesita otra fuente de logs, aún por identificar.
-- **Una operación rara puede no ocurrir en 7 días**, como una devolución en una clínica pequeña. Propuesta: la ventana se amplía hasta cubrirla, sin generar tráfico sintético en producción. Debe aprobarse.
+- **Una operación rara puede no ocurrir en 7 días**, como una devolución en una clínica pequeña. La ventana se amplía hasta cubrirla, sin generar tráfico sintético en producción.
 
 ## Criterio de cierre de H-1
 
