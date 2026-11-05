@@ -29,11 +29,10 @@ ENV VITE_API_URL=${VITE_API_URL} \
     VITE_SENTRY_ENVIRONMENT=${VITE_SENTRY_ENVIRONMENT} \
     VITE_SENTRY_RELEASE=${VITE_SENTRY_RELEASE}
 
-# P1-5 A4: credenciales de upload de source maps. SECRETO build-time — en CI
-# pasarlas idealmente con BuildKit `--secret`. Se consumen solo durante
-# `pnpm run build`; este stage builder se descarta, así que NO llegan al image
-# runtime (nginx). Si están vacías, el plugin no se carga (ver vite.config.js).
-ARG SENTRY_AUTH_TOKEN
+# P1-5 A4: destino de la subida de source maps; no son secretos. El token va por
+# BuildKit `--secret` (abajo), nunca como ARG: un build arg queda en el historial
+# de la etapa y en la caché del host que construye, aunque no llegue a nginx.
+# Sin token, sin org o sin proyecto el plugin no se carga (ver vite.config.js).
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
 
@@ -43,7 +42,11 @@ COPY . .
 # P1-5 A4: build con source maps 'hidden' (vite.config.js). El plugin de Sentry
 # los sube y borra; el `find ... -delete` es safeguard por si el upload no corrió
 # (sin token) → garantiza que ningún .map llegue a nginx (no exponer el código).
-RUN SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN} \
+# El secreto solo existe durante este RUN: no entra en capas, historial ni caché.
+RUN --mount=type=secret,id=sentry_auth_token \
+    SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)"; \
+    export SENTRY_AUTH_TOKEN; \
+    if [ -n "$SENTRY_AUTH_TOKEN" ]; then echo "[build] sentry token: provided"; else echo "[build] sentry token: absent"; fi; \
     SENTRY_ORG=${SENTRY_ORG} \
     SENTRY_PROJECT=${SENTRY_PROJECT} \
     pnpm run build \

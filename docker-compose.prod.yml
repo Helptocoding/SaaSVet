@@ -213,9 +213,12 @@ services:
         # P1-5: tags de Sentry browser + upload de source maps (build-time).
         VITE_SENTRY_ENVIRONMENT: ${ENVIRONMENT:-production}
         VITE_SENTRY_RELEASE: ${SENTRY_RELEASE:-}
-        SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN:-}
         SENTRY_ORG: ${SENTRY_ORG:-}
         SENTRY_PROJECT: ${SENTRY_PROJECT:-}
+      # BuildKit secret, not a build arg: it must not persist in the build history
+      # or cache of the host. Declared at the bottom of this file.
+      secrets:
+        - sentry_auth_token
     image: vet-frontend:${IMAGE_TAG:-latest}   # P1-6B: SHA-tagged (see backend note)
     restart: unless-stopped
     networks: [internal]
@@ -282,3 +285,7 @@ volumes:
   static_files:
   caddy_data:
   caddy_config:
+
+secrets:
+  sentry_auth_token:
+    environment: SENTRY_AUTH_TOKEN

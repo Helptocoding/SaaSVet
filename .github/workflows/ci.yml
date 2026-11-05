@@ -141,6 +141,71 @@ jobs:
         run: pnpm run smoke:urls
 
   # ---------------------------------------------------------------------------
+  # IMAGES: real builds, since the Dockerfiles are not exercised anywhere else.
+  # A canary proves the Sentry token reaches the build but no layer or history of
+  # any stage. It cannot prove the upload to Sentry: that needs real credentials.
+  # ---------------------------------------------------------------------------
+  images:
+    name: images (build + build secret)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Build backend image
+        run: docker build --target runtime -t vet-backend:ci backend
+      - name: Build frontend with a canary token
+        env:
+          SENTRY_AUTH_TOKEN: canary-sentry-token-3f9c1a7e
+        run: |
+          set -euo pipefail
+          for target in builder runtime; do
+            DOCKER_BUILDKIT=1 docker build --no-cache --progress=plain \
+              --secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
+              --build-arg VITE_API_URL=https://ci.invalid/api/ \
+              --target "$target" -t "vet-frontend:$target" frontend 2>&1 | tee "/tmp/build-$target.log"
+            grep -q '\[build\] sentry token: provided' "/tmp/build-$target.log" || [ "$target" = runtime ]
+          done
+      - name: The canary is in no layer or history of any stage
+        run: |
+          set -euo pipefail
+          canary=canary-sentry-token-3f9c1a7e
+          for target in builder runtime; do
+            if docker history --no-trunc "vet-frontend:$target" | grep -q "$canary"; then
+              echo "::error::token found in the history of $target"; exit 1
+            fi
+            if docker inspect "vet-frontend:$target" | grep -q "$canary"; then
+              echo "::error::token found in the config of $target"; exit 1
+            fi
+            docker save "vet-frontend:$target" -o "/tmp/$target.tar"
+            mkdir -p "/tmp/layers-$target"
+            tar -xf "/tmp/$target.tar" -C "/tmp/layers-$target"
+            if grep -rqa "$canary" "/tmp/layers-$target"; then
+              echo "::error::token found in the layers of $target"; exit 1
+            fi
+          done
+      - name: A build without the token still works and says so
+        run: |
+          set -euo pipefail
+          DOCKER_BUILDKIT=1 docker build --no-cache --progress=plain \
+            --build-arg VITE_API_URL=https://ci.invalid/api/ \
+            --target builder -t vet-frontend:no-secret frontend 2>&1 | tee /tmp/build-no-secret.log
+          grep -q '\[build\] sentry token: absent' /tmp/build-no-secret.log
+      - name: The compose file builds the frontend with the secret
+        env:
+          SENTRY_AUTH_TOKEN: canary-sentry-token-3f9c1a7e
+          VITE_API_URL: https://ci.invalid/api/
+        run: |
+          set -euo pipefail
+          cp .env.prod.example /tmp/env.ci
+          docker compose -f docker-compose.prod.yml --env-file /tmp/env.ci config --quiet
+          docker compose -f docker-compose.prod.yml --env-file /tmp/env.ci build frontend
+      - name: The compose file builds the frontend when the token is empty
+        env:
+          VITE_API_URL: https://ci.invalid/api/
+        run: |
+          set -euo pipefail
+          docker compose -f docker-compose.prod.yml --env-file /tmp/env.ci build --no-cache frontend
+
+  # ---------------------------------------------------------------------------
   # SECURITY — gitleaks is BLOCKING (a prior accidental B2 credential exposure
   # is why secrets must never enter the repo). Dependency audits are advisory.
   # ---------------------------------------------------------------------------
