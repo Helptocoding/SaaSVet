@@ -195,15 +195,16 @@ jobs:
           VITE_API_URL: https://ci.invalid/api/
         run: |
           set -euo pipefail
-          cp .env.prod.example /tmp/env.ci
-          docker compose -f docker-compose.prod.yml --env-file /tmp/env.ci config --quiet
-          docker compose -f docker-compose.prod.yml --env-file /tmp/env.ci build frontend
+          # The services declare env_file: .env.prod, so compose needs it to exist.
+          cp .env.prod.example .env.prod
+          docker compose -f docker-compose.prod.yml --env-file .env.prod config --quiet
+          docker compose -f docker-compose.prod.yml --env-file .env.prod build frontend
       - name: The compose file builds the frontend when the token is empty
         env:
           VITE_API_URL: https://ci.invalid/api/
         run: |
           set -euo pipefail
-          docker compose -f docker-compose.prod.yml --env-file /tmp/env.ci build --no-cache frontend
+          docker compose -f docker-compose.prod.yml --env-file .env.prod build --no-cache frontend
 
   # ---------------------------------------------------------------------------
   # SECURITY — gitleaks is BLOCKING (a prior accidental B2 credential exposure
