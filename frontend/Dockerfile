@@ -5,7 +5,9 @@
 # from :443 outside.
 
 # ---- builder ----
-FROM node:20-alpine AS builder
+# Pinned by digest, keeping the tag readable. To bump: read the new index digest from
+# the registry, review the release, and let the CI images job build it.
+FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS builder
 WORKDIR /app
 
 # Pin pnpm to match pnpm-lock.yaml lockfileVersion (frontend/package.json
@@ -53,7 +55,7 @@ RUN --mount=type=secret,id=sentry_auth_token \
  && find dist -name '*.map' -delete
 
 # ---- runtime ----
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10 AS runtime
 
 # Replace the default vhost; ours is single-purpose (SPA static + fallback).
 RUN rm -rf /usr/share/nginx/html/* /etc/nginx/conf.d/default.conf

@@ -40,7 +40,7 @@ jobs:
         working-directory: backend
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -150,6 +150,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Pinned service images exist
+        run: |
+          set -euo pipefail
+          grep -oE 'image: [a-z0-9]+:[^ ]+@sha256:[0-9a-f]{64}' docker-compose.prod.yml | cut -d' ' -f2 | xargs -n1 docker pull -q
       - name: Build backend image
         run: docker build --target runtime -t vet-backend:ci backend
       - name: Build frontend with a canary token

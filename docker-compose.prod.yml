@@ -28,7 +28,7 @@ x-backend-build: &backend-build
 services:
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -57,7 +57,7 @@ services:
   # counters, nothing authoritative. No persistence, no volume: a restart loses
   # at most that cache + in-flight counters (both reconstructed on next use).
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f
     restart: unless-stopped
     environment:
       # The official redis image does NOT auto-read this — auth is set by
@@ -229,7 +229,7 @@ services:
     # Capa 3: NO host port mapping. Caddy proxies / → frontend:80.
 
   caddy:
-    image: caddy:2-alpine
+    image: caddy:2-alpine@sha256:70b3180738b46cd88e49b300d790ae448a0aca3f58edef0f000bb57d619a9ab3
     restart: unless-stopped
     ports:
       # The ONLY ports exposed to the world. Everything else is internal.

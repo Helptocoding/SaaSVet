@@ -2,7 +2,9 @@
 # Capa 1 (DEPLOY_VPS_PLAN.md): backend image.
 # Multi-stage: builder compiles wheels, runtime is slim + non-root.
 
-FROM python:3.13-slim AS base
+# Pinned by digest, keeping the tag readable. To bump: read the new index digest from
+# the registry, review the release, and let the CI images job build it.
+FROM python:3.13-slim@sha256:ae14d4ce8771606477a81446e7ef429edd6762305fc50c84507c1041fa8285d1 AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
