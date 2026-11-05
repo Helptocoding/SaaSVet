@@ -58,7 +58,7 @@ class ConsultationDraftFieldTests(APITestCase):
     def test_default_is_empty_dict(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet)
-        r = self.client.get(self._detail_url(mr.pk))
+        r = self.client.get(self._detail_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(r.data["consultation_draft"], {})
 
@@ -66,16 +66,16 @@ class ConsultationDraftFieldTests(APITestCase):
         mr = self._make_record()
         self.client.force_authenticate(self.vet)
         payload = {"consultation_draft": {"vaccine": {"vaccine_name": "Rabia"}}}
-        r = self.client.patch(self._detail_url(mr.pk), payload, format="json")
+        r = self.client.patch(self._detail_url(mr.public_id), payload, format="json")
         self.assertEqual(r.status_code, status.HTTP_200_OK)
-        r2 = self.client.get(self._detail_url(mr.pk))
+        r2 = self.client.get(self._detail_url(mr.public_id))
         self.assertEqual(r2.data["consultation_draft"], {"vaccine": {"vaccine_name": "Rabia"}})
 
     def test_general_key_accepted(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet)
         payload = {"consultation_draft": {"general": {"chief_complaint": "Vómito"}}}
-        r = self.client.patch(self._detail_url(mr.pk), payload, format="json")
+        r = self.client.patch(self._detail_url(mr.public_id), payload, format="json")
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(r.data["consultation_draft"], {"general": {"chief_complaint": "Vómito"}})
 
@@ -83,7 +83,7 @@ class ConsultationDraftFieldTests(APITestCase):
         mr = self._make_record()
         self.client.force_authenticate(self.vet)
         r = self.client.patch(
-            self._detail_url(mr.pk),
+            self._detail_url(mr.public_id),
             {"consultation_draft": {"hola": {}, "otra_cosa": {}}},
             format="json",
         )
@@ -93,7 +93,7 @@ class ConsultationDraftFieldTests(APITestCase):
         mr = self._make_record()
         self.client.force_authenticate(self.vet)
         r = self.client.patch(
-            self._detail_url(mr.pk),
+            self._detail_url(mr.public_id),
             {"consultation_draft": ["not", "a", "dict"]},
             format="json",
         )
@@ -104,7 +104,7 @@ class ConsultationDraftFieldTests(APITestCase):
         self.client.force_authenticate(self.vet)
         big = {"vaccine": {"notes": "x" * 20000}}  # > 16 KB
         r = self.client.patch(
-            self._detail_url(mr.pk),
+            self._detail_url(mr.public_id),
             {"consultation_draft": big},
             format="json",
         )
@@ -148,7 +148,7 @@ class VaccineMaterializationOnCloseTests(APITestCase):
     def test_vaccine_close_materializes_record(self):
         mr = self._make_record(MedicalRecord.ConsultationType.VACCINE, self._vaccine_draft())
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         qs = VaccineRecord.objects.filter(medical_record=mr)
         self.assertEqual(qs.count(), 1)
@@ -165,7 +165,7 @@ class VaccineMaterializationOnCloseTests(APITestCase):
         mr.treatment = "reposo"  # general exige tratamiento
         mr.save(update_fields=["treatment"])
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(VaccineRecord.objects.filter(medical_record=mr).count(), 0)
 
@@ -174,7 +174,7 @@ class VaccineMaterializationOnCloseTests(APITestCase):
             MedicalRecord.ConsultationType.VACCINE, {"vaccine": {"vaccine_name": ""}}
         )
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(VaccineRecord.objects.filter(medical_record=mr).count(), 0)
 
@@ -187,7 +187,7 @@ class VaccineMaterializationOnCloseTests(APITestCase):
         )
         mr = self._make_record(MedicalRecord.ConsultationType.VACCINE, bad)
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
         mr.refresh_from_db()
         self.assertEqual(mr.status, MedicalRecord.Status.OPEN)  # rollback
@@ -197,7 +197,7 @@ class VaccineMaterializationOnCloseTests(APITestCase):
         draft = self._vaccine_draft(scheduleBooster=False, next_due_date=None)
         mr = self._make_record(MedicalRecord.ConsultationType.VACCINE, draft)
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         vr = VaccineRecord.objects.get(medical_record=mr)
         self.assertIsNone(vr.next_due_date)
@@ -205,8 +205,8 @@ class VaccineMaterializationOnCloseTests(APITestCase):
     def test_idempotent_close_does_not_duplicate(self):
         mr = self._make_record(MedicalRecord.ConsultationType.VACCINE, self._vaccine_draft())
         self.client.force_authenticate(self.vet)
-        self.client.post(self._close_url(mr.pk))
-        self.client.post(self._close_url(mr.pk))  # segunda vez: ya cerrada
+        self.client.post(self._close_url(mr.public_id))
+        self.client.post(self._close_url(mr.public_id))  # segunda vez: ya cerrada
         self.assertEqual(VaccineRecord.objects.filter(medical_record=mr).count(), 1)
 
 
@@ -234,7 +234,7 @@ class GeneralAssessmentMaterializationOnCloseTests(APITestCase):
     def test_general_with_content_materializes(self):
         mr = self._make_record({"general": {"chief_complaint": "Vómito", "history": "hace 2 días"}})
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         qs = ConsultationAssessment.objects.filter(medical_record=mr)
         self.assertEqual(qs.count(), 1)
@@ -249,7 +249,7 @@ class GeneralAssessmentMaterializationOnCloseTests(APITestCase):
         # Consulta general "clásica" (sin SOAP estructurado) → no crea assessment.
         mr = self._make_record({})
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(ConsultationAssessment.objects.filter(medical_record=mr).count(), 0)
 
@@ -257,13 +257,13 @@ class GeneralAssessmentMaterializationOnCloseTests(APITestCase):
         # General mantiene las reglas de cierre actuales (dx obligatorio).
         mr = self._make_record({"general": {"chief_complaint": "x"}}, diagnosis="", treatment="tx")
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(ConsultationAssessment.objects.filter(medical_record=mr).count(), 0)
 
     def test_idempotent_close_does_not_duplicate(self):
         mr = self._make_record({"general": {"chief_complaint": "x"}})
         self.client.force_authenticate(self.vet)
-        self.client.post(self._close_url(mr.pk))
-        self.client.post(self._close_url(mr.pk))
+        self.client.post(self._close_url(mr.public_id))
+        self.client.post(self._close_url(mr.public_id))
         self.assertEqual(ConsultationAssessment.objects.filter(medical_record=mr).count(), 1)

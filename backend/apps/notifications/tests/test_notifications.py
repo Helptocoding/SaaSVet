@@ -190,7 +190,11 @@ class DerivedFeedTests(NotificationsSetupMixin, TestCase):
         self.assertTrue(any('upcoming' in k for k in keys))
         self.assertFalse(any('delayed' in k for k in keys))
 
-    def test_delayed_window(self):
+    @patch(
+        'django.utils.timezone.now',
+        return_value=datetime(2026, 10, 17, 12, 0, tzinfo=dt_timezone.utc),
+    )
+    def test_delayed_window(self, _now):
         now = timezone.now()
         self._make_appointment(now - timedelta(minutes=30))
         self._make_appointment(now - timedelta(minutes=5))
@@ -198,7 +202,11 @@ class DerivedFeedTests(NotificationsSetupMixin, TestCase):
         keys = [i['key'] for i in response.data['items']]
         self.assertTrue(any('delayed' in k for k in keys))
 
-    def test_seen_sparse_then_hidden_count(self):
+    @patch(
+        'django.utils.timezone.now',
+        return_value=datetime(2026, 10, 17, 12, 0, tzinfo=dt_timezone.utc),
+    )
+    def test_seen_sparse_then_hidden_count(self, _now):
         now = timezone.now()
         appt = self._make_appointment(now + timedelta(minutes=10))
         feed = self.client.get('/api/v1/notifications/feed/?limit=20').data
@@ -211,7 +219,11 @@ class DerivedFeedTests(NotificationsSetupMixin, TestCase):
         self.assertTrue(item['seen'])
         self.assertEqual(feed2['unseen_count'], feed['unseen_count'] - 1)
 
-    def test_seen_all_marks_applicable(self):
+    @patch(
+        'django.utils.timezone.now',
+        return_value=datetime(2026, 10, 17, 12, 0, tzinfo=dt_timezone.utc),
+    )
+    def test_seen_all_marks_applicable(self, _now):
         now = timezone.now()
         self._make_appointment(now + timedelta(minutes=10))
         self._make_appointment(now + timedelta(minutes=12))

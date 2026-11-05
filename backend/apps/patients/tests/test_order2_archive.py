@@ -65,7 +65,7 @@ class ArchiveContractTests(APITestCase):
         self.assertTrue(Owner.all_objects.get(pk=self.owner.pk).is_active)
         self.assertTrue(Pet.all_objects.get(pk=self.pet.pk).is_active)
         self.assertTrue(Pet.all_objects.get(pk=other.pk).is_active)
-        now = timezone.now() - timedelta(days=2)
+        now = (timezone.now() - timedelta(days=2)).replace(hour=12, minute=0, second=0, microsecond=0)
         Appointment.objects.create(organization=self.org, pet=self.pet,
             date=now.date(), start_time=now.time().replace(tzinfo=None),
             end_time=(now + timedelta(minutes=30)).time().replace(tzinfo=None),

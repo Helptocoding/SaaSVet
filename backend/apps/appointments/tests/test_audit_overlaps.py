@@ -71,7 +71,7 @@ class AuditAppointmentOverlapsTests(TestCase):
         cls.pet_b = Pet.objects.create(
             organization=cls.org, owner=owner, name="Rocky",
             species="perro", birth_date="2021-01-01")
-        cls.base = timezone.now() + timedelta(days=30)
+        cls.base = (timezone.now() + timedelta(days=30)).replace(hour=12, minute=0, second=0, microsecond=0)
 
     def setUp(self):
         _drop_no_overlap_constraint()

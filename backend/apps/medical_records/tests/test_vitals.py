@@ -71,57 +71,57 @@ class VitalSignsTests(APITestCase):
     def test_create_vitals_open_record_returns_201(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._vitals_url(mr.pk), {"weight": "5.50"}, format="json")
+        r = self.client.post(self._vitals_url(mr.public_id), {"weight": "5.50"}, format="json")
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
         self.assertTrue(VitalSigns.objects.filter(medical_record=mr).exists())
 
     def test_create_vitals_closed_record_returns_403(self):
         mr = self._make_closed()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._vitals_url(mr.pk), {"weight": "5.50"}, format="json")
+        r = self.client.post(self._vitals_url(mr.public_id), {"weight": "5.50"}, format="json")
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_create_vitals_cross_tenant_returns_404(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_b)
-        r = self.client.post(self._vitals_url(mr.pk), {"weight": "5.50"}, format="json")
+        r = self.client.post(self._vitals_url(mr.public_id), {"weight": "5.50"}, format="json")
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_vitals_all_null_returns_400(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._vitals_url(mr.pk), {}, format="json")
+        r = self.client.post(self._vitals_url(mr.public_id), {}, format="json")
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_vitals_temperature_out_of_range_returns_400(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._vitals_url(mr.pk), {"temperature": "50.0"}, format="json")
+        r = self.client.post(self._vitals_url(mr.public_id), {"temperature": "50.0"}, format="json")
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_vitals_temperature_below_range_returns_400(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._vitals_url(mr.pk), {"temperature": "25.0"}, format="json")
+        r = self.client.post(self._vitals_url(mr.public_id), {"temperature": "25.0"}, format="json")
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_vitals_weight_out_of_range_returns_400(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._vitals_url(mr.pk), {"weight": "300.00"}, format="json")
+        r = self.client.post(self._vitals_url(mr.public_id), {"weight": "300.00"}, format="json")
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_vitals_heart_rate_out_of_range_returns_400(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._vitals_url(mr.pk), {"heart_rate": 400}, format="json")
+        r = self.client.post(self._vitals_url(mr.public_id), {"heart_rate": 400}, format="json")
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_vitals_inconsistent_temp_and_hr_returns_400(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
         r = self.client.post(
-            self._vitals_url(mr.pk),
+            self._vitals_url(mr.public_id),
             {"temperature": "43.0", "heart_rate": 15},
             format="json",
         )
@@ -130,7 +130,7 @@ class VitalSignsTests(APITestCase):
     def test_create_vitals_organization_auto_assigned(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        self.client.post(self._vitals_url(mr.pk), {"weight": "6.00"}, format="json")
+        self.client.post(self._vitals_url(mr.public_id), {"weight": "6.00"}, format="json")
         vital = VitalSigns.objects.filter(medical_record=mr).first()
         self.assertIsNotNone(vital)
         self.assertEqual(vital.organization, self.org_a)
@@ -138,7 +138,7 @@ class VitalSignsTests(APITestCase):
     def test_create_vitals_recorded_by_set_to_current_user(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        self.client.post(self._vitals_url(mr.pk), {"temperature": "38.5"}, format="json")
+        self.client.post(self._vitals_url(mr.public_id), {"temperature": "38.5"}, format="json")
         vital = VitalSigns.objects.filter(medical_record=mr).first()
         self.assertEqual(vital.recorded_by, self.vet_a)
 
@@ -149,7 +149,7 @@ class VitalSignsTests(APITestCase):
         VitalSigns.objects.create(medical_record=mr, organization=self.org_a, weight="5.00")
         VitalSigns.objects.create(medical_record=mr, organization=self.org_a, temperature="38.5")
         self.client.force_authenticate(self.vet_a)
-        r = self.client.get(self._vitals_url(mr.pk))
+        r = self.client.get(self._vitals_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(r.data["count"], 2)
 
@@ -160,7 +160,7 @@ class VitalSignsTests(APITestCase):
         VitalSigns.objects.create(medical_record=mr, organization=self.org_a, weight="4.00", recorded_at=old)
         VitalSigns.objects.create(medical_record=mr, organization=self.org_a, weight="5.00", recorded_at=new)
         self.client.force_authenticate(self.vet_a)
-        r = self.client.get(self._vitals_url(mr.pk))
+        r = self.client.get(self._vitals_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         results = r.data["results"]
         self.assertEqual(str(results[0]["weight"]), "5.00")
@@ -170,13 +170,13 @@ class VitalSignsTests(APITestCase):
     def test_assistant_cannot_create_vitals_returns_403(self):
         mr = self._make_record()
         self.client.force_authenticate(self.assistant_a)
-        r = self.client.post(self._vitals_url(mr.pk), {"weight": "5.00"}, format="json")
+        r = self.client.post(self._vitals_url(mr.public_id), {"weight": "5.00"}, format="json")
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_assistant_can_list_vitals_returns_200(self):
         mr = self._make_record()
         self.client.force_authenticate(self.assistant_a)
-        r = self.client.get(self._vitals_url(mr.pk))
+        r = self.client.get(self._vitals_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
     # ── Summary ──────────────────────────────────────────────────────────────
@@ -188,7 +188,7 @@ class VitalSignsTests(APITestCase):
             weight="5.50", temperature="38.5",
         )
         self.client.force_authenticate(self.vet_a)
-        r = self.client.get(self._summary_url(mr.pk))
+        r = self.client.get(self._summary_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertIn("patient", r.data)
         self.assertIn("last_vitals", r.data)
@@ -204,7 +204,7 @@ class VitalSignsTests(APITestCase):
         mr.weight = "7.20"
         mr.save(update_fields=["weight"])
         self.client.force_authenticate(self.vet_a)
-        r = self.client.get(self._summary_url(mr.pk))
+        r = self.client.get(self._summary_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertFalse(r.data["last_vitals"]["has_vitals"])
         self.assertEqual(str(r.data["last_vitals"]["weight"]), "7.20")
@@ -218,7 +218,7 @@ class VitalSignsTests(APITestCase):
             weight=None, temperature="38.0",
         )
         self.client.force_authenticate(self.vet_a)
-        r = self.client.get(self._summary_url(mr.pk))
+        r = self.client.get(self._summary_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(str(r.data["last_vitals"]["weight"]), "8.00")
 
@@ -226,7 +226,7 @@ class VitalSignsTests(APITestCase):
         """El signal crea una invoice draft automáticamente — totals nunca es null para registros nuevos."""
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.get(self._summary_url(mr.pk))
+        r = self.client.get(self._summary_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         # La invoice draft se crea vía signal — totals debe existir con status=draft
         if r.data["totals"] is not None:
@@ -237,7 +237,7 @@ class VitalSignsTests(APITestCase):
     def test_summary_cross_tenant_returns_404(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_b)
-        r = self.client.get(self._summary_url(mr.pk))
+        r = self.client.get(self._summary_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_summary_with_next_vaccine(self):
@@ -251,6 +251,6 @@ class VitalSignsTests(APITestCase):
             organization=self.org_a,
         )
         self.client.force_authenticate(self.vet_a)
-        r = self.client.get(self._summary_url(mr.pk))
+        r = self.client.get(self._summary_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(str(r.data["next_vaccine_date"]), str(future_date))

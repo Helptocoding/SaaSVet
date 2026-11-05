@@ -59,7 +59,7 @@ class PetDeleteTests(APITestCase):
             owner=owner,
             organization=self.org,
         )
-        now = timezone.now()
+        now = timezone.now().replace(hour=12, minute=0, second=0, microsecond=0)
         Appointment.objects.create(
             organization=self.org,
             pet=pet,

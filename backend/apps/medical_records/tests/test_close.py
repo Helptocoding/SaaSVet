@@ -81,7 +81,7 @@ class CloseMedicalRecordTests(APITestCase):
     def test_close_open_record_returns_200(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         mr.refresh_from_db()
         self.assertEqual(mr.status, MedicalRecord.Status.CLOSED)
@@ -95,7 +95,7 @@ class CloseMedicalRecordTests(APITestCase):
         self.vet_a.save(update_fields=['first_name', 'last_name', 'specialty'])
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        first = self.client.post(self._close_url(mr.pk))
+        first = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(first.status_code, 200)
         mr.refresh_from_db()
         recorded_at = mr.vet_snapshot_recorded_at
@@ -103,7 +103,7 @@ class CloseMedicalRecordTests(APITestCase):
         self.assertEqual(mr.vet_public_id_at_close, self.vet_a.public_id)
         self.vet_a.last_name = 'Nuevo'
         self.vet_a.save(update_fields=['last_name'])
-        replay = self.client.post(self._close_url(mr.pk))
+        replay = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(replay.status_code, 200)
         self.assertEqual(replay.data['veterinarian_name'], 'Eva Original')
         from pypdf import PdfReader
@@ -171,25 +171,25 @@ class CloseMedicalRecordTests(APITestCase):
     def test_close_already_closed_is_idempotent_200(self):
         mr = self._make_closed()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
     def test_admin_can_close_any_record(self):
         mr = self._make_record(vet=self.vet_a)
         self.client.force_authenticate(self.admin_a)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
     def test_vet_not_owner_cannot_close_403(self):
         mr = self._make_record(vet=self.vet_a)
         self.client.force_authenticate(self.vet_a2)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_cross_tenant_close_returns_404(self):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_b)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
 
     # ── bloqueos en consulta cerrada ─────────────────────────────────────────
@@ -197,13 +197,13 @@ class CloseMedicalRecordTests(APITestCase):
     def test_update_closed_record_returns_403(self):
         mr = self._make_closed()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.patch(self._detail_url(mr.pk), {"notes": "hack"})
+        r = self.client.patch(self._detail_url(mr.public_id), {"notes": "hack"})
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_delete_closed_record_returns_403(self):
         mr = self._make_closed()
         self.client.force_authenticate(self.admin_a)
-        r = self.client.delete(self._detail_url(mr.pk))
+        r = self.client.delete(self._detail_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_add_product_to_closed_record_returns_403(self):
@@ -219,7 +219,7 @@ class CloseMedicalRecordTests(APITestCase):
         )
         self.client.force_authenticate(self.vet_a)
         r = self.client.post(
-            f"/api/medical-records/{mr.pk}/products/",
+            f"/api/medical-records/{mr.public_id}/products/",
             {"presentation": pres.id, "quantity": 1}, format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
@@ -229,7 +229,7 @@ class CloseMedicalRecordTests(APITestCase):
         svc = Service.objects.create(name="Svc", base_price="50.00", organization=self.org_a)
         self.client.force_authenticate(self.vet_a)
         r = self.client.post(
-            f"/api/medical-records/{mr.pk}/services/",
+            f"/api/medical-records/{mr.public_id}/services/",
             {"service": svc.id, "quantity": 1}, format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
@@ -240,21 +240,21 @@ class CloseMedicalRecordTests(APITestCase):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
         with self.assertLogs("medical_records.events", level="INFO") as cm:
-            self.client.post(self._close_url(mr.pk))
+            self.client.post(self._close_url(mr.public_id))
         self.assertIn("MEDICAL_RECORD_CLOSED", [r.getMessage() for r in cm.records])
 
     def test_close_idempotent_emits_idempotent_log(self):
         mr = self._make_closed()
         self.client.force_authenticate(self.vet_a)
         with self.assertLogs("medical_records.events", level="INFO") as cm:
-            self.client.post(self._close_url(mr.pk))
+            self.client.post(self._close_url(mr.public_id))
         self.assertIn("MEDICAL_RECORD_CLOSE_IDEMPOTENT", [r.getMessage() for r in cm.records])
 
     def test_ownership_denied_emits_log(self):
         mr = self._make_record(vet=self.vet_a)
         self.client.force_authenticate(self.vet_a2)
         with self.assertLogs("medical_records.events", level="WARNING") as cm:
-            self.client.post(self._close_url(mr.pk))
+            self.client.post(self._close_url(mr.public_id))
         self.assertIn("MEDICAL_RECORD_OWNERSHIP_DENIED", [r.getMessage() for r in cm.records])
 
     def test_closed_denied_emits_log(self):
@@ -271,7 +271,7 @@ class CloseMedicalRecordTests(APITestCase):
         self.client.force_authenticate(self.vet_a)
         with self.assertLogs("medical_records.events", level="WARNING") as cm:
             self.client.post(
-                f"/api/medical-records/{mr.pk}/products/",
+                f"/api/medical-records/{mr.public_id}/products/",
                 {"presentation": pres.id, "quantity": 1}, format="json",
             )
         self.assertIn("MEDICAL_RECORD_CLOSED_DENIED", [r.getMessage() for r in cm.records])
@@ -282,7 +282,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
         for _ in range(3):
-            r = self.client.post(self._close_url(mr.pk))
+            r = self.client.post(self._close_url(mr.public_id))
             self.assertEqual(r.status_code, status.HTTP_200_OK)
         mr.refresh_from_db()
         self.assertEqual(mr.status, MedicalRecord.Status.CLOSED)
@@ -294,7 +294,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr.diagnosis = ""
         mr.save(update_fields=["diagnosis"])
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("diagnosis", r.data["errors"])
 
@@ -307,7 +307,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr.treatment = ""
         mr.save(update_fields=["consultation_type", "diagnosis", "treatment"])
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
     def test_close_cirugia_con_ambos_retorna_200(self):
@@ -317,7 +317,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr.treatment = "osteosíntesis con placa"
         mr.save(update_fields=["consultation_type", "diagnosis", "treatment"])
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
     def test_close_general_sin_treatment_retorna_400(self):
@@ -327,7 +327,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr.treatment = ""
         mr.save(update_fields=["consultation_type", "diagnosis", "treatment"])
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("treatment", r.data["errors"])
 
@@ -340,7 +340,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr.treatment = ""
         mr.save(update_fields=["consultation_type", "diagnosis", "treatment"])
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
     def test_close_vaccine_sin_treatment_retorna_200(self):
@@ -350,7 +350,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr.treatment = ""
         mr.save(update_fields=["consultation_type", "diagnosis", "treatment"])
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
     def test_close_validation_failure_emits_warning_log(self):
@@ -361,7 +361,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr.save(update_fields=["consultation_type", "diagnosis", "treatment"])
         self.client.force_authenticate(self.vet_a)
         with self.assertLogs("medical_records.events", level="WARNING") as cm:
-            self.client.post(self._close_url(mr.pk))
+            self.client.post(self._close_url(mr.public_id))
         self.assertIn("MEDICAL_RECORD_CLOSE_VALIDATION_FAILED", [r.getMessage() for r in cm.records])
 
     def test_close_ya_cerrado_retorna_200_aunque_diagnostico_vacio(self):
@@ -370,7 +370,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr.diagnosis = ""
         mr.save(update_fields=["diagnosis"])
         self.client.force_authenticate(self.vet_a)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
     # ── CREATE sin treatment ──────────────────────────────────────────────────
@@ -416,7 +416,7 @@ class CloseMedicalRecordTests(APITestCase):
         """PATCH parcial (stepper) no requiere organization."""
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
-        r = self.client.patch(self._detail_url(mr.pk), {
+        r = self.client.patch(self._detail_url(mr.public_id), {
             "treatment": "nuevo tratamiento",
         }, format="json")
         self.assertEqual(r.status_code, status.HTTP_200_OK)
@@ -428,7 +428,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr = self._make_record()
         original_org = mr.organization_id
         self.client.force_authenticate(self.vet_a)
-        r = self.client.patch(self._detail_url(mr.pk), {
+        r = self.client.patch(self._detail_url(mr.public_id), {
             "organization": 999,
         }, format="json")
         self.assertEqual(r.status_code, status.HTTP_200_OK)
@@ -449,7 +449,7 @@ class CloseMedicalRecordTests(APITestCase):
     def test_delete_open_record_with_diagnosis_returns_403(self):
         mr = self._make_record()
         self.client.force_authenticate(self.admin_a)
-        r = self.client.delete(self._detail_url(mr.pk))
+        r = self.client.delete(self._detail_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_delete_open_record_with_prescription_returns_403(self):
@@ -459,13 +459,13 @@ class CloseMedicalRecordTests(APITestCase):
             medical_record=mr, pet=pet, organization=self.org_a,
         )
         self.client.force_authenticate(self.admin_a)
-        r = self.client.delete(self._detail_url(mr.pk))
+        r = self.client.delete(self._detail_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_delete_empty_open_record_succeeds(self):
         mr, _owner, _pet = self._make_empty_record()
         self.client.force_authenticate(self.admin_a)
-        r = self.client.delete(self._detail_url(mr.pk))
+        r = self.client.delete(self._detail_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(MedicalRecord.objects.filter(pk=mr.pk).exists())
 
@@ -503,7 +503,7 @@ class CloseSyncsAppointmentTests(APITestCase):
     def test_close_marks_in_progress_appointment_done(self):
         appt, mr = self._make_appt("in_progress")
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         mr.refresh_from_db()
         appt.refresh_from_db()
@@ -523,7 +523,7 @@ class CloseSyncsAppointmentTests(APITestCase):
             diagnosis="d", treatment="t",
         )
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         mr.refresh_from_db()
         self.assertEqual(mr.status, MedicalRecord.Status.CLOSED)
@@ -536,8 +536,8 @@ class CloseSyncsAppointmentTests(APITestCase):
     def test_close_twice_does_not_duplicate_transition(self):
         appt, mr = self._make_appt("in_progress")
         self.client.force_authenticate(self.vet)
-        r1 = self.client.post(self._close_url(mr.pk))
-        self.client.post(self._close_url(mr.pk))
+        r1 = self.client.post(self._close_url(mr.public_id))
+        self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r1.status_code, status.HTTP_200_OK)
         appt.refresh_from_db()
         self.assertEqual(appt.status, "done")
@@ -547,7 +547,7 @@ class CloseSyncsAppointmentTests(APITestCase):
     def test_close_with_appointment_already_done_is_noop(self):
         appt, mr = self._make_appt("done")
         self.client.force_authenticate(self.vet)
-        r = self.client.post(self._close_url(mr.pk))
+        r = self.client.post(self._close_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         appt.refresh_from_db()
         mr.refresh_from_db()
