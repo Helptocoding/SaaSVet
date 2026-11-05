@@ -335,6 +335,8 @@ N+1 de owner + filtraba en memoria. Ver § Filtros disponibles (GET /api/pets/).
 | Editar         | `patient.update`   |
 | Eliminar       | `patient.destroy`  |
 
+`PUT` y `PATCH` exigen el mismo código `*.update`: `_resolve_required` resuelve `partial_update` como `update`, tanto en mascotas como en clientes. No existe un código `*.partial_update`.
+
 ## Indices de busqueda
 
 `Owner.name` y `Pet.name` tienen índice GIN trigram (`gin_trgm_ops`, extensión `pg_trgm`) desde Capa 2 (2026-05-26), para que la búsqueda `name__icontains` no haga seq scan por org. Requiere `django.contrib.postgres` en INSTALLED_APPS y la extensión `pg_trgm` en la DB (ver `DEPLOY_VPS_PLAN.md`).

@@ -235,6 +235,10 @@ def _resolve_required(request, view) -> str | None:
 
     # Soporte ViewSets (action) y generic views (derivado del método HTTP)
     action = getattr(view, "action", None) or _method_to_action(request.method, view)
+    # DRF despacha PATCH como `partial_update`, pero es la misma capacidad de
+    # negocio que `update`: no existe un código propio en el catálogo.
+    if action == "partial_update":
+        action = "update"
     return f"{resource}.{action}"
 
 

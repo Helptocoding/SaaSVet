@@ -61,7 +61,7 @@ Los cuatro códigos deben estar en `PERMISSION_CODES` antes de que el seed inten
 
 **Corrección de H-10.** `1d13389` retiró `organization.list` como código sin consumidor. Era falso: lo exigen cuatro rutas, derivado de `resource_name` y del método, sin literal. El test `test_no_view_service_or_screen_asks_for_them` solo busca texto y no puede verlo. Hoy no hay regresión, porque el ADMIN entra por `*.*`, pero ese test y `RETIRED` deben corregirse. `organization.create` no lo exige ninguna ruta y puede seguir retirado.
 
-**Defecto aparte, fuera de H-1.** VET y ASSISTANT tienen `patient.update` y `owner.update`, pero recibían `403` en esos `PATCH` porque la ruta pedía `*.partial_update`. Es una distinción técnica de DRF, no una decisión de autorización: se corrige en su propio cambio.
+**Defecto aparte, fuera de H-1: corregido.** VET y ASSISTANT tienen `patient.update` y `owner.update`, pero recibían `403` en esos `PATCH` porque la ruta pedía `*.partial_update`. Era una distinción técnica de DRF, no una decisión de autorización: `_resolve_required` ya resuelve `partial_update` como `update`. Con eso, H-1 solo necesita los cuatro códigos nuevos; las otras 8 rutas siguen dependiendo de `*.*`.
 
 ## Retiro de `notification.retrieve`
 
