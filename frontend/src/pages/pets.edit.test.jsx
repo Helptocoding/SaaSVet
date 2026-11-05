@@ -81,13 +81,14 @@ describe("Mascotas: editar", () => {
         await waitFor(() => expect(toast.success).toHaveBeenCalled());
     }, 15000);
 
-    it("un 403 no se presenta como guardado", async () => {
+    it("un 403 explica el motivo y no se presenta como guardado", async () => {
         patch.mockRejectedValue({ response: { status: 403, data: { code: "permission_denied", message: "Sin permiso" } } });
 
         await editAndSave();
 
         await waitFor(() => expect(patch).toHaveBeenCalled());
         await screen.findByRole("button", { name: /guardar cambios/i });
+        await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Sin permiso"));
         expect(toast.success).not.toHaveBeenCalled();
     }, 15000);
 });

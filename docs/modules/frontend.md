@@ -630,6 +630,8 @@ hora, estado o reintento; esta agrupación nunca deduplica ni altera los datos.
   - `src/utils/handleFormError.js`: centraliza la lógica para mapear errores DRF a `formErrors` y mostrar toasts globales.
   - `src/utils/mapFieldErrors.js`: normaliza la respuesta de errores DRF a claves planas (soporta colisiones y nested keys).
 
+- Enrutamiento: `{code, errors: {campo: [...]}}` y `{campo: [...]}` van al formulario; `{code, message}` va a un toast, incluidos `403` y `409`. Sus datos extra, como `candidate`, nunca son campos. Dentro de `errors`, `error`, `detail` y `non_field_errors` también van al toast, porque ningún campo los pinta.
+
 - Convenciones obligatorias:
   - Todos los formularios POST/PATCH deben usar `handleFormError(err, setFormErrors)` dentro del `catch`.
   - Al abrir un modal con formulario limpiar errores: `setFormErrors({})`.

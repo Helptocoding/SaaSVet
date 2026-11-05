@@ -73,4 +73,103 @@ describe("handleFormError — ruteo de errores DRF a form vs toast", () => {
     expect(setErrors).not.toHaveBeenCalled();
     expect(toast.error).toHaveBeenCalledWith("Error inesperado");
   });
+
+  it("403 {code, message} → toast con el mensaje, sin tocar el form", () => {
+    const setErrors = vi.fn();
+    handleFormError(
+      { response: { status: 403, data: { code: "permission_denied", message: "Sin permiso" } } },
+      setErrors
+    );
+    expect(setErrors).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith("Sin permiso");
+  });
+
+  it("409 con datos extra → toast: `candidate` no son campos del form", () => {
+    const setErrors = vi.fn();
+    handleFormError(
+      {
+        response: {
+          status: 409,
+          data: {
+            code: "owner_exists",
+            message: "Ese teléfono ya tiene expediente",
+            candidate: { public_id: "uuid", name: "Ana" },
+          },
+        },
+      },
+      setErrors
+    );
+    expect(setErrors).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith("Ese teléfono ya tiene expediente");
+  });
+
+  it("validación {code, errors} → solo los campos llegan al form", () => {
+    const setErrors = vi.fn();
+    handleFormError(
+      { response: { status: 400, data: { code: "validation_error", errors: { name: ["Requerido"] } } } },
+      setErrors,
+      { merge: false }
+    );
+    expect(setErrors).toHaveBeenCalledWith({ name: "Requerido" });
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("validación anidada conserva la clave plana y la completa", () => {
+    const setErrors = vi.fn();
+    handleFormError(
+      {
+        response: {
+          status: 400,
+          data: { code: "validation_error", errors: { owner: { phone: ["Inválido"] } } },
+        },
+      },
+      setErrors,
+      { merge: false }
+    );
+    expect(setErrors).toHaveBeenCalledWith({ phone: "Inválido", "owner.phone": "Inválido" });
+  });
+
+  it("slot_taken: un `errors.error` no es un campo, va a toast", () => {
+    const setErrors = vi.fn();
+    handleFormError(
+      {
+        response: {
+          status: 400,
+          data: { code: "slot_taken", message: "Horario ocupado", errors: { error: ["Horario ocupado"] } },
+        },
+      },
+      setErrors
+    );
+    expect(setErrors).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith("Horario ocupado");
+  });
+
+  it("campo y mensaje global a la vez → form y toast", () => {
+    const setErrors = vi.fn();
+    handleFormError(
+      {
+        response: {
+          status: 400,
+          data: {
+            code: "validation_error",
+            errors: { name: ["Requerido"], non_field_errors: ["Combinación inválida"] },
+          },
+        },
+      },
+      setErrors,
+      { merge: false }
+    );
+    expect(setErrors).toHaveBeenCalledWith({ name: "Requerido" });
+    expect(toast.error).toHaveBeenCalledWith("Combinación inválida");
+  });
+
+  it("un campo llamado `code` dentro de `errors` sí es un campo", () => {
+    const setErrors = vi.fn();
+    handleFormError(
+      { response: { status: 400, data: { code: "validation_error", errors: { code: ["Repetido"] } } } },
+      setErrors,
+      { merge: false }
+    );
+    expect(setErrors).toHaveBeenCalledWith({ code: "Repetido" });
+  });
 });
