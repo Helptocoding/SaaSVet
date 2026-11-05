@@ -1,6 +1,7 @@
 import json
 from datetime import date, timedelta
 
+from apps.core.tenant_validation import require_same_organization
 from apps.core.datetime_utils import serializer_today
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -271,9 +272,8 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
     def validate_pet(self, pet):
-        if pet and pet.organization != self.context['request'].user.organization:
-            raise serializers.ValidationError('Acceso inválido.')
-        return pet
+        return require_same_organization(
+            pet, self.context.get('request'), field='pet', serializer=type(self).__name__)
 
     def validate_consultation_draft(self, value):
         # Valida ESTRUCTURA, no contenido. Solo claves whitelisteadas + tope de
@@ -292,14 +292,12 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         return value
 
     def validate_appointment(self, appointment):
-        if appointment and appointment.organization != self.context['request'].user.organization:
-            raise serializers.ValidationError('Acceso inválido.')
-        return appointment
+        return require_same_organization(
+            appointment, self.context.get('request'), field='appointment', serializer=type(self).__name__)
 
     def validate_veterinarian(self, vet):
-        if vet and vet.organization != self.context['request'].user.organization:
-            raise serializers.ValidationError('Acceso inválido.')
-        return vet
+        return require_same_organization(
+            vet, self.context.get('request'), field='veterinarian', serializer=type(self).__name__)
 
     def get_veterinarian_name(self, obj):
         if obj.status == MedicalRecord.Status.CLOSED:
@@ -485,14 +483,12 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
         return value
 
     def validate_pet(self, pet):
-        if pet and pet.organization != self.context['request'].user.organization:
-            raise serializers.ValidationError('Acceso inválido.')
-        return pet
+        return require_same_organization(
+            pet, self.context.get('request'), field='pet', serializer=type(self).__name__)
 
     def validate_medical_record(self, mr):
-        if mr and mr.organization != self.context['request'].user.organization:
-            raise serializers.ValidationError('Acceso inválido.')
-        return mr
+        return require_same_organization(
+            mr, self.context.get('request'), field='medical_record', serializer=type(self).__name__)
 
     def validate(self, data):
         if 'notes' in data:

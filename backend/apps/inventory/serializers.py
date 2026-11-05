@@ -4,6 +4,7 @@ from uuid import uuid4
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
+from apps.core.tenant_validation import require_same_organization
 from .models import Product, Presentation, StockLot, StockMovement, MedicalRecordProduct
 
 PRODUCT_NAME_REGEX = re.compile(r"^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ\s\.\-\(\)\/\%\+]+$")
@@ -429,16 +430,17 @@ class MedicalRecordProductSerializer(serializers.ModelSerializer):
         validators = []
 
     def validate_presentation(self, presentation):
-        if presentation and presentation.organization != self.context['request'].user.organization:
-            raise serializers.ValidationError('Acceso inválido.')
-        return presentation
+        return require_same_organization(
+            presentation, self.context.get('request'), field='presentation', serializer=type(self).__name__)
 
     def validate_lot(self, lot):
         if lot is None:
             return lot
         request = self.context.get('request')
-        if request and lot.organization_id != request.user.organization_id:
-            raise serializers.ValidationError('Lote fuera de tu organización.')
+        if request:
+            require_same_organization(
+                lot, request, field='lot', serializer=type(self).__name__,
+                message='Lote fuera de tu organización.')
         return lot
 
     def validate(self, attrs):

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from apps.core.tenant_validation import require_same_organization
 from django.db.models import Q
 from django.utils.timezone import now
 
@@ -122,14 +123,18 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def validate_pet(self, value):
         request = self.context.get('request')
-        if request and value.organization_id != request.user.organization_id:
-            raise serializers.ValidationError('Mascota fuera de tu organización')
+        if request:
+            require_same_organization(
+                value, request, field='pet', serializer=type(self).__name__,
+                message='Mascota fuera de tu organización')
         return value
 
     def validate_veterinarian(self, value):
         request = self.context.get('request')
-        if request and value is not None and value.organization_id != request.user.organization_id:
-            raise serializers.ValidationError('Veterinario fuera de tu organización')
+        if request:
+            require_same_organization(
+                value, request, field='veterinarian', serializer=type(self).__name__,
+                message='Veterinario fuera de tu organización')
         return value
 
     def validate(self, attrs):

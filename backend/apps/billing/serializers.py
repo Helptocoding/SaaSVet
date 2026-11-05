@@ -1,4 +1,3 @@
-import logging
 import re
 from rest_framework import serializers
 from decimal import Decimal
@@ -9,15 +8,10 @@ from .models import (
     CheckoutItem, ReplacementWaiver, CheckoutDispute,
 )
 from .money import discount_amount, money
+from apps.core.tenant_validation import require_same_organization, same_organization
 from apps.core.sanitize import sanitize_text
 
 SERVICE_NAME_REGEX = re.compile(r'^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ\s\-\(\)\/\%\+]+$')
-
-# Logger dedicado para rechazos de tenant en serializers (ADR p14) — evento
-# TENANT_VALIDATION_REJECTED a severidad WARNING. Separado de
-# TENANT_MISMATCH_DETECTED (HybridPermission, ERROR) para no saturar la señal
-# operacional con typos de UI / IDs stale del frontend.
-tenant_logger = logging.getLogger('apps.tenant_validation')
 
 
 class PaymentCommandLineSerializer(serializers.Serializer):
@@ -69,37 +63,6 @@ class CheckoutItemMutationSerializer(serializers.Serializer):
     quantity = serializers.DecimalField(
         max_digits=10, decimal_places=2, min_value=Decimal('0.01'), required=False,
     )
-
-
-def _validate_same_org(value, request, field_name, serializer_name):
-    """
-    Helper local: verifica que `value` pertenezca a la organización del
-    request.user. Emite TENANT_VALIDATION_REJECTED en caso de violación.
-    Retorna `value` si pasa (o si es None — FK opcional).
-
-    NO se promueve a apps/core/ todavía (ADR p14 Fase 2). Battle-testing
-    primero en los 2 sitios de Día 3, luego extracción a mixin centralizado.
-    """
-    if value is None:
-        return value
-    user_org_id = getattr(request.user, 'organization_id', None)
-    obj_org_id = getattr(value, 'organization_id', None)
-    if user_org_id is None or obj_org_id is None:
-        return value
-    if obj_org_id != user_org_id:
-        tenant_logger.warning("TENANT_VALIDATION_REJECTED", extra={
-            "source": "serializer",
-            "serializer": serializer_name,
-            "field": field_name,
-            "user_id": getattr(request.user, 'pk', None),
-            "user_org_id": user_org_id,
-            "resource_org_id": obj_org_id,
-            "resource_pk": getattr(value, 'pk', None),
-            "endpoint": getattr(request, 'path', None),
-            "method": getattr(request, 'method', None),
-        })
-        raise serializers.ValidationError('Acceso inválido.')
-    return value
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -198,7 +161,7 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
 
         # Día 6 audit F11: tenant validation canonical (ADR-13). Antes
         # comparaba contra invoice.organization_id (correcto pero sin log
-        # estructurado). _validate_same_org valida contra request.user.org
+        # estructurado). require_same_organization valida contra request.user.org
         # y emite TENANT_VALIDATION_REJECTED uniforme con InvoiceSerializer.
         # Invariante: invoice.organization == request.user.organization
         # (garantizado por _get_invoice via for_organization()).
@@ -215,14 +178,14 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
         )
 
         if service:
-            _validate_same_org(service, request, 'service', 'InvoiceItemSerializer')
+            require_same_organization(service, request, field='service', serializer='InvoiceItemSerializer')
             if not self.instance and InvoiceItem.objects.filter(invoice=invoice, service=service).exists():
                 raise serializers.ValidationError(
                     "Este servicio ya está incluido en la factura."
                 )
 
         if presentation:
-            _validate_same_org(presentation, request, 'presentation', 'InvoiceItemSerializer')
+            require_same_organization(presentation, request, field='presentation', serializer='InvoiceItemSerializer')
             # Availability is never inferred from Presentation.stock (legacy).
             # Checkout posting settles Product/StockLot under locks; InvoiceItem
             # serialization must not introduce a competing stock authority.
@@ -233,7 +196,7 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
                 if not self.instance:
                     if lot is None:
                         raise serializers.ValidationError({'lot': 'Selecciona el lote a consumir.'})
-                    if lot.organization_id != request.user.organization_id:
+                    if not same_organization(lot, request, field='lot', serializer=type(self).__name__):
                         raise serializers.ValidationError({'lot': 'Lote fuera de tu organización.'})
                     if lot.product_id != presentation.product_id:
                         raise serializers.ValidationError({'lot': 'El lote no corresponde a este producto.'})
@@ -407,16 +370,16 @@ class InvoiceSerializer(serializers.ModelSerializer):
         return request
 
     def validate_owner(self, owner):
-        return _validate_same_org(owner, self._get_request(), 'owner', 'InvoiceSerializer')
+        return require_same_organization(owner, self._get_request(), field='owner', serializer='InvoiceSerializer')
 
     def validate_pet(self, pet):
-        return _validate_same_org(pet, self._get_request(), 'pet', 'InvoiceSerializer')
+        return require_same_organization(pet, self._get_request(), field='pet', serializer='InvoiceSerializer')
 
     def validate_appointment(self, appointment):
-        return _validate_same_org(appointment, self._get_request(), 'appointment', 'InvoiceSerializer')
+        return require_same_organization(appointment, self._get_request(), field='appointment', serializer='InvoiceSerializer')
 
     def validate_medical_record(self, mr):
-        return _validate_same_org(mr, self._get_request(), 'medical_record', 'InvoiceSerializer')
+        return require_same_organization(mr, self._get_request(), field='medical_record', serializer='InvoiceSerializer')
 
     def validate(self, data):
         # Resolver owner/pet/invoice_type considerando partial PATCH: los campos

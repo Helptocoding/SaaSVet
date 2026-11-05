@@ -215,3 +215,15 @@ class TenantScopedSerializerMixin:
 - `CLAUDE.md` sección "Validación de FKs en serializers" — actualizada con regla `.get() + assert`
 - Memoria `feedback-serializer-context-access.md` — preferencia del usuario sobre acceso defensivo a context
 - Memoria `feedback-invoice-item-f-expression.md` — patrón "abstracción local antes que promoción prematura a core"
+
+---
+
+## Addendum 2026-11-04: extracción a `apps/core/tenant_validation.py` (auditoría run-1, H-3)
+
+Se hizo la extracción prevista, como función y no como mixin: los sitios tienen campos, mensajes y formas de error distintos, y un mixin no aportaba nada frente a una llamada explícita.
+
+- `same_organization()` registra y devuelve un booleano; `require_same_organization()` además rechaza a nivel de campo. El lote de `InvoiceItemSerializer` usa el primero para conservar su forma `{'lot': ...}`.
+- `billing`, `prescriptions`, `appointments`, `inventory` y `medical_records` la usan. Las tres últimas no registraban el intento y ahora emiten `TENANT_VALIDATION_REJECTED`.
+- Se conservan el estado HTTP, la forma del error y el mensaje de cada campo.
+
+**Único cambio de comportamiento, deliberado:** este helper dejaba pasar un actor o un recurso sin organización, mientras que `appointments`, `inventory` y `medical_records` los rechazaban. Extraerlo tal cual habría abierto esas tres apps. Se adoptó la regla estricta en todas. Es un endurecimiento en `billing` y `prescriptions`.
