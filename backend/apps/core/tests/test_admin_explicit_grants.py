@@ -5,6 +5,8 @@ listas de Python. Muchos tests del proyecto asignan `*.*` en sus fixtures, así 
 verde no dice nada sobre esta política.
 """
 from io import StringIO
+from pathlib import Path
+import re
 from unittest import mock
 import uuid
 
@@ -58,6 +60,11 @@ def role_codes(org, name='ADMIN'):
 def make_admin(username, org):
     return get_user_model().objects.create_user(
         username=username, password='x', organization=org, role='ADMIN')
+
+
+def make_user_with_role(username, org, role):
+    return get_user_model().objects.create_user(
+        username=username, password='x', organization=org, role=role)
 
 
 def fresh(user):
@@ -145,6 +152,21 @@ class PolicyIsExplicit(SimpleTestCase):
         self.assertEqual(missing, {})
 
 
+class EveryProgrammaticCheckUsesAGrantedCode(SimpleTestCase):
+    """Las rutas no lo ven todo: un servicio también puede pedir un permiso."""
+    CHECK = re.compile(
+        r"""\b(?:user_has_permission(?:_strict|_db_only)?|_has_required_permission|_recipients_with_capability)"""
+        r"""\(\s*[^,()]+,\s*['"]([^'"]+)['"]""")
+
+    def test_codes_asked_by_services_are_held_by_the_admin(self):
+        found = set()
+        for path in Path('apps').rglob('*.py'):
+            if 'tests' not in path.parts and 'migrations' not in path.parts:
+                found |= set(self.CHECK.findall(path.read_text(encoding='utf-8', errors='ignore')))
+        self.assertIn('inventory.view', found, 'La búsqueda dejó de encontrar los chequeos')
+        self.assertEqual(found - set(PERMISSIONS['ADMIN']), set())
+
+
 class SeededAdminKeepsCapabilities(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -174,8 +196,35 @@ class SeededAdminKeepsCapabilities(TestCase):
                 response = getattr(client, method)(url, {}, format='json')
                 self.assertNotEqual(response.status_code, 403, response.data)
 
+    @mock.patch('apps.core.permissions._legal_blocks', return_value=False)
+    def test_unimplemented_method_is_405_not_403(self, _legal):
+        vet = make_user_with_role('vet_method', self.orgs[0], 'VET')
+        for user in (fresh(self.admins[0]), vet):
+            client = APIClient()
+            client.force_authenticate(user=user)
+            with self.subTest(role=user.role):
+                self.assertEqual(client.delete('/api/organizations/me/').status_code, 405)
+
+    def test_implemented_method_without_the_code_is_still_403(self):
+        vet = make_user_with_role('vet_denied', self.orgs[0], 'VET')
+        client = APIClient()
+        client.force_authenticate(user=vet)
+        self.assertEqual(client.patch('/api/organizations/me/', {}, format='json').status_code, 403)
+
+    def test_admin_still_receives_stock_notifications(self):
+        from apps.notifications.services import _recipients_with_capability
+        recipients = _recipients_with_capability(self.orgs[0], 'inventory.view')
+        self.assertIn(self.admins[0].pk, [user.pk for user in recipients])
+
+    def test_stock_notifications_do_not_reach_other_roles(self):
+        from apps.notifications.services import _recipients_with_capability
+        vet = make_user_with_role('vet_stock', self.orgs[0], 'VET')
+        recipients = _recipients_with_capability(self.orgs[0], 'inventory.view')
+        self.assertNotIn(vet.pk, [user.pk for user in recipients])
+
     def test_other_roles_do_not_gain_the_new_admin_codes(self):
-        new_codes = {'organization.list', 'prescription.update', 'inventory.destroy', 'medicalrecord.destroy'}
+        new_codes = {'organization.list', 'prescription.update', 'inventory.destroy',
+                     'medicalrecord.destroy', 'inventory.view'}
         for role in ('VET', 'ASSISTANT', 'AGENT'):
             with self.subTest(role=role):
                 self.assertEqual(role_codes(self.orgs[0], role) & new_codes, set())

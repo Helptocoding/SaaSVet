@@ -96,6 +96,8 @@ PERMISSION_CODES = [
     "inventory.create",
     "inventory.update",
     "inventory.destroy",
+    # Quién recibe los avisos de stock (`notifications.services`).
+    "inventory.view",
 
     # Recetas
     "prescription.list",
@@ -187,6 +189,7 @@ ORDINARY_CODES = frozenset({
     "patient.list", "patient.retrieve", "patient.create", "patient.update", "patient.destroy",
     "owner.list", "owner.retrieve", "owner.create", "owner.update", "owner.destroy",
     "inventory.list", "inventory.retrieve", "inventory.create", "inventory.update",
+    "inventory.view",
     "prescription.list", "prescription.retrieve", "prescription.create", "prescription.update",
     "prescription.destroy",
     "staff.list", "organization.list", "organization.retrieve",
@@ -243,7 +246,7 @@ PERMISSIONS = {
         "patient.destroy",
         "owner.list", "owner.retrieve", "owner.create", "owner.update", "owner.destroy",
         "inventory.list", "inventory.retrieve", "inventory.create", "inventory.update",
-        "inventory.destroy",
+        "inventory.destroy", "inventory.view",
         "prescription.list", "prescription.retrieve", "prescription.create",
         "prescription.update", "prescription.destroy",
         "staff.list", "staff.create", "staff.destroy", "staff.reset_password",

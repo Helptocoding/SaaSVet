@@ -215,6 +215,12 @@ def _method_to_action(method: str, view) -> str:
     }.get(method, "list")
 
 
+def _method_is_implemented(request, view) -> bool:
+    """True si la vista tiene handler para el método, igual que decide `APIView.dispatch`."""
+    method = request.method.lower()
+    return method in view.http_method_names and hasattr(view, method)
+
+
 def _resolve_required(request, view) -> str | None:
     """
     Determina el permiso requerido para una request+view.
@@ -404,6 +410,11 @@ class HybridPermission(BasePermission):
         if _legal_blocks(request):
             _log_legal_blocked(request)
             return False
+
+        # Un método que la vista no implementa no ejecuta nada. DRF revisa permisos antes
+        # que el método, así que sin esto un 405 o el 410 de una vista retirada serían 403.
+        if not _method_is_implemented(request, view):
+            return True
 
         required = _resolve_required(request, view)
         if required is None:

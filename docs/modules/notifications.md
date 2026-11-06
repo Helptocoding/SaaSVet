@@ -15,7 +15,7 @@ plan `docs/plan-implementacion-centro-notificaciones-2026-09-06.md`.
 | `appointment_upcoming` | CONDITION | derivada | cita + `start_iso` UTC | asignado o `appointment.list` |
 | `appointment_delayed` | CONDITION | derivada | cita + `start_iso` UTC | mismo |
 | `stock_low_entered` | EVENT | Notification | `stock_low:{product}:{movement}` | capacidad `inventory.view` |
-| `stock_out` | EVENT | Notification | `stock_out:{product}:{movement}` | capacidad `inventory.view` |
+| `stock_out` | EVENT | Notification | `stock_out:{product}:{movement}` | capacidad `inventory.view` (hoy solo ADMIN, ADR p63) |
 | `cash_difference` | EVENT | Notification | `cashsession:{public_id}` | capacidad `cashsession.close` |
 
 Ventanas beta (solo pruebas, en `notifications/policies.py`): upcoming 15m, delayed 20m,

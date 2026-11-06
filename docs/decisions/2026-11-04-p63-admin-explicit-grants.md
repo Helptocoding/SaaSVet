@@ -61,7 +61,12 @@ Se enumeraron las rutas reales con el mismo `_resolve_required` de producción: 
 | `patient.partial_update` | `PATCH /api/pets/<id>/` (200 → 403) | Nadie | **No entra al catálogo:** `partial_update` se resuelve como `update` | |
 | `owner.partial_update` | `PATCH /api/owners/<id>/` (200 → 403) | Nadie | **No entra al catálogo:** igual que el anterior | |
 
-Los cuatro códigos deben estar en `PERMISSION_CODES` antes de que el seed intente asignarlos, porque el seed descarta en silencio lo desconocido.
+Los cuatro códigos deben estar en `PERMISSION_CODES` antes de que el seed intente asignarlos, porque el seed descartaba en silencio lo desconocido.
+
+**Dos hallazgos más, de la suite completa en CI, que la enumeración de rutas no vio:**
+
+- **`inventory.view`** lo pide `notifications.services` en una variable para elegir quién recibe los avisos de stock, y no estaba en el catálogo. Solo llegaban al ADMIN por `*.*`; la lista explícita se los habría quitado. Entra al catálogo solo para el ADMIN, como ordinario, para conservar exactamente quién los recibe. Hacer que VET o ASSISTANT también los reciban sería otra decisión.
+- **Métodos no implementados.** DRF revisa permisos antes que el método, así que un `405`, o el `410` de la ruta retirada de organizaciones, se habrían vuelto `403` para el ADMIN. `HybridPermission` ahora deja pasar un método sin handler, porque no ejecuta nada. Esto también cambia ese `403` a `405` para los demás roles.
 
 **Corrección de H-10.** `1d13389` retiró `organization.list` como código sin consumidor. Era falso: lo exigen cuatro rutas, derivado de `resource_name` y del método, sin literal. El test `test_no_view_service_or_screen_asks_for_them` solo busca texto y no puede verlo. Hoy no hay regresión, porque el ADMIN entra por `*.*`, pero ese test y `RETIRED` deben corregirse. `organization.create` no lo exige ninguna ruta y puede seguir retirado.
 
@@ -113,7 +118,7 @@ Estos cinco siguen siendo ordinarios, sin cambio de categoría ni de rol:
 
 ## Matriz
 
-Filas del catálogo actual. Las concesiones sensibles del ADMIN están aprobadas. Los cuatro códigos nuevos del hallazgo se añaden al implementar, y `notification.retrieve` se retira.
+Inventario previo a la implementación. Las concesiones sensibles del ADMIN están aprobadas. Al implementar se añadieron los cuatro códigos del hallazgo más `inventory.view` y se retiró `notification.retrieve`: la lista vigente son los 91 códigos de `PERMISSIONS["ADMIN"]`.
 
 | Código | Clase | ADMIN | VET | ASSISTANT | AGENT | Rutas que lo exigen | UI |
 |---|---|---|---|---|---|---|---|
