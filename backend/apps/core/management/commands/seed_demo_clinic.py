@@ -58,7 +58,7 @@ from apps.billing.checkout_services import (
 )
 from apps.cash.models import CashSession, CashMovement
 from apps.core.models import Permission, Role
-from apps.core.permissions_codes import PERMISSION_CODES
+from apps.core.permissions_codes import role_grants
 from apps.platform.deletion_guards import demo_purge_authorized
 from apps.platform.services.provision_organization import provision_organization
 
@@ -249,43 +249,27 @@ class Command(BaseCommand):
 
     def _restrict_demo_import(self, org):
         """
-        Deshabilita la importación de datos para los 3 usuarios demo.
+        Deshabilita la importación de datos para los usuarios demo.
 
         Import = operación sensible (alta masiva de clientes/mascotas). En el demo
-        privado los testers no deben poder migrar datos. VET/ASSISTANT ya no tienen
-        `import.*` (sus listas RBAC explícitas no lo incluyen); el ADMIN sí lo
-        tiene vía el wildcard `*.*`. Aquí se reemplaza el wildcard del rol ADMIN de
-        la org demo por la lista explícita de TODOS los permisos MENOS `import.*`.
+        privado los testers no deben poder migrar datos. `role_grants` es la misma
+        fuente que usa `seed_permissions`, así que un release no revierte esta resta.
 
         Efecto (ambos lados, ver apps/core/permissions.py):
-          - backend HybridPermission usa los perms de DB (sin fallback estático
-            cuando hay UserRole) → `_is_allowed('import.create', perms)` = False → 403.
-          - /api/me build_permissions_list expande sobre PERMISSION_CODES → el array
-            no incluye `import.*` → frontend `can('import.create')` = False → sin CTA.
+          - backend HybridPermission usa los perms de DB → 403 en `import.*`.
+          - /api/me build_permissions_list no incluye `import.*` → sin CTA en frontend.
 
-        Scoped a la org demo (los roles son por organización) → no afecta clínicas
-        reales. Idempotente: re-aplica el mismo set. Trade-off aceptado: el admin
-        demo pierde la forward-compat del wildcard (un permiso nuevo no se le asigna
-        solo) — irrelevante para un demo.
+        Scoped a la org demo (los roles son por organización). Idempotente.
         """
-        allowed_codes = [c for c in PERMISSION_CODES if not c.startswith("import.")]
-        perms = [Permission.objects.get_or_create(code=c)[0] for c in allowed_codes]
-
-        admin_role = Role.objects.filter(
-            organization=org, name="ADMIN", is_system_role=True
-        ).first()
-        if admin_role:
-            admin_role.permissions.set(perms)  # reemplaza el wildcard *.*
-
-        # Defensa: quitar import.* a VET/ASSISTANT por si alguna vez se les agregó.
-        import_perms = list(Permission.objects.filter(code__startswith="import."))
-        if import_perms:
-            for rname in ("VET", "ASSISTANT"):
-                role = Role.objects.filter(
-                    organization=org, name=rname, is_system_role=True
-                ).first()
-                if role:
-                    role.permissions.remove(*import_perms)
+        for role_name in ("ADMIN", "VET", "ASSISTANT"):
+            role = Role.objects.filter(
+                organization=org, name=role_name, is_system_role=True
+            ).first()
+            if role:
+                role.permissions.set([
+                    Permission.objects.get_or_create(code=code)[0]
+                    for code in role_grants(role_name, is_demo=True)
+                ])
 
     # ------------------------------------------------------------------ #
     # Catálogo: servicios + productos + stock inicial

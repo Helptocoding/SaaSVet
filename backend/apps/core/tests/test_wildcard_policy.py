@@ -1,8 +1,6 @@
-"""H-1 reducida: cada código se clasifica, y excluir uno del comodín tiene efecto.
+"""Cada código se clasifica, y excluir uno del comodín de plataforma tiene efecto.
 
-No retira el `*.*` del ADMIN de clínica; eso exige un ADR. Lo que garantiza es que
-un código nuevo no entra al comodín sin una decisión, y que un código exclusivo de
-plataforma tiene dónde declararse para que el comodín no lo conceda.
+La concesión del ADMIN de clínica se prueba en `test_admin_explicit_grants.py`.
 """
 from unittest import mock
 
@@ -14,7 +12,7 @@ from apps.core.permissions import (
     _is_allowed, user_has_permission, user_has_permission_strict,
 )
 from apps.core.permissions_codes import (
-    ADMIN_WILDCARD_ORDINARY, ADMIN_WILDCARD_SENSITIVE, PERMISSION_CODES, PERMISSIONS,
+    ORDINARY_CODES, SENSITIVE_CODES, PERMISSION_CODES, PERMISSIONS,
     WILDCARD_EXCLUDED,
 )
 from apps.organizations.models import Organization
@@ -25,7 +23,7 @@ EXCLUDED_PATH = 'apps.core.permissions.WILDCARD_EXCLUDED'
 
 class EveryCodeIsClassified(SimpleTestCase):
     def test_groups_partition_the_catalog_exactly(self):
-        groups = (ADMIN_WILDCARD_ORDINARY, ADMIN_WILDCARD_SENSITIVE, WILDCARD_EXCLUDED)
+        groups = (ORDINARY_CODES, SENSITIVE_CODES, WILDCARD_EXCLUDED)
         classified = [code for group in groups for code in group]
         self.assertEqual(len(classified), len(set(classified)), 'A code is in two groups')
         self.assertEqual(set(classified) - set(PERMISSION_CODES), set(), 'Classified but not in catalog')
@@ -36,7 +34,7 @@ class EveryCodeIsClassified(SimpleTestCase):
         for code in ('billing.refund', 'invoice.void_terminal', 'staff.reset_password',
                      'agentinbox.identity_verify'):
             with self.subTest(code=code):
-                self.assertIn(code, ADMIN_WILDCARD_SENSITIVE)
+                self.assertIn(code, SENSITIVE_CODES)
 
 
 class ExclusionIsEnforcedAtEvaluation(SimpleTestCase):
@@ -47,7 +45,7 @@ class ExclusionIsEnforcedAtEvaluation(SimpleTestCase):
 
     def test_global_wildcard_does_not_grant_an_excluded_code(self):
         with mock.patch(EXCLUDED_PATH, frozenset({PLATFORM_CODE})):
-            self.assertFalse(_is_allowed(PLATFORM_CODE, PERMISSIONS['ADMIN']))
+            self.assertFalse(_is_allowed(PLATFORM_CODE, PERMISSIONS['ADMIN_SAAS']))
 
     def test_resource_wildcard_does_not_grant_an_excluded_code(self):
         with mock.patch(EXCLUDED_PATH, frozenset({PLATFORM_CODE})):
@@ -59,7 +57,7 @@ class ExclusionIsEnforcedAtEvaluation(SimpleTestCase):
 
     def test_exclusion_does_not_affect_other_codes(self):
         with mock.patch(EXCLUDED_PATH, frozenset({PLATFORM_CODE})):
-            self.assertTrue(_is_allowed('billing.refund', PERMISSIONS['ADMIN']))
+            self.assertTrue(_is_allowed('billing.refund', PERMISSIONS['ADMIN_SAAS']))
 
 
 class ExclusionReachesEveryPermissionPath(TestCase):

@@ -1,7 +1,8 @@
 # ADR p63 — Concesiones explícitas para el ADMIN de clínica
 
 **Fecha**: 2026-11-04
-**Estado**: **ACEPTADO por el dueño del producto el 2026-11-05. No implementado.** H-1 sigue abierta y el despliegue no está autorizado: falta implementar, y falta la evidencia de producción.
+**Estado**: **ACEPTADO e IMPLEMENTADO en `develop` el 2026-11-05. Sin desplegar.** H-1 sigue abierta hasta reunir la evidencia de producción.
+**Excepción aceptada por el dueño (2026-11-05):** el cambio se activa en el siguiente despliegue, sin esperar antes los 7 días de evidencia. Quien despliegue debe saber que todos los ADMIN pasan a la lista explícita en ese momento.
 **Origen**: auditoría de seguridad run-1, H-1 (`docs/plan-implementacion-seguridad-run1-2026-10-28.md`)
 
 ## Contexto
@@ -33,17 +34,17 @@ La lista **no se deriva** de `PERMISSION_CODES` ni de los grupos de clasificaci�
 | `ADMIN_SAAS` con `*.*` | Se mantiene |
 | `*.*` en cualquier otro rol | No se admite como excepción implícita: bloquea el despliegue |
 | Los escritores de roles | Consumen una única fuente |
-| Implementar H-1 | Todavía no |
-| Autorizar el despliegue | No, hasta cumplir el gate de producción |
+| Implementar H-1 | Hecho |
+| Activarlo en el siguiente despliegue | Aceptado sin evidencia previa; el preflight sigue siendo bloqueante |
 
 ## Dos decisiones separadas
 
 | Decisión | Qué autoriza | Qué exige |
 |---|---|---|
 | **Aprobar el ADR** | La política, la matriz y escribir el código y las pruebas | Las decisiones pendientes de este documento |
-| **Autorizar el despliegue** | Que el cambio llegue a las clínicas | Preflight limpio, y la evidencia de producción descrita abajo |
+| **Autorizar el despliegue** | Que el cambio llegue a las clínicas | Preflight limpio. La evidencia pasa a reunirse **después** de activar, por decisión del dueño |
 
-La primera quedó aprobada el 2026-11-05. **La segunda no se puede cumplir porque no hay servidor, y no se simula.**
+La primera quedó aprobada el 2026-11-05. **La evidencia no se puede reunir porque no hay servidor, y no se simula.** Con la excepción aceptada, ya no protege contra un error de la lista antes de activarla: lo detecta después. Las pruebas de rutas reducen ese riesgo, pero no prueban el uso real.
 
 ## Hallazgo: los 87 códigos no bastan
 
@@ -226,26 +227,29 @@ Leído en el código, con estas consecuencias:
 - **Editar a mano un rol de sistema ya no sobrevive:** cada release lo reescribe, y un rol llamado `ADMIN` se adopta como de sistema. p63 no añade esa pérdida.
 - **No hay vía de producto para editar roles:** ni API ni admin de Django; solo shell o SQL. Hay que comprobar en producción, no asumir, que nadie lo hizo.
 - **Hay dos escritores:** `seed_permissions` para las existentes y `_seed_roles_for_org` para las nuevas. Ambos leen `PERMISSIONS`, y las pruebas deben cubrir los dos.
-- **Descarta en silencio lo que no esté en el catálogo.** Con `organization.list` en la lista del ADMIN pero no en `PERMISSION_CODES`, el rol quedaría sin él y sin error. La lista debe ser subconjunto del catálogo, por test.
+- **Antes descartaba en silencio lo que no estuviera en el catálogo.** Ahora eso bloquea el seed, y un test exige que cada lista sea subconjunto del catálogo.
 - **No es atómico entre organizaciones.** Un fallo a mitad deja unas con lista y otras con comodín. Volver a correrlo converge, y el procedimiento debe decirlo.
-- **La demo es un tercer escritor.** `seed_demo_clinic` arma su lista con `PERMISSION_CODES` menos `import.*`, así que un código nuevo le llegaría solo. Además, cada `seed_permissions` le pisa esa restricción hasta la siguiente corrida de la demo. Eso ya ocurre hoy y debe resolverse aquí.
+- **La demo era un tercer escritor con otra lista.** Armaba la suya con `PERMISSION_CODES` menos `import.*`, y cada `seed_permissions` le pisaba esa restricción. Ambas cosas quedaron corregidas.
 
-**Política única.** `seed_permissions`, `_seed_roles_for_org` y `seed_demo_clinic` consumen la misma fuente explícita. La demo solo puede restarle `import.*` de forma declarada, nunca mantener otra lista. Sin esto habría tres políticas que coinciden por casualidad.
+**Política única.** `seed_permissions`, `_seed_roles_for_org` y `seed_demo_clinic` consumen `role_grants`, en `permissions_codes.py`. La demo solo resta `import.*`.
 
 ## Preflight
 
-`seed_permissions` no tiene `--dry-run`: hay que construirlo. Sin escribir nada, informa por organización:
+`seed_permissions --dry-run` hace esta revisión sin escribir nada, y `seed_permissions` la repite antes de escribir, así que un bloqueo también detiene el `release`. Informa por organización:
 
-1. Roles `ADMIN` y usuarios con `role='ADMIN'`.
+1. Usuarios con `role='ADMIN'`.
 2. Usuarios activos sin `UserRole`, y usuarios cuyo `role` no coincide con su `UserRole`.
-3. Permisos actuales de cada rol, y qué ganaría o perdería con la matriz.
-4. Roles que no son de sistema, y los permisos efectivos de cada usuario que combine varios roles.
-5. Diferencias entre organizaciones.
+3. Qué ganaría o perdería cada rol de sistema.
+4. Roles no gestionados, y cuántos usuarios combinan varios roles.
+
+Las diferencias entre organizaciones se leen comparando esos bloques.
 
 **Bloquea el despliegue, sin opción de continuar con advertencia:**
 
-- Cualquier rol distinto de `ADMIN_SAAS` que fuera a conservar `*.*` o un comodín `recurso.*`. Como `_get_cached_permissions` une todos los roles del usuario, uno solo bastaría para que siga recibiendo permisos futuros. Solo se admite con una excepción explícita, aprobada y documentada, identificada por organización y rol.
-- Cualquier otro resultado que no corresponda a la matriz aprobada.
+- Cualquier rol distinto de `ADMIN_SAAS` que fuera a conservar `*.*` o un comodín `recurso.*`. Como `_get_cached_permissions` une todos los roles del usuario, uno solo bastaría para que siga recibiendo permisos futuros. Solo se admite con una excepción explícita en `WILDCARD_ROLE_EXCEPTIONS`, aprobada y documentada, identificada por organización y rol.
+- Una concesión fuera del catálogo.
+
+Usuarios sin `UserRole` o con un rol distinto se informan, no bloquean: revisar esa salida es parte del despliegue.
 
 ## Pruebas exigidas
 
@@ -278,7 +282,7 @@ Leído en el código, con estas consecuencias:
 - **Frontend:** conserva los permisos en memoria hasta releer `/me/`. Tras el cambio puede mostrar botones que reciben `403`. El backend es quien decide.
 - **Procedimiento:** revertir y correr `release` con la imagen anterior. Según el código, `seed_permissions` restaura `*.*` en los roles de sistema, porque sobrescribe el rol y la fila `*.*` no se borra. No toca roles personalizados.
 
-Esto aún no está probado. Se exigen estos escenarios sobre base de datos:
+Probado en `apps/core/tests/test_admin_explicit_grants.py`. **Límite:** el release anterior se representa con lo que hacía su seed con el rol ADMIN, no con la imagen anterior real. Escenarios:
 
 | Escenario | Qué comprobar |
 |---|---|

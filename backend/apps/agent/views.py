@@ -4,7 +4,7 @@ agent/views.py — API de la bandeja `/api/inbox/` (É-F0 PR-6).
 Permisos propios `agentinbox.*` (Q13): la bandeja expone transcripts (PII
 conversacional) — no cuelga de appointment.*. `claim` cubre también cerrar
 y liberar (gestión de estado); `config` (kill switch + horario + FAQ) es
-ADMIN vía `*.*`.
+solo de ADMIN.
 
 Toda query org-scoped con for_organization; conversaciones por public_id
 (ADR p18). Views delgadas: el único "estado" que mutan es el conversacional

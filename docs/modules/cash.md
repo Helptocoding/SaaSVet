@@ -144,7 +144,7 @@ Body de `movements/` (POST): `{movement_type, amount, reason}`.
 ## RBAC
 
 Codigos `cashsession.{list,retrieve,open,close}` y `cashmovement.{list,create}`
-(ADR p39) en `PERMISSION_CODES`. Asignados a ADMIN (`*.*`), VET y ASSISTANT (recepcion
+(ADR p39) en `PERMISSION_CODES`. Asignados a ADMIN, VET y ASSISTANT (recepcion
 opera caja). Requiere `seed_permissions` en el siguiente deploy.
 
 ## Analytics

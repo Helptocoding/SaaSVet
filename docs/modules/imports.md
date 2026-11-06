@@ -342,7 +342,7 @@ sistema (los `*.extra` están exentos — many→1), y faltantes requeridos.
 | POST | `/api/imports/<public_id>/commit/` | `import.commit` |
 | POST | `/api/imports/<public_id>/commit/` retorna 400 si `result.blocking` no está vacío (código `import_has_blocking_errors`) | — |
 
-Permisos `import.*` asignados a **ADMIN** (vía `*.*`). El importador es operación de
+Permisos `import.*` asignados a **ADMIN**. El importador es operación de
 migración, no de uso diario. `ImportJobViewSet` usa `PublicIdLookupMixin` +
 `TenantQueryMixin` (cross-tenant → 404).
 

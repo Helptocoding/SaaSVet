@@ -30,6 +30,7 @@ PERMISSION_CODES = [
     "medicalrecord.create",
     "medicalrecord.update",
     "medicalrecord.close",
+    "medicalrecord.destroy",
     "medicalrecord.vitals.create",
     "medicalrecord.vitals.list",
     "medicalrecord.summary.retrieve",
@@ -94,11 +95,13 @@ PERMISSION_CODES = [
     "inventory.retrieve",
     "inventory.create",
     "inventory.update",
+    "inventory.destroy",
 
     # Recetas
     "prescription.list",
     "prescription.retrieve",
     "prescription.create",
+    "prescription.update",
     "prescription.destroy",
 
     # Equipo (gestión de usuarios internos)
@@ -108,7 +111,8 @@ PERMISSION_CODES = [
     # ADR p21: admin reset de password de staff. Solo ADMIN de la org.
     "staff.reset_password",
 
-    # Organización
+    # Organización. `list` lo exigen los GET de me, schedule, settings y configuration.
+    "organization.list",
     "organization.retrieve",
     "organization.update",
 
@@ -126,7 +130,7 @@ PERMISSION_CODES = [
     "cashmovement.list",
     "cashmovement.create",
 
-    # Importador CSV/Excel (migración de clínicas). v1: solo ADMIN (vía *.*).
+    # Importador CSV/Excel (migración de clínicas). v1: solo ADMIN.
     # No se agregan a VET/ASSISTANT — migración de datos = operación sensible.
     "import.list",
     "import.retrieve",
@@ -135,13 +139,12 @@ PERMISSION_CODES = [
 
     # Centro de notificaciones (Rev.5: lectura por capacidad).
     "notification.list",
-    "notification.retrieve",
     "notification.seen",
     # Bandeja del agente conversacional (É-F0 PR-6, decisión Q13 de la spec).
     # La bandeja expone transcripts (PII conversacional) → permisos propios,
     # no colgados de appointment.*. claim cubre también cerrar/liberar
     # (gestión de estado de la conversación); config = kill switch + horario
-    # + FAQ (solo ADMIN vía *.*).
+    # + FAQ (solo ADMIN).
     "agentinbox.view",
     "agentinbox.claim",
     "agentinbox.send",
@@ -157,20 +160,19 @@ PERMISSION_CODES = [
 ]
 
 # ---------------------------------------------------------------------------
-# Política de cada código frente al comodín "*.*" (auditoría run-1, H-1)
+# Clasificación de cada código (ADR p63)
 # ---------------------------------------------------------------------------
 # Todo código del catálogo debe estar en exactamente un grupo; un test falla si
-# aparece uno sin clasificar, así que añadir un código obliga a decidir si el ADMIN
-# de clínica debe recibirlo por el comodín.
+# aparece uno sin clasificar. Clasificar no concede nada: la concesión del ADMIN de
+# clínica es su lista literal en PERMISSIONS.
 #
-#   ADMIN_WILDCARD_ORDINARY: operación ordinaria de la clínica.
-#   ADMIN_WILDCARD_SENSITIVE: el ADMIN los recibe por contrato, pero mueven dinero,
-#     acceso o identidad. Es una lista revisada, no una restricción en ejecución.
-#   WILDCARD_EXCLUDED: el comodín NO los concede (`_is_allowed`): exigen asignación
-#     explícita al rol. Es donde va un código exclusivo de plataforma. Un superuser
-#     sigue pasando, porque no se evalúa por comodín. Hoy vacío: ningún código actual
-#     es exclusivo de plataforma, ya que esas vistas usan `IsPlatformOperator`.
-ADMIN_WILDCARD_ORDINARY = frozenset({
+#   ORDINARY_CODES: operación rutinaria de la clínica, aunque toque dinero o borre
+#     registros.
+#   SENSITIVE_CODES: alto impacto, difícil de deshacer y, por defecto, solo del ADMIN.
+#   WILDCARD_EXCLUDED: el comodín de plataforma NO los concede (`_is_allowed`): exigen
+#     asignación explícita al rol. Un superuser sigue pasando, porque no se evalúa por
+#     comodín. Hoy vacío: esas vistas usan `IsPlatformOperator`.
+ORDINARY_CODES = frozenset({
     "appointment.list", "appointment.retrieve", "appointment.create",
     "appointment.create_walkin", "appointment.update", "appointment.destroy",
     "medicalrecord.list", "medicalrecord.retrieve", "medicalrecord.create",
@@ -185,16 +187,17 @@ ADMIN_WILDCARD_ORDINARY = frozenset({
     "patient.list", "patient.retrieve", "patient.create", "patient.update", "patient.destroy",
     "owner.list", "owner.retrieve", "owner.create", "owner.update", "owner.destroy",
     "inventory.list", "inventory.retrieve", "inventory.create", "inventory.update",
-    "prescription.list", "prescription.retrieve", "prescription.create", "prescription.destroy",
-    "staff.list", "organization.retrieve",
+    "prescription.list", "prescription.retrieve", "prescription.create", "prescription.update",
+    "prescription.destroy",
+    "staff.list", "organization.list", "organization.retrieve",
     "dashboard.view", "dashboard.summary",
     "cashsession.list", "cashsession.retrieve", "cashsession.open", "cashsession.close",
     "cashmovement.list", "cashmovement.create",
     "import.list", "import.retrieve", "import.create",
-    "notification.list", "notification.retrieve", "notification.seen",
+    "notification.list", "notification.seen",
     "agentinbox.view", "agentinbox.claim", "agentinbox.send",
 })
-ADMIN_WILDCARD_SENSITIVE = frozenset({
+SENSITIVE_CODES = frozenset({
     "invoice.destroy", "invoice.post_unpaid", "invoice.replace", "invoice.replace_adjust",
     "invoice.replace_manage", "invoice.replace_waive", "invoice.void_terminal",
     "billing.clinical_charge.reprice", "billing.refund",
@@ -202,8 +205,13 @@ ADMIN_WILDCARD_SENSITIVE = frozenset({
     "staff.create", "staff.destroy", "staff.reset_password",
     "organization.update", "import.commit", "dashboard.financial.view",
     "agentinbox.config", "agentinbox.identity_verify",
+    "inventory.destroy", "medicalrecord.destroy",
 })
 WILDCARD_EXCLUDED = frozenset()
+
+# Roles que `seed_permissions` admite con un comodín, además de ADMIN_SAAS. Cada entrada
+# es una excepción aprobada y documentada: (public_id de la organización, nombre del rol).
+WILDCARD_ROLE_EXCEPTIONS = frozenset()
 
 # ---------------------------------------------------------------------------
 # Permisos estáticos por rol (fallback cuando no hay roles en DB)
@@ -212,8 +220,42 @@ PERMISSIONS = {
     # Superadmin de plataforma
     "ADMIN_SAAS": ["*.*"],
 
-    # Administrador de clínica
-    "ADMIN": ["*.*"],
+    # Administrador de clínica (ADR p63). Lista literal: no se deriva del catálogo ni de
+    # la clasificación. Un código nuevo no le llega hasta añadirlo aquí.
+    "ADMIN": [
+        "appointment.list", "appointment.retrieve", "appointment.create",
+        "appointment.create_walkin", "appointment.update", "appointment.destroy",
+        "medicalrecord.list", "medicalrecord.retrieve", "medicalrecord.create",
+        "medicalrecord.update", "medicalrecord.close", "medicalrecord.destroy",
+        "medicalrecord.vitals.create", "medicalrecord.vitals.list",
+        "medicalrecord.summary.retrieve",
+        "vaccinerecord.list", "vaccinerecord.retrieve", "vaccinerecord.create",
+        "vaccinerecord.update",
+        "invoice.list", "invoice.retrieve", "invoice.create", "invoice.destroy",
+        "invoice.pay", "invoice.post_unpaid", "invoice.replace_waive", "invoice.replace",
+        "invoice.replace_adjust", "invoice.replace_manage", "invoice.void_terminal",
+        "billing.clinical_charge.reprice", "checkout.prescription_decide",
+        "checkout.estimate.issue", "checkout.dispute.open", "checkout.dispute.resolve",
+        "collection.resolve", "billing.rx_dispense", "billing.refund",
+        "service.list", "service.retrieve", "service.create", "service.update",
+        "service.destroy",
+        "patient.list", "patient.retrieve", "patient.create", "patient.update",
+        "patient.destroy",
+        "owner.list", "owner.retrieve", "owner.create", "owner.update", "owner.destroy",
+        "inventory.list", "inventory.retrieve", "inventory.create", "inventory.update",
+        "inventory.destroy",
+        "prescription.list", "prescription.retrieve", "prescription.create",
+        "prescription.update", "prescription.destroy",
+        "staff.list", "staff.create", "staff.destroy", "staff.reset_password",
+        "organization.list", "organization.retrieve", "organization.update",
+        "dashboard.view", "dashboard.financial.view", "dashboard.summary",
+        "cashsession.list", "cashsession.retrieve", "cashsession.open", "cashsession.close",
+        "cashmovement.list", "cashmovement.create",
+        "import.list", "import.retrieve", "import.create", "import.commit",
+        "notification.list", "notification.seen",
+        "agentinbox.view", "agentinbox.claim", "agentinbox.send", "agentinbox.config",
+        "agentinbox.identity_verify",
+    ],
 
     # Veterinario
     "VET": [
@@ -240,7 +282,7 @@ PERMISSIONS = {
         "staff.list",
         "dashboard.view",
         "dashboard.summary",
-        "notification.list", "notification.retrieve", "notification.seen",
+        "notification.list", "notification.seen",
         # Caja (ADR p28)
         "cashsession.list", "cashsession.retrieve",
         "cashsession.open", "cashsession.close",
@@ -270,7 +312,7 @@ PERMISSIONS = {
         "staff.list",
         "dashboard.view",
         "dashboard.summary",
-        "notification.list", "notification.retrieve", "notification.seen",
+        "notification.list", "notification.seen",
         # Caja (ADR p28)
         "cashsession.list", "cashsession.retrieve",
         "cashsession.open", "cashsession.close",
@@ -303,3 +345,15 @@ PERMISSIONS = {
         "inventory.list", "inventory.retrieve",
     ],
 }
+
+
+def role_grants(role, *, is_demo=False):
+    """Fuente única de lo que recibe un rol de sistema en una organización.
+
+    La consumen `seed_permissions`, `_seed_roles_for_org` y `seed_demo_clinic`. La
+    demo no mantiene otra lista: solo le resta la importación de datos.
+    """
+    codes = PERMISSIONS[role]
+    if is_demo:
+        return [code for code in codes if not code.startswith("import.")]
+    return list(codes)

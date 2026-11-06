@@ -6,13 +6,20 @@ Se ejecuta automáticamente en cada deploy (ver Procfile).
 
 Si agregas nuevos permisos en PERMISSION_CODES / PERMISSIONS,
 el próximo deploy los crea automáticamente.
+
+Antes de escribir revisa el estado de los roles, y aborta si un rol conservaría un
+comodín (ADR p63). `--dry-run` muestra esa revisión sin escribir nada.
 """
 import logging
 
-from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand, CommandError
+from django.db.models import F
 
-from apps.core.models import Permission, Role
-from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
+from apps.core.models import Permission, Role, UserRole
+from apps.core.permissions_codes import (
+    PERMISSION_CODES, PERMISSIONS, WILDCARD_ROLE_EXCEPTIONS, role_grants,
+)
 from apps.organizations.models import Organization
 
 logger = logging.getLogger(__name__)
@@ -21,13 +28,81 @@ logger = logging.getLogger(__name__)
 _PLATFORM_ROLES = {"ADMIN_SAAS"}
 
 
+def _is_wildcard(code):
+    return code.endswith(".*")
+
+
 class Command(BaseCommand):
     help = "Seed RBAC: permisos y roles de sistema por organización (idempotente)"
 
-    def handle(self, *args, **kwargs):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--dry-run", action="store_true",
+            help="Informa qué cambiaría y qué bloquea el seed, sin escribir nada.",
+        )
+
+    def handle(self, *args, **options):
+        blockers = self._preflight()
+        if blockers:
+            raise CommandError(
+                "seed_permissions bloqueado, sin cambios:\n  " + "\n  ".join(blockers))
+        if options["dry_run"]:
+            self.stdout.write(self.style.SUCCESS("Preflight limpio. Sin cambios (--dry-run)."))
+            return
         self._seed_permissions()
         self._seed_roles()
         self.stdout.write(self.style.SUCCESS("seed_permissions completado"))
+
+    def _org_role_codes(self):
+        return [role for role in PERMISSIONS if role not in _PLATFORM_ROLES]
+
+    def _preflight(self):
+        blockers = []
+        catalog = set(PERMISSION_CODES)
+        managed = self._org_role_codes()
+        for role_code in managed:
+            for is_demo in (False, True):
+                unknown = set(role_grants(role_code, is_demo=is_demo)) - catalog
+                if unknown:
+                    blockers.append(f"El rol {role_code} concede códigos fuera del catálogo: {sorted(unknown)}")
+
+        users = get_user_model().objects.filter(is_active=True)
+        roles = Role.objects.select_related("organization").prefetch_related("permissions")
+        roles_by_org = {}
+        for role in roles:
+            roles_by_org.setdefault(role.organization_id, []).append(role)
+
+        for org in Organization.objects.all():
+            org_users = users.filter(organization=org)
+            without_role = org_users.exclude(pk__in=UserRole.objects.values("user_id")).count()
+            mismatched = org_users.filter(user_roles__isnull=False).exclude(
+                user_roles__role__name=F("role")).distinct().count()
+            self.stdout.write(
+                f"Organización {org.public_id}: {org_users.filter(role='ADMIN').count()} usuarios ADMIN, "
+                f"{without_role} activos sin UserRole, {mismatched} con UserRole distinto de su rol")
+
+            for role in roles_by_org.get(org.pk, []):
+                current = {p.code for p in role.permissions.all()}
+                if role.name in managed:
+                    target = set(role_grants(role.name, is_demo=org.is_demo))
+                    gains, loses = sorted(target - current), sorted(current - target)
+                    if gains or loses:
+                        self.stdout.write(f"  {role.name}: gana {gains}; pierde {loses}")
+                    continue
+                self.stdout.write(f"  Rol no gestionado {role.name}: {len(current)} permisos")
+                wildcards = sorted(code for code in current if _is_wildcard(code))
+                if (wildcards and role.name not in _PLATFORM_ROLES
+                        and (str(org.public_id), role.name) not in WILDCARD_ROLE_EXCEPTIONS):
+                    blockers.append(
+                        f"Organización {org.public_id}, rol {role.name}: conserva {wildcards}. "
+                        "Retíralo o documenta una excepción en WILDCARD_ROLE_EXCEPTIONS.")
+
+            multi_role = sum(
+                1 for user in org_users.prefetch_related("user_roles")
+                if len(user.user_roles.all()) > 1)
+            if multi_role:
+                self.stdout.write(f"  {multi_role} usuarios combinan varios roles: reciben su unión")
+        return blockers
 
     def _seed_permissions(self):
         created = 0
@@ -42,21 +117,12 @@ class Command(BaseCommand):
     def _seed_roles(self):
         perms_map = {p.code: p for p in Permission.objects.filter(code__in=PERMISSION_CODES)}
 
-        # "*.*" no está en PERMISSION_CODES pero es necesario para roles ADMIN
-        wildcard_perm, _ = Permission.objects.get_or_create(code="*.*")
-
-        org_role_definitions = {
-            role_code: perm_codes
-            for role_code, perm_codes in PERMISSIONS.items()
-            if role_code not in _PLATFORM_ROLES
-        }
-
         orgs = list(Organization.objects.all())
         roles_created = 0
         roles_updated = 0
 
         for org in orgs:
-            for role_code, perm_codes in org_role_definitions.items():
+            for role_code in self._org_role_codes():
                 role, created = Role.objects.get_or_create(
                     name=role_code,
                     organization=org,
@@ -67,11 +133,8 @@ class Command(BaseCommand):
                     role.is_system_role = True
                     role.save(update_fields=["is_system_role"])
 
-                if "*.*" in perm_codes:
-                    role.permissions.set([wildcard_perm])
-                else:
-                    valid_perms = [perms_map[c] for c in perm_codes if c in perms_map]
-                    role.permissions.set(valid_perms)
+                role.permissions.set(
+                    [perms_map[code] for code in role_grants(role_code, is_demo=org.is_demo)])
 
                 if created:
                     roles_created += 1

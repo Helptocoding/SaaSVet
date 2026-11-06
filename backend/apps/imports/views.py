@@ -10,7 +10,7 @@ imports/views.py — Endpoints del importador (flujo de 3 fases).
 
 Multi-tenant: queryset siempre for_organization; el commit fuerza organization=org
 en cada Owner/Pet (services). Cross-org = 404 vía PublicIdLookupMixin.
-Permisos: import.* — v1 solo ADMIN (vía *.*). Upload/commit con throttle scoped.
+Permisos: import.* — v1 solo ADMIN. Upload/commit con throttle scoped.
 """
 from django.db import transaction
 from django.db.models import Q

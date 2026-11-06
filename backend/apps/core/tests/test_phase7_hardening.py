@@ -263,8 +263,8 @@ class LegacyIdLookupIsOffByDefault(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-class RetiredOrganizationPermissionCodes(SimpleTestCase):
-    RETIRED = ('organization.create', 'organization.list')
+class RetiredPermissionCodes(SimpleTestCase):
+    RETIRED = ('organization.create', 'notification.retrieve')
 
     def test_absent_from_the_catalog_and_every_explicit_role(self):
         for code in self.RETIRED:
@@ -276,7 +276,7 @@ class RetiredOrganizationPermissionCodes(SimpleTestCase):
     def test_no_view_service_or_screen_asks_for_them(self):
         this_file = Path(__file__).resolve()
         catalog = REPO_ROOT / 'backend/apps/core/permissions_codes.py'
-        pattern = re.compile(r'organization\.(create|list)\b')
+        pattern = re.compile(r'organization\.create\b|notification\.retrieve\b')
         roots = [(REPO_ROOT / 'backend/apps', '*.py'), (REPO_ROOT / 'frontend/src', '*.js'),
                  (REPO_ROOT / 'frontend/src', '*.jsx')]
         offenders = []

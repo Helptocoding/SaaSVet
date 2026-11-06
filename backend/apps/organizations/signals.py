@@ -46,12 +46,11 @@ def _seed_roles_for_org(org):
     Idempotente: usa get_or_create.
     """
     from apps.core.models import Permission, Role
-    from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
+    from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS, role_grants
 
-    wildcard, _ = Permission.objects.get_or_create(code="*.*")
     perms_map = {c: Permission.objects.get_or_create(code=c)[0] for c in PERMISSION_CODES}
 
-    for role_name, codes in PERMISSIONS.items():
+    for role_name in PERMISSIONS:
         if role_name == "ADMIN_SAAS":
             continue
         role, _ = Role.objects.get_or_create(
@@ -61,8 +60,7 @@ def _seed_roles_for_org(org):
         )
         role.is_system_role = True
         role.permissions.set(
-            [wildcard] if "*.*" in codes
-            else [perms_map[c] for c in codes if c in perms_map]
+            [perms_map[c] for c in role_grants(role_name, is_demo=org.is_demo)]
         )
         role.save(update_fields=["is_system_role"])
 

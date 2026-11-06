@@ -560,8 +560,8 @@ def _require_admin_for_financial(user):
 def financial_series(request):
     """
     Financial daily series. Visible to ADMIN only.
-    Permission code 'dashboard.financial.view' must be granted to the
-    ADMIN role via seed_permissions; ADMIN already gets it via wildcard.
+    Permission code 'dashboard.financial.view' is granted to the ADMIN
+    role via seed_permissions.
     """
     return _series_endpoint(
         request,

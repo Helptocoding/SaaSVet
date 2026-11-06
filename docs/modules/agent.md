@@ -793,7 +793,7 @@ bypass.
 | `POST …/reset-identity/` | `agentinbox.config` | Resetea el `ContactIdentity` a `unknown` (owner/verificación/`linked_via`, cualquier procedencia) + cierra el hilo activo. `resolve_contact_identity` solo matchea teléfono→Owner al CREAR la fila (nunca la re-deriva después, ni si `Owner.phone` cambia) — este endpoint es la única forma soportada de reabrir esa resolución con el mismo número real. Solo ADMIN: desligar una identidad ya verificada es sensible (mismo permiso que el kill switch) |
 | `GET/PATCH /api/inbox/settings/` | `agentinbox.config` | Kill switch + `faq_facts` (caps 20×500; rechaza claves de la config de clínica). `enabled=true` exige teléfono de clínica válido → 400 (ver §Gate del kill switch). El horario NO se toca aquí: vive en `/config` |
 
-Permisos (Q13): ADMIN `*.*` · ASSISTANT view+claim+send · VET view · AGENT
+Permisos (Q13): ADMIN todos (lista explícita, ADR p63) · ASSISTANT view+claim+send · VET view · AGENT
 (el bot) ninguno de bandeja.
 
 ### Selectores de transcript y anti-eco (addendum p58, 2026-08-23)
