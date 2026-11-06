@@ -1,7 +1,7 @@
 # ADR p63 — Concesiones explícitas para el ADMIN de clínica
 
 **Fecha**: 2026-11-04
-**Estado**: **PROPUESTO. No implementado.** H-1 sigue abierta y el despliegue no está autorizado. Decisiones registradas abajo; falta confirmar la definición de «sensible» y los cinco casos ordinarios, y la evidencia de producción.
+**Estado**: **ACEPTADO por el dueño del producto el 2026-11-05. No implementado.** H-1 sigue abierta y el despliegue no está autorizado: falta implementar, y falta la evidencia de producción.
 **Origen**: auditoría de seguridad run-1, H-1 (`docs/plan-implementacion-seguridad-run1-2026-10-28.md`)
 
 ## Contexto
@@ -10,7 +10,7 @@ El ADMIN de clínica tiene `*.*`, igual que `ADMIN_SAAS`. Todo código de permis
 
 `cb0ff9e` añadió una versión reducida que **no resuelve esto**: cada código se clasifica, y `_is_allowed` niega al comodín los de `WILDCARD_EXCLUDED`. Pero clasificar no es conceder: mientras exista `*.*`, un código clasificado como ordinario o sensible se concede solo.
 
-## Decisión propuesta
+## Decisión
 
 Sustituir `*.*` del rol `ADMIN` por una lista literal en `permissions_codes.py`, con el contenido de la matriz. `ADMIN_SAAS` conserva `*.*`. Un superuser no se evalúa por comodín.
 
@@ -29,6 +29,7 @@ La lista **no se deriva** de `PERMISSION_CODES` ni de los grupos de clasificaci�
 | Los 19 sensibles para el ADMIN | **Aprobado por el dueño, 2026-11-05**, conservando las condiciones de dominio |
 | Lista de endpoints críticos | **Aprobada por el dueño, 2026-11-05** |
 | Operaciones raras sin cubrir en 7 días | **Aprobado, 2026-11-05:** la ventana se amplía, sin tráfico sintético en producción |
+| Definición de «sensible» y los cinco ordinarios | **Aprobados por el dueño, 2026-11-05** |
 | `ADMIN_SAAS` con `*.*` | Se mantiene |
 | `*.*` en cualquier otro rol | No se admite como excepción implícita: bloquea el despliegue |
 | Los escritores de roles | Consumen una única fuente |
@@ -42,7 +43,7 @@ La lista **no se deriva** de `PERMISSION_CODES` ni de los grupos de clasificaci�
 | **Aprobar el ADR** | La política, la matriz y escribir el código y las pruebas | Las decisiones pendientes de este documento |
 | **Autorizar el despliegue** | Que el cambio llegue a las clínicas | Preflight limpio, y la evidencia de producción descrita abajo |
 
-Hoy se puede avanzar en la primera. **La segunda no se puede cumplir porque no hay servidor, y no se simula.**
+La primera quedó aprobada el 2026-11-05. **La segunda no se puede cumplir porque no hay servidor, y no se simula.**
 
 ## Hallazgo: los 87 códigos no bastan
 
@@ -97,11 +98,11 @@ Con `inventory.destroy` y `medicalrecord.destroy` serán 21 sensibles.
 
 El comentario actual de `permissions_codes.py` dice que estos códigos «mueven dinero, acceso o identidad». No describe bien la clasificación: `invoice.pay` mueve dinero y figura como ordinario.
 
-**Definición propuesta:** sensible es un código de alto impacto, difícil de deshacer, que por defecto solo tiene el ADMIN. Ordinario es la operación rutinaria de la clínica, aunque toque dinero o borre registros.
+**Definición aprobada:** sensible es un código de alto impacto, difícil de deshacer, que por defecto solo tiene el ADMIN. Ordinario es la operación rutinaria de la clínica, aunque toque dinero o borre registros.
 
-Estos ordinarios quedan a confirmar con esa definición. No se propone moverlos de categoría ni de rol:
+Estos cinco siguen siendo ordinarios, sin cambio de categoría ni de rol:
 
-| Código | Roles además de ADMIN | Justificación propuesta |
+| Código | Roles además de ADMIN | Justificación |
 |---|---|---|
 | `invoice.pay` | ASSISTANT | Cobro diario de recepción |
 | `checkout.dispute.open` | VET, ASSISTANT | Abrir no resuelve; resolver es sensible |
@@ -316,7 +317,8 @@ Se añade, porque la ausencia de un evento no basta:
 Los 500 requests no sustituyen esta cobertura. Cómo se mide:
 
 - **El campo `endpoint` guarda `request.path`, con identificadores.** Medir cobertura exige normalizarlo contra el patrón de la ruta.
-- **Los eventos RBAC no ven todo.** `/api/token/`, `/api/token/refresh/` y `/api/me/` no aparecen entre las rutas con RBAC, así que su cobertura necesita otra fuente de logs, aún por identificar.
+- **Los eventos RBAC no ven todo.** `/api/token/`, `/api/token/refresh/` y `/api/me/` no aparecen entre las rutas con RBAC. Su cobertura sale de los logs de acceso, que ya están configurados: Caddy en JSON (`infra/Caddyfile`) y gunicorn (`--access-logfile=-` en `docker-compose.prod.yml`). Leído en la configuración; falta comprobarlo con logs reales.
+- **La retención actual puede no cubrir la ventana.** El runbook de observabilidad fija la rotación de Docker en `max-size: 10m, max-file: 5`, unos 50 MB por contenedor. Cada request con RBAC escribe al menos un evento más su línea de acceso, y un despliegue que recrea el contenedor descarta sus logs. Antes de empezar a contar los 7 días hay que exportar los logs fuera del contenedor y mantener la exportación durante toda la ventana; si no, no se puede demostrar que no hubo huecos.
 - **Una operación rara puede no ocurrir en 7 días**, como una devolución en una clínica pequeña. La ventana se amplía hasta cubrirla, sin generar tráfico sintético en producción.
 
 ## Criterio de cierre de H-1
