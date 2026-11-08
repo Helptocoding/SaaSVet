@@ -184,9 +184,12 @@ unidades de presentación, `StockMovement(quantity_unit='base')` auditable).
 Estos productos aparecen como `no_baseline` en `audit_stock_integrity`
 (informativo, igual que el alta manual). Paridad con el alta manual verificada
 por test gate: `Product.stock_quantity == stock×cf` y `Presentation.stock ==
-stock` para cualquier `cf > 0`. En importación `Presentation.quantity ==
-conversion_factor` SIEMPRE (contrato canónico; el alta manual puede dejar
-`quantity=1` — deuda preexistente, ADR p61 §Deuda).
+stock` para cualquier `cf > 0`. `Presentation.quantity == conversion_factor`
+exacto con 4 decimales, igual que en el alta manual (orden 4, I02). Hasta el
+08-11-2026 el importador redondeaba el alias a 2 decimales (0.125 → 0.13) y
+rechazaba factores menores a 0.005, herencia de cuando `quantity` era 10/2.
+Diferencia que sigue: el importador redondea a 4 decimales un factor con más,
+mientras el alta manual lo rechaza.
 
 ### Result: contadores adicionales (aditivos)
 

@@ -19,13 +19,19 @@ Si falla o se pierde la respuesta de recepción inicial de lotes, el wizard no a
 | Ruta | Operación | Regla | Evidencia |
 |---|---|---|---|
 | `inventory/serializers.py::ProductSerializer.create` | Alta manual | stock cero y entrada por writer; alias normalizado | gate paridad y factores en `test_inventory_import.py` |
-| `inventory/serializers.py::PresentationCreateSerializer` | Alta/PATCH | un alias normaliza ambos; contradicción rechazada; PATCH no asigna stock | `test_order4_alias.py`, test de presentación en `test_inventory_import.py` |
+| `inventory/serializers.py::PresentationCreateSerializer` | Alta/PATCH | un alias normaliza ambos; contradicción rechazada; PATCH no asigna stock | `test_order4_alias.py`, test de presentación en `test_inventory_import.py`, `test_order4_alias_writers.py` |
+| `inventory/serializers.py::ProductSerializer.update` | PATCH del producto con `presentation_input` | edita la primera presentación con el mismo par normalizado; contradicción rechazada sin cambios | `test_order4_alias_writers.py` |
+| `inventory/views.py::PresentationDetailView` | PATCH de presentación | sin alias conserva el par; uno solo normaliza ambos; contradicción o factor 0 rechazados | `test_order4_alias_writers.py` |
 | `inventory/views.py::PresentationCreateView` | Nueva presentación | entrada positiva por writer, lotes requieren recepción | dos tests de presentación en `test_inventory_import.py` |
 | `inventory/admin.py::PresentationAdmin` | Edición | alias solo lectura y sincronizado al cambiar factor | `test_order4_alias.py` |
-| `imports/services_inventory.py::_create_product_with_presentation` | Importación/bulk | alias igual a factor, stock cero; writer aplica entrada | gate paridad y suite inventory import |
+| `imports/services_inventory.py::_create_product_with_presentation` | Importación/bulk | alias igual a factor con 4 decimales (corregido el 08-11: lo redondeaba a 2), stock cero; writer aplica entrada | gate paridad, suite inventory import y `test_order4_alias_writers.py` |
 | `inventory/services.py::apply_stock_movement` | Movimiento | lock de producto, unidades base, ledger y sombra | suite recepción/stock y tests del writer |
 | `inventory/views.py::receive_presentation_stock` y `services.py::receive_stock` | Recepción de lotes | identidad opcional, receipt atómico, writer por lote | `ReceptionIdempotencyTests`, `test_order4_reception_concurrency.py` |
-| `core/management/commands/seed_demo_clinic.py` | Seed explícito demo | envía ambos aliases iguales y usa writer | inspección estática; no ejecutado en esta entrega |
+| `core/management/commands/seed_demo_clinic.py` | Seed explícito demo | envía ambos aliases iguales y usa writer | pasos de organización y catálogo ejecutados dos veces en `test_order4_alias_writers.py` |
+
+Lista cerrada el 08-11 con una búsqueda de todas las escrituras de `Presentation` fuera de pruebas: no hay otros writers vivos. `ProductAdmin` no tiene inlines. Las migraciones 0005 y 0018 son históricas, y 0029 corrige su resultado.
+
+**Importador (08-11):** el alias se redondeaba a 2 decimales (0.125 → 0.13) y una guarda rechazaba factores menores a 0.005, ambas cosas porque `quantity` era 10/2 antes de 0028. Ahora copia el factor exacto y solo rechaza un factor que redondea a 0 con 4 decimales. Sigue una diferencia, pendiente de decisión: el importador redondea a 4 decimales un factor con más, mientras el alta manual lo rechaza.
 
 ## I01: recuperación sin estado local (06-11)
 

@@ -213,3 +213,27 @@ Para volver atrás se restaura ese respaldo; consultar antes [aplicación y roll
 
 Sin push, despliegue ni cambios en producción o en el VPS.
 
+### I02: writers del alias (08-11)
+
+Una búsqueda de todas las escrituras de `Presentation` fuera de pruebas deja 6 writers vivos: alta de producto, PATCH anidado del producto, alta y PATCH de presentación, admin, importador y seed de demo. Las migraciones 0005 y 0018 son históricas. La tabla está en [decisiones](DECISIONES.md#writers-de-producción-contrastados).
+
+`apps/inventory/tests/test_order4_alias_writers.py` recorre cada writer por su entrada real y relee el par desde PostgreSQL:
+
+| Writer | Casos |
+|---|---|
+| Alta de producto | Alias solo, par igual (12 y 12.0000), ninguno → 1, límite 999999.9999. Rechazo sin escribir nada de contradicción, 0, -1, NaN, Infinity, 5 decimales, 1000000 y texto |
+| PATCH del producto con `presentation_input` | Factor 0.125, alias 6, contradicción rechazada sin cambios, edición sin presentación que conserva el par |
+| PATCH de presentación | Solo precio conserva el par; factor 1.2345 y alias 12 normalizan; contradicción y factor 0 rechazados |
+| Nueva presentación | Contradicción rechazada sin crearla; factor 0.125 guardado en ambos |
+| Importación | Factores 0.125 y 0.004 con su stock base (1 y 4) |
+| Seed de demo | Pasos de organización y catálogo dos veces: alias igual al factor y sin cambios ni movimientos nuevos al repetir |
+
+La prueba de importación encontró un **defecto real**: el importador guardaba alias 0.1300 con factor 0.1250 y bloqueaba la fila con factor 0.004. Ver [decisiones](DECISIONES.md#writers-de-producción-contrastados). Con el importador de `HEAD` la prueba falla (`import_has_blocking_errors`); con la corrección pasa, y el archivo corregido se restauró y se comprobó con `cmp`.
+
+Corridas en el cluster de orden 4:
+
+- Módulo nuevo, `test_order4_alias` y `apps.imports` juntos: 129 pruebas, 128 PASS. El error era el seed completo, que en esta rama falla en la parte de cobros («requiere una atestación externa vigente»), ajena a las presentaciones. `develop` cambia ese comando; la prueba quedó limitada a los pasos que escriben presentaciones.
+- Módulo final: 7 PASS.
+
+Pendiente de decisión, sin cambio: el importador redondea a 4 decimales un factor con más, mientras el alta manual lo rechaza.
+
