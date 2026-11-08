@@ -262,3 +262,25 @@ Observaciones sin cambio, fuera de I03:
 - Si las primeras 100 son altas, la sección «por revisar» de la muestra queda en «Mostrando 0 de 20»; el detalle completo sí las muestra.
 - En clientes y mascotas, el texto fijo «…ya pertenece a otro paciente» también se usa para un número de cliente repetido.
 
+### Integración en develop y CI (08-11)
+
+Por petición expresa, I01, I02 e I03 se rebasaron sobre `origin/develop` y se subieron a `codex/e4-capacity-scheduling`. El push fue fast-forward desde `8886604`, sin forzar.
+
+- **Rebase:** la rama iba 25 commits por detrás. Hubo un único conflicto, de imports en `inventory/serializers.py`, y se conservaron ambos lados. `develop` no trae migraciones nuevas.
+- **Antes del push, sobre el código integrado, en el cluster de orden 4:**
+  - `makemigrations --check --dry-run` sin cambios.
+  - `apps.core`: 315 PASS, 7 skipped. Incluye las compuertas nuevas de `develop` de permisos explícitos, rutas y validación de tenant.
+  - `apps.inventory` y `apps.imports`: 263 PASS, 8 skipped, que son los navegadores.
+  - Vitest: 813 de 814. El que falta es el timeout de 5 s del Inbox con el equipo cargado; ese archivo solo da 93/93 dos veces.
+  - Build y smoke de URLs: PASS.
+  - Navegador sobre la build integrada: los 7 escenarios de I01 y el de I03, 8 PASS.
+- **CI real**, disparada con `workflow_dispatch` porque el push a esta rama no la lanza ([corrida 42516001803](https://github.com/Helptocoding/SaaSVet/actions/runs/42516001803), `711162e`), con los 4 jobs en verde:
+  - Backend: 3.999 pruebas OK, 20 skipped, además de migraciones, `audit_billing_schema` y los runners críticos B0, B3, B4 y B5. La última CI de `develop` tenía 3.944.
+  - Frontend: 71 archivos.
+  - Security: gitleaks bloqueante.
+  - Images.
+
+El escaneo local de gitleaks sobre todo el historial (Windows) marcaba hallazgos en manifiestos ruta → sha256 de `docs/evals` del commit `8886604`. En CI el mismo historial pasa. No se investigó la diferencia.
+
+Sin despliegue ni cambios en producción o en el VPS. La base habitual local quedó migrada como se registra en [Cierre 08-11](#cierre-08-11).
+

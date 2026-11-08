@@ -13,3 +13,5 @@ Continuación 01-11: ciclo de rollback/upgrade de reporte probado con lectura pa
 Continuación 06-11: recuperación de recepciones sin estado local. El servidor guarda la intención antes de tocar stock y la app la descubre sin UUID; una persona concilia las candidatas. Decisión en [DECISIONES](DECISIONES.md#i01-recuperación-sin-estado-local-06-11), pruebas en [EVIDENCIA](EVIDENCIA.md#continuación-06-11-i01) y aplicación en [APLICACION-Y-ROLLBACK](APLICACION-Y-ROLLBACK.md). Las migraciones siguen aplicadas solo en el destino sintético.
 
 Continuación 08-11: suite global local sin fallos atribuibles a I01, pasos de CI de frontend en verde y migraciones de I01 aplicadas a la base habitual local con respaldo. Véase [evidencia](EVIDENCIA.md#cierre-08-11).
+
+Integración 08-11: I01, I02 e I03 rebasados sobre `develop`, subidos a `codex/e4-capacity-scheduling` y con CI real en verde. Véase [evidencia](EVIDENCIA.md#integración-en-develop-y-ci-08-11).
