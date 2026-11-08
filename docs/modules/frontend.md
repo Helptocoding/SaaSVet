@@ -1281,6 +1281,22 @@ Para edición: "Guardar cambios" → `handleWizardSave()` directo.
 
 **Gate de animación:** `localStorage.getItem("multi_presentation_animation_seen")` — se muestra una sola vez por dispositivo.
 
+### Recepciones según el servidor (orden 4, I01)
+
+`components/ReceptionsModal.jsx` no lee nada del navegador: consulta `GET /inventory/receptions/` sin ningún
+identificador, así que sirve también en una sesión recién iniciada en un navegador vacío.
+`api/inventory.js::receiveStock(presentación, captura, operationId)` prepara y después ejecuta; `localStorage`
+guarda como mucho un atajo de reintento (fallar al escribirlo o perderlo no cambia nada).
+
+- Se abre desde el botón «Recepciones» y desde el aviso de pendientes, que `pages/inventory.jsx` carga del servidor.
+- **Nunca elige por el usuario**: ni con una sola candidata; resolver exige seleccionarla y confirmar.
+- `allowed_actions` lo decide el servidor. Las recepciones identificadas usan siempre la identidad recuperada;
+  «Registrar una recepción nueva» es otra acción, con otra identidad.
+- Mostrar `applied_lines` como lo que entró y `current_balance` como saldo acumulado: **nunca** presentar el segundo
+  como cantidad de la operación.
+- Un `409` no se reintenta: se recarga el detalle y se muestra lo que el servidor sabe ahora.
+- Refrescar tras resolver sin pasar por `loading` de la página, o se desmonta el panel con la evidencia.
+
 ### `api/inventory.js` — funciones disponibles
 
 ```javascript

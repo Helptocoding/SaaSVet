@@ -74,3 +74,142 @@ Grafo MCP no disponible; fuentes locales contrastadas. Cluster exclusivo detenid
 * No se ejecutó comprobación visual de preview/resultado I03. La pérdida total de almacenamiento local en otro navegador o al borrarlo no tiene aún reconciliación autoritativa antes de una nueva entrada; el caso bloquea cerrar I01.
 * `pg_ctl status` identificó PID 43096 y directorio/puerto propios; `pg_ctl -D <directorio orden4> -m fast -w stop` detuvo únicamente ese servidor. Directorio conservado.
 * Tras endurecer `compare_proposal` para rechazar campos de evidencia ausentes, se verificó de nuevo puerto libre y se reinició el mismo cluster. `apps.inventory.tests.test_order4_diagnostics`: 7 PASS. `pg_ctl status` identificó PID 34992 y el directorio/puerto propios; se detuvo ese proceso y se conservó el directorio.
+
+## Continuación 06-11 (I01)
+
+**Estado: verificado localmente el 07-11; suite global local y migración de la base habitual el 08-11.** Los siete escenarios en navegador tienen PASS sobre la build final. El alcance exacto y sus límites están en [Cierre 07-11](#cierre-07-11) y [Cierre 08-11](#cierre-08-11). La corrida del 06-11 se interrumpió por falta de memoria del equipo; lo que sigue conserva ese registro.
+
+Entorno: no se consultó el grafo, se leyeron fuentes actuales. `pg_ctl status` confirmó el cluster exclusivo detenido y un bind loopback confirmó libre 49935 antes de arrancarlo; el runner verificó directorio y puerto efectivos. Las migraciones 0031–0033 se aplicaron solo a `test_orden4_iso_20261031`. Base habitual, otros clusters y VPS no se tocaron. Sin commit, push ni despliegue.
+
+### Prueba directa contra PostgreSQL
+
+Desde `backend`, prefijo `rtk proxy python scripts/orden4_isolated.py`:
+
+| Comando | Resultado | Qué cubre |
+|---|---|---|
+| `check` · `makemigrations --check --dry-run` | PASS; sin drift | Sin cambios de modelo posteriores |
+| `test apps.inventory.tests.test_order4_reception_recovery apps.inventory.tests.test_stock_reception apps.core.tests.test_tenant_scoping_audit --keepdb --noinput` | 43 PASS, 1 FAIL | Login real sin identidad previa, evidencia histórica frente a saldo actual, identidad idéntica, aislamiento, supervisión, límites. El FAIL era de la prueba: el conteo de consultas medía la caché de permisos del primer request |
+| `test …recovery.DiscoveryBoundsTests …recovery_races …reception_concurrency …reception_upgrade --keepdb --noinput` | 13 PASS | El caso corregido; 8 carreras con conexiones independientes; concurrencia previa; upgrade desde 0030 y rollback con intención abierta |
+
+Las carreras retienen una transacción abierta mientras otra conexión actúa: ejecución en vuelo visible como `pending`, intención aún sin commit que hace esperar y rechaza a otra, discard contra ejecución en vuelo, fallo antes del commit, y dos preparaciones, completados o completado contra descarte a la vez. Después de estas corridas se añadió a `test_presentation_factor_is_kept_with_the_operation` la comprobación de cambiar el factor más tarde, que pasó el 07-11.
+
+### Prueba directa en navegador
+
+`test_order4_reception_browser`: Chromium headless, API real con `LiveServerTestCase` y PostgreSQL de orden 4. Cada recuperación abre un contexto nuevo sin almacenamiento ni cookies e inicia sesión con credenciales; las pruebas no leen ningún `operation_id`. La pérdida de respuesta se provoca con la petición ya servida, reenviada por `route.fetch` y abortada hacia la página.
+
+| Corrida | Resultado |
+|---|---|
+| Primera, 7 escenarios | 3 PASS, 1 FAIL, 3 ERROR. Una causa fue un selector de la prueba; la otra, un **bug real**: `loadAll` activaba `loading`, la página se reemplazaba por su pantalla de carga y el panel se desmontaba con la evidencia. Corregido con refresco sin `loading` y regresión en `inventory.receptions.test.jsx`. La salida estaba truncada: qué escenarios fueron los 3 PASS es una inferencia, no un dato |
+| Segunda, tras la corrección | **Interrumpida por el sistema por falta de memoria** durante el quinto escenario. 4 PASS: `test_committed_reception_with_lost_response_is_recovered_in_a_clean_browser`, `test_execution_in_flight_cannot_become_a_second_entry_from_a_clean_browser`, `test_execution_that_never_arrived_is_completed_once_and_a_new_entry_stays_legitimate`, `test_identical_candidates_need_an_explicit_choice` |
+| Tercera, 07-11, solo los 3 sin resultado y sobre la build final | 3 PASS en 126,7 s: `test_intent_that_never_arrived_leaves_nothing_and_a_new_entry_is_free`, `test_lost_intent_response_is_closed_without_touching_stock`, `test_new_product_from_the_wizard_is_not_created_again` |
+| Cuarta, 07-11, los 4 restantes sobre la misma build final | 4 PASS en 190,1 s: los mismos cuatro de la segunda corrida |
+
+La build de la segunda corrida no incluía los últimos ajustes del panel: textos, «Cargar más» en Entradas sin identidad y guarda de página tardía. La cuarta corrida regeneró las capturas y se revisaron visualmente sobre la build final: confirmada, sin confirmar y candidatas sin selección. Muestran horas en UTC porque la clínica sintética se crea con `timezone='UTC'`, no por un error del panel, que usa la zona de la organización.
+
+### Frontend
+
+Simulación con transporte mockeado, complementaria a la prueba en navegador:
+
+- `pnpm exec vitest run src/components/ReceptionsModal.test.jsx src/pages/inventory.receptions.test.jsx`: 19 PASS; tras la corrección del panel, `inventory.receptions.test.jsx`: 8 PASS.
+- `src/api/inventory.reception.test.js` y `src/pages/inventory.order.test.jsx`: PASS. Se conservan las pruebas de recarga con estado local; solo se añadió `getReceptions` al mock. **Corrección 08-11:** el PASS de `inventory.reception.test.js` no se sostiene sobre su versión final; esa prueba fallaba siempre por un error de la propia prueba, corregido en [Cierre 08-11](#cierre-08-11).
+- ESLint dirigido: sin hallazgos en archivos nuevos. `inventory.jsx` mantiene los cinco errores ya registrados y `StockEntryModal.jsx` un error y una advertencia de un efecto previo. No se atribuye PASS global.
+- `vite build` hacia un directorio temporal: PASS.
+
+Los últimos ajustes del panel se verificaron el 07-11.
+
+### Cierre 07-11
+
+Por indicación expresa, solo se ejecutó lo que no tenía resultado, salvo lo necesario para probarlo. El código de backend no cambia desde el 06-11 a las 22:30 y sus corridas en verde son de 22:36 a 22:48, así que esas suites no se repitieron.
+
+Desde `backend`, prefijo `rtk proxy python scripts/orden4_isolated.py`, con `--keepdb --noinput`:
+
+| Comando | Resultado | Motivo |
+|---|---|---|
+| `test apps.inventory.tests.test_order4_reception_concurrency` | 1 PASS | Ya verificada. Se repitió porque limpia las filas sintéticas que dejó la corrida interrumpida |
+| `test …ConfirmedOperationRecoveryTests.test_presentation_factor_is_kept_with_the_operation apps.core.tests.test_admin_registration_audit` | 3 PASS | Comprobación añadida y auditoría de admin, sin resultado previo |
+| `test` de los 11 módulos de `apps.inventory.tests` no verificados | 80 PASS | Regresión. Excluye `test_order4_reception_*` y `test_stock_reception`, ya en verde |
+| `test apps.imports` | 115 PASS | Regresión |
+| `ORDEN4_BROWSER_DIST=<dir> test` de los 3 escenarios pendientes | 3 PASS | Chromium sobre la build final |
+| `ORDEN4_BROWSER_DIST=<dir> test` de los 4 escenarios restantes | 4 PASS | Repetidos a petición, para tener los 7 sobre la misma build |
+
+Frontend, con el código final:
+
+- `pnpm exec vitest run src/components/ReceptionsModal.test.jsx src/pages/inventory.receptions.test.jsx src/pages/inventory.order.test.jsx`: 23 PASS.
+- Ninguna prueba ejercitaba «Cargar más» en Entradas sin identidad ni la guarda de página tardía, así que se añadieron dos a `ReceptionsModal.test.jsx`, que queda en 14 PASS. Al retirar la guarda temporalmente, la prueba falla con la página tardía visible; después se restauró el archivo y se comprobó con `cmp`.
+- ESLint: `ReceptionsModal.jsx` y su prueba sin hallazgos. `inventory.jsx` conserva cinco errores y una advertencia, y `StockEntryModal.jsx` un error y una advertencia, ya registrados. No se atribuye PASS global.
+- `VITE_API_URL=http://127.0.0.1:49936/api/ pnpm exec vite build --outDir <dir>`: PASS.
+
+Alcance y límites:
+
+- **Los 7 escenarios usan la misma build, en dos corridas.** Entre la de 3 y la de 4 ningún archivo fuente de `frontend/src` cambió respecto a esa build.
+- **Sin suite global ni CI.** `billing`, `medical_records` y `dashboard` también consumen inventario y sus suites no se ejecutaron. Resuelto en local el 08-11, salvo la CI real.
+- **Sin aplicar fuera del destino sintético.** Las migraciones 0031–0033 no se han aplicado a la base habitual ni a producción. La base habitual local se migró el 08-11; producción sigue sin tocar.
+
+Entorno: un bind loopback confirmó libres 49935, 49936 y 49937, y el runner verificó destino y puerto en cada comando. El primer arranque con `pg_ctl … start | tail` quedó colgado porque el postmaster heredó la tubería, y detener esa tarea tumbó el cluster. Se rearrancó con la salida a un archivo, antes de ejecutar cualquier prueba; al repetir, no canalizar esa salida. En cada una de las dos sesiones, `pg_ctl status` identificó el proceso propio (PID 38372 y 41396) con su directorio y puerto, y `pg_ctl -m fast stop` lo detuvo. Directorio conservado y puertos libres. Base habitual, otros clusters y VPS no se tocaron. Sin commit, push ni despliegue. No se pudo inspeccionar la lista de procesos (acceso denegado), así que no consta si quedó algún Chromium huérfano de la corrida interrumpida.
+
+### Cierre 08-11
+
+Por petición expresa: suite global, pasos de CI en local, migraciones en la base habitual local y commit, sin push ni despliegue.
+
+**Suite global del backend.** Corrida en el cluster exclusivo de orden 4 (PostgreSQL 18.3, loopback 49935), que ningún otro proceso usa. Antes de empezar:
+
+- `makemigrations --check --dry-run`: sin cambios.
+- La base de pruebas se migró desde cero y se guardó como plantilla.
+- `audit_billing_schema --json` sobre esa plantilla: 0 violaciones.
+
+`DiscoverRunner` descubre 3.860 pruebas y todas se ejecutaron:
+
+| Dato | Resultado |
+|---|---|
+| Lotes | 146 |
+| Ejecuciones | 3.899. Las 39 de más son clases importadas por otro módulo, que se ejecutan dos veces |
+| Skipped | 19. 7 son el navegador de I01, que necesita `ORDEN4_BROWSER_DIST` y Playwright; 9 están en `test_d29_frontiers` y 3 en otros módulos |
+| Fallos | 21, en 5 lotes, ninguno atribuible a I01 |
+
+Los módulos que consumen inventario pasan: `inventory` 140, `billing` 73, `medical_records` 122, `dashboard` 69, `prescriptions` 15, `cash` 30, `imports` 115 y `core` 216.
+
+| Fallos | Causa | Situación |
+|---|---|---|
+| 17 | `MediaWorkerTests` y `test_inbox_media` necesitan `INBOX_MEDIA_ALLOW_LOCAL`, que por defecto vale `DEBUG`, y CI corre con `DEBUG=False` | Previo a I01; corregido en `develop` (`3d7157f`) |
+| 1 | `test_identity_evidence` borra una mascota sin `authorize_physical_deletion` | Previo a I01; corregido en `develop` (`9129f5f`) |
+| 1 | `test_inbox_thread_around`, aserción sobre lecturas de metadatos (`0 != 2`) | Previo a I01; `develop` cambia esa aserción (`3d7157f`) |
+| 1 | `test_inbox_search` con `'ramÍREZ'` | Del entorno: el cluster sintético usa collation `C`, donde `upper('ramírez')` devuelve `'RAMíREZ'` y el `ILIKE` no pliega el acento. CI usa `en_US.utf8` |
+| 1 | `test_media_restore_drill` | Puerta de entorno: el drill exige una base `test_inbox_policy_*` |
+
+I01 no modifica `channels`, `agent`, `patients`, `platform` ni `config`. Esta rama va 25 commits por detrás de `origin/develop`, donde la última CI de `develop` (3.944 pruebas) pasó.
+
+Diferencias con la CI real, que no se ejecutó porque requiere push:
+
+- **Entorno:** Windows 11, Python 3.13 y PostgreSQL 18.3 local, frente a Ubuntu con PostgreSQL 16 en CI.
+- **Lotes:** procesos separados en lugar de un único `test --parallel`. Cada lote reutiliza su base; si falla, se repite sobre una copia limpia de la plantilla (8 repeticiones) y solo cuenta el resultado limpio.
+- **Contraseñas de fixtures:** `MD5PasswordHasher`, como hace `apps/agent/tests/run_b8b_acceptance.py`, salvo en los cuatro primeros lotes. PBKDF2 tarda unos 3 s por hash en este equipo.
+- **Multiproceso B8B–B8E:** sus workers exigen una base con prefijo `test_b8X_`, así que corrieron sobre bases con ese nombre. `develop` ya retiró esa exigencia.
+- **Cluster:** desechable, con `fsync=off` durante la mayor parte de la corrida.
+- **Interrupciones:** hubo dos reinicios inesperados del equipo (Kernel-Power 41; el de las 13:09 con el cluster ocioso) y dos suspensiones. Tras cada reinicio, la plantilla se rehízo desde cero y un `pg_dump` completo leyó la base sintética sin error. Los lotes cortados se repitieron.
+- **Pasos críticos de CI:** B0, B3, B4 y B5 no se lanzaron por separado con sus `Critical*Runner`. Sus módulos pasaron dentro de la suite sin skips.
+
+**Frontend con los pasos de CI.** Node 22 y pnpm 11, frente a Node 20 y pnpm 9 en CI, con `VITE_API_URL=http://127.0.0.1:8000/api`:
+
+- `vite build` hacia un directorio temporal: PASS.
+- `pnpm run test`: en la primera corrida, 5 fallos de 798.
+  - `inventory.reception.test.js` fallaba siempre por un error de la prueba. `beforeEach(() => vi.mocked(api.post).mockReset())` devolvía el mock, Vitest ejecuta como limpieza lo que devuelve `beforeEach`, y en la prueba que simula la pérdida de conexión ese mock rechazaba. Corregido con un cuerpo de bloque: 3/3 en tres corridas.
+  - Los otros 4 eran timeouts de 5 s en `inbox/index.test.jsx` con el equipo cargado. Ese archivo solo da 93/93.
+  - Segunda corrida completa: **69 archivos y 798 pruebas en verde**.
+- `smoke:urls`: 5/5.
+- `pnpm run lint`, que en CI es solo advertencia: 217 problemas en todo el frontend. Comparado archivo por archivo con `HEAD`, I01 no añade errores, pero sí una advertencia `react-hooks/exhaustive-deps` en `inventory.jsx`. `loadAll` llama ahora a `loadUnresolvedReceptions`, que lee `canReceive`, y el efecto sigue dependiendo solo de `token`. No tiene efecto práctico, porque `PrivateRoute` no monta la página hasta cargar los permisos de `/me/`. Corregirlo exigiría reestructurar `loadAll` en un archivo con 5 errores previos de `react-hooks`.
+- No se ejecutaron `pnpm audit` ni `pip-audit`, que en CI son solo advertencia.
+
+**Base habitual local.** `veterinaria_saas` en `localhost:5432`, 08-11, por petición expresa:
+
+- Para aplicar 0031–0033, Django exige antes `organizations` 0013–0015 e `inventory` 0027–0030, entre ellas 0028/0029 de I02. Se aplicaron las 10 con aprobación explícita.
+- Comprobación previa: 0 conexiones abiertas, 0 factores inválidos y 0 alias que 0029 fuera a reescribir.
+- `pg_dump -Fc` completo antes de migrar, fuera del repositorio.
+- `migrate inventory 0033`: 10 migraciones en 21 s.
+- Después siguen iguales los conteos de productos (116), movimientos (237), presentaciones (117) y stock total (25.631). Hay 0 alias distintos del factor y 6 organizaciones, todas activas.
+- Existen `stock_reception_state_consistent`, el índice único parcial `stock_reception_one_pending` y los índices `idx_reception_org_actor`, `idx_reception_org_created` e `idx_stockmov_reception_op`. `check`: sin problemas.
+- Las otras 23 migraciones pendientes de esa base (`billing`, `patients`, `medical_records` y otras) no se tocaron.
+
+Para volver atrás se restaura ese respaldo; consultar antes [aplicación y rollback](APLICACION-Y-ROLLBACK.md).
+
+Sin push, despliegue ni cambios en producción o en el VPS.
+

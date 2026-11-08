@@ -13,6 +13,7 @@ vi.mock("../api/inventory", () => ({
     ]),
     getUnitChoices: vi.fn().mockResolvedValue([]),
     getLotAlerts: vi.fn().mockResolvedValue({ expiring_soon: [], expired_with_stock: [] }),
+    getReceptions: vi.fn().mockResolvedValue({ results: [] }),
     createProduct: vi.fn(), updateProduct: vi.fn(), deleteProduct: vi.fn(), adjustStock: vi.fn(),
     createPresentation: vi.fn(), updatePresentation: vi.fn(), receiveStock: vi.fn(),
 }));

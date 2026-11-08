@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Icon } from "./icons";
 import { apiError } from "../utils/apiError";
+import { newOperationUuid } from "../utils/idempotency";
 import { adjustPresentationStock, receiveStock } from "../api/inventory";
 import s from "../pages/inventory.module.css";
 
@@ -27,7 +28,7 @@ const CategoryIcon = ({ category, size = 18 }) => {
  * aplica el conversion_factor del formato recibido (multi-presentación correcto).
  * NO crea productos ni modifica datos del producto.
  */
-const StockEntryModal = ({ products, onClose, onSaved, onCreateNew }) => {
+const StockEntryModal = ({ products, onClose, onSaved, onCreateNew, onReceptionIssue }) => {
     const [query, setQuery] = useState("");
     const [match, setMatch] = useState(null);        // { product, presentation|null, lockedFormat }
     const [presId, setPresId] = useState("");         // presentación elegida (multi)
@@ -41,6 +42,8 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew }) => {
 
     const searchRef = useRef(null);
     const qtyRef = useRef(null);
+    // Reintentar la misma captura conserva su identidad; cambiarla es otra recepción.
+    const receptionAttempt = useRef(null);
 
     useEffect(() => { searchRef.current?.focus(); }, []);
 
@@ -132,21 +135,28 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew }) => {
             const clean = lots.map(l => ({ ...l, lot_number: (l.lot_number || "").trim() }));
             if (clean.some(l => !l.lot_number)) { toast.error("Cada lote necesita su número."); return; }
             if (clean.some(l => !(Number(l.quantity) > 0))) { toast.error("La cantidad de cada lote debe ser mayor a 0."); return; }
+            const payload = {
+                supplier_name: supplierName.trim(),
+                lots: clean.map(l => ({
+                    lot_number: l.lot_number,
+                    expiry_date: l.expiry_date || null,
+                    quantity: Number(l.quantity),
+                })),
+            };
+            const fingerprint = JSON.stringify([currentPres.public_id, payload]);
+            if (receptionAttempt.current?.fingerprint !== fingerprint) {
+                receptionAttempt.current = { fingerprint, operationId: newOperationUuid() };
+            }
             setSaving(true);
             try {
-                await receiveStock(currentPres.public_id, {
-                    supplier_name: supplierName.trim(),
-                    lots: clean.map(l => ({
-                        lot_number: l.lot_number,
-                        expiry_date: l.expiry_date || null,
-                        quantity: Number(l.quantity),
-                    })),
-                });
+                await receiveStock(currentPres.public_id, payload, receptionAttempt.current.operationId);
+                receptionAttempt.current = null;
                 toast.success(`Recepción registrada · ${match.product.name}`);
                 await onSaved?.();
                 resetToSearch(true);
             } catch (err) {
-                toast.error(apiError(err, "No se pudo registrar la recepción"));
+                toast.error(apiError(err, "No se pudo confirmar la recepción"));
+                await onReceptionIssue?.(err);
             } finally {
                 setSaving(false);
             }

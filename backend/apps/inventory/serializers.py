@@ -4,8 +4,13 @@ from uuid import uuid4
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
+from apps.core.sanitize import sanitize_text
 from apps.core.tenant_validation import require_same_organization
-from .models import Product, Presentation, StockLot, StockMovement, MedicalRecordProduct
+
+from .models import (
+    Product, Presentation, StockLot, StockMovement, StockReceptionReceipt, MedicalRecordProduct,
+)
+from .services import reception_allowed_actions
 
 PRODUCT_NAME_REGEX = re.compile(r"^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ\s\.\-\(\)\/\%\+]+$")
 
@@ -388,6 +393,160 @@ class StockReceptionSerializer(serializers.Serializer):
         if not value:
             raise serializers.ValidationError("Agrega al menos un lote.")
         return value
+
+
+def _display_name(user):
+    if user is None:
+        return ''
+    return f"{user.first_name} {user.last_name}".strip() or user.username
+
+
+class StockReceptionOperationSerializer(serializers.ModelSerializer):
+    """Lectura de una operación de recepción, con lo que el servidor puede acreditar.
+
+    `requested_lines` es lo capturado y `applied_lines` lo que el libro registró para
+    esta operación. Ambos son históricos: el saldo de hoy viaja aparte, en el detalle.
+    """
+    LIST_LINE_CAP = 10
+
+    actor_public_id = serializers.UUIDField(source='actor.public_id', read_only=True)
+    actor_name = serializers.SerializerMethodField()
+    is_own = serializers.SerializerMethodField()
+    product_public_id = serializers.UUIDField(source='product.public_id', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    base_unit = serializers.CharField(source='product.base_unit', read_only=True)
+    presentation_public_id = serializers.UUIDField(source='presentation.public_id', read_only=True)
+    presentation_name = serializers.CharField(source='presentation.name', read_only=True)
+    resolved_by_name = serializers.SerializerMethodField()
+    supplier_name = serializers.SerializerMethodField()
+    received_at = serializers.SerializerMethodField()
+    evidence_level = serializers.SerializerMethodField()
+    requested_lines = serializers.SerializerMethodField()
+    applied_lines = serializers.SerializerMethodField()
+    lines_total = serializers.SerializerMethodField()
+    legacy_lots = serializers.SerializerMethodField()
+    allowed_actions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StockReceptionReceipt
+        fields = [
+            'operation_id', 'status', 'evidence_level', 'created_at',
+            'resolved_at', 'resolved_by_name', 'discard_reason', 'discard_note',
+            'actor_public_id', 'actor_name', 'is_own',
+            'product_public_id', 'product_name', 'base_unit',
+            'presentation_public_id', 'presentation_name', 'conversion_factor_snapshot',
+            'supplier_name', 'received_at', 'requested_lines', 'applied_lines',
+            'lines_total', 'legacy_lots', 'allowed_actions',
+        ]
+        read_only_fields = fields
+
+    def _viewer(self):
+        request = self.context.get('request')
+        assert request is not None, 'StockReceptionOperationSerializer requires request in context.'
+        return request.user
+
+    def _capped(self, lines):
+        return lines if self.context.get('detail') else lines[:self.LIST_LINE_CAP]
+
+    def _movements(self, obj):
+        return sorted(obj.movements.all(), key=lambda movement: movement.pk)
+
+    def get_actor_name(self, obj):
+        return _display_name(obj.actor)
+
+    def get_is_own(self, obj):
+        return obj.actor_id == self._viewer().pk
+
+    def get_resolved_by_name(self, obj):
+        return _display_name(obj.resolved_by)
+
+    def get_supplier_name(self, obj):
+        return (obj.payload or {}).get('supplier_name', '')
+
+    def get_received_at(self, obj):
+        return (obj.payload or {}).get('received_at')
+
+    def get_evidence_level(self, obj):
+        if obj.status != StockReceptionReceipt.STATUS_CONFIRMED:
+            return 'intent' if obj.payload is not None else 'unavailable'
+        if self._movements(obj):
+            return 'ledger'
+        return 'receipt_without_ledger' if obj.payload is not None else 'legacy_receipt'
+
+    def get_requested_lines(self, obj):
+        if obj.payload is None:
+            return None
+        return self._capped([
+            {'lot_number': line['lot_number'], 'expiry_date': line.get('expiry_date'),
+             'quantity': line['quantity']}
+            for line in obj.payload['lots']
+        ])
+
+    def get_applied_lines(self, obj):
+        factor = obj.conversion_factor_snapshot
+        return self._capped([
+            {
+                'movement_id': movement.pk,
+                'lot_public_id': movement.lot.public_id if movement.lot else None,
+                'lot_number': movement.lot_number,
+                'expiry_date': movement.lot.expiry_date if movement.lot else None,
+                'quantity_base': movement.quantity,
+                'quantity_presentation': (
+                    (movement.quantity / factor).quantize(Decimal('0.0001')) if factor else None
+                ),
+                'created_at': movement.created_at,
+            }
+            for movement in self._movements(obj)
+        ])
+
+    def get_lines_total(self, obj):
+        if obj.payload is not None:
+            return len(obj.payload['lots'])
+        return len(self._movements(obj))
+
+    def get_legacy_lots(self, obj):
+        """Solo la identidad de los lotes: los saldos de ese recibo no son cantidades."""
+        if obj.payload is not None or not obj.result:
+            return None
+        return self._capped([
+            {'lot_number': lot.get('lot_number'), 'expiry_date': lot.get('expiry_date')}
+            for lot in obj.result.get('lots', [])
+        ])
+
+    def get_allowed_actions(self, obj):
+        return reception_allowed_actions(obj, self._viewer())
+
+
+class ReceptionLedgerEntrySerializer(serializers.ModelSerializer):
+    """Fila del libro para revisión humana; nunca revela la identidad de otra operación."""
+    product_public_id = serializers.UUIDField(source='presentation.product.public_id', read_only=True)
+    product_name = serializers.CharField(source='presentation.product.name', read_only=True)
+    presentation_name = serializers.CharField(source='presentation.name', read_only=True)
+    actor_name = serializers.SerializerMethodField()
+    attributed_to_operation = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StockMovement
+        fields = [
+            'id', 'created_at', 'movement_type', 'quantity', 'quantity_unit', 'lot_number',
+            'product_public_id', 'product_name', 'presentation_name', 'actor_name',
+            'attributed_to_operation',
+        ]
+        read_only_fields = fields
+
+    def get_actor_name(self, obj):
+        return _display_name(obj.created_by)
+
+    def get_attributed_to_operation(self, obj):
+        return obj.reception_operation_id is not None
+
+
+class ReceptionDiscardSerializer(serializers.Serializer):
+    reason = serializers.ChoiceField(choices=StockReceptionReceipt.DISCARD_REASON_CHOICES)
+    note = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
+
+    def validate_note(self, value):
+        return sanitize_text(value, max_length=255)
 
 
 class LotDiscardSerializer(serializers.Serializer):

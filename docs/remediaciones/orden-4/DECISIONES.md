@@ -26,3 +26,43 @@ Si falla o se pierde la respuesta de recepción inicial de lotes, el wizard no a
 | `inventory/services.py::apply_stock_movement` | Movimiento | lock de producto, unidades base, ledger y sombra | suite recepción/stock y tests del writer |
 | `inventory/views.py::receive_presentation_stock` y `services.py::receive_stock` | Recepción de lotes | identidad opcional, receipt atómico, writer por lote | `ReceptionIdempotencyTests`, `test_order4_reception_concurrency.py` |
 | `core/management/commands/seed_demo_clinic.py` | Seed explícito demo | envía ambos aliases iguales y usa writer | inspección estática; no ejecutado en esta entrega |
+
+## I01: recuperación sin estado local (06-11)
+
+Contrato: [metaprompt del 02-11](../../metaprompt-orden-4-i01-recuperacion-sin-estado-local-2026-11-02.md). El receipt de 0030 ya garantizaba idempotencia a quien conservara el UUID, pero nadie podía encontrarlo sin él. Se extiende ese mismo modelo; no se crea un segundo concepto ni infraestructura genérica.
+
+**Decisión: intención durable en dos peticiones.** `POST presentations/<id>/receptions/` guarda la captura como `pending` y `POST receptions/<id>/complete/` la aplica. Una sola petición con dos commits no bastaba: mientras aún no llegara a Django sería invisible, así que una lista vacía no probaría nada. Separadas, la ejecución solo sale tras conocer la respuesta de la intención. Cada orden de llegada queda cubierto:
+
+| Qué ocurre | Estado del servidor | Consecuencia |
+|---|---|---|
+| Intención perdida antes de llegar | Nada | Nada aplicado. Sin rastro que conciliar; una entrada nueva es libre |
+| Intención tardía, tras otra entrada | `pending` inerte | Sin stock. Aparece para que una persona la descarte |
+| Respuesta de la intención perdida | `pending` | Sin stock. Se completa o descarta sin recapturar |
+| Ejecución en vuelo | `pending` | Completar espera el lock y devuelve lo confirmado; descartar espera y da 409 si ya se aplicó; otra entrada del producto → 409 |
+| Fallo antes del commit | `pending` | Rollback completo. Se reintenta con la misma identidad |
+| Respuesta de la ejecución perdida | `confirmed` | Se recupera la evidencia, sin movimientos nuevos |
+| Ejecución tardía tras descartar | `discarded` | 409, sin stock |
+
+**Cómo se descubre sin UUID local.** `GET /api/inventory/receptions/` devuelve, sin filtro obligatorio, las operaciones del usuario autenticado: paginación por cursor con el orden del libro, 50 por defecto, máximo 100 y hasta 10 líneas por fila en la lista. Producto, lote, cantidad, proveedor, fecha, actor y estado bastan para reconocerla, y `operation_id` es la identidad pública con la que se continúa. La organización sale de la sesión. El aviso de pendientes y el panel Recepciones parten de esta lista, no del navegador. El `localStorage` del wizard queda como atajo de reintento: que falle o se borre ya no cambia nada, y un valor ilegible dejó de bloquear el alta.
+
+**Cómo se resuelve una candidata ambigua.** El sistema no elige: ni `first()`, ni coincidencia de contenido, ni autoselección con una sola candidata. La persona selecciona una fila, ve lo capturado, las demás entradas de ese producto desde entonces y el saldo actual aparte, y confirma una de dos acciones: **completar** (aplica esa captura, con su identidad) o **descartar** (motivo obligatorio, sin stock). Si la evidencia no determina cuál fue, ese es el procedimiento: comparar con la remisión y decidir. No se promete detección automática.
+
+**Qué acredita cada estado.** `confirmed` y los movimientos enlazados (`StockMovement.reception_operation`, misma transacción) son la prueba; un saldo o lote coincidente no lo es, y un `pending` sigue `pending` aunque el stock coincida. `applied_lines` es lo histórico y `current_balance` se publica aparte, rotulado como acumulado.
+
+**Actor y supervisión.** El vínculo de actor se conserva: ejecutar exige ser quien capturó, y sin supervisión una operación ajena da 404, incluso con `inventory.update`. Reutilizar una identidad descubierta da 409 sin detalle. La supervisión es `staff.reset_password`, permiso existente de administración del equipo: añade lectura con `scope=organization` y permite **cerrar** una operación ajena, nunca ejecutarla, para que la de alguien que ya no está tenga salida. Otra clínica: 404 también con UUID, cursor o filtro de producto. No autenticado: 401. Organización desactivada: rechazada por autenticación.
+
+**Sin evidencia suficiente.**
+
+- *Recibo anterior a 0031:* `confirmed` con `evidence_level=legacy_receipt`. No se reconstruyen payload, cantidades ni enlaces: el hash es de un solo sentido y los saldos del recibo no son cantidades (además podían ser anteriores al movimiento). Solo se publica la identidad de los lotes.
+- *Fila sin resultado:* no debería existir. Queda `pending` sin captura y solo puede descartarse.
+- *Entrada sin operación:* `GET /receptions/unattributed/` lista esos hechos del libro. Procedimiento concreto en el panel: comparar con la remisión; si está, ya sumó y no hay nada que corregir; si no, recepción nueva explícita. Ninguno de los dos caminos altera el historial, y no se fabrica un receipt.
+
+**Recepción nueva.** Es otra acción, con otra identidad, y sigue permitida: no se deduplica por contenido. Solo se exige resolver antes el `pending` del mismo actor y producto (`UniqueConstraint` parcial). Pendientes de otras personas no bloquean; se ven como evidencia al revisar.
+
+**Límites que permanecen.**
+
+- Si el navegador original sigue vivo con la intención en vuelo y la persona registra otra entrada en otra pestaña, ambas son acciones explícitas y el servidor no puede saber que eran la misma entrega; la segunda aparece como operación propia para revisión. No se promete detección infalible.
+- `POST /receive/` con clave sigue siendo una sola petición: idempotente, pero sin visibilidad mientras está en vuelo. Sin clave conserva su contrato y no recibe estas garantías; la app ya no lo usa para recepciones por lotes.
+- La entrada rápida de productos **sin lotes** (`adjust`) no tiene identidad de operación: aparece en «Entradas sin identidad», sin idempotencia. Queda fuera de este criterio.
+- El alta del producto (`createProduct`) no es idempotente; si se pierde esa respuesta el producto se ve en el catálogo con stock cero. No se amplía el alcance del plan.
+- Un `pending` no caduca: permanece hasta que alguien lo resuelve.

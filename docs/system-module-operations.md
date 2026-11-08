@@ -645,6 +645,31 @@ open → closed (terminal, irrevocable)
 
 ---
 
+### Acción: Recibir mercancía por lotes (operación durable)
+
+**Requiere**
+- Permiso `inventory.update` y un producto con `tracks_lots`.
+- Un identificador de operación UUID generado por el cliente al preparar. Después, ninguno: la recuperación no lo pide.
+
+**Resultado**
+- Preparar guarda la captura como `pending`, sin tocar stock.
+- Completar aplica exactamente esa captura en una transacción: stock, lotes, movimientos enlazados y `confirmed`.
+- Descartar la cierra sin aplicarla, con motivo, autor y fecha. Nunca elimina ni compensa movimientos.
+
+**Desbloquea**
+- Tras perder respuesta, sesión y navegador, consultar en Inventario → Recepciones qué registró el servidor,
+  y resolver lo pendiente con su misma identidad, sin volver a capturar ni a crear el producto.
+
+**Bloquea**
+- Una entrada nueva del mismo producto y actor mientras haya un `pending` → `409 reception_unresolved`. Se resuelve
+  y entonces se registra: dos recepciones iguales siguen siendo válidas, porque no se deduplica por contenido.
+- Ejecutar la operación de otra persona, aunque se conozca su identidad.
+
+**Módulos involucrados**
+`inventory`.
+
+---
+
 ### Acción: Ajustar stock (gestión manual)
 
 **Requiere**

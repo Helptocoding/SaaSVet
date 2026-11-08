@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useConfirm } from "../components/useConfirm";
 import { apiError } from "../utils/apiError";
+import { newOperationUuid } from "../utils/idempotency";
 import handleFormError from "../utils/handleFormError";
 import { toList } from "../utils/toList";
 import { stockStatus, productStockQty, productStockValue, compareInventoryProducts, computeInitialStock, fmt, fmtCur } from "../utils/inventory";
 import {
     getProducts, createProduct, updateProduct, deleteProduct,
     adjustStock, getUnitChoices, createPresentation, updatePresentation,
-    getLotAlerts, receiveStock,
+    getLotAlerts, getReceptions, receiveStock,
 } from "../api/inventory";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { toast } from "sonner";
 import StockEntryModal from "../components/StockEntryModal";
 import LotManagerModal from "../components/LotManagerModal";
+import ReceptionsModal from "../components/ReceptionsModal";
 import EmptyState from "../components/EmptyState";
 import s from "./inventory.module.css";
 import ProductCreationTour from "../features/inventory/tutorial/ProductCreationTour";
@@ -108,6 +110,16 @@ const subscribeReception = (notify) => {
     };
 };
 const receptionChanged = () => window.dispatchEvent(new Event("inventory-reception-change"));
+// Atajo para reintentar en este navegador. No sostiene la recuperación: esa vive en el
+// servidor, así que si el almacenamiento falla o se borra el flujo sigue igual.
+const rememberReception = (key, pending) => {
+    try { if (key) localStorage.setItem(key, JSON.stringify(pending)); } catch { /* opcional */ }
+    receptionChanged();
+};
+const forgetReception = (key) => {
+    try { if (key) localStorage.removeItem(key); } catch { /* opcional */ }
+    receptionChanged();
+};
 
 const newSalesPres = (unitLabel = "Unidad") => ({
     _localId: `sp_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -215,24 +227,36 @@ const Inventory = () => {
         try {
             return receptionKey ? localStorage.getItem(receptionKey) : null;
         } catch {
-            return receptionKey ? "__storage_unavailable__" : null;
+            return null;
         }
     }, () => null);
     const pendingReception = useMemo(() => {
         try {
             if (!pendingRaw) return null;
             const pending = JSON.parse(pendingRaw);
-            return pending?.operationId && pending?.presentationId && pending?.payload
-                ? pending : { unavailable: true };
+            return pending?.operationId && pending?.presentationId && pending?.payload ? pending : null;
         } catch {
-            return { unavailable: true };
+            return null;
         }
     }, [pendingRaw]);
+    const canReceive = can("inventory.update");
+    const [unresolvedReceptions, setUnresolvedReceptions] = useState([]);
+    const [receptionsOpen, setReceptionsOpen] = useState(false);
+    const localReceptionIsListed = unresolvedReceptions.some(op => op.operation_id === pendingReception?.operationId);
     const [animatedTotalVal, setAnimatedTotalVal] = useState(0);
     const [isTotalValAnimating, setIsTotalValAnimating] = useState(false);
     const totalValFrameRef = useRef(null);
     const displayedTotalValRef = useRef(0);
     const hasAnimatedTotalValRef = useRef(false);
+
+    const loadUnresolvedReceptions = async () => {
+        if (!canReceive) return;
+        try {
+            setUnresolvedReceptions((await getReceptions({ status: "pending", page_size: 20 })).results || []);
+        } catch {
+            /* El servidor sigue rechazando otra entrada del mismo producto si hay una abierta. */
+        }
+    };
 
     useEffect(() => { if (token) loadAll(); }, [token]);
 
@@ -256,6 +280,27 @@ const Inventory = () => {
         } catch {
             /* alertas informativas: silencioso */
         }
+        await loadUnresolvedReceptions();
+    };
+
+    // Sin pasar por `loading`: esa pantalla desmontaría el panel y la evidencia que muestra.
+    const handleReceptionResolved = async (operationId) => {
+        if (pendingReception?.operationId === operationId) forgetReception(receptionKey);
+        try {
+            setProducts(toList(await getProducts()));
+        } catch (err) {
+            console.error(apiError(err));
+        }
+        await loadUnresolvedReceptions();
+    };
+
+    // Un 400 se corrige en el formulario; cualquier otro desenlace deja el resultado por confirmar.
+    const handleReceptionIssue = async (err) => {
+        await loadUnresolvedReceptions();
+        if (err?.response?.status !== 400) {
+            setStockEntryOpen(false);
+            setReceptionsOpen(true);
+        }
     };
 
     const retryPendingReception = async () => {
@@ -263,12 +308,17 @@ const Inventory = () => {
         setRetryingReception(true);
         try {
             await receiveStock(pendingReception.presentationId, pendingReception.payload, pendingReception.operationId);
-            localStorage.removeItem(receptionKey);
-            receptionChanged();
+            forgetReception(receptionKey);
             toast.success("Recepción confirmada.");
             await loadAll();
         } catch (err) {
-            toast.warning(`No se pudo confirmar la recepción: ${apiError(err)}. Conserva esta operación para reintentar.`);
+            toast.warning(`No se pudo confirmar la recepción: ${apiError(err)}.`);
+            // Un 409 es una respuesta definitiva del servidor: reintentar no cambia nada.
+            if (err?.response?.status === 409) {
+                forgetReception(receptionKey);
+                await loadUnresolvedReceptions();
+                setReceptionsOpen(true);
+            }
         } finally {
             setRetryingReception(false);
         }
@@ -597,13 +647,15 @@ const Inventory = () => {
     };
 
     const handleWizardSave = async () => {
+        let receptionUnconfirmed = false;
         if (tutorialMode) {
             setTutorialMode(false);
             tour.finish();
             return;
         }
-        if (!wizardEditing && wizardProduct.tracks_lots && pendingReception) {
-            toast.warning("Confirma primero la recepción pendiente antes de crear otra entrada por lotes.");
+        if (!wizardEditing && wizardProduct.tracks_lots && (pendingReception || unresolvedReceptions.length > 0)) {
+            toast.warning("Resuelve primero la recepción sin confirmar: puede corresponder a este producto.");
+            setReceptionsOpen(true);
             return;
         }
         setSaving(true);
@@ -708,7 +760,6 @@ const Inventory = () => {
 
                 // Primer lote (opcional) sobre la presentación base (cf=1 → cantidad = unidad base).
                 let stockMsg;
-                let receptionUnconfirmed = false;
                 if (isLots) {
                     const validLots = wizardLots
                         .map(l => ({
@@ -726,19 +777,16 @@ const Inventory = () => {
                                     supplier_name: wizardSupplier.trim(),
                                     lots: validLots,
                                 };
-                                if (!receptionKey || !globalThis.crypto?.randomUUID) throw new Error("No fue posible conservar la identidad de recepción.");
                                 const pending = { productId: created.public_id, presentationId: basePres.public_id,
-                                    operationId: globalThis.crypto.randomUUID(), payload };
-                                localStorage.setItem(receptionKey, JSON.stringify(pending));
-                                receptionChanged();
+                                    operationId: newOperationUuid(), payload };
+                                rememberReception(receptionKey, pending);
                                 await receiveStock(basePres.public_id, payload, pending.operationId);
-                                localStorage.removeItem(receptionKey);
-                                receptionChanged();
+                                forgetReception(receptionKey);
                                 const total = validLots.reduce((a, l) => a + l.quantity, 0);
                                 stockMsg = ` Primer lote registrado: ${fmt(total)} ${stockLabel} en ${validLots.length} lote(s).`;
                             } catch (err) {
                                 receptionUnconfirmed = true;
-                                toast.warning(`Producto creado; no se pudo confirmar la recepción: ${apiError(err, "error de conexión")}. Revisa los movimientos y lotes antes de intentar otra entrada.`);
+                                toast.warning(`Producto creado; no se pudo confirmar la recepción: ${apiError(err, "error de conexión")}. Revisa aquí lo que registró el servidor antes de intentar otra entrada.`);
                                 stockMsg = "";
                             }
                         } else {
@@ -761,6 +809,7 @@ const Inventory = () => {
             }
             closeWizard();
             await loadAll();
+            if (receptionUnconfirmed) setReceptionsOpen(true);
         } catch (err) {
             handleFormError(err, setWizardErrors);
         } finally {
@@ -850,8 +899,18 @@ const Inventory = () => {
                     <h1 className={s.ptitle}>Inventario</h1>
                     <p className={s.psub}>Productos, medicamentos y suministros de la clínica</p>
                 </div>
-                {canManage && (
-                    <div className={s.pacts}>
+                <div className={s.pacts}>
+                    {canReceive && (
+                        <button
+                            className="btn btn-secondary btn-md"
+                            onClick={() => setReceptionsOpen(true)}
+                            title="Consultar en el servidor qué pasó con cada recepción"
+                        >
+                            <Icon.Rows s={13} />
+                            Recepciones
+                        </button>
+                    )}
+                    {canManage && (<>
                         <button
                             className="btn btn-secondary btn-md"
                             onClick={() => tour.start({
@@ -885,18 +944,29 @@ const Inventory = () => {
                             Nuevo producto
                             <span className="btn-trailing-icon" aria-hidden="true"><Icon.ChevronRight s={15} /></span>
                         </button>
-                    </div>
-                )}
+                    </>)}
+                </div>
             </div>
 
-            {pendingReception && can("inventory.update") && (
+            {pendingReception && canReceive && !localReceptionIsListed && (
                 <div className={s.alertBar} role="status">
-                    <span>{pendingReception.unavailable
-                        ? "No se puede leer la recepción pendiente. Revisa movimientos y lotes antes de registrar otra entrada."
-                        : "Hay una recepción sin confirmar para un producto ya creado. Reintenta la misma operación antes de registrar otra entrada ambigua."}</span>
-                    {!pendingReception.unavailable && <button className="btn btn-secondary btn-sm" type="button" disabled={retryingReception} onClick={retryPendingReception}>
+                    <span>Hay una recepción sin confirmar para un producto ya creado. Reintenta la misma operación antes de registrar otra entrada ambigua.</span>
+                    <button className={`btn btn-secondary btn-sm ${s.alertAction}`} type="button" disabled={retryingReception} onClick={retryPendingReception}>
                         {retryingReception ? "Confirmando…" : "Confirmar recepción pendiente"}
-                    </button>}
+                    </button>
+                </div>
+            )}
+
+            {canReceive && unresolvedReceptions.length > 0 && (
+                <div className={s.alertBar} role="status">
+                    <span>
+                        {unresolvedReceptions.length === 1
+                            ? "Tienes 1 recepción sin resolver. Todavía no suma stock: revísala antes de registrar esa mercancía de nuevo."
+                            : `Tienes ${unresolvedReceptions.length} recepciones sin resolver. Todavía no suman stock: revísalas antes de registrar esa mercancía de nuevo.`}
+                    </span>
+                    <button className={`btn btn-secondary btn-sm ${s.alertAction}`} type="button" onClick={() => setReceptionsOpen(true)}>
+                        Revisar recepciones
+                    </button>
                 </div>
             )}
 
@@ -1945,6 +2015,18 @@ const Inventory = () => {
                     onClose={() => setStockEntryOpen(false)}
                     onSaved={loadAll}
                     onCreateNew={() => openWizardCreate()}
+                    onReceptionIssue={handleReceptionIssue}
+                />
+            )}
+
+            {/* ── Modal: Recepciones según el servidor ── */}
+            {receptionsOpen && (
+                <ReceptionsModal
+                    products={products}
+                    initialFilter={unresolvedReceptions.length > 0 ? "pending" : ""}
+                    onClose={() => setReceptionsOpen(false)}
+                    onChanged={handleReceptionResolved}
+                    onNewReception={() => { setReceptionsOpen(false); setStockEntryOpen(true); }}
                 />
             )}
 
