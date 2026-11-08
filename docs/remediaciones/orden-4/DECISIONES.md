@@ -72,3 +72,12 @@ Contrato: [metaprompt del 02-11](../../metaprompt-orden-4-i01-recuperacion-sin-e
 - La entrada rápida de productos **sin lotes** (`adjust`) no tiene identidad de operación: aparece en «Entradas sin identidad», sin idempotencia. Queda fuera de este criterio.
 - El alta del producto (`createProduct`) no es idempotente; si se pierde esa respuesta el producto se ve en el catálogo con stock cero. No se amplía el alcance del plan.
 - Un `pending` no caduca: permanece hasta que alguien lo resuelve.
+
+## I03: presentación del reporte (08-11)
+
+La revisión visual cambió la presentación, no el contrato del reporte ni las decisiones de importación:
+
+- El detalle paginado usa la misma tarjeta que la muestra (`ConflictCard.jsx`), con «En tu archivo» frente a «Ya registrado». Antes mostraba nombres de campo internos (`name:`, `internal_code:`) sin decir cuál venía de dónde.
+- En inventario, «por revisar» puede ser por código con otro nombre o por nombre sin código. La sección pasa a «Posibles duplicados por revisar» con un texto que cubre ambos casos, y cada tarjeta muestra el `message` del servidor. Clientes y mascotas conserva su texto fijo.
+- La tarjeta de resultado de inventario lee `skipped_conflicts`. `skipped_duplicates` nunca se incrementa en ese importador, así que mostraba 0 aunque se omitieran filas.
+

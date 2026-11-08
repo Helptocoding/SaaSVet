@@ -124,12 +124,15 @@ export const INVENTORY_CONFIG = {
         link: null, // el detalle de producto no tiene ruta pública por public_id hoy
         linkText: "",
         highText: "Parece el mismo producto.",
-        cardUncertainText: "El nombre ya existe y la fila no trae código que lo distinga.",
-        uncertainTitle: (n) => `Posibles duplicados por nombre (${n})`,
+        // Sin texto fijo: un producto por revisar coincide por código o por nombre, y la
+        // tarjeta muestra el motivo concreto que envía el servidor.
+        cardUncertainText: null,
+        uncertainTitle: (n) => `Posibles duplicados por revisar (${n})`,
         uncertainDesc:
-            "Ya existe un producto con este nombre y la fila no trae código interno para " +
-            "confirmarlo. Agrega el código en tu archivo y vuelve a mapear para importarla, " +
-            "o confirma sabiendo que se omitirá.",
+            "Coinciden con un producto registrado por código interno o por nombre, pero los datos " +
+            "no confirman que sea el mismo. Revisa cada fila en el detalle completo: corrige el " +
+            "código o el nombre en tu archivo y vuelve a mapear para importarlas, o confirma " +
+            "sabiendo que se omitirán.",
     },
 
     skippedCardFields: [
@@ -158,7 +161,9 @@ export const INVENTORY_CONFIG = {
         { valueKey: "created_products", label: "Productos creados", tone: "success" },
         { valueKey: "created_presentations", label: "Presentaciones creadas", tone: "success" },
         { valueKey: "initial_stock_movements", label: "Con stock inicial", tone: "" },
-        { valueKey: "skipped_duplicates", label: "Duplicados omitidos", tone: "warning" },
+        // El importador de inventario no tiene duplicados exactos: todo choque con un
+        // producto registrado (código, nombre o código de barras) se omite como conflicto.
+        { valueKey: "skipped_conflicts", label: "Posibles duplicados omitidos", tone: "warning" },
         { valueKey: "error_rows", label: "Filas con error", tone: "danger" },
     ],
     incompleteLabels: {

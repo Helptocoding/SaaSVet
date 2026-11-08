@@ -237,3 +237,28 @@ Corridas en el cluster de orden 4:
 
 Pendiente de decisión, sin cambio: el importador redondea a 4 decimales un factor con más, mientras el alta manual lo rechaza.
 
+### I03: comprobación visual (08-11)
+
+`apps/imports/tests/test_order4_conflicts_browser.py` usa el mismo arnés que el navegador de I01 (Chromium headless, `LiveServerTestCase`, build estática) y se omite sin `ORDEN4_BROWSER_DIST` y Playwright. El escenario:
+
+- La clínica tiene 130 productos.
+- El CSV choca con todos: 110 coincidencias altas, con el mismo código y nombre, y 20 por revisar, con el mismo código y otro nombre. Además trae 5 productos nuevos.
+- La prueba recorre subida, columnas, vista previa, confirmación y resultado.
+- En la vista previa y en el resultado recorre el detalle: 50, 50 y 30 filas, sin huecos ni duplicados. «Siguiente» se desactiva en la última página y «Anterior» vuelve.
+- Comprueba en la base el job confirmado, 135 productos y los existentes intactos.
+
+Revisando las capturas aparecieron tres defectos, ahora fijados por la prueba de navegador y por `ConflictPages.test.jsx` y `entityConfig.test.jsx` (ver [decisiones](DECISIONES.md#i03-presentación-del-reporte-08-11)):
+
+1. El detalle mostraba `name:` e `internal_code:` sin indicar qué era del archivo y qué estaba registrado. En las filas por revisar salían dos `name:` seguidos.
+2. La muestra titulaba «Posibles duplicados por nombre (20)» y pedía añadir el código interno, cuando esas filas ya lo traían y chocaban por código.
+3. El resultado decía «0 Duplicados omitidos» con 130 filas omitidas.
+
+Corridas: navegador 1 PASS en cada una de las tres builds, la última con el código final; capturas revisadas a resolución real. `vitest run src/pages/imports`: 72 PASS. ESLint sin hallazgos nuevos; `PreviewStep.jsx` conserva los 3 errores y 2 advertencias que ya tenía en `HEAD`.
+
+Observaciones sin cambio, fuera de I03:
+
+- El botón flotante de ayuda «?» tapa en parte «Confirmar importación» cuando se llega al final de la página. Es un componente global.
+- Con reportes grandes, la muestra de 100 tarjetas alarga la vista previa a unos 20.000 px antes del detalle.
+- Si las primeras 100 son altas, la sección «por revisar» de la muestra queda en «Mostrando 0 de 20»; el detalle completo sí las muestra.
+- En clientes y mascotas, el texto fijo «…ya pertenece a otro paciente» también se usa para un número de cliente repetido.
+

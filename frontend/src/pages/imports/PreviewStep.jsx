@@ -4,6 +4,7 @@ import { groupImportIssues } from "./groupImportIssues";
 import { getEntityConfig } from "./entityConfig";
 import s from "./imports.module.css";
 import ConflictPages from "./ConflictPages";
+import ConflictCard from "./ConflictCard";
 
 const PAGE_SIZE = 25;
 
@@ -35,47 +36,6 @@ function downloadCsv(items, labelByKey, filename, csvActions) {
     a.click();
     URL.revokeObjectURL(url);
 }
-
-/* ── Card de conflicto individual ── */
-const ConflictCard = ({ conflict, cfg }) => {
-    const c = cfg.conflict;
-    const link = c.link ? c.link(conflict) : null;
-    return (
-        <div className={s.conflictCard}>
-            <div className={s.conflictRow}>
-                <span className={s.conflictNum}>Fila #{conflict.row}</span>
-            </div>
-            <div className={s.conflictCompare}>
-                <div className={s.conflictSide}>
-                    <div className={s.conflictSideLabel}>En tu archivo</div>
-                    <div className={s.conflictSideValue}>
-                        {conflict.incoming?.[c.incomingPrimaryKey] || "—"}
-                    </div>
-                    <div className={s.conflictSideMeta}>
-                        {conflict.incoming?.[c.incomingSecondaryKey] || "—"}
-                    </div>
-                </div>
-                <div className={s.conflictSide}>
-                    <div className={s.conflictSideLabel}>Ya registrado</div>
-                    <div className={s.conflictSideValue}>
-                        {conflict.existing ? c.existingPrimary(conflict.existing) : "—"}
-                    </div>
-                    <div className={s.conflictSideMeta}>
-                        {conflict.existing ? (c.existingSecondary(conflict.existing) || "") : ""}
-                    </div>
-                </div>
-            </div>
-            <p className={s.conflictHint}>
-                {conflict.match_confidence === "high" ? c.highText : c.cardUncertainText}
-            </p>
-            {link && (
-                <a href={link} target="_blank" rel="noopener noreferrer" className={s.conflictLink}>
-                    {c.linkText}
-                </a>
-            )}
-        </div>
-    );
-};
 
 /* ── Grupo colapsable genérico (conflictos) ── */
 const CollapseGroup = ({ icon, title, count, intro, items, open, onToggle, variant }) => {
@@ -491,7 +451,7 @@ const PreviewStep = ({
                 </div>
             )}
 
-            <ConflictPages key={r.conflict_report?.version} publicId={jobPublicId} report={r.conflict_report} highTotal={conflictsHighTotal} uncertainTotal={conflictsUncertainTotal} />
+            <ConflictPages key={r.conflict_report?.version} publicId={jobPublicId} report={r.conflict_report} highTotal={conflictsHighTotal} uncertainTotal={conflictsUncertainTotal} cfg={cfg} />
 
             {/* ── Descarga CSV ── */}
             {(blocking.length > 0 || warnings.length > 0) && (

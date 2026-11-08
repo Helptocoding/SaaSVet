@@ -115,7 +115,7 @@ const ResultStep = ({ result, job, fieldCatalog = [], onReset, entityType = "own
                 </div>
             )}
 
-            <ConflictPages key={r.conflict_report?.version} publicId={job?.public_id} report={r.conflict_report} highTotal={num(r.conflicts_high)} uncertainTotal={num(r.conflicts_uncertain)} />
+            <ConflictPages key={r.conflict_report?.version} publicId={job?.public_id} report={r.conflict_report} highTotal={num(r.conflicts_high)} uncertainTotal={num(r.conflicts_uncertain)} cfg={cfg} />
 
             <div className={s.actions}>
                 <button className="btn btn-secondary btn-md" onClick={onReset}>
