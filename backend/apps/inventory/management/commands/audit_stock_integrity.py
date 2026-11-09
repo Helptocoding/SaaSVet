@@ -1,23 +1,21 @@
 """
 audit_stock_integrity — reconcilia stock contra el ledger de StockMovement.
 
-ADR p31: el algoritmo opera ahora a nivel de Product (base_units). Los
-movimientos legacy (quantity_unit='presentation') se ignoran en el cálculo
-nuevo; el baseline de cada producto es el último StockMovement(adjustment,
-quantity_unit='base') creado por la migration 0018.
+ADR p31: el algoritmo opera a nivel de Product (base_units).
 
-Modelo de reconciliacion (modo Product, ADR p31)
--------------------------------------------------
-  baseline = último StockMovement(adjustment, quantity_unit='base') para ese Product.
-  expected = baseline.quantity
-           + SUM('in', quantity_unit='base', pk > baseline.pk)
-           - SUM('out', quantity_unit='base', pk > baseline.pk)
-  compare expected vs Product.stock_quantity
+Modelo de reconciliacion
+------------------------
+  Se recorre el libro del producto en orden (`replay_ledger`):
+    - sin ningun adjustment de producto el saldo parte de 0, porque todo stock
+      entra por `apply_stock_movement` (orden 4, 09-11);
+    - un adjustment de producto fija el saldo (absoluto);
+    - un adjustment de lote mueve el agregado por su diferencia con ese lote;
+    - 'in' suma y 'out' resta.
+  El resultado se compara con Product.stock_quantity.
 
-Modo legacy (Presentation)
---------------------------
-Se mantiene el algoritmo original para productos sin baseline en base_units,
-reportados como 'no_baseline_product' (informativo, no drift).
+Un movimiento legacy (sin producto o con quantity_unit='presentation') no se puede
+sumar. Deja el producto como 'no_baseline' (informativo, no drift) hasta su
+siguiente adjustment de producto.
 
 Exit codes:
   0  sin drift
@@ -26,6 +24,7 @@ Exit codes:
 """
 import json
 import sys
+from collections import defaultdict
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand
@@ -33,6 +32,38 @@ from django.db.models import Q, Sum
 
 
 SAMPLE_SIZE = 20
+ZERO = Decimal('0.0000')
+
+LEDGER_FIELDS = ('pk', 'product_id', 'movement_type', 'quantity', 'quantity_unit', 'lot_id', 'lot_number')
+
+
+def replay_ledger(movements):
+    """Recorre movimientos (filas de LEDGER_FIELDS, en orden de pk).
+
+    Devuelve (saldo esperado, pk del ultimo adjustment de producto). El saldo es None si
+    un movimiento legacy lo deja sin reconstruir; el pk es None si se partio de 0.
+    """
+    expected = ZERO
+    known = True
+    baseline_pk = None
+    lots = defaultdict(lambda: ZERO)
+    for pk, product_id, movement_type, quantity, unit, lot_id, lot_number in movements:
+        if product_id is None or unit != 'base':
+            known = False
+            continue
+        lot = (lot_id, lot_number) if lot_id is not None or lot_number else None
+        if movement_type == 'adjustment':
+            if lot is None:
+                expected, known, baseline_pk = quantity, True, pk
+            else:
+                expected += quantity - lots[lot]
+                lots[lot] = quantity
+            continue
+        signed = quantity if movement_type == 'in' else -quantity
+        expected += signed
+        if lot is not None:
+            lots[lot] += signed
+    return (expected if known else None), baseline_pk
 
 
 class Command(BaseCommand):
@@ -59,6 +90,7 @@ class Command(BaseCommand):
 
         checked = 0
         reconciled = 0
+        reconciled_from_zero = 0
         no_baseline = 0
         drift_count = 0
         drift_sample = []
@@ -66,42 +98,21 @@ class Command(BaseCommand):
         for p in products.iterator(chunk_size=500):
             checked += 1
 
-            # Baseline: último adjustment en base_units para este producto
-            last_adj = (
+            movements = (
                 StockMovement.all_objects
-                .filter(
-                    product_id=p['pk'],
-                    movement_type='adjustment',
-                    quantity_unit='base',
-                )
-                .order_by('-pk')
-                .values('pk', 'quantity')
-                .first()
+                .filter(Q(product_id=p['pk']) | Q(product__isnull=True, presentation__product_id=p['pk']))
+                .order_by('pk')
+                .values_list(*LEDGER_FIELDS)
             )
+            expected, baseline_pk = replay_ledger(movements.iterator(chunk_size=500))
 
-            if last_adj is None:
+            if expected is None:
                 no_baseline += 1
                 continue
 
-            net = Decimal('0')
-            after = (
-                StockMovement.all_objects
-                .filter(
-                    product_id=p['pk'],
-                    pk__gt=last_adj['pk'],
-                    quantity_unit='base',
-                )
-                .values('movement_type')
-                .annotate(total=Sum('quantity'))
-            )
-            for row in after:
-                if row['movement_type'] == 'in':
-                    net += row['total']
-                elif row['movement_type'] == 'out':
-                    net -= row['total']
-
-            expected = last_adj['quantity'] + net
             reconciled += 1
+            if baseline_pk is None:
+                reconciled_from_zero += 1
 
             if expected != p['stock_quantity']:
                 drift_count += 1
@@ -113,7 +124,7 @@ class Command(BaseCommand):
                         'stock_actual': str(p['stock_quantity']),
                         'stock_esperado': str(expected),
                         'diff': str(p['stock_quantity'] - expected),
-                        'baseline_adjustment_pk': last_adj['pk'],
+                        'baseline_adjustment_pk': baseline_pk,
                     })
 
         # Invariante de lotes (spec 2026-07-10): para productos con tracks_lots,
@@ -147,6 +158,7 @@ class Command(BaseCommand):
         report = {
             'checked_products': checked,
             'reconciled': reconciled,
+            'reconciled_from_zero': reconciled_from_zero,
             'no_baseline': no_baseline,
             'drift_count': drift_count,
             'drift_sample': drift_sample,
@@ -166,11 +178,12 @@ class Command(BaseCommand):
         self.stdout.write(self.style.MIGRATE_HEADING("Stock integrity audit (ADR p31)"))
         self.stdout.write("")
         self.stdout.write(f"  Productos revisados      : {report['checked_products']}")
-        self.stdout.write(f"  Reconciliados (baseline) : {report['reconciled']}")
+        self.stdout.write(f"  Reconciliados            : {report['reconciled']}")
+        self.stdout.write(f"    de ellos, desde 0      : {report['reconciled_from_zero']}")
         self.stdout.write(self.style.WARNING(
-            f"  Sin baseline base_units  : {report['no_baseline']}"
+            f"  No reconstruibles (legacy): {report['no_baseline']}"
         ) if report['no_baseline'] else
-            f"  Sin baseline base_units  : 0")
+            f"  No reconstruibles (legacy): 0")
         self.stdout.write("")
 
         if report['drift_count'] == 0:
@@ -184,7 +197,7 @@ class Command(BaseCommand):
                     f"      - product={row['product_id']} ({row['product_name']}) "
                     f"org={row['organization_id']} "
                     f"actual={row['stock_actual']} esperado={row['stock_esperado']} "
-                    f"diff={row['diff']} (baseline adj pk={row['baseline_adjustment_pk']})"
+                    f"diff={row['diff']} (baseline adj pk={row['baseline_adjustment_pk'] or 'ninguno, desde 0'})"
                 )
 
         self.stdout.write("")

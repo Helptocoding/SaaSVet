@@ -712,7 +712,7 @@ open → closed (terminal, irrevocable)
 
 **Resultado**
 - Exit 0: sin drift. Exit 1: drift detectado. Exit 2: error.
-- Detecta presentaciones sin baseline de `adjustment` (esto es informativo, no cuenta como drift).
+- Sin `adjustment`, el saldo se reconstruye desde 0, así que un stock que el libro no explica es drift. Solo los productos con movimientos legacy quedan como `no_baseline` (informativo).
 
 ---
 

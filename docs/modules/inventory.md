@@ -301,8 +301,9 @@ El frontend ordena: primero agotados (`stock_quantity = 0`), luego bajo mínimo.
 `python manage.py audit_stock_integrity [--org N] [--verbose] [--json]`
 
 - Fuente de verdad: `Product.stock_quantity`
-- Baseline: último `StockMovement(quantity_unit='base', movement_type='adjustment')` por producto
-- Movimientos legacy (`quantity_unit='presentation'`) ignorados
+- Recorre el libro de cada producto: sin `adjustment` de producto parte de 0, un `adjustment` de producto fija el saldo y uno de lote mueve el agregado por su diferencia con ese lote
+- Saldo sin movimientos que lo expliquen = drift. Todo stock entra por `apply_stock_movement`, incluido el inicial
+- `no_baseline`: solo productos con movimientos legacy (sin producto o en unidades de presentación) y sin `adjustment` posterior; informativo, no drift
 - Exit: 0 sin drift, 1 drift detectado, 2 error
 
 ## Barcode lookup (POS scanner)

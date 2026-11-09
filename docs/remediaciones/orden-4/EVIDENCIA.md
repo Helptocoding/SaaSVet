@@ -312,3 +312,7 @@ La importación solo bloquea productos creados en su propia transacción, que na
 | Sin movimientos y saldo 0 | 1 |
 
 Sin regularización. Base habitual sin escrituras, VPS sin tocar, cluster detenido con su directorio conservado y puerto 49935 libre.
+
+**Auditor de stock (09-11).** Fuera del plan original, por petición del usuario: `audit_stock_integrity` no comprobaba ningún producto sin `adjustment`, y todo producto nuevo entra con un `in`. Ahora recorre el libro desde 0 y calcula los ajustes de lote por su diferencia; antes contaba un ajuste de lote como saldo del producto y daba una diferencia falsa. Pruebas del auditor, 15 PASS, 7 de ellas en rojo antes del cambio; inventario completo, 157 pruebas OK con 7 skipped, en el cluster sintético.
+
+En la base local aparecieron las 22 diferencias previstas. Se corrigieron con 22 `adjustment` por `apply_stock_movement`, con el motivo «Apertura de datos de prueba (orden 4)». El stock total no cambió (25.631) y el auditor quedó en 116 reconciliados, 0 diferencias y exit 0.

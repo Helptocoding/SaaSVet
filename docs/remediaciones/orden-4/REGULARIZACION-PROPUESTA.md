@@ -16,4 +16,4 @@ La eventual reconstrucción desde saldo observado requiere aprobación explícit
 
 **09-11: sin objeto.** El usuario confirmó que no existen clínicas ni datos reales, así que no hay saldos históricos que regularizar ni aprobaciones que recoger, y la operación apply no se construyó. El diagnóstico se conserva por si algún día se incorpora una base con historia real, y entonces rigen las condiciones de arriba.
 
-Lo que este cierre no resuelve: `audit_stock_integrity` solo reconcilia productos con un `adjustment`, y un producto creado hoy entra con un `in` inicial, de modo que queda como `no_baseline` y fuera de la comprobación de drift hasta su primer ajuste.
+Desde el 09-11, `audit_stock_integrity` reconstruye desde 0 los productos sin `adjustment`, así que un producto nuevo con `in` inicial queda auditado. En `diagnose_product`, `no_baseline` conserva su sentido anterior (sin `adjustment` de producto).
