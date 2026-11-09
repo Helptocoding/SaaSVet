@@ -284,3 +284,31 @@ El escaneo local de gitleaks sobre todo el historial (Windows) marcaba hallazgos
 
 Sin despliegue ni cambios en producción o en el VPS. La base habitual local quedó migrada como se registra en [Cierre 08-11](#cierre-08-11).
 
+
+## Decisiones 09-11
+
+Premisa: el usuario confirmó que no existen clínicas ni datos reales; todas las clínicas de la base local son de prueba.
+
+**I02, factores con más de 4 decimales.** Una prueba nueva (`test_import_blocks_a_factor_it_would_have_to_round`) falló con el código anterior: `0.33333` no bloqueaba la fila. Con la corrección, `0.33333` bloquea la vista previa y el commit responde 400 sin crear el producto, mientras que `1.50000` entra como 1.5. Importador, alias de todos los writers y diagnóstico: 57 pruebas PASS en el cluster sintético de orden 4.
+
+**I04, medición en el tope.** Una sola importación de 2.000 filas nuevas, en el cluster sintético, con `fsync` apagado y en este equipo; los tiempos no valen para otro servidor. Solo cubre la importación de inventario.
+
+| Medida | Resultado |
+|---|---|
+| Importación sola | 54,0 s |
+| Importación con carga simultánea | 58,2 s; 2.000 productos y 2.000 movimientos iniciales |
+| Ventas sobre un producto existente durante la importación | 1.663, mediana 13,6 ms, máximo 71,1 ms |
+| Alta manual con el código de una fila ya insertada y sin confirmar | Esperó 56,7 s y terminó en `IntegrityError` |
+
+La importación solo bloquea productos creados en su propia transacción, que nadie más ve hasta el commit. El alta con código repetido es el único bloqueo observado, y ese error no tiene manejo específico en inventario. El `--timeout=60` de gunicorn no limita la duración de una petición con el valor por defecto de `docker-compose.prod.yml` (2 hilos por worker); el valor real del servidor no se comprobó.
+
+**I07, clasificación de la base local.** Lectura con `default_transaction_read_only=on` y `audit_stock_integrity` sin escrituras: 116 productos, 84 reconciliados sin diferencias y 32 `no_baseline`.
+
+| Situación de los 32 | Productos |
+|---|---|
+| Sin movimientos y con saldo | 18 |
+| Una salida y ninguna entrada | 4 |
+| Entradas menos salidas igual al saldo | 9 |
+| Sin movimientos y saldo 0 | 1 |
+
+Sin regularización. Base habitual sin escrituras, VPS sin tocar, cluster detenido con su directorio conservado y puerto 49935 libre.

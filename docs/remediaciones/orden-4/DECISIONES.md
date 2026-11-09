@@ -31,7 +31,7 @@ Si falla o se pierde la respuesta de recepción inicial de lotes, el wizard no a
 
 Lista cerrada el 08-11 con una búsqueda de todas las escrituras de `Presentation` fuera de pruebas: no hay otros writers vivos. `ProductAdmin` no tiene inlines. Las migraciones 0005 y 0018 son históricas, y 0029 corrige su resultado.
 
-**Importador (08-11):** el alias se redondeaba a 2 decimales (0.125 → 0.13) y una guarda rechazaba factores menores a 0.005, ambas cosas porque `quantity` era 10/2 antes de 0028. Ahora copia el factor exacto y solo rechaza un factor que redondea a 0 con 4 decimales. Sigue una diferencia, pendiente de decisión: el importador redondea a 4 decimales un factor con más, mientras el alta manual lo rechaza.
+**Importador (08-11):** el alias se redondeaba a 2 decimales (0.125 → 0.13) y una guarda rechazaba factores menores a 0.005, ambas cosas porque `quantity` era 10/2 antes de 0028. Ahora copia el factor exacto y solo rechaza un factor que redondea a 0 con 4 decimales. Desde el 09-11 también bloquea la fila si el factor perdería valor con 4 decimales (`0.33333`), como exige el plan §4.2 y hace el alta manual; a diferencia de esta, acepta ceros a la derecha (`1.50000`), porque no pierden nada y son habituales en archivos exportados.
 
 ## I01: recuperación sin estado local (06-11)
 

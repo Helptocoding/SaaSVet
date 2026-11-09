@@ -15,3 +15,5 @@ Continuación 06-11: recuperación de recepciones sin estado local. El servidor 
 Continuación 08-11: suite global local sin fallos atribuibles a I01, pasos de CI de frontend en verde y migraciones de I01 aplicadas a la base habitual local con respaldo. Véase [evidencia](EVIDENCIA.md#cierre-08-11).
 
 Integración 08-11: I01, I02 e I03 rebasados sobre `develop`, subidos a `codex/e4-capacity-scheduling` y con CI real en verde. Véase [evidencia](EVIDENCIA.md#integración-en-develop-y-ci-08-11).
+
+Continuación 09-11: confirmado que no existen datos reales, I07 deja de aplicar; el importador bloquea factores que perderían valor y se midió I04 en su tope. I04 e I06 siguen aplazados. Véase [evidencia](EVIDENCIA.md#decisiones-09-11).
