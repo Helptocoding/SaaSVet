@@ -123,6 +123,26 @@ class AliasWriterApiTests(_InventoryAPIBase, TestCase):
                 self.assertEqual((pres.quantity, pres.conversion_factor), (Decimal(factor), Decimal(factor)))
                 self.assertEqual(product.stock_quantity, Decimal(stock))
 
+    def test_import_blocks_a_factor_it_would_have_to_round(self):
+        # Igual que el alta manual: 0.33333 se guardaría como 0.3333 y movería el stock base.
+        # Los ceros a la derecha no pierden nada y siguen entrando.
+        header = 'Producto,Código,Unidad,Existencia,Precio,Factor\n'
+        mapping = {**INV_MAPPING, 'Factor': 'presentation.conversion_factor'}
+
+        pid = self._upload_ok(header + 'Gasa estéril,GAS-003,pieza,8,12.00,0.33333\n')
+        self._set_mapping(pid, mapping)
+        result = self._validate(pid)['result']
+        self.assertEqual(result['blocking_rows'], 1)
+        self.assertEqual([b['field'] for b in result['blocking']], ['presentation.conversion_factor'])
+        self.assertEqual(self._commit(pid).status_code, 400)
+        self.assertFalse(Product.objects.filter(internal_code='GAS-003').exists())
+
+        pid = self._upload_ok(header + 'Hilo,GAS-004,pieza,10,3.00,1.50000\n')
+        self._set_mapping(pid, mapping)
+        self.assertEqual(self._validate(pid)['result']['blocking_rows'], 0)
+        self.assertEqual(self._commit(pid).status_code, 200)
+        self.assertEqual(self._stored('GAS-004'), (Decimal('1.5'), Decimal('1.5')))
+
 
 class DemoSeedAliasTests(TestCase):
     """Ejecuta los pasos del seed que escriben presentaciones: organización y catálogo.

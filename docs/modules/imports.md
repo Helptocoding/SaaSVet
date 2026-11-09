@@ -188,8 +188,9 @@ stock` para cualquier `cf > 0`. `Presentation.quantity == conversion_factor`
 exacto con 4 decimales, igual que en el alta manual (orden 4, I02). Hasta el
 08-11-2026 el importador redondeaba el alias a 2 decimales (0.125 → 0.13) y
 rechazaba factores menores a 0.005, herencia de cuando `quantity` era 10/2.
-Diferencia que sigue: el importador redondea a 4 decimales un factor con más,
-mientras el alta manual lo rechaza.
+Un factor que perdería valor con 4 decimales (`0.33333`) es error bloqueante de
+la fila, como en el alta manual; los ceros a la derecha (`1.50000`) se aceptan
+porque no pierden nada.
 
 ### Result: contadores adicionales (aditivos)
 
