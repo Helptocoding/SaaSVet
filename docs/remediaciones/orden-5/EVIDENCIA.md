@@ -28,6 +28,18 @@ Tomada al preparar el plan.
 Límites: los 4 timeouts se tratan como no regresión según la regla de carga; no hay otros fallos.
 Observaciones sin cambio: ninguna.
 
+## E01 — C6 y F04: docstring y terminología (2026-11-10)
+
+| Comando | Resultado |
+|---|---|
+| `git diff src/utils/mapFieldErrors.js` | solo cambian líneas del comentario de cabecera |
+| `vitest run src/utils/mapFieldErrors.test.js --reporter=dot` | 11/11 pasan |
+| `eslint src/utils/mapFieldErrors.js src/pages/platform/createOrganization.jsx` | sin salida (exit 0) |
+| `eslint .` | 61 errores, 19 warnings (coincide) |
+
+Límites: la suite completa no se corrió; el cambio es de comentario y dos textos.
+Observaciones sin cambio: etiquetas `Login` y claves `admin_username` intactas.
+
 Plantilla por entrega:
 
 ```markdown

@@ -8,8 +8,8 @@ Se actualiza al cerrar cada entrega. Estado permitido: `PENDIENTE`, `EN_CURSO` o
 | C5 | E02 | PENDIENTE | | |
 | C4 | E02, E03 | PENDIENTE | | |
 | C3 | E04 | PENDIENTE | | |
-| C6 | E01 | PENDIENTE | | |
-| F04 | E01 | PENDIENTE | | |
+| C6 | E01 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E01 | EVIDENCIA.md §E01 |
+| F04 | E01 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E01 | EVIDENCIA.md §E01 |
 | F03 | E09, E10 | PENDIENTE | | |
 | F02 | E11 | PENDIENTE | | |
 
@@ -18,7 +18,7 @@ Se actualiza al cerrar cada entrega. Estado permitido: `PENDIENTE`, `EN_CURSO` o
 | Entrega | Errores esperados | Errores reales | Commit |
 |---|---|---|---|
 | E00 | 61 | 61 | ver commit E00 |
-| E01 | 61 | | |
+| E01 | 61 | 61 | ver commit E01 |
 | E02 | 61 | | |
 | E03 | 61 | | |
 | E04 | 59 | | |

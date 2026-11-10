@@ -60,7 +60,7 @@ const CreateOrganization = () => {
     const clientSideValidate = () => {
         const errs = {};
         if (!form.name.trim()) errs.name = "Nombre requerido.";
-        if (!form.admin_username.trim()) errs.admin_username = "Username requerido.";
+        if (!form.admin_username.trim()) errs.admin_username = "Usuario requerido.";
         if (!form.admin_email.trim()) errs.admin_email = "Correo electrónico requerido.";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.admin_email))
             errs.admin_email = "Correo electrónico inválido.";
@@ -195,7 +195,7 @@ const CreateOrganization = () => {
                             </Field>
                         </div>
 
-                        <Field label="Username" required error={fieldError("admin_username")}>
+                        <Field label="Usuario" required error={fieldError("admin_username")}>
                             <input
                                 className={inputClass("admin_username")}
                                 placeholder="sanlazaro_admin"

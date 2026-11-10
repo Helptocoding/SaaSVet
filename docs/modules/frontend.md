@@ -1547,8 +1547,6 @@ Notas:
   pantalla es administrativa → Mascota; si es el acto clínico → Paciente.
 - La mascota genérica de walk-in se etiqueta en agenda como *"Atención sin mascota
   registrada — vincular mascota"* (no "Paciente anónimo").
-- Deuda conocida (no clínica, fuera del piloto): `platform/createOrganization`
-  aún valida `"Username requerido."` (anglicismo "Username").
 
 ## Punto de Venta (`/pos`)
 
@@ -1675,8 +1673,7 @@ blocking (Fase D).
 
 - `mapFieldErrors` aplana cada error anidado a **dos** claves (dotted
   `presentation_input.sale_price` + plana `sale_price`); ambas load-bearing
-  (`inventory.jsx` las consume como fallback). El docstring de la función está
-  desactualizado (solo menciona la dotted) — ver deuda fase 4.
+  (`inventory.jsx` las consume como fallback).
 - `PaymentLinesEditor` recalcula `sum`/`remaining`/`change` **inline**, duplicando la
   matemática de `payments.js` (deuda fase 4). El test de float-drift ancla ese cálculo.
 - Botón eliminar de `PaymentLinesEditor` con 1 sola línea: `visibility:hidden` →
