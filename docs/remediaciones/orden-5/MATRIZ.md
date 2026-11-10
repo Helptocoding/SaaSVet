@@ -4,7 +4,7 @@ Se actualiza al cerrar cada entrega. Estado permitido: `PENDIENTE`, `EN_CURSO` o
 
 | ID | Entregas | Estado | Commit(s) | Evidencia |
 |---|---|---|---|---|
-| F01 | E00, E05–E08, E12 | PENDIENTE | | |
+| F01 | E00, E05–E08, E12 | EN_CURSO | | |
 | C5 | E02 | PENDIENTE | | |
 | C4 | E02, E03 | PENDIENTE | | |
 | C3 | E04 | PENDIENTE | | |
@@ -17,7 +17,7 @@ Se actualiza al cerrar cada entrega. Estado permitido: `PENDIENTE`, `EN_CURSO` o
 
 | Entrega | Errores esperados | Errores reales | Commit |
 |---|---|---|---|
-| E00 | 61 | | |
+| E00 | 61 | 61 | ver commit E00 |
 | E01 | 61 | | |
 | E02 | 61 | | |
 | E03 | 61 | | |
