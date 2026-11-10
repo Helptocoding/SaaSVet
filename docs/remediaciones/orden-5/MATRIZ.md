@@ -1,0 +1,32 @@
+# Estado de los ocho IDs
+
+Se actualiza al cerrar cada entrega. Estado permitido: `PENDIENTE`, `EN_CURSO` o `IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE`.
+
+| ID | Entregas | Estado | Commit(s) | Evidencia |
+|---|---|---|---|---|
+| F01 | E00, E05–E08, E12 | PENDIENTE | | |
+| C5 | E02 | PENDIENTE | | |
+| C4 | E02, E03 | PENDIENTE | | |
+| C3 | E04 | PENDIENTE | | |
+| C6 | E01 | PENDIENTE | | |
+| F04 | E01 | PENDIENTE | | |
+| F03 | E09, E10 | PENDIENTE | | |
+| F02 | E11 | PENDIENTE | | |
+
+## Avance de lint
+
+| Entrega | Errores esperados | Errores reales | Commit |
+|---|---|---|---|
+| E00 | 61 | | |
+| E01 | 61 | | |
+| E02 | 61 | | |
+| E03 | 61 | | |
+| E04 | 59 | | |
+| E05 | 50 | | |
+| E06 | 34 | | |
+| E07 | 18 | | |
+| E08 | 0 | | |
+| E09 | 0 | | |
+| E10 | 0 | | |
+| E11 | 0 | | |
+| E12 | 0 | | |
