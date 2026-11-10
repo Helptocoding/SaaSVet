@@ -4,7 +4,7 @@ import { PAYMENT_METHODS, paymentSummary } from "../utils/payments";
 /* ── PaymentLinesEditor — pago único o split, total exacto (ADR p30 rev) ──
    Componente compartido: modal Registrar Pago (Cobros), devoluciones y POS.
    No duplicar editores de pago por módulo. */
-const PaymentLinesEditor = ({ total, allowPartial, allowChange = false, lines, setLines, disabled }) => {
+const PaymentLinesEditor = ({ total, allowChange = false, lines, setLines, disabled }) => {
     const { sum, remaining, change } = paymentSummary(lines, total);
     const setLine = (i, patch) => setLines(prev => prev.map((l, idx) => idx === i ? { ...l, ...patch } : l));
     const addLine = () => setLines(prev => [...prev, { method: "card", amount: remaining > 0 ? remaining.toFixed(2) : "" }]);
@@ -48,14 +48,9 @@ const PaymentLinesEditor = ({ total, allowPartial, allowChange = false, lines, s
                         ? `Falta $${remaining.toFixed(2)}`
                         : remaining < 0
                             ? (allowChange ? `Cambio $${change.toFixed(2)}` : `Excede $${change.toFixed(2)}`)
-                            : (allowPartial ? "Pago completo" : "Exacto")}
+                            : "Exacto"}
                 </span>
             </div>
-            {allowPartial && remaining > 0 && sum > 0 && (
-                <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
-                    Pago parcial: la factura quedará confirmada con saldo pendiente.
-                </p>
-            )}
             {allowChange && remaining < 0 && (
                 <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
                     Se cobra el total ${Number(total).toFixed(2)}; el cambio ${change.toFixed(2)} no se registra.

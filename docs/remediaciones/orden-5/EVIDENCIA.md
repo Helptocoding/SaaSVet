@@ -53,6 +53,21 @@ Observaciones sin cambio: etiquetas `Login` y claves `admin_username` intactas.
 Límites: `paymentLinesValid` no se tocó (rechaza negativos y suma solo positivos). La suite completa no se corrió.
 Observaciones sin cambio: C4 queda EN_CURSO hasta E03.
 
+## E03 — Retirar `allowPartial` (2026-11-10)
+
+| Comando | Resultado |
+|---|---|
+| `vitest run src/utils/payments.test.js src/components/PaymentLinesEditor.test.jsx --reporter=dot` | 44/44 pasan |
+| `eslint` de `payments.js`, `PaymentLinesEditor.jsx`, `pos/PaymentPanel.jsx`, `pages/billing.jsx` | sin errores |
+| `eslint .` | 61 errores, 19 warnings (coincide) |
+| `pnpm run build` | OK (built in 10.26s) |
+| búsqueda de `allowPartial` / `payAllowPartial` en `frontend/src` | 0 resultados |
+
+Callers de `paymentLinesValid` tras el cambio de firma: `PaymentPanel.jsx` `(lines, total, true)`, `billing.jsx` `RefundModal` `(lines, total)` y `Billing` `(lines, total, true)`. El cambio en efectivo sigue activo en POS y Registrar Pago.
+Cambio de aserciones: se elimina el test «pago insuficiente permitiendo parcial» y se añade «pago insuficiente nunca es válido, aunque se permita cambio». Es el único cambio de aserciones permitido del orden.
+Límites: la suite completa no se corrió.
+Observaciones sin cambio: ninguna.
+
 Plantilla por entrega:
 
 ```markdown

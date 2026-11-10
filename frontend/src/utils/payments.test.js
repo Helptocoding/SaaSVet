@@ -57,54 +57,54 @@ describe("buildPaymentLines — líneas a enviar al backend (ADR p30)", () => {
 
 describe("paymentLinesValid — habilita/bloquea el botón de cobrar", () => {
   it("total exacto sin parciales → válido", () => {
-    expect(paymentLinesValid([{ method: "cash", amount: "100" }], 100, false)).toBe(true);
+    expect(paymentLinesValid([{ method: "cash", amount: "100" }], 100)).toBe(true);
   });
 
-  it("pago insuficiente sin permitir parcial → inválido (ADR p30: sin parciales)", () => {
-    expect(paymentLinesValid([{ method: "cash", amount: "50" }], 100, false)).toBe(false);
-  });
-
-  it("pago insuficiente permitiendo parcial → válido (refund parcial / casos futuros)", () => {
-    expect(paymentLinesValid([{ method: "cash", amount: "50" }], 100, true)).toBe(true);
+  it("pago insuficiente → inválido (ADR p30: sin parciales)", () => {
+    expect(paymentLinesValid([{ method: "cash", amount: "50" }], 100)).toBe(false);
   });
 
   it("sobrepago sin permitir cambio → inválido", () => {
-    expect(paymentLinesValid([{ method: "cash", amount: "150" }], 100, false, false)).toBe(false);
+    expect(paymentLinesValid([{ method: "cash", amount: "150" }], 100, false)).toBe(false);
   });
 
   it("sobrepago permitiendo cambio (efectivo) → válido", () => {
-    expect(paymentLinesValid([{ method: "cash", amount: "150" }], 100, false, true)).toBe(true);
+    expect(paymentLinesValid([{ method: "cash", amount: "150" }], 100, true)).toBe(true);
   });
 
   it("todas las líneas en cero → inválido (no hay monto positivo)", () => {
-    expect(paymentLinesValid([{ method: "cash", amount: "0" }], 100, false)).toBe(false);
+    expect(paymentLinesValid([{ method: "cash", amount: "0" }], 100)).toBe(false);
   });
 
   it("array de líneas vacío → inválido", () => {
-    expect(paymentLinesValid([], 100, false)).toBe(false);
+    expect(paymentLinesValid([], 100)).toBe(false);
   });
 
   it("cualquier monto negativo → inválido", () => {
-    expect(paymentLinesValid([{ method: "cash", amount: "-10" }], 100, true)).toBe(false);
+    expect(paymentLinesValid([{ method: "cash", amount: "-10" }], 100)).toBe(false);
+  });
+
+  it("pago insuficiente nunca es válido, aunque se permita cambio", () => {
+    expect(paymentLinesValid([{ method: "cash", amount: "50" }], 100, true)).toBe(false);
   });
 
   it("monto negativo se bloquea ANTES que la rama de cambio (invariante de dinero)", () => {
     // El guard de negativo corre antes que allowChange: una línea negativa nunca
     // pasa, ni siquiera con cambio habilitado (ej. [+200, -100] sumando 100).
     expect(
-      paymentLinesValid([{ method: "cash", amount: "200" }, { method: "card", amount: "-100" }], 100, false, true)
+      paymentLinesValid([{ method: "cash", amount: "200" }, { method: "card", amount: "-100" }], 100, true)
     ).toBe(false);
   });
 
   it("split de varios métodos que suma exacto → válido", () => {
     expect(
-      paymentLinesValid([{ method: "cash", amount: "60" }, { method: "card", amount: "40" }], 100, false)
+      paymentLinesValid([{ method: "cash", amount: "60" }, { method: "card", amount: "40" }], 100)
     ).toBe(true);
   });
 
   it("líneas positivas + ceros que suman exacto → válido (los ceros se ignoran)", () => {
     expect(
-      paymentLinesValid([{ method: "cash", amount: "100" }, { method: "card", amount: "0" }], 100, false)
+      paymentLinesValid([{ method: "cash", amount: "100" }, { method: "card", amount: "0" }], 100)
     ).toBe(true);
   });
 });

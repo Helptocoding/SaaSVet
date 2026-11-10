@@ -10,12 +10,11 @@ import PaymentLinesEditor from "./PaymentLinesEditor";
 // useState reproduce ese contrato para observar el comportamiento real (footer, inputs)
 // tras la interacción — sin espiar estado interno ni mockear payments.js.
 
-function Host({ total = 500, allowPartial = false, allowChange = false, initial, disabled = false }) {
+function Host({ total = 500, allowChange = false, initial, disabled = false }) {
   const [lines, setLines] = useState(initial ?? [{ method: "cash", amount: "" }]);
   return (
     <PaymentLinesEditor
       total={total}
-      allowPartial={allowPartial}
       allowChange={allowChange}
       lines={lines}
       setLines={setLines}
@@ -93,7 +92,7 @@ describe("PaymentLinesEditor — captura de cantidad", () => {
 describe("PaymentLinesEditor — pago exacto", () => {
   it("500 en efectivo sobre total 500 → 'Exacto', sin faltante ni cambio", async () => {
     const user = userEvent.setup();
-    render(<Host total={500} allowPartial={false} />);
+    render(<Host total={500} />);
     await user.type(amountInputs()[0], "500");
 
     expect(screen.getByText("Exacto")).toBeInTheDocument();

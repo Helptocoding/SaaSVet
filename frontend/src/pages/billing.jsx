@@ -88,7 +88,7 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
         Number(r.quantity) > 0 && Number(r.quantity) <= r.maxQty + 1e-9 &&
         Number(r.amount) >= 0 && Number(r.amount) <= r.maxAmount + 1e-9
     );
-    const refundValid = paymentLinesValid(refundLines, refundTotal, false);
+    const refundValid = paymentLinesValid(refundLines, refundTotal);
     const canSubmit = creditValid && refundValid && refundTotal > 0 && !!reasonCode && !submitting;
 
     const matchRefundToTotal = () =>
@@ -207,7 +207,6 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
                     </div>
                     <PaymentLinesEditor
                         total={refundTotal}
-                        allowPartial={false}
                         lines={refundLines}
                         setLines={setRefundLines}
                         disabled={submitting}
@@ -1011,7 +1010,6 @@ const Billing = () => {
     const payTarget = selectedInvoice
         ? Number(isCheckout ? selectedInvoice.total : selectedInvoice.remaining_balance)
         : 0;
-    const payAllowPartial = false;
     // Solo bloquea si la org exige caja Y sabemos que está cerrada (no en carga).
     const cashBlocked = requireCash && cashSession === null;
     const checkoutAction = (name) => selectedInvoice?.actions?.[name] || null;
@@ -1335,7 +1333,6 @@ const Billing = () => {
                                     </label>
                                     <PaymentLinesEditor
                                         total={payTarget}
-                                        allowPartial={payAllowPartial}
                                         allowChange={true}
                                         lines={payLines}
                                         setLines={setPayLines}
@@ -1348,7 +1345,7 @@ const Billing = () => {
                                         className="btn btn-primary btn-sm"
                                         style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }}
                                         onClick={submitPayment}
-                                        disabled={paying || !paymentLinesValid(payLines, payTarget, payAllowPartial, true)}
+                                        disabled={paying || !paymentLinesValid(payLines, payTarget, true)}
                                     >
                                         {paying ? <Icon.Loader s={14} /> : "Registrar Pago"}
                                     </button>

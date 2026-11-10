@@ -36,7 +36,6 @@ const PaymentPanel = ({
                     </div>
                     <PaymentLinesEditor
                         total={Number(invoice.total)}
-                        allowPartial={false}
                         allowChange={true}
                         lines={lines}
                         setLines={setLines}
@@ -51,7 +50,7 @@ const PaymentPanel = ({
                         className={`btn btn-primary btn-lg ${s.chargeBtn}`}
                         style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }}
                         onClick={onConfirmCharge}
-                        disabled={processing || cashBlocked || payBlocked || !paymentLinesValid(lines, Number(invoice.total), false, true)}
+                        disabled={processing || cashBlocked || payBlocked || !paymentLinesValid(lines, Number(invoice.total), true)}
                         title={cashBlocked ? "Abre una caja para cobrar" : payBlockedTitle}
                     >
                         {processing ? <Icon.Loader s={16} /> : `Confirmar cobro $${fmt(invoice.total)}`}

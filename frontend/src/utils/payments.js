@@ -17,12 +17,6 @@ export const paymentSummary = (lines, total) => {
     return { sum, remaining, change: remaining < 0 ? Math.abs(remaining) : 0 };
 };
 
-// Valida líneas de pago contra el total.
-//  - allowPartial=true  → admite pagar menos (no se usa para cobros nuevos: ADR p30
-//    rev exige total exacto siempre). Se conserva para casos futuros / refund parcial.
-//  - allowChange=true   → admite efectivo recibido MAYOR al total; el excedente es
-//    cambio, no se registra. Aplica a TODO cobro (ADR p30 rev).
-//  - ambos false        → exige monto exacto (refund).
 // Construye las payment_lines a enviar al backend (ADR p30 rev): si lo
 // ingresado supera el total (cambio en efectivo, no se persiste), se registra
 // SOLO el total con el método de la primera línea; si no, se envían las
@@ -36,13 +30,15 @@ export const buildPaymentLines = (lines, total) => {
         .map(l => ({ method: l.method, amount: Number(l.amount).toFixed(2) }));
 };
 
-export const paymentLinesValid = (lines, total, allowPartial, allowChange = false) => {
+// Valida líneas de pago contra el total. Toda factura exige total exacto (ADR p30 rev).
+//  - allowChange=true  → admite recibir MÁS que el total; el excedente es cambio y no se registra.
+//  - allowChange=false → exige monto exacto (devoluciones).
+export const paymentLinesValid = (lines, total, allowChange = false) => {
     if (lines.some(l => Number(l.amount) < 0)) return false;
     const positive = lines.map(l => Number(l.amount)).filter(n => n > 0);
     if (positive.length === 0) return false;
     const sum = Number(positive.reduce((a, n) => a + n, 0).toFixed(2));
     const t = Number(Number(total).toFixed(2));
     if (sum > t) return allowChange;          // sobrepago solo válido si se da cambio
-    if (!allowPartial && sum !== t) return false;
-    return true;
+    return sum === t;
 };
