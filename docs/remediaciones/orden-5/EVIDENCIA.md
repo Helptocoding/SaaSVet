@@ -40,6 +40,19 @@ Observaciones sin cambio: ninguna.
 Límites: la suite completa no se corrió; el cambio es de comentario y dos textos.
 Observaciones sin cambio: etiquetas `Login` y claves `admin_username` intactas.
 
+## E02 — C4 y C5: matemática de pagos y nombres accesibles (2026-11-10)
+
+| Comando | Resultado |
+|---|---|
+| `vitest run src/utils/payments.test.js src/components/PaymentLinesEditor.test.jsx --reporter=dot` | 44/44 pasan (5 nuevas en `paymentSummary`, 1 de nombres accesibles) |
+| `eslint src/utils/payments.js src/components/PaymentLinesEditor.jsx` | sin salida (exit 0) |
+| `eslint .` | 61 errores, 19 warnings (coincide) |
+| `pnpm run build` | OK (built in 14.00s) |
+| `git diff` de `PaymentLinesEditor.test.jsx` | solo cambia el helper `removeButtons` y se añade un `describe`; ninguna aserción existente cambió |
+
+Límites: `paymentLinesValid` no se tocó (rechaza negativos y suma solo positivos). La suite completa no se corrió.
+Observaciones sin cambio: C4 queda EN_CURSO hasta E03.
+
 Plantilla por entrega:
 
 ```markdown

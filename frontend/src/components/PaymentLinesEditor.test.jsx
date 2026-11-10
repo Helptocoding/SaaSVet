@@ -28,9 +28,7 @@ function Host({ total = 500, allowPartial = false, allowChange = false, initial,
 const methodSelects = () => screen.getAllByRole("combobox");
 const amountInputs = () => screen.getAllByRole("spinbutton"); // input type=number → spinbutton
 const addButton = () => screen.getByRole("button", { name: /otro método/i });
-// Botones de basura: sin nombre accesible (solo icono) → se identifican por exclusión.
-const removeButtons = () =>
-  screen.getAllByRole("button").filter((b) => !/otro método/i.test(b.textContent || ""));
+const removeButtons = () => screen.queryAllByRole("button", { name: /quitar método/i });
 
 describe("PaymentLinesEditor — render inicial", () => {
   it("muestra una línea con los 4 métodos de pago del catálogo (payments.js real)", () => {
@@ -234,6 +232,19 @@ describe("PaymentLinesEditor — valores inválidos (comportamiento existente, s
     render(<Host total={500} initial={[{ method: "cash", amount: "-50" }]} />);
     expect(screen.getByText(/Ingresado \$-50\.00/)).toBeInTheDocument();
     expect(screen.getByText("Falta $550.00")).toBeInTheDocument();
+  });
+});
+
+describe("PaymentLinesEditor — nombres accesibles", () => {
+  it("cada control de una línea tiene nombre accesible propio", async () => {
+    const user = userEvent.setup();
+    render(<Host total={500} />);
+    await user.click(addButton());
+
+    expect(screen.getByRole("combobox", { name: "Método de pago 1" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Método de pago 2" })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: "Monto del método 2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Quitar método 1" })).toBeEnabled();
   });
 });
 

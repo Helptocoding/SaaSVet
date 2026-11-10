@@ -6,6 +6,17 @@ export const PAYMENT_METHODS = [
     { value: "other", label: "Otro" },
 ];
 
+const sumLineAmounts = (lines) =>
+    Number(lines.reduce((a, l) => a + (Number(l.amount) || 0), 0).toFixed(2));
+
+// Resumen visual de las líneas contra el total. Única fuente de sum/remaining/change.
+// Suma todas las líneas, incluso negativas: la validez la decide paymentLinesValid.
+export const paymentSummary = (lines, total) => {
+    const sum = sumLineAmounts(lines);
+    const remaining = Number((Number(total) - sum).toFixed(2));
+    return { sum, remaining, change: remaining < 0 ? Math.abs(remaining) : 0 };
+};
+
 // Valida líneas de pago contra el total.
 //  - allowPartial=true  → admite pagar menos (no se usa para cobros nuevos: ADR p30
 //    rev exige total exacto siempre). Se conserva para casos futuros / refund parcial.
@@ -18,7 +29,7 @@ export const PAYMENT_METHODS = [
 // líneas > 0 normalizadas a 2 decimales. Única fuente — no copiar por módulo.
 export const buildPaymentLines = (lines, total) => {
     const target = Number(Number(total).toFixed(2));
-    const sum = Number(lines.reduce((a, l) => a + (Number(l.amount) || 0), 0).toFixed(2));
+    const sum = sumLineAmounts(lines);
     if (sum > target) return [{ method: lines[0].method, amount: target.toFixed(2) }];
     return lines
         .filter(l => Number(l.amount) > 0)

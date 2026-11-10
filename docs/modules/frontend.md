@@ -1674,8 +1674,6 @@ blocking (Fase D).
 - `mapFieldErrors` aplana cada error anidado a **dos** claves (dotted
   `presentation_input.sale_price` + plana `sale_price`); ambas load-bearing
   (`inventory.jsx` las consume como fallback).
-- `PaymentLinesEditor` recalcula `sum`/`remaining`/`change` **inline**, duplicando la
-  matemática de `payments.js` (deuda fase 4). El test de float-drift ancla ese cálculo.
 - Botón eliminar de `PaymentLinesEditor` con 1 sola línea: `visibility:hidden` →
   queda **fuera** del árbol de accesibilidad (no matchea `getAllByRole('button')`).
   Es el contrato: el usuario no puede borrar el único método de pago.

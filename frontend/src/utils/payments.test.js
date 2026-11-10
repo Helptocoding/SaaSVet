@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildPaymentLines, paymentLinesValid, PAYMENT_METHODS } from "./payments";
+import { buildPaymentLines, paymentLinesValid, paymentSummary, PAYMENT_METHODS } from "./payments";
 
 // Reglas de dinero (ADR p30 rev): toda factura se cobra por el TOTAL EXACTO.
 // No hay pagos parciales en cobros nuevos. El sobrepago en efectivo es "cambio":
@@ -112,5 +112,28 @@ describe("paymentLinesValid — habilita/bloquea el botón de cobrar", () => {
 describe("PAYMENT_METHODS — catálogo (espejo del backend)", () => {
   it("expone los 4 métodos contables conocidos", () => {
     expect(PAYMENT_METHODS.map((m) => m.value)).toEqual(["cash", "card", "transfer", "other"]);
+  });
+});
+
+describe("paymentSummary — resumen visual de las líneas", () => {
+  it("monto vacío cuenta como cero", () => {
+    expect(paymentSummary([{ method: "cash", amount: "" }], 500)).toEqual({ sum: 0, remaining: 500, change: 0 });
+  });
+
+  it("normaliza la deriva de punto flotante", () => {
+    const lines = [{ method: "cash", amount: "199.99" }, { method: "card", amount: "300.01" }];
+    expect(paymentSummary(lines, 500)).toEqual({ sum: 500, remaining: 0, change: 0 });
+  });
+
+  it("calcula el cambio cuando se recibe de más", () => {
+    expect(paymentSummary([{ method: "cash", amount: "600" }], 500)).toEqual({ sum: 600, remaining: -100, change: 100 });
+  });
+
+  it("una línea negativa entra en la suma: la validez no se decide aquí", () => {
+    expect(paymentSummary([{ method: "cash", amount: "-50" }], 500)).toEqual({ sum: -50, remaining: 550, change: 0 });
+  });
+
+  it("acepta el total como texto", () => {
+    expect(paymentSummary([{ method: "cash", amount: "100" }], "100.00").remaining).toBe(0);
   });
 });
