@@ -193,3 +193,17 @@ Plantilla por entrega:
 Límites: ...
 Observaciones sin cambio: ...
 ```
+
+## E11 — F02: dividir `billing.jsx` (2026-11-11)
+
+| Comando | Resultado |
+|---|---|
+| `node verbatim.cjs` (scratchpad, no versionado) | `RefundModal.jsx IDENTICO`, `DispenseLotSelect.jsx IDENTICO`, `PrescriptionDispensePanel.jsx IDENTICO` |
+| `vitest run src/components/billing` | 3 archivos, 14/14 pasan |
+| `eslint src/pages/billing.jsx src/components/billing` | 0 errores, 0 warnings |
+| `eslint .` | 0 errores, 14 warnings |
+| `pnpm run build` | OK |
+
+Cambios: `billing.jsx` pierde 471 líneas; subcomponentes movidos sin cambios a `components/billing/` y `REASON_CODES`/`REASON_LABELS` a `refundReasons.js` (con `export`). Quitados de `billing.jsx` los imports `refundInvoice`, `dispensePrescription`, `decidePrescriptionItem` y `authoritativePresentationMax`.
+Observaciones sin cambio: en `decline`, `const updated = await toast.promise(` usa el patrón desaconsejado de sonner v2; `handleDispensed` ignora su argumento, así que no causa daño. Se dejó igual. `suggestions.map(s => ...)` tapa el import `s` del CSS; correcto, sin renombrar.
+Límites: sin verificación visual en navegador. Suite completa no ejecutada en esta entrega (solo dirigidas, lint y build).

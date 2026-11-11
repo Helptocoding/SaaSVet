@@ -11,7 +11,7 @@ Se actualiza al cerrar cada entrega. Estado permitido: `PENDIENTE`, `EN_CURSO` o
 | C6 | E01 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E01 | EVIDENCIA.md §E01 |
 | F04 | E01 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E01 | EVIDENCIA.md §E01 |
 | F03 | E09, E09b, E10 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commits E09, E09b, E10 | EVIDENCIA.md §E09, §E09b, §E10 |
-| F02 | E11 | PENDIENTE | | |
+| F02 | E11 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E11 | EVIDENCIA.md §E11 |
 
 ## Avance de lint
 
@@ -29,5 +29,5 @@ Se actualiza al cerrar cada entrega. Estado permitido: `PENDIENTE`, `EN_CURSO` o
 | E09 | 0 | 0 | ver commit E09 |
 | E09b | 0 | 0 | ver commit E09b |
 | E10 | 0 | 0 | ver commit E10 |
-| E11 | 0 | | |
+| E11 | 0 | 0 | ver commit E11 |
 | E12 | 0 | | |

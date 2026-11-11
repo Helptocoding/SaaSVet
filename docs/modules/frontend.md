@@ -1683,5 +1683,5 @@ blocking (Fase D).
 
 ### Pendiente (siguientes fases)
 
-- C: extraer la lógica pura restante (billing sub-componentes, dedup sum/remaining).
+- C: extraer la lógica pura restante (dedup sum/remaining). Los subcomponentes de billing (`RefundModal`, `DispenseLotSelect`, `PrescriptionDispensePanel`, `refundReasons`) ya viven en `components/billing/` con pruebas de caracterización.
 - D: triar los ~6 errores `react-hooks` (lint) para pasar lint a blocking.
