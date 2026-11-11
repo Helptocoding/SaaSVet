@@ -108,6 +108,19 @@ Cambios: 5 archivos de dashboard leen colores CSS en el inicializador de `useSta
 Observaciones: los warnings bajaron de 19 a 17 por quitar los `useLayoutEffect` de colores. `readCssVar` sigue duplicado por decisión del prompt.
 Límites: suite completa no corrida.
 
+## E07 — Agenda, inventario, mascota y equipo (2026-11-10)
+
+| Comando | Resultado |
+|---|---|
+| `eslint` de los 4 archivos | 0 errores, 5 warnings `exhaustive-deps` (sin tocar) |
+| `eslint .` | 18 errores, 16 warnings (coincide) |
+| `vitest run inventory.order, inventory.receptions, api/appointments, SpotlightTour` | 4 archivos, 22/22 pasan |
+| `pnpm run build` | OK |
+
+Cambios: eliminado el componente `Appointments` (sin importadores; precondición verificada), `ApptBadge` y `apptHour` de `appointments.jsx`; `AppointmentList` reinicia página al cambiar `appointments` con estado derivado en render; `unitChoices`/`unitsLoaded` y su efecto fuera de `inventory.jsx` (`getUnitChoices` sigue en la API); `loadAll` y `fetchStaff` como declaraciones de función; supresiones justificadas; dos frases en `docs/modules/frontend.md`.
+Observaciones: sin imports sin uso tras el borrado.
+Límites: suite completa no corrida.
+
 Plantilla por entrega:
 
 ```markdown

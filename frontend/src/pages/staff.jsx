@@ -50,7 +50,7 @@ const Staff = () => {
         }
     }, [initializing, user]);
 
-    const fetchStaff = async () => {
+    async function fetchStaff() {
         try {
             setLoading(true);
             const data = await getStaff();

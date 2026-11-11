@@ -7,7 +7,7 @@ import { toList } from "../utils/toList";
 import { stockStatus, productStockQty, productStockValue, compareInventoryProducts, computeInitialStock, fmt, fmtCur } from "../utils/inventory";
 import {
     getProducts, createProduct, updateProduct, deleteProduct,
-    adjustStock, getUnitChoices, createPresentation, updatePresentation,
+    adjustStock, createPresentation, updatePresentation,
     getLotAlerts, getReceptions, receiveStock,
 } from "../api/inventory";
 import { useAuth } from "../auth/authContext";
@@ -175,8 +175,6 @@ const Inventory = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const [unitChoices, setUnitChoices] = useState([]);
-    const [unitsLoaded, setUnitsLoaded] = useState(false);
 
     const [filterCategory, setFilterCategory] = useState("");
     const [searchText, setSearchText] = useState("");
@@ -260,13 +258,7 @@ const Inventory = () => {
 
     useEffect(() => { if (token) loadAll(); }, [token]);
 
-    useEffect(() => {
-        getUnitChoices()
-            .then(data => { setUnitChoices(data); setUnitsLoaded(true); })
-            .catch(() => setUnitsLoaded(true));
-    }, []);
-
-    const loadAll = async () => {
+    async function loadAll() {
         setLoading(true);
         try {
             setProducts(toList(await getProducts()));
@@ -353,6 +345,7 @@ const Inventory = () => {
         if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") {
             displayedTotalValRef.current = nextValue;
             hasAnimatedTotalValRef.current = true;
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- entorno sin requestAnimationFrame: fija el valor final sin animar
             setIsTotalValAnimating(false);
             setAnimatedTotalVal(nextValue);
             return undefined;
@@ -432,6 +425,7 @@ const Inventory = () => {
     useEffect(() => {
         if (wizardMode !== "multi" || wizardEditing) return;
         presSecondAutoRef.current = { nameEdited: false, cfEdited: false };
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- inicializa la segunda presentación al entrar en modo multi
         setSalesPres(prev => prev.length < 2 ? [...prev, newSalesPres()] : prev);
     }, [wizardMode, wizardEditing]);
 

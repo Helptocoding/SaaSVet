@@ -24,6 +24,7 @@ const PetDetail = () => {
     const [showRecordDetail, setShowRecordDetail] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/immutability -- se invoca dentro del efecto, después de inicializar la constante
         if (token && id) loadAll();
     }, [token, id]);
 
@@ -47,6 +48,7 @@ const PetDetail = () => {
 
     const calcAge = (birthDate) => {
         if (!birthDate) return null;
+        // eslint-disable-next-line react-hooks/purity -- edad en años o meses; la precisión entre renders no importa
         const diff = Date.now() - new Date(birthDate).getTime();
         const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
         const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30.44));

@@ -1464,8 +1464,8 @@ Reglas (no negociables — voz de producto):
 - **EN VIVO sobre la UI real, no un modal de mocks.** El recorrido opera la pantalla real:
   abre el formulario de nueva cita, y el **modal de detalle REAL** de la cita.
 - **Cita demo Luna NO persistida**: `makeDemoLuna()` (`public_id="__demo__"`) se inyecta
-  SOLO en el grid local (`tourDemoAppt` → merge en `weekAppts`, **no** en las stats,
-  **nunca** al backend) para que aparezca como `ApptBadge` real y abra el `DetailModal`
+  SOLO en el grid local (`tourDemoAppt` → merge en `visibleAppointments`, **no** en las stats,
+  **nunca** al backend) para que aparezca como evento real del calendario y abra el `DetailModal`
   real. Se limpia en `skip`/`finish` (`setViewAppt(null)` + `setTourDemoAppt(null)` +
   `setSelectedSlot(null)`). Resuelve el problema de clínica vacía sin escribir datos.
 - **Contar una HISTORIA, no listar features.** Narra la visita de un paciente (**Luna**)
