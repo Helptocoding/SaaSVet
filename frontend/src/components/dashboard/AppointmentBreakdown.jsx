@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../icons";
+import { statusLabel } from "../../utils/appointmentStatus";
 
 const PILL_CLASS = {
   scheduled:   "pill-scheduled",
@@ -10,22 +11,13 @@ const PILL_CLASS = {
   no_show:     "pill-no_show",
 };
 
-const STATUS_LABELS = {
-  scheduled:   "Programada",
-  confirmed:   "Confirmada",
-  in_progress: "En consulta",
-  done:        "Completada",
-  canceled:    "Cancelada",
-  no_show:     "No se presentó",
-};
-
 const AppointmentBreakdown = ({ byStatus, totals, statusOrder, selectedStatus }) => {
   const navigate = useNavigate();
   if (!statusOrder?.length) return null;
 
   const grandTotal = Object.values(totals || {}).reduce((a, b) => a + b, 0);
   const title = selectedStatus
-    ? `${STATUS_LABELS[selectedStatus]} (${totals[selectedStatus] || 0})`
+    ? `${statusLabel(selectedStatus)} (${totals[selectedStatus] || 0})`
     : `Agenda (${grandTotal})`;
 
   return (
@@ -48,7 +40,7 @@ const AppointmentBreakdown = ({ byStatus, totals, statusOrder, selectedStatus })
           <div key={status}>
             <div className="breakdown-group-head">
               <span className={`pill ${PILL_CLASS[status] || "pill-scheduled"}`}>
-                {STATUS_LABELS[status]} ({total})
+                {statusLabel(status)} ({total})
               </span>
             </div>
             {items.map((a) => (

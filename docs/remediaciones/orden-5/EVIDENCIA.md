@@ -137,6 +137,18 @@ Warnings finales por regla: `react-hooks/exhaustive-deps` 13; sin regla (aviso d
 Cambios: comentarios en los `catch` vacíos de config; import sin uso de `useAuth` fuera de `config/index.jsx`; `PreviewStep` con selección inicial perezosa (sin efecto) y `ReviewPanel` sin prop `labelByKey`; `loadAllData` y `loadRecords` como declaraciones de función; supresiones justificadas; dos directivas sin uso eliminadas.
 Límites: ninguno.
 
+## E09 — badges de estados de cita (2026-11-11)
+
+| Comando | Resultado |
+|---|---|
+| `vitest run StatusBadge AppointmentBreakdown petDetail` | 3 archivos, 10/10 pasan |
+| `eslint` (archivos de la entrega) | 0 errores, 1 warning `exhaustive-deps` preexistente en `petDetail.jsx` |
+| `eslint .` | 0 errores, 14 warnings |
+| `pnpm run build` | OK |
+
+Cambios: `petDetail` usa `StatusBadge` (corrige badge vacío en `confirmed`, `in_progress`, `no_show`); `AppointmentBreakdown` usa `statusLabel`; pruebas nuevas; frase en `docs/modules/frontend.md`.
+Límites: F03 sigue EN_CURSO hasta E10.
+
 Plantilla por entrega:
 
 ```markdown
