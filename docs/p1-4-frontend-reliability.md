@@ -187,7 +187,7 @@ Cada flecha = PR independiente.
 **Deseable (no bloqueante):**
 - [ ] billing.jsx sub-componentes extraídos.
 - [ ] duplicación `sum/remaining` eliminada.
-- [ ] 42 errores react-hooks triados → lint blocking.
+- [x] 42 errores react-hooks triados → lint blocking. (orden 5, 2026-11)
 
 **Señal de éxito:** un dev cambia un campo en billing/inventory, corre `pnpm test`, y si rompe la regla de cobro/stock el test falla **antes** del merge.
 

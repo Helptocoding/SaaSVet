@@ -4,7 +4,7 @@ Se actualiza al cerrar cada entrega. Estado permitido: `PENDIENTE`, `EN_CURSO` o
 
 | ID | Entregas | Estado | Commit(s) | Evidencia |
 |---|---|---|---|---|
-| F01 | E00, E05–E08, E12 | EN_CURSO | | |
+| F01 | E00, E05–E08, E12 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | 553382f, 05ede6b, 6ee4f30, cfd87d8, 57a5248, ver commit E12 | EVIDENCIA.md §E00, §E05–§E08, §E12 |
 | C5 | E02 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E02 | EVIDENCIA.md §E02 |
 | C4 | E02, E03 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commits E02, E03 | EVIDENCIA.md §E02, §E03 |
 | C3 | E04 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E04 | EVIDENCIA.md §E04 |
@@ -30,4 +30,4 @@ Se actualiza al cerrar cada entrega. Estado permitido: `PENDIENTE`, `EN_CURSO` o
 | E09b | 0 | 0 | ver commit E09b |
 | E10 | 0 | 0 | ver commit E10 |
 | E11 | 0 | 0 | ver commit E11 |
-| E12 | 0 | | |
+| E12 | 0 | 0 | ver commit E12 |

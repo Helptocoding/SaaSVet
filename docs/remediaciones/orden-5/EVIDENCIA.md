@@ -207,3 +207,22 @@ Observaciones sin cambio: ...
 Cambios: `billing.jsx` pierde 471 líneas; subcomponentes movidos sin cambios a `components/billing/` y `REASON_CODES`/`REASON_LABELS` a `refundReasons.js` (con `export`). Quitados de `billing.jsx` los imports `refundInvoice`, `dispensePrescription`, `decidePrescriptionItem` y `authoritativePresentationMax`.
 Observaciones sin cambio: en `decline`, `const updated = await toast.promise(` usa el patrón desaconsejado de sonner v2; `handleDispensed` ignora su argumento, así que no causa daño. Se dejó igual. `suggestions.map(s => ...)` tapa el import `s` del CSS; correcto, sin renombrar.
 Límites: sin verificación visual en navegador. Suite completa no ejecutada en esta entrega (solo dirigidas, lint y build).
+
+## E12 — gate de CI, salvaguarda de supresiones y cierre (2026-11-11)
+
+| Comando | Resultado |
+|---|---|
+| `eslint . --quiet; echo "exit=$?"` | `exit=0` (antes y después) |
+| `eslint . \| tail -3` | `14 problems (0 errors, 14 warnings)` |
+| `pnpm run build` | OK |
+| `pnpm run smoke:urls` | `5/5 gates verde, 0 matches` |
+| `vitest run --reporter=dot` (suite completa) | 77 archivos pasan, 1 falla; 843/846 tests. Los 3 fallos son `Test timed out in 5000ms` en `src/pages/inbox/index.test.jsx` |
+| `vitest run src/pages/inbox/index.test.jsx src/test/lintDisableReason.test.js` | 2 archivos, 94/94 pasan (los timeouts eran carga, no regresión) |
+| `git diff codex/e4-capacity-scheduling --stat -- backend` | sin cambios |
+
+Cambios: `ci.yml` job `frontend` con lint bloqueante (sin `continue-on-error`, sin `--max-warnings`); nuevo gate `src/test/lintDisableReason.test.js`; docs `frontend.md`, `p1-4-frontend-reliability.md` y `fase4-prioridad-baja.md` (C3, C4, C5, C6 cerrados).
+Warnings restantes por regla: `react-hooks/exhaustive-deps` 13, sin regla (aviso de `--fix`/directiva) 1. Ninguno bloquea.
+Límites:
+- El gate bloqueante solo queda probado en CI cuando el usuario suba la rama.
+- Sin despliegue.
+- Verificación visual de E06 y E10: no realizada en navegador en esta entrega; solo lint, build y pruebas.

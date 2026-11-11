@@ -1636,9 +1636,8 @@ pnpm test:watch   # vitest (desarrollo)
 ### CI (gate bloqueante)
 
 El job `frontend` corre `pnpm run test` como paso **bloqueante** (ADR/plan P1-4
-Fase A): `.github/workflows/ci.yml`. Un test rojo tumba el merge. `lint` sigue
-siendo advisory (`continue-on-error`); ver el plan para la condición de pasarlo a
-blocking (Fase D).
+Fase A): `.github/workflows/ci.yml`. Un test rojo tumba el merge. `lint` bloquea por errores desde el orden 5; los warnings `exhaustive-deps` no bloquean.
+`src/test/lintDisableReason.test.js` exige motivo en las supresiones de reglas de react-hooks.
 
 ### Convenciones (obligatorias)
 
@@ -1684,4 +1683,3 @@ blocking (Fase D).
 ### Pendiente (siguientes fases)
 
 - C: extraer la lógica pura restante (dedup sum/remaining). Los subcomponentes de billing (`RefundModal`, `DispenseLotSelect`, `PrescriptionDispensePanel`, `refundReasons`) ya viven en `components/billing/` con pruebas de caracterización.
-- D: triar los ~6 errores `react-hooks` (lint) para pasar lint a blocking.

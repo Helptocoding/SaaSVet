@@ -103,7 +103,7 @@ jobs:
         run: python manage.py test --parallel
 
   # ---------------------------------------------------------------------------
-  # FRONTEND (required) — build + unit tests (Vitest) must pass; lint advisory.
+  # FRONTEND (required) — build, unit tests (Vitest) and lint errors must pass.
   # ---------------------------------------------------------------------------
   frontend:
     name: frontend (build + test + smoke)
@@ -134,8 +134,7 @@ jobs:
         run: pnpm run build
       - name: Unit tests — Vitest (blocking)
         run: pnpm run test
-      - name: Lint (warning)
-        continue-on-error: true
+      - name: Lint (blocking on errors)
         run: pnpm run lint
       - name: Smoke - URL construction (blocking)
         run: pnpm run smoke:urls
