@@ -44,6 +44,7 @@ const SpotlightTour = ({ steps, stepIdx, onNext, onPrev, onSkip, onFinish }) => 
   // Localiza el elemento real (con polling: puede montarse tras un side-effect del paso).
   useEffect(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sin objetivo en este paso se limpia la posición medida del DOM
     if (!target) { setRect(null); return undefined; }
     let attempts = 0;
     const poll = () => {

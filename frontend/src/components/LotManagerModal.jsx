@@ -36,6 +36,7 @@ const LotManagerModal = ({ product, onClose, onChanged }) => {
         }
     }, [product.public_id]);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial desde la API al montar
     useEffect(() => { load(); }, [load]);
 
     const afterChange = async () => {

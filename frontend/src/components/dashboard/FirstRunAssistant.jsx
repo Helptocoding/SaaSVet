@@ -193,6 +193,7 @@ const FirstRunAssistant = ({ onComplete }) => {
     // desmontaje/re-montaje del módulo: si al volver la activación YA está completa
     // (no hay paso que renderizar), el latch igual permite disparar el momento final.
     sawStepRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- consume una señal de un solo uso que llega por el estado del router
     setCelebrateKey(step);
     navigate(location.pathname, { replace: true, state: {} });
   }, [location.state, location.pathname, navigate]);
@@ -237,6 +238,7 @@ const FirstRunAssistant = ({ onComplete }) => {
 
   const currentIndex = STEPS.findIndex((s) => !activation[s.key]);
   const current = currentIndex >= 0 ? STEPS[currentIndex] : null;
+  // eslint-disable-next-line react-hooks/refs -- latch que solo pasa de false a true; no cambia lo que se renderiza
   if (current) sawStepRef.current = true;
 
   const orgName = user?.organization_name;

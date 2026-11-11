@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AGENDA_TOUR_KEY, buildAgendaSteps } from "./agendaSteps";
 
 /**
@@ -16,7 +16,7 @@ export function useAgendaTour(actions) {
   const [stepIdx, setStepIdx] = useState(0);
   const steps = useMemo(() => buildAgendaSteps(actions), [actions]);
   const actionsRef = useRef(actions);
-  actionsRef.current = actions;
+  useEffect(() => { actionsRef.current = actions; }, [actions]);
 
   const runEnter = useCallback((idx) => {
     steps[idx]?.onEnter?.(actionsRef.current);

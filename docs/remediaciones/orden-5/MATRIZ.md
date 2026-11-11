@@ -23,7 +23,7 @@ Se actualiza al cerrar cada entrega. Estado permitido: `PENDIENTE`, `EN_CURSO` o
 | E03 | 61 | 61 | ver commit E03 |
 | E04 | 59 | 59 | ver commit E04 |
 | E05 | 50 | 50 | ver commit E05 |
-| E06 | 34 | | |
+| E06 | 34 | 34 | ver commit E06 |
 | E07 | 18 | | |
 | E08 | 0 | | |
 | E09 | 0 | | |

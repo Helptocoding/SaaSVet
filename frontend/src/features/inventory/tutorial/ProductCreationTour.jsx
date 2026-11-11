@@ -49,6 +49,7 @@ const ProductCreationTour = ({
     useEffect(() => {
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         if (!demoActive || !currentStep?.target) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- sin demo activa se limpia la posición medida del DOM
             setRect(null);
             prevTargetRef.current = null;
             return;

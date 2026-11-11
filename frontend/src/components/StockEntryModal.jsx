@@ -124,8 +124,8 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew, onReceptionI
 
     // Al elegir un producto con control de lotes, reiniciar el editor de lotes.
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- reinicia el editor de lotes al cambiar de producto
         if (tracksLots) { setLots([emptyLot()]); setSupplierName(""); }
-        // eslint-disable-next-line react-hooks/set-state-in-effect
     }, [match?.product?.public_id, tracksLots]);
 
     const handleConfirm = async () => {

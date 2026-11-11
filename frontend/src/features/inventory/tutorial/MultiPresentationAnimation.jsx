@@ -246,6 +246,7 @@ function SceneSale({ config }) {
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- reinicia la animación de la escena
         setPhase("idle");
         setDisplayStock(initialStock);
         const t1 = setTimeout(() => {
@@ -429,21 +430,21 @@ export default function MultiPresentationAnimation({
         setScene(next);
     }, [scene]);
 
+    const handleDismiss = useCallback(() => {
+        localStorage.setItem(STORAGE_KEY, "true");
+        onDismiss?.();
+    }, [onDismiss]);
+
     const goNext = useCallback(() => {
         if (scene < total - 1) goTo(scene + 1);
         else handleDismiss();
-    }, [scene, total, goTo]);
+    }, [scene, total, goTo, handleDismiss]);
 
     const goPrev = useCallback(() => {
         if (scene > 0) goTo(scene - 1);
     }, [scene, goTo]);
 
     const handleRepeat = useCallback(() => goTo(0), [goTo]);
-
-    const handleDismiss = useCallback(() => {
-        localStorage.setItem(STORAGE_KEY, "true");
-        onDismiss?.();
-    }, [onDismiss]);
 
     const scenes = [
         <SceneIntro key="intro" config={config} />,

@@ -1,4 +1,4 @@
-import { memo, useState, useMemo, useLayoutEffect, Component } from "react";
+import { memo, useState, useMemo, Component } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 /* ── CSS var resolver — SVG attrs can't use var() natively ─── */
@@ -51,14 +51,11 @@ function StatusPieChart({ pieData, grandTotal, onSelect, selectedKey }) {
   const [localActive, setLocalActive] = useState(null);
 
   // Resolve CSS vars once after mount — SVG attrs don't support var()
-  const [colors, setColors] = useState({ text: "#171817", surface: "#ffffff", text2: "#454744" });
-  useLayoutEffect(() => {
-    setColors({
-      text:    readCssVar("--c-text",    "#1a1a1a"),
-      surface: readCssVar("--c-surface", "#ffffff"),
-      text2:   readCssVar("--c-text-2",  "#3a3a3a"),
-    });
-  }, []);
+  const [colors] = useState(() => ({
+    text:    readCssVar("--c-text",    "#1a1a1a"),
+    surface: readCssVar("--c-surface", "#ffffff"),
+    text2:   readCssVar("--c-text-2",  "#3a3a3a"),
+  }));
 
   const activeKey = selectedKey ?? localActive;
   const chartData = useMemo(() => transformPieData(pieData ?? []), [pieData]);

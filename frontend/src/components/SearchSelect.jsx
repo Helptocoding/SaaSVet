@@ -32,6 +32,7 @@ export default function SearchSelect({
     const lastQueryRef = useRef(null);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sincroniza el texto visible con el valor controlado por el padre
         setInputVal(value?.label ?? "");
         if (!value) {
             setResults([]);

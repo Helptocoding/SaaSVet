@@ -95,6 +95,19 @@ Observaciones sin cambio: los errores de `AuthProvider.jsx` y `ActivationProvide
 Límites: la suite completa no se corrió.
 Observaciones sin cambio: la rama `FETCH_USER` del efecto de arranque no devuelve limpieza del timer. `AuthProvider` no se desmonta durante la sesión, así que no se tocó.
 
+## E06 — Componentes, dashboard y tours (2026-11-10)
+
+| Comando | Resultado |
+|---|---|
+| `eslint src/components src/features` | 0 errores, 2 warnings `exhaustive-deps` (sin tocar) |
+| `eslint .` | 34 errores, 17 warnings (coincide en errores) |
+| `vitest run src/components src/features --reporter=dot` | 17 archivos, 113/113 pasan |
+| `pnpm run build` | OK |
+
+Cambios: 5 archivos de dashboard leen colores CSS en el inicializador de `useState`; `useAgendaTour` asigna `actionsRef` en un efecto; `handleDismiss` movido antes de `goNext` en `MultiPresentationAnimation`; directiva de `StockEntryModal` reubicada; 8 supresiones justificadas. La de `FirstRunAssistant` usa la regla `react-hooks/refs`.
+Observaciones: los warnings bajaron de 19 a 17 por quitar los `useLayoutEffect` de colores. `readCssVar` sigue duplicado por decisión del prompt.
+Límites: suite completa no corrida.
+
 Plantilla por entrega:
 
 ```markdown
