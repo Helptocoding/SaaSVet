@@ -1115,11 +1115,10 @@ Formulario de receta reutilizable. Acepta `lockedPet` y `lockedMedicalRecord` pa
 (`.table-wrap` + `.table`); estilos `th-sortable`/`th-inner`/`sort-arrow` en
 `global.css`. Accesible: `tabIndex`, Enter/Espacio y `aria-sort`. Props:
 `col`, `label`, `sortCol`, `sortDir`, `onSort`, `align`. Usado en Cobros
-(Fecha/Total). **Desde ADR p42 el sort de Cobros es server-side**: `onSort`
+(Fecha/Total). Inventario lo usa desde el orden 5. **Desde ADR p42 el sort de Cobros es server-side**: `onSort`
 actualiza `(sortCol, sortDir)` → `?ordering` y refetcha (la tabla pagina; ordenar
 client-side solo ordenaría la página actual). **No crear sorting por módulo**
-(design-system.md §5). Deuda contenida: Inventario conserva su SortHeader local
-(module CSS) — migrar junto con la unificación de su tabla, no piecemeal.
+(design-system.md §5).
 
 ### Pagination (paginador Anterior/Siguiente) — ADR p42
 
@@ -1681,13 +1680,8 @@ blocking (Fase D).
   (`productStockValue`); el `/cf` normaliza el precio de la presentación a unidad base.
   Conviven **dos** definiciones de "bajo stock": `stockStatus.low` (frontend, `min>0 &&
   stock<min`) y `metrics.lowStock` (flag backend `is_low_stock`). No unificar sin ADR.
-- **Bug conocido (deuda fase 3 B7):** el sort de la columna "Valor en stock" ordena por
-  `sale_price × stock` **sin** `/cf` → no coincide con el valor mostrado para productos
-  con `conversion_factor ≠ 1`. Bug de UX (orden), sin pérdida de datos. Fix: usar
-  `productStockValue`/`productStockQty` en el comparador.
 
 ### Pendiente (siguientes fases)
 
-- B7 (deuda fase 3): alinear el sort "Valor en stock" con `productStockValue` (fix + test).
 - C: extraer la lógica pura restante (billing sub-componentes, dedup sum/remaining).
 - D: triar los ~6 errores `react-hooks` (lint) para pasar lint a blocking.

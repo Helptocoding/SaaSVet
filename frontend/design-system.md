@@ -142,13 +142,11 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 - Variante acento (timeline/historial): border-left 3px coloreado, resto igual. No usar `#e8e8e4` ni radio 12px crudo.
 
 ### Tabla — `.table-wrap` + `.table`
-- Header: fondo `--ink`, th 11.5px/700 UPPERCASE #fff, padding `14px 16px`, letter-spacing 0.05em.
-- Body: td 13.5px `--c-text`, padding `12px 16px`, zebra `--c-subtle`/`--c-surface`, hover `--c-hover`.
+- Header: fondo `--c-surface-2`, th 11.5px/600 `--c-text-2`, padding `11px 16px`, letter-spacing 0.01em, borde inferior `--c-border`.
+- Body: td 13.5px `--c-text`, padding `12px 16px`, fondo `--c-surface` sin cebra, hover `--c-hover`.
 - Radio header `--r-lg`. Footer `.table-footer`.
 - **Columna ordenable:** componente compartido `components/SortHeader.jsx` (`th.th-sortable`
   + `.th-inner` + `.sort-arrow` en `global.css`). No crear sorting por módulo.
-  (Inventario conserva su SortHeader local en module CSS — deuda contenida, migrar
-  junto con la unificación de su tabla, no piecemeal.)
 - 🚫 No crear `.tableCompact` ni tablas por módulo. Una sola tabla.
   (`.tableCompact` de Cobros eliminado 2026-06-11 — migrado a `.table-wrap`/`.table`.)
 

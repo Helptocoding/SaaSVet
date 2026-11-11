@@ -107,4 +107,11 @@ Verificación visual: si dispones de backend y navegador, abre `/inventory` en e
 
 Commit: `refactor(frontend): move inventory to the shared table and sort header (order 5, F03)`.
 
-Marca F03 como `IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE`. En «Para revisar» indica mirar Inventario en vista tabla.
+Marca F03 como `IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE`. En `MATRIZ.md`:
+
+- Fila F03: Commit(s) `ver commits E09, E09b, E10`; Evidencia `EVIDENCIA.md §E09, §E09b, §E10`.
+- Tabla de avance: completa también la fila E09b, que quedó vacía: `| E09b | 0 | 0 | ver commit E09b |`.
+
+Incluye este prompt en el mismo commit, sin editarlo: se ajustó tras revisar E09b.
+
+En «Para revisar» indica mirar Inventario en vista tabla.

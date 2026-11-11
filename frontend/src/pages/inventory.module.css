@@ -295,54 +295,6 @@
    - Acciones con texto, no íconos
 ══════════════════════════════════════════════════════════ */
 
-.tableWrap {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-.table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-/* ─ Header ─ */
-.table thead tr {
-  background: var(--ink);
-}
-.th {
-  padding: 14px 16px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: none;
-  letter-spacing: .07em;
-  color: #fff;
-  text-align: left;
-  white-space: nowrap;
-  user-select: none;
-}
-.th:first-child { border-top-left-radius: var(--r-xl); }
-.th:last-child { border-top-right-radius: var(--r-xl); }
-.th.sortable { cursor: pointer; }
-.th.sortable:hover { opacity: 0.8; }
-.thInner { display: inline-flex; align-items: center; gap: 4px; }
-.sortArrow { font-size: 10px; opacity: .7; }
-.sortArrow.active { opacity: 1; color: #fff; }
-
-/* ─ Body rows ─ */
-.table tbody tr:nth-child(even) { background: var(--c-subtle); }
-.table tbody tr:nth-child(odd) { background: var(--c-surface); }
-.table tbody tr {
-  border-bottom: none;
-  transition: background 120ms;
-}
-.table tbody tr:hover { background: var(--c-hover); }
-
-.td { padding: 13px 16px; font-size: 13px; color: var(--c-text); vertical-align: middle; }
-
 /* ─ Columna: Producto ─ */
 .prodCell { display: flex; align-items: center; gap: 12px; }
 .prodIco {

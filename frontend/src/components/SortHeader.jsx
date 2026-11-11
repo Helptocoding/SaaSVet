@@ -10,9 +10,6 @@ import { Icon } from "./icons";
  *  - sortCol / sortDir: estado actual ("asc" | "desc").
  *  - onSort(col): el padre alterna columna/dirección.
  *  - align: "left" (default) | "right".
- *
- * Nota: Inventario conserva su SortHeader local (CSS module propio); migrarlo
- * aquí es parte del backlog de unificación de tablas, no piecemeal.
  */
 export default function SortHeader({ col, label, sortCol, sortDir, onSort, align = "left" }) {
     const active = sortCol === col;

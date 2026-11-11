@@ -17,6 +17,7 @@ import StockEntryModal from "../components/StockEntryModal";
 import LotManagerModal from "../components/LotManagerModal";
 import ReceptionsModal from "../components/ReceptionsModal";
 import EmptyState from "../components/EmptyState";
+import SortHeader from "../components/SortHeader";
 import s from "./inventory.module.css";
 import ProductCreationTour from "../features/inventory/tutorial/ProductCreationTour";
 import { useProductTour } from "../features/inventory/tutorial/useProductTour";
@@ -150,22 +151,6 @@ const CategoryIcon = ({ category, size = 18 }) => {
 
 const ICO_CLS = { medication: s.icoMed, food: s.icoFood, accessory: s.icoAcc, other: s.icoOther };
 const BADGE_CLS = { medication: s.badgeBlue, food: s.badgeGreen, accessory: s.badgePurple, other: s.badgeGray };
-
-// ── SortableHeader ─────────────────────────────────────────
-const SortHeader = ({ col, label, sortCol, sortDir, onSort, align = "left" }) => {
-    const active = sortCol === col;
-    const ArrowIcon = active ? (sortDir === "asc" ? Icon.ArrowUp : Icon.ArrowDown) : Icon.ArrowUpDown;
-    return (
-        <th className={`${s.th} ${s.sortable}`} style={{ textAlign: align }} onClick={() => onSort(col)}>
-            <span className={s.thInner}>
-                {label}
-                <span className={`${s.sortArrow} ${active ? s.active : ""}`}>
-                    <ArrowIcon s={11} c="currentColor" />
-                </span>
-            </span>
-        </th>
-    );
-};
 
 // ── Component ──────────────────────────────────────────────
 const Inventory = () => {
@@ -1092,8 +1077,8 @@ const Inventory = () => {
                     />
                 )
             ) : viewMode === "table" ? (
-                <div className={s.tableWrap}>
-                    <table className={s.table}>
+                <div className="table-wrap">
+                    <table className="table">
                         <thead>
                             <tr>
                                 <SortHeader col="name" label="Producto" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -1102,7 +1087,7 @@ const Inventory = () => {
                                 <SortHeader col="status" label="Estado" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
                                 <SortHeader col="price" label="Precio unit." sortCol={sortCol} sortDir={sortDir} onSort={handleSort} align="right" />
                                 <SortHeader col="value" label="Valor en stock" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} align="right" />
-                                {canManage && <th className={s.th}>Acciones</th>}
+                                {canManage && <th>Acciones</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -1118,7 +1103,7 @@ const Inventory = () => {
                                 const multiPres = (product.presentations?.length || 0) > 1;
                                 return (
                                     <tr key={product.id}>
-                                        <td className={s.td}>
+                                        <td>
                                             <div className={s.prodCell}>
                                                 <div className={`${s.prodIco} ${ICO_CLS[product.category] || s.icoOther}`}>
                                                     <CategoryIcon category={product.category} />
@@ -1147,12 +1132,12 @@ const Inventory = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className={s.td}>
+                                        <td>
                                             <span className={`${s.badge} ${BADGE_CLS[product.category] || s.badgeGray}`}>
                                                 {CATEGORY_LABELS[product.category] || "Otro"}
                                             </span>
                                         </td>
-                                        <td className={s.td}>
+                                        <td>
                                             <div className={s.stockCell}>
                                                 <span className={`${s.stockNum} ${st.state === "crit" ? s.stockNumCrit : st.state === "low" ? s.stockNumLow : ""}`}>
                                                     {fmt(stockVal)}
@@ -1166,13 +1151,13 @@ const Inventory = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className={s.td}>
+                                        <td>
                                             <span className={`${s.pill} ${st.state === "crit" ? s.pillCrit : st.state === "low" ? s.pillLow : s.pillOk}`}>
                                                 <span className={`${s.pillDot} ${st.state === "crit" ? s.dotCrit : st.state === "low" ? s.dotLow : s.dotOk}`} />
                                                 {st.label}
                                             </span>
                                         </td>
-                                        <td className={s.td} style={{ textAlign: "right" }}>
+                                        <td style={{ textAlign: "right" }}>
                                             {salePrice > 0 ? (
                                                 <div className={s.valMain}>${fmtCur(salePrice)}</div>
                                             ) : (
@@ -1182,7 +1167,7 @@ const Inventory = () => {
                                                 <div className={s.valSub}>por {unitDisplay}</div>
                                             )}
                                         </td>
-                                        <td className={s.td} style={{ textAlign: "right" }}>
+                                        <td style={{ textAlign: "right" }}>
                                             {val > 0 ? (
                                                 <div className={s.valMain}>${fmtCur(val)}</div>
                                             ) : (
@@ -1190,7 +1175,7 @@ const Inventory = () => {
                                             )}
                                         </td>
                                         {canManage && (
-                                            <td className={s.td}>
+                                            <td>
                                                 <div className={s.actCell}>
                                                     {product.tracks_lots && (
                                                         <button className={`${s.ab} ${s.abAj}`} onClick={e => { e.stopPropagation(); setLotModalProduct(product); }} title="Lotes y caducidad"><Icon.Box s={14} /></button>

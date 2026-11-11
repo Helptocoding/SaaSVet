@@ -165,6 +165,22 @@ Límites: F03 sigue EN_CURSO hasta E10.
 Cambios: `appointments.jsx` usa `StatusBadge` y `statusBadgeClass`; eliminados `S_BADGE`/`S_LABEL` (`no_show` ya no usa la clase inexistente `badge-secondary`).
 Límites: F03 sigue EN_CURSO hasta E10.
 
+## E10 — tabla de Inventario y SortHeader compartido (2026-11-11)
+
+| Comando | Resultado |
+|---|---|
+| precondición `s.tableWrap/table/th/td/sortable/thInner/sortArrow` en `StockEntryModal`, `ReceptionsModal` | 0 resultados |
+| `grep s.th / s.td inventory.jsx` | sin coincidencias |
+| `vitest run inventory.order + inventory.receptions` | 12/12 pasan (incluye prueba nueva de `aria-sort`) |
+| `eslint inventory.jsx inventory.order.test.jsx SortHeader.jsx` | 0 errores, 1 warning preexistente (`loadAll`) |
+| `eslint .` | 0 errores, 14 warnings |
+| `vitest run` (suite completa) | 830/831; 1 timeout de 5000 ms en `src/pages/inbox/index.test.jsx` («cap global de 20 intentos») por carga |
+| `vitest run src/pages/inbox/index.test.jsx` (solo) | 93/93 pasan |
+| `pnpm run build` | OK |
+
+Cambios: Inventario usa `table-wrap`/`table` globales y el `SortHeader` compartido; eliminadas las reglas de tabla de `inventory.module.css` y el `SortHeader` local; docs (`design-system.md`, `frontend.md`, comentario de `SortHeader`) actualizadas.
+Límites: verificación visual en navegador (escritorio y móvil) pendiente; no se vio. F03 pasa a IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE.
+
 Plantilla por entrega:
 
 ```markdown
