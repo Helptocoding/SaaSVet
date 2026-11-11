@@ -52,6 +52,7 @@ export function useFinancialSeries(rangeDays = 30, includeToday = true) {
     }
   }, [rangeDays, includeToday]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- carga desde la API al montar o cambiar el rango
   useEffect(() => { fetchData(); }, [fetchData]);
 
   return { series, today, loading, error, refetch: fetchData };

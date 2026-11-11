@@ -44,6 +44,7 @@ export function ActivationProvider({ children }) {
 
   useEffect(() => {
     mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial desde la API al montar
     refetch();
 
     const onRefresh = () => refetch();

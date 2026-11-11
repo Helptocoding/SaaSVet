@@ -83,6 +83,18 @@ Criterio sustituido: el criterio escrito en la deuda fue sustituido por decisió
 Límites: lógica de sesión sin tocar.
 Observaciones sin cambio: los errores de `AuthProvider.jsx` y `ActivationProvider.jsx` se tratan en E05.
 
+## E05 — Auth y hooks de datos (2026-11-10)
+
+| Comando | Resultado |
+|---|---|
+| `eslint src/auth src/hooks` | 0 errores, 3 warnings `exhaustive-deps` (sin tocar) |
+| `eslint .` | 50 errores, 19 warnings (coincide) |
+| `vitest run src/auth src/hooks src/components/dashboard --reporter=dot` | 29/29 pasan |
+| `git diff` | 10 líneas añadidas, todas comentarios `eslint-disable-next-line ... -- motivo`; 1 eliminada (la directiva sin motivo de `useDayAppointments.js`, reemplazada) |
+
+Límites: la suite completa no se corrió.
+Observaciones sin cambio: la rama `FETCH_USER` del efecto de arranque no devuelve limpieza del timer. `AuthProvider` no se desmonta durante la sesión, así que no se tocó.
+
 Plantilla por entrega:
 
 ```markdown

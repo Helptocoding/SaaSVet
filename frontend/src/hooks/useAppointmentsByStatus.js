@@ -41,6 +41,7 @@ export function useAppointmentsByStatus(dateRange) {
   }, [dateRange?.from, dateRange?.to]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga desde la API al montar o cambiar el rango
     fetchData();
   }, [fetchData]);
 
