@@ -17,7 +17,7 @@ Base: [priorización, §5](plan-remediacion-priorizado-2026-10-28.md), [inventar
 | C3 | Se mueve `AuthProvider` a `auth/AuthProvider.jsx` y `authContext` conserva contexto y hook. **Sustituye el criterio escrito en la deuda**, que pedía crear `useAuth.js` y repuntar unos 58 archivos, 20 de ellos `vi.mock`. Igual para `ActivationProvider`. |
 | C4 | Una sola fuente de `sum/remaining/change`: `paymentSummary` en `utils/payments.js`. `paymentLinesValid` conserva su suma propia, que tiene otro contrato. |
 | `allowPartial` | Se retira por completo en una entrega propia. Es código muerto que contradice la regla de total exacto (ADR p30 rev). Implica cambiar únicamente las aserciones de pago parcial. |
-| F03, badges | `StatusBadge` es solo para citas. Se migran `petDetail` y `AppointmentBreakdown`. `billing` y `cash` muestran estados de cobro y de caja: la lista documentada estaba equivocada y se corrige. |
+| F03, badges | `StatusBadge` es solo para citas. Se migran `petDetail` y `AppointmentBreakdown` (E09), y la agenda `appointments.jsx` (E09b, añadida tras revisar E09). `billing` y `cash` muestran estados de cobro y de caja: la lista documentada estaba equivocada y se corrige. |
 | F03, tabla | La tabla de Inventario migra a `.table-wrap`/`.table` y al `SortHeader` compartido. Adopta el CSS real: encabezado claro y sin cebra, como Cobros. `design-system.md` se corrige porque describe un encabezado oscuro que `global.css` ya no aplica. |
 | Código muerto | Se borra el componente `Appointments` de `pages/appointments.jsx` (648 líneas sin importadores), su export con nombre, `ApptBadge` y `apptHour`. |
 | F02 | Se extraen tal cual a `components/billing/` `RefundModal`, `DispenseLotSelect` y `PrescriptionDispensePanel`. Las pruebas de caracterización llegan después de moverlos, sin cambiar lógica. |
@@ -89,6 +89,7 @@ Cada veredicto se **validó en memoria** el 09-11 aplicándolo con `ESLint.lintT
 | E07 | F01: `appointments`, `inventory`, `petDetail`, `staff` | 18 |
 | E08 | F01: `config`, `analytics`, `imports`, `medicalRecords` | 0 |
 | E09 | F03: badges de citas | 0 |
+| E09b | F03: badges de la agenda (añadida tras revisar E09) | 0 |
 | E10 | F03: tabla de Inventario y `SortHeader` | 0 |
 | E11 | F02: dividir `billing.jsx` | 0 |
 | E12 | Gate de CI, salvaguarda de supresiones, documentos y cierre | 0 |
@@ -98,7 +99,7 @@ El orden importa: C3 precede a la limpieza de auth para que las supresiones caig
 ## 7. Verificación y límites
 
 - Cada entrega: lint de los archivos tocados, pruebas dirigidas y, cuando cambian imports, build. Comandos exactos en las [reglas comunes](remediaciones/orden-5/prompts/00-REGLAS-COMUNES.md).
-- E00, E04, E08 y E12 ejecutan además la suite completa.
+- E00, E04, E08, E09b y E12 ejecutan además la suite completa.
 - La verificación visual de E10 y de las gráficas de E06 puede quedar a cargo del usuario si el agente no dispone de backend y navegador. Se declara como pendiente; no se afirma.
 - Sin datos reales en juego: ninguna entrega usa base de datos.
 - Las líneas citadas corresponden a `c3f42ba` y se desplazan entre entregas: el agente localiza por símbolo o por texto.

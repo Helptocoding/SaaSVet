@@ -26,10 +26,11 @@ Entre entregas, revisa el commit con la [lista del plan, §9](../../plan-remedia
 | E07 | [F01 páginas I](prompts/E07-f01-paginas-1.md) | Agenda, inventario, mascota, equipo | 18 |
 | E08 | [F01 páginas II](prompts/E08-f01-paginas-2.md) | Config, analítica, importador, consulta | 0 |
 | E09 | [F03 badges](prompts/E09-f03-badges.md) | Estados de cita | 0 |
+| E09b | [F03 badges de la agenda](prompts/E09b-f03-badges-agenda.md) | Estados de cita en la agenda (añadida tras revisar E09) | 0 |
 | E10 | [F03 tabla](prompts/E10-f03-tabla-inventario.md) | Tabla de Inventario y `SortHeader` | 0 |
 | E11 | [F02 billing](prompts/E11-f02-billing.md) | Extraer subcomponentes y probarlos | 0 |
 | E12 | [cierre](prompts/E12-cierre-gate.md) | Gate de CI, docs y cierre | 0 |
 
-Las entregas [E10](prompts/E10-f03-tabla-inventario.md) y [E06](prompts/E06-f01-componentes.md) cambian o pueden cambiar la apariencia: conviene mirar Inventario y las gráficas del dashboard al revisarlas.
+Las entregas [E10](prompts/E10-f03-tabla-inventario.md), [E09b](prompts/E09b-f03-badges-agenda.md) y [E06](prompts/E06-f01-componentes.md) cambian o pueden cambiar la apariencia: conviene mirar Inventario, los badges de la agenda y las gráficas del dashboard al revisarlas.
 
 Reglas compartidas: [00-REGLAS-COMUNES](prompts/00-REGLAS-COMUNES.md).

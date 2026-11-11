@@ -149,6 +149,22 @@ Límites: ninguno.
 Cambios: `petDetail` usa `StatusBadge` (corrige badge vacío en `confirmed`, `in_progress`, `no_show`); `AppointmentBreakdown` usa `statusLabel`; pruebas nuevas; frase en `docs/modules/frontend.md`.
 Límites: F03 sigue EN_CURSO hasta E10.
 
+## E09b — badges de estado en la agenda (2026-11-11)
+
+| Comando | Resultado |
+|---|---|
+| `grep S_BADGE\|S_LABEL\|badge-secondary appointments.jsx` | sin coincidencias |
+| `grep -c "<StatusBadge status="` / `statusBadgeClass(h.` | 4 / 2 |
+| `eslint src/pages/appointments.jsx` | 0 errores, 3 warnings preexistentes |
+| `eslint .` | 0 errores, 14 warnings |
+| `vitest run StatusBadge` | 7/7 pasan |
+| `vitest run` (suite completa) | 829/830; 1 timeout de 5000 ms en `src/pages/inbox/index.test.jsx` («cap global de 20 intentos») por carga |
+| `vitest run src/pages/inbox/index.test.jsx` (solo) | 93/93 pasan |
+| `pnpm run build` | OK |
+
+Cambios: `appointments.jsx` usa `StatusBadge` y `statusBadgeClass`; eliminados `S_BADGE`/`S_LABEL` (`no_show` ya no usa la clase inexistente `badge-secondary`).
+Límites: F03 sigue EN_CURSO hasta E10.
+
 Plantilla por entrega:
 
 ```markdown

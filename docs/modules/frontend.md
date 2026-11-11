@@ -1162,7 +1162,7 @@ Mapeo (no crear enums ni clases nuevas):
 | `canceled` | Cancelada | `badge-danger` |
 | `no_show` | No se presentó | `badge-default` (unificado; antes el modal usaba `badge-secondary`) |
 
-Migrados: `TodayAgendaList`, `AppointmentQuickModal`, `petDetail`. `AppointmentBreakdown` usa `statusLabel` con pills propias. `billing` y `cash` muestran estados de cobro y de caja, fuera de este componente.
+Migrados: `TodayAgendaList`, `AppointmentQuickModal`, `petDetail` y la agenda (`appointments.jsx`). `AppointmentBreakdown` usa `statusLabel` con pills propias. `billing` y `cash` muestran estados de cobro y de caja, fuera de este componente.
 
 ### AppointmentQuickModal (acciones rápidas de cita) — ADR p35
 
