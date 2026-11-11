@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getItem, setTokens, setAccessToken, setRefreshToken, setUser as storeUser, clearTokens, isLoggingOut } from "./tokenStorage";
-
-const AuthContext = createContext();
+import { AuthContext } from "./authContext";
 
 const rawBase = import.meta.env.VITE_API_URL || "";
 const API_BASE = rawBase.endsWith("/") ? rawBase : rawBase + "/";
@@ -302,5 +301,3 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
-
-export const useAuth = () => useContext(AuthContext);

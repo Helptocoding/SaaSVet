@@ -9,7 +9,7 @@
 - Estilos: CSS modules por pagina + variables globales en `tokens.css`
 - Toasts: `sonner` (configurado en `App.jsx`)
 - Iconos: `lucide-react`
-- Auth: Context propio (`src/auth/authContext.jsx`) con JWT + refresh automatico
+- Auth: Context propio (`src/auth/AuthProvider.jsx` + `src/auth/authContext.js`) con JWT + refresh automatico
 - HTTP: Axios con interceptores (`src/api/client.js`)
 - Confirmaciones: `useConfirm` hook (`src/components/ConfirmDialog.jsx`)
 - Calendario: `@fullcalendar/react` (core + daygrid + timegrid + interaction)
@@ -916,7 +916,7 @@ triggerDownload(blob, filename);
   "consulta (1).pdf", revisar ese setting antes que este código.
 - Handler estándar: `downloadingId` state para deshabilitar el botón + `apiError` en catch.
 
-### authContext.jsx
+### AuthProvider.jsx
 
 Autenticación basada en JWT con refresh automático. El flujo de inicialización sigue una **máquina de estados determinista** que evita montar rutas protegidas con tokens vencidos.
 

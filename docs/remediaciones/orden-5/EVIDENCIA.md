@@ -68,6 +68,21 @@ Cambio de aserciones: se elimina el test «pago insuficiente permitiendo parcial
 Límites: la suite completa no se corrió.
 Observaciones sin cambio: ninguna.
 
+## E04 — Separar providers de contexto y hook (2026-11-10)
+
+| Comando | Resultado |
+|---|---|
+| `eslint src/auth src/hooks/ActivationProvider.jsx src/hooks/activationContext.js src/App.jsx` | sin `only-export-components`; quedan 3 errores previos (2 en `AuthProvider.jsx`, 1 `set-state-in-effect` en `ActivationProvider.jsx`) |
+| `eslint .` | 59 errores, 19 warnings (coincide) |
+| `pnpm run build` | OK (built in 16.76s) |
+| `vitest run` (suite completa) | 817/820; 3 timeouts de 5000 ms en `src/pages/inbox/index.test.jsx` bajo carga |
+| `vitest run src/pages/inbox/index.test.jsx` (solo) | 93/93 pasan |
+
+Cambios: `git mv` de `authContext.jsx` → `AuthProvider.jsx` y `activationContext.jsx` → `ActivationProvider.jsx`; nuevos `authContext.js` y `activationContext.js` con contexto y hook. Importadores cambiados: `App.jsx` y `authContext.logout.test.jsx`. Docs: dos referencias en `docs/modules/frontend.md`. Sin imports con extensión previos.
+Criterio sustituido: el criterio escrito en la deuda fue sustituido por decisión del usuario (plan §1).
+Límites: lógica de sesión sin tocar.
+Observaciones sin cambio: los errores de `AuthProvider.jsx` y `ActivationProvider.jsx` se tratan en E05.
+
 Plantilla por entrega:
 
 ```markdown
