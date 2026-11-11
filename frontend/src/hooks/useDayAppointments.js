@@ -33,7 +33,7 @@ export function useDayAppointments(date) {
   useEffect(() => {
     // Fetch-on-mount/date-change. setState ocurre tras await (mismo patrón que
     // useDashboardSummary). El plugin React Compiler marca la llamada igual.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga desde la API al montar o cambiar la fecha
     fetchData();
   }, [fetchData]);
 

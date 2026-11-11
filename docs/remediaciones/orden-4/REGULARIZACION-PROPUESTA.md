@@ -13,3 +13,7 @@ Pruebas sintéticas adicionales cubren unidades legacy, referencia incompleta, d
 La futura propuesta individual debe incluir organización y UUID público, saldo y unidad base observados, presentaciones, watermark de ledger, cobertura, ambigüedades, situación de lotes, acción y efectos esperados; aprobación, actor, fecha y motivo quedan pendientes. Si no se puede reconstruir un delta, clasificar como no verificable.
 
 La eventual reconstrucción desde saldo observado requiere aprobación explícita por producto y revalidación bajo locks de organización, saldo, ledger y lotes; cambios invalidan la propuesta. No volver a sumar el saldo, duplicar aperturas, reparar drift de oficio ni certificar el pasado. No existe una operación apply en esta entrega.
+
+**09-11: sin objeto.** El usuario confirmó que no existen clínicas ni datos reales, así que no hay saldos históricos que regularizar ni aprobaciones que recoger, y la operación apply no se construyó. El diagnóstico se conserva por si algún día se incorpora una base con historia real, y entonces rigen las condiciones de arriba.
+
+Desde el 09-11, `audit_stock_integrity` reconstruye desde 0 los productos sin `adjustment`, así que un producto nuevo con `in` inicial queda auditado. En `diagnose_product`, `no_baseline` conserva su sentido anterior (sin `adjustment` de producto).

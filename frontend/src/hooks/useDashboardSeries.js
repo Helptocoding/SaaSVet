@@ -122,6 +122,7 @@ export function useDashboardSeries(rangeDays = 30, includeToday = true) {
   }, [rangeDays, includeToday]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga desde la API al montar o cambiar el rango
     fetchData();
   }, [fetchData]);
 

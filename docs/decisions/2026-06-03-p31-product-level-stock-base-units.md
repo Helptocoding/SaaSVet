@@ -69,6 +69,8 @@ apply_stock_movement(quantity=quantity_base, ...)
 - Baseline: último `StockMovement(quantity_unit='base', type='adjustment')` por producto
 - Ignora movimientos legacy (`quantity_unit='presentation'`)
 
+> **Actualización (2026-11-09, orden 4):** sin `adjustment` de producto el saldo parte de 0, y un ajuste de lote mueve el agregado por su diferencia en vez de contar como baseline. Contrato vigente en [`modules/inventory.md`](../modules/inventory.md).
+
 ## Consecuencias
 
 **Positivas:**

@@ -6,7 +6,8 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // standalone/ está en .gitignore: CI nunca lo ve y su build ensucia el lint local.
+  globalIgnores(['dist', 'standalone']),
   {
     files: ['**/*.{js,jsx}'],
     plugins: { react },

@@ -5,6 +5,7 @@ import { getMedicalRecords, getMedicalRecord } from "../api/medicalRecords";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import ImportedDataSection from "../components/ImportedDataSection";
+import StatusBadge from "../components/StatusBadge";
 import { apiError } from "../utils/apiError";
 import api from "../api/client";
 
@@ -24,6 +25,7 @@ const PetDetail = () => {
     const [showRecordDetail, setShowRecordDetail] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/immutability -- se invoca dentro del efecto, después de inicializar la constante
         if (token && id) loadAll();
     }, [token, id]);
 
@@ -47,6 +49,7 @@ const PetDetail = () => {
 
     const calcAge = (birthDate) => {
         if (!birthDate) return null;
+        // eslint-disable-next-line react-hooks/purity -- edad en años o meses; la precisión entre renders no importa
         const diff = Date.now() - new Date(birthDate).getTime();
         const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
         const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30.44));
@@ -67,13 +70,6 @@ const PetDetail = () => {
             console.error(apiError(err));
         }
     };
-
-    const STATUS_BADGE = {
-        scheduled: "badge badge-info",
-        done: "badge badge-success",
-        canceled: "badge badge-danger",
-    };
-    const STATUS_LABEL = { scheduled: "Programada", done: "Completada", canceled: "Cancelada" };
 
     if (initializing || loading) {
         return (
@@ -265,9 +261,7 @@ const PetDetail = () => {
                                         <span style={{ fontWeight: "600" }}>
                                             {new Date(appt.date).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                                         </span>
-                                        <span className={STATUS_BADGE[appt.status] || "badge badge-default"}>
-                                            {STATUS_LABEL[appt.status]}
-                                        </span>
+                                        <StatusBadge status={appt.status} />
                                     </div>
                                     <p style={{ fontSize: "12.5px", color: "var(--c-text-2)" }}>
                                         {appt.start_time?.slice(0, 5)} – {appt.end_time?.slice(0, 5)}

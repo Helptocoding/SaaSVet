@@ -1,4 +1,4 @@
-import { memo, useMemo, useLayoutEffect, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   ComposedChart, Bar, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -87,18 +87,11 @@ const ChartEmptyState = ({ colors }) => (
 function ActivityAreaChart({ rangeDays = 7 }) {
   const { allPoints, loading } = useDashboardSeries(rangeDays, true);
 
-  const [colors, setColors] = useState({
-    primary: "#10b981",
-    accent:  "#d67b5c",
-    muted:   "#8a8a7f",
-  });
-  useLayoutEffect(() => {
-    setColors({
-      primary: readCssVar("--c-success-text", "#10b981"),
-      accent:  readCssVar("--c-accent",       "#d67b5c"),
-      muted:   readCssVar("--c-text-3",       "#8a8a7f"),
-    });
-  }, []);
+  const [colors] = useState(() => ({
+    primary: readCssVar("--c-success-text", "#10b981"),
+    accent:  readCssVar("--c-accent",       "#d67b5c"),
+    muted:   readCssVar("--c-text-3",       "#8a8a7f"),
+  }));
 
   const points = useMemo(
     () =>

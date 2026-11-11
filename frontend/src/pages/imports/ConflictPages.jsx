@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { getImportConflicts } from "../../api/imports";
 import { apiError } from "../../utils/apiError";
+import ConflictCard from "./ConflictCard";
 import s from "./imports.module.css";
 
 // Una sola página en memoria; los cursores quedan ligados a la versión del job.
-export default function ConflictPages({ publicId, report, highTotal, uncertainTotal }) {
+// `cfg` es la configuración de la entidad: las tarjetas son las mismas que en la muestra.
+export default function ConflictPages({ publicId, report, highTotal, uncertainTotal, cfg }) {
     const [page, setPage] = useState(null);
     const [cursors, setCursors] = useState([null]);
     const [index, setIndex] = useState(0);
@@ -43,11 +45,7 @@ export default function ConflictPages({ publicId, report, highTotal, uncertainTo
                     const entries = page.results.filter(item => level === 'high' ? item.match_confidence === 'high' : item.match_confidence !== 'high');
                     return entries.length > 0 && <div key={level}>
                         <h4>{level === 'high' ? 'Coincidencias altas' : 'Por revisar'}</h4>
-                        {entries.map((item, i) => <div className={s.skippedCard} key={`${item.row}-${i}`}>
-                            <strong>Fila #{item.row}</strong><p>{item.message}</p>
-                            {Object.entries(item.incoming || {}).map(([key, value]) => <div key={key}>{key}: {value || '—'}</div>)}
-                            {Object.entries(item.existing || {}).filter(([key]) => key !== 'public_id').map(([key, value]) => <div key={key}>{key}: {value || '—'}</div>)}
-                        </div>)}
+                        {entries.map((item, i) => <ConflictCard key={`${item.row}-${i}`} conflict={item} cfg={cfg} />)}
                     </div>;
                 })}
                 <button type="button" className="btn btn-secondary btn-sm" disabled={busy || index === 0} onClick={() => load(cursors[index - 1], index - 1, cursors)}>Anterior</button>{' '}

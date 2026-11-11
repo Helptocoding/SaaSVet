@@ -24,6 +24,8 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 | "No hay caja abierta" al cobrar | Toggle `require_open_cash_session=True` y el actor no tiene sesión de caja. | Abrir caja con `POST /api/cash/sessions/open/`. |
 | 403 al dispensar receta | Falta el permiso `billing.rx_dispense`. | Asignarlo al rol correspondiente (ADMIN/VET) desde la sección de Roles. |
 | Checkout abierto de $0 | Consulta cerrada sin cargos. | Debe completarse con `complete_no_charge`; no se crea Invoice. |
+| `409 reception_unresolved` al registrar una recepción | Ese usuario tiene una operación `pending` de ese producto, quizá con una ejecución aún en curso. **No es un fallo.** | Inventario → Recepciones: completarla o descartarla. Después se registra la nueva. Nunca sumar por ajuste para saltárselo. |
+| Una recepción quedó sin respuesta o se perdió el navegador | El cliente no sabe qué ocurrió; el servidor sí. | Inventario → Recepciones, desde cualquier sesión: `confirmed` ya sumó y no se repite; `pending` todavía no, y se completa o descarta. Si no aparece y parece haber entrado, revisar «Entradas sin identidad». |
 | Drift de stock detectado por `audit_stock_integrity` | Escritura directa a `stock` sin pasar por `apply_stock_movement`. | Investigar el caller. Se corrige con migración de baseline o `adjustment` manual. |
 | `RBAC_FALLBACK_ALLOWED` en logs | Usuario sin `UserRole` en la base de datos. | Ejecutar `seed_permissions` en la organización. |
 | 401 en frontend tras login válido | Toggle "Recordarme" e inconsistencia en el almacenamiento del token. | Revisar `auth/tokenStorage.js` (session tiene prioridad sobre local). |
@@ -174,6 +176,11 @@ invariantes del sistema y el resumen ejecutivo del negocio.
     Inbox lo muestre inmediatamente. Esa excepción operacional no prueba que
     Meta lo haya recibido. Anti-eco y decisiones de entrega usan
     `emitted_outbound`, limitado a `sent`/`delivered`/`read`.
+
+27. **INV-H — una recepción identificada se aplica desde una intención ya durable** (orden 4, I01): la captura se
+    confirma antes de tocar stock, y `confirmed` se publica en la misma transacción que stock y movimientos. Un saldo
+    o un lote que coincidan **no** prueban que una operación se aplicó: lo prueba su estado y sus movimientos
+    enlazados. Consultar nunca ejecuta, y ejecutar solo lo puede hacer quien capturó.
 
 ---
 

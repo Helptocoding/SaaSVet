@@ -73,4 +73,21 @@ describe("Wizard con entityType=inventory", () => {
         const cta = screen.getByText("Ver inventario");
         expect(cta).toBeInTheDocument();
     });
+
+    it("ResultStep cuenta las filas omitidas por conflicto, que en inventario son los duplicados", () => {
+        render(
+            <MemoryRouter>
+                <ResultStep
+                    result={{ ...RESULT_INV, skipped_conflicts: 130, conflicts_high: 110, conflicts_uncertain: 20 }}
+                    job={{ original_filename: "inv.xlsx" }}
+                    fieldCatalog={[]}
+                    entityType="inventory"
+                    onReset={() => {}}
+                />
+            </MemoryRouter>,
+        );
+        const card = screen.getByText("Posibles duplicados omitidos").parentElement;
+        expect(card).toHaveTextContent("130");
+        expect(screen.queryByText("Duplicados omitidos")).not.toBeInTheDocument();
+    });
 });

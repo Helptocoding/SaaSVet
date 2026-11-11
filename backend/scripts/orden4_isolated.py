@@ -15,7 +15,8 @@ DIRECTORY = Path.home() / 'AppData/Local/Temp/opencode/orden4_pg18_20261031'
 
 def main():
     keys = ('PATH', 'PATHEXT', 'SYSTEMROOT', 'WINDIR', 'COMSPEC', 'TEMP',
-            'TMP', 'USERPROFILE', 'HOMEDRIVE', 'HOMEPATH', 'LOCALAPPDATA', 'APPDATA')
+            'TMP', 'USERPROFILE', 'HOMEDRIVE', 'HOMEPATH', 'LOCALAPPDATA', 'APPDATA',
+            'ORDEN4_BROWSER_DIST')
     minimal = {key: os.environ[key] for key in keys if key in os.environ}
     os.environ.clear()
     os.environ.update(minimal)

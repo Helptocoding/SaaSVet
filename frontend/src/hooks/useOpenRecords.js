@@ -24,6 +24,7 @@ export function useOpenRecords(limit = 5) {
   }, [limit]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga desde la API al montar o cambiar el límite
     fetchData();
   }, [fetchData]);
 

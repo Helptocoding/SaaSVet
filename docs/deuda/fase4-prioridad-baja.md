@@ -107,7 +107,7 @@ def create_invoice(*, organization, owner, pet=None, invoice_type='consultation'
 
 **Estimación:** 30–45 min (mecánico, 1 archivo nuevo + 31 import swaps + verificación).
 
-**Estado:** sigue diferido tras P1-4 Fase B2 (no se tocó `authContext`). Candidato natural a Fase C.
+**Estado:** cerrado en el orden 5 ([expediente](../remediaciones/orden-5/README.md)). El criterio escrito fue sustituido: se movió `AuthProvider` en lugar de crear `useAuth.js`.
 
 ---
 
@@ -141,6 +141,8 @@ como cualquier consumidor lo usen. Sin cambiar comportamiento (el test lo verifi
 
 **Estimación:** 30 min.
 
+**Estado:** cerrado en el orden 5 ([expediente](../remediaciones/orden-5/README.md)).
+
 ---
 
 ## C5 — `PaymentLinesEditor`: controles sin nombre accesible (a11y)
@@ -163,6 +165,8 @@ botón icon-only.
 
 **Estimación:** 20 min (junto con C4, mismo componente).
 
+**Estado:** cerrado en el orden 5 ([expediente](../remediaciones/orden-5/README.md)).
+
 ---
 
 ## C6 — Docstring desactualizado en `utils/mapFieldErrors.js`
@@ -181,6 +185,8 @@ la implementación (comportamiento enviado a producción, cubierto por `mapField
 **Riesgo:** nulo (solo comentario).
 
 **Estimación:** 5 min.
+
+**Estado:** cerrado en el orden 5 ([expediente](../remediaciones/orden-5/README.md)).
 
 ---
 

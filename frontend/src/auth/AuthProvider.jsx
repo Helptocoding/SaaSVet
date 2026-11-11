@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getItem, setTokens, setAccessToken, setRefreshToken, setUser as storeUser, clearTokens, isLoggingOut } from "./tokenStorage";
-
-const AuthContext = createContext();
+import { AuthContext } from "./authContext";
 
 const rawBase = import.meta.env.VITE_API_URL || "";
 const API_BASE = rawBase.endsWith("/") ? rawBase : rawBase + "/";
@@ -89,6 +88,7 @@ export const AuthProvider = ({ children }) => {
                     setAccessToken(data.access);
                     setRefreshToken(data.refresh);
                     setToken(data.access);
+                    // eslint-disable-next-line react-hooks/immutability -- autorreferencia dentro de un timer; corre después de inicializar la constante
                     scheduleTokenRefresh(data.access);
                 } else {
                     logout();
@@ -129,6 +129,7 @@ export const AuthProvider = ({ children }) => {
 
         // ── UNKNOWN → LOGIN: no token at all ──────────────────────────
         if (!storedToken) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- estado terminal de la máquina de arranque cuando no hay token
             setInitializing(false);
             return;
         }
@@ -302,5 +303,3 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
-
-export const useAuth = () => useContext(AuthContext);

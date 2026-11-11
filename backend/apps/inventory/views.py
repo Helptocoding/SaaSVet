@@ -1,13 +1,10 @@
 import logging
-import hashlib
-import json
 from uuid import UUID
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
-from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -25,7 +22,22 @@ from apps.medical_records.policies import (
     log_ownership_denied,
 )
 
-from .models import Product, Presentation, StockLot, StockMovement, MedicalRecordProduct
+from .models import (
+    Product, Presentation, StockLot, StockMovement, StockReceptionReceipt, MedicalRecordProduct,
+)
+from .services import (
+    build_reception_result,
+    can_supervise_receptions,
+    complete_reception,
+    discard_reception,
+    get_visible_reception,
+    prepare_reception,
+    reception_current_balance,
+    reception_ledger_since_intent,
+    receive_with_identity,
+    receptions_visible_to,
+    unattributed_reception_entries,
+)
 from .units import presentation_conversion_factor
 from .serializers import (
     ProductSerializer,
@@ -35,6 +47,9 @@ from .serializers import (
     StockAdjustmentSerializer,
     StockLotSerializer,
     StockReceptionSerializer,
+    StockReceptionOperationSerializer,
+    ReceptionLedgerEntrySerializer,
+    ReceptionDiscardSerializer,
     LotDiscardSerializer,
     LotStatusSerializer,
     MedicalRecordProductSerializer,
@@ -220,30 +235,18 @@ def receive_presentation_stock(request, pk):
     serializer = StockReceptionSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
-    raw_operation = request.headers.get('X-Idempotency-Key')
-    operation_id = None
-    if raw_operation is not None:
-        try:
-            operation_id = UUID(raw_operation)
-        except (ValueError, TypeError, AttributeError):
-            raise ValidationError({'operation_id': 'Identificador de operación inválido.'})
-    payload = json.dumps(serializer.validated_data, cls=DjangoJSONEncoder, sort_keys=True, separators=(',', ':'))
-    digest = hashlib.sha256(payload.encode()).hexdigest()
-
+    operation_id = _reception_operation_id(request)
     try:
+        if operation_id is not None:
+            operation = receive_with_identity(
+                organization=request.user.organization,
+                actor=request.user,
+                presentation=presentation,
+                validated_data=serializer.validated_data,
+                operation_id=operation_id,
+            )
+            return Response(operation.result)
         with transaction.atomic():
-            receipt = None
-            if operation_id is not None:
-                from .models import StockReceptionReceipt
-                receipt, created = StockReceptionReceipt.objects.get_or_create(
-                    organization=request.user.organization, operation_id=operation_id,
-                    defaults={'actor': request.user, 'presentation': presentation, 'payload_hash': digest},
-                )
-                if not created:
-                    if (receipt.actor_id != request.user.pk or receipt.presentation_id != presentation.pk
-                            or receipt.payload_hash != digest or receipt.result is None):
-                        return Response({'code': 'reception_operation_conflict', 'message': 'La operación no coincide con la recepción solicitada.'}, status=status.HTTP_409_CONFLICT)
-                    return Response(receipt.result)
             affected = receive_stock(
                 presentation=presentation,
                 lots=serializer.validated_data['lots'],
@@ -252,16 +255,185 @@ def receive_presentation_stock(request, pk):
                 received_at=serializer.validated_data.get('received_at'),
                 created_by=request.user,
             )
-            presentation.refresh_from_db()
-            result = {'presentation': PresentationSerializer(presentation).data,
-                      'lots': StockLotSerializer(affected, many=True).data}
-            if receipt is not None:
-                receipt.result = json.loads(json.dumps(result, cls=DjangoJSONEncoder))
-                receipt.save(update_fields=['result'])
+            result = build_reception_result(presentation, affected)
     except DjValidationError as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(result)
+
+
+def _reception_operation_id(request):
+    raw_operation = request.headers.get('X-Idempotency-Key')
+    if raw_operation is None:
+        return None
+    try:
+        return UUID(raw_operation)
+    except (ValueError, TypeError, AttributeError):
+        raise ValidationError({'operation_id': 'Identificador de operación inválido.'})
+
+
+def _reception_organization(request):
+    organization = request.user.organization
+    if organization is None:
+        raise PermissionDenied('User has no organization assigned')
+    return organization
+
+
+def _include_other_actors(request):
+    scope = request.query_params.get('scope', 'own')
+    if scope not in ('own', 'organization'):
+        raise ValidationError({'scope': 'Alcance inválido.'})
+    if scope == 'organization' and not can_supervise_receptions(request.user):
+        raise PermissionDenied()
+    return scope == 'organization'
+
+
+def _serialized_reception_detail(operation, request):
+    data = dict(StockReceptionOperationSerializer(
+        operation, context={'request': request, 'detail': True},
+    ).data)
+    data['current_balance'] = reception_current_balance(operation)
+    if operation.status == StockReceptionReceipt.STATUS_PENDING:
+        ledger = reception_ledger_since_intent(operation)
+        data['ledger_since_intent'] = {
+            'entries': ReceptionLedgerEntrySerializer(ledger['entries'], many=True).data,
+            'truncated': ledger['truncated'],
+        }
+    return data
+
+
+@api_view(['POST'])
+@permission_classes([make_permission("inventory.update")])
+def prepare_presentation_reception(request, pk):
+    """Registra la intención de recepción ANTES de tocar stock.
+
+    POST /api/inventory/presentations/<pk>/receptions/ + X-Idempotency-Key: <uuid>
+    La ejecución es otra petición (receptions/<id>/complete/): como solo se envía tras
+    conocer esta respuesta, una intención perdida o tardía nunca suma stock.
+    """
+    organization = _reception_organization(request)
+    presentation = resolve_public_id(
+        Presentation.objects.for_organization(organization).select_related('product'), pk,
+    )
+    if not presentation.product.tracks_lots:
+        return Response(
+            {'code': 'validation_error',
+             'errors': {'product': ['Este producto no usa control de lotes.']}},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    serializer = StockReceptionSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    operation_id = _reception_operation_id(request)
+    if operation_id is None:
+        raise ValidationError({'operation_id': 'Falta el identificador de operación.'})
+    _, created = prepare_reception(
+        organization=organization,
+        actor=request.user,
+        presentation=presentation,
+        validated_data=serializer.validated_data,
+        operation_id=operation_id,
+    )
+    operation = get_visible_reception(organization, request.user, operation_id)
+    return Response(
+        _serialized_reception_detail(operation, request),
+        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+    )
+
+
+@api_view(['GET'])
+@permission_classes([make_permission("inventory.update")])
+def reception_list(request):
+    """Descubre operaciones sin conocer ningún identificador previo.
+
+    GET /api/inventory/receptions/?status=&product=&scope=own|organization&cursor=
+    Por defecto, las propias; `scope=organization` exige facultad de supervisión.
+    """
+    organization = _reception_organization(request)
+    include_others = _include_other_actors(request)
+    queryset = receptions_visible_to(organization, request.user, include_others=include_others)
+
+    status_filter = request.query_params.get('status')
+    if status_filter:
+        if status_filter not in dict(StockReceptionReceipt.STATUS_CHOICES):
+            raise ValidationError({'status': 'Estado inválido.'})
+        queryset = queryset.filter(status=status_filter)
+    product_lookup = request.query_params.get('product')
+    if product_lookup:
+        queryset = queryset.filter(product=resolve_public_id(
+            Product.objects.for_organization(organization), product_lookup,
+        ))
+
+    queryset = queryset.select_related(
+        'actor', 'resolved_by', 'product', 'presentation',
+    ).prefetch_related('movements__lot')
+    paginator = StockMovementCursorPagination()
+    page = paginator.paginate_queryset(queryset, request)
+    results = StockReceptionOperationSerializer(
+        page, many=True, context={'request': request, 'detail': False},
+    ).data
+    response = paginator.get_paginated_response(results)
+    response.data['can_supervise'] = can_supervise_receptions(request.user)
+    return response
+
+
+@api_view(['GET'])
+@permission_classes([make_permission("inventory.update")])
+def unattributed_reception_list(request):
+    """GET /api/inventory/receptions/unattributed/ — entradas sin identidad de operación."""
+    organization = _reception_organization(request)
+    queryset = unattributed_reception_entries(
+        organization, request.user, include_others=_include_other_actors(request),
+    )
+    paginator = StockMovementCursorPagination()
+    page = paginator.paginate_queryset(queryset, request)
+    return paginator.get_paginated_response(ReceptionLedgerEntrySerializer(page, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes([make_permission("inventory.update")])
+def reception_detail(request, operation_id):
+    """Evidencia de una operación. Consultar nunca muta ni ejecuta."""
+    organization = _reception_organization(request)
+    operation = get_visible_reception(organization, request.user, operation_id)
+    return Response(_serialized_reception_detail(operation, request))
+
+
+@api_view(['POST'])
+@permission_classes([make_permission("inventory.update")])
+def complete_reception_view(request, operation_id):
+    """Ejecuta la captura guardada de una intención propia, sin reenviarla."""
+    from django.core.exceptions import ValidationError as DjValidationError
+
+    organization = _reception_organization(request)
+    try:
+        complete_reception(
+            organization=organization, actor=request.user, operation_id=operation_id,
+        )
+    except DjValidationError as e:
+        return Response(
+            {'code': 'validation_error', 'message': ' '.join(e.messages)},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    operation = get_visible_reception(organization, request.user, operation_id)
+    return Response(_serialized_reception_detail(operation, request))
+
+
+@api_view(['POST'])
+@permission_classes([make_permission("inventory.update")])
+def discard_reception_view(request, operation_id):
+    """Cierra una intención sin aplicarla; quedan motivo, autor y fecha."""
+    organization = _reception_organization(request)
+    serializer = ReceptionDiscardSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    discard_reception(
+        organization=organization,
+        actor=request.user,
+        operation_id=operation_id,
+        reason=serializer.validated_data['reason'],
+        note=serializer.validated_data.get('note', ''),
+    )
+    operation = get_visible_reception(organization, request.user, operation_id)
+    return Response(_serialized_reception_detail(operation, request))
 
 
 class ProductLotsView(TenantQueryMixin, generics.ListAPIView):

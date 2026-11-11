@@ -9,3 +9,11 @@ Continuación r2: se corrigió la interpretación de ajustes por lote con FK nul
 Continuación posterior: puente de rollback del reporte, lectura concurrente versionada y alta de presentación adicional mediante el writer. El alcance sigue sujeto a las verificaciones pendientes de la matriz.
 
 Continuación 01-11: ciclo de rollback/upgrade de reporte probado con lectura paginada; recepción con identidad persistida en servidor y reintento desde el wizard. Véase evidencia y límites de almacenamiento local en la matriz.
+
+Continuación 06-11: recuperación de recepciones sin estado local. El servidor guarda la intención antes de tocar stock y la app la descubre sin UUID; una persona concilia las candidatas. Decisión en [DECISIONES](DECISIONES.md#i01-recuperación-sin-estado-local-06-11), pruebas en [EVIDENCIA](EVIDENCIA.md#continuación-06-11-i01) y aplicación en [APLICACION-Y-ROLLBACK](APLICACION-Y-ROLLBACK.md). Las migraciones siguen aplicadas solo en el destino sintético.
+
+Continuación 08-11: suite global local sin fallos atribuibles a I01, pasos de CI de frontend en verde y migraciones de I01 aplicadas a la base habitual local con respaldo. Véase [evidencia](EVIDENCIA.md#cierre-08-11).
+
+Integración 08-11: I01, I02 e I03 rebasados sobre `develop`, subidos a `codex/e4-capacity-scheduling` y con CI real en verde. Véase [evidencia](EVIDENCIA.md#integración-en-develop-y-ci-08-11).
+
+Continuación 09-11: confirmado que no existen datos reales, I07 deja de aplicar; el importador bloquea factores que perderían valor y se midió I04 en su tope. I04 e I06 siguen aplazados. Véase [evidencia](EVIDENCIA.md#decisiones-09-11).

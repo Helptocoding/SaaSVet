@@ -13,6 +13,7 @@ vi.mock("../api/inventory", () => ({
     ]),
     getUnitChoices: vi.fn().mockResolvedValue([]),
     getLotAlerts: vi.fn().mockResolvedValue({ expiring_soon: [], expired_with_stock: [] }),
+    getReceptions: vi.fn().mockResolvedValue({ results: [] }),
     createProduct: vi.fn(), updateProduct: vi.fn(), deleteProduct: vi.fn(), adjustStock: vi.fn(),
     createPresentation: vi.fn(), updatePresentation: vi.fn(), receiveStock: vi.fn(),
 }));
@@ -34,6 +35,22 @@ describe("orden de la tabla de inventario", () => {
         expect(rows()[0]).toContain("Producto B");
         fireEvent.click(within(table).getByText("Stock"));
         expect(rows()[0]).toContain("Producto A");
+    });
+
+    it("usa la tabla global y expone el orden de forma accesible", async () => {
+        render(<Inventory />);
+        await screen.findByText("Producto A");
+        const table = screen.getByRole("table");
+        expect(table).toHaveClass("table");
+
+        const header = within(table).getByText("Valor en stock").closest("th");
+        expect(header).toHaveAttribute("aria-sort", "none");
+
+        fireEvent.click(header);
+        expect(header).toHaveAttribute("aria-sort", "ascending");
+
+        fireEvent.keyDown(header, { key: "Enter" });
+        expect(header).toHaveAttribute("aria-sort", "descending");
     });
 });
 

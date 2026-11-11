@@ -1,6 +1,6 @@
 # Modulo: Importador CSV/Excel
 
-> Orden 4 en curso: importación devuelve `demo_account_restricted` para el 403 del guard demo. El reporte paginado tiene implementación y pruebas parciales; ver [expediente](../remediaciones/orden-4/README.md).
+> Orden 4: importación devuelve `demo_account_restricted` para el 403 del guard demo. El reporte paginado está verificado localmente, también en navegador (I03); ver [expediente](../remediaciones/orden-4/README.md).
 
 `GET /api/imports/<public_id>/conflicts/` acepta `page_size` 1–100 (50 por defecto), `version` y `cursor` firmado. Responde `version`, `total`, `available`, `complete`, `results`, `next_cursor`; un cursor requiere versión. Un reporte sustituido devuelve 409 `conflict_report_changed`; cursor inválido devuelve 400; job de otra clínica devuelve 404. Resultados legacy se convierten desde su JSON persistido bajo lock sin consultar el catálogo; `complete=false` indica detalles históricos faltantes. `validate` guarda reporte/metadatos del job pero no escribe datos de dominio.
 
@@ -184,16 +184,22 @@ unidades de presentación, `StockMovement(quantity_unit='base')` auditable).
 Estos productos aparecen como `no_baseline` en `audit_stock_integrity`
 (informativo, igual que el alta manual). Paridad con el alta manual verificada
 por test gate: `Product.stock_quantity == stock×cf` y `Presentation.stock ==
-stock` para cualquier `cf > 0`. En importación `Presentation.quantity ==
-conversion_factor` SIEMPRE (contrato canónico; el alta manual puede dejar
-`quantity=1` — deuda preexistente, ADR p61 §Deuda).
+stock` para cualquier `cf > 0`. `Presentation.quantity == conversion_factor`
+exacto con 4 decimales, igual que en el alta manual (orden 4, I02). Hasta el
+08-11-2026 el importador redondeaba el alias a 2 decimales (0.125 → 0.13) y
+rechazaba factores menores a 0.005, herencia de cuando `quantity` era 10/2.
+Un factor que perdería valor con 4 decimales (`0.33333`) es error bloqueante de
+la fila, como en el alta manual; los ceros a la derecha (`1.50000`) se aceptan
+porque no pierden nada.
 
 ### Result: contadores adicionales (aditivos)
 
 `created_products`, `created_presentations`, `initial_stock_movements` (en
 owner_pet quedan en 0). El resto del shape canónico es idéntico. Tipos de
 conflicto nuevos: `duplicate_internal_code`, `duplicate_barcode`,
-`duplicate_name`.
+`duplicate_name`. Inventario no usa `skipped_duplicates`: todo choque con un
+producto registrado se omite como conflicto, y su tarjeta de resultado
+«Posibles duplicados omitidos» lee `skipped_conflicts`.
 
 ### Frontend
 
@@ -202,6 +208,12 @@ El MISMO wizard (`pages/imports/`) con selector de tipo en el paso 1
 tarjetas de resumen y CTA final vienen de `entityConfig.js` (default =
 owner_pet ⇒ comportamiento histórico intacto). Los destinos "extra" del picker
 se derivan del catálogo (`is_extra`), sin hardcodear entidades.
+
+`ConflictCard.jsx` es la tarjeta única de un conflicto («En tu archivo» frente a
+«Ya registrado»): la usan la muestra de la vista previa y el detalle paginado
+`ConflictPages`, que no muestra nombres de campo internos. En las tarjetas por
+revisar, una entidad sin `cardUncertainText` (inventario) muestra el `message`
+del servidor, que dice si la coincidencia es por código o por nombre.
 
 ## Shape del `result` (contrato)
 

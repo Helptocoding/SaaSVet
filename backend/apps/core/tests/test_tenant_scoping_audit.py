@@ -110,15 +110,15 @@ BASELINE = {
     # Revisado 2026-07-15 (inventory/services.py:420): get_or_create con
     # organization= explícito en el lookup — tenant-scoped por construcción.
     ('inventory', 'services.py', 'StockLot', 'get_or_create'),
-    # Revisado 2026-11-02 (recibo idempotente de recepción de stock):
-    # StockReceptionReceipt es `models.Model` PLANO, así que tampoco expone
-    # `for_organization`. El get_or_create lleva
-    # `organization=request.user.organization` EXPLÍCITO en el lookup, de modo
-    # que no puede casar con la fila de otra clínica: un operation_id ajeno no
-    # se lee, se crea uno nuevo para la organización del actor. Lo respalda en
-    # base `UniqueConstraint(organization, operation_id)`. Mismo criterio que
-    # `StockLot.get_or_create` justo arriba.
-    ('inventory', 'views.py', 'StockReceptionReceipt', 'get_or_create'),
+    # Revisado 2026-11-06 (operaciones de recepción, I01): StockReceptionReceipt es
+    # `models.Model` PLANO, así que no expone `for_organization`. Cada `filter` y
+    # `get_or_create` de services.py lleva `organization=` EXPLÍCITO, recibida de
+    # request.user.organization, de modo que no puede casar con la fila de otra
+    # clínica: un operation_id ajeno da 404 o se crea uno nuevo para la organización
+    # del actor. Lo respalda en base `UniqueConstraint(organization, operation_id)`.
+    # Mismo criterio que `StockLot.get_or_create` justo arriba.
+    ('inventory', 'services.py', 'StockReceptionReceipt', 'get_or_create'),
+    ('inventory', 'services.py', 'StockReceptionReceipt', 'filter'),
     # Revisados 2026-07-15: LegalAcceptance se filtra/crea por user, y un user
     # pertenece a exactamente una organización (invariante ADR p48). El scoping
     # viene del principal autenticado, no de un id del cliente.

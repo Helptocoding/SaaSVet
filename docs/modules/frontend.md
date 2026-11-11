@@ -9,7 +9,7 @@
 - Estilos: CSS modules por pagina + variables globales en `tokens.css`
 - Toasts: `sonner` (configurado en `App.jsx`)
 - Iconos: `lucide-react`
-- Auth: Context propio (`src/auth/authContext.jsx`) con JWT + refresh automatico
+- Auth: Context propio (`src/auth/AuthProvider.jsx` + `src/auth/authContext.js`) con JWT + refresh automatico
 - HTTP: Axios con interceptores (`src/api/client.js`)
 - Confirmaciones: `useConfirm` hook (`src/components/ConfirmDialog.jsx`)
 - Calendario: `@fullcalendar/react` (core + daygrid + timegrid + interaction)
@@ -916,7 +916,7 @@ triggerDownload(blob, filename);
   "consulta (1).pdf", revisar ese setting antes que este código.
 - Handler estándar: `downloadingId` state para deshabilitar el botón + `apiError` en catch.
 
-### authContext.jsx
+### AuthProvider.jsx
 
 Autenticación basada en JWT con refresh automático. El flujo de inicialización sigue una **máquina de estados determinista** que evita montar rutas protegidas con tokens vencidos.
 
@@ -1115,11 +1115,10 @@ Formulario de receta reutilizable. Acepta `lockedPet` y `lockedMedicalRecord` pa
 (`.table-wrap` + `.table`); estilos `th-sortable`/`th-inner`/`sort-arrow` en
 `global.css`. Accesible: `tabIndex`, Enter/Espacio y `aria-sort`. Props:
 `col`, `label`, `sortCol`, `sortDir`, `onSort`, `align`. Usado en Cobros
-(Fecha/Total). **Desde ADR p42 el sort de Cobros es server-side**: `onSort`
+(Fecha/Total). Inventario lo usa desde el orden 5. **Desde ADR p42 el sort de Cobros es server-side**: `onSort`
 actualiza `(sortCol, sortDir)` → `?ordering` y refetcha (la tabla pagina; ordenar
 client-side solo ordenaría la página actual). **No crear sorting por módulo**
-(design-system.md §5). Deuda contenida: Inventario conserva su SortHeader local
-(module CSS) — migrar junto con la unificación de su tabla, no piecemeal.
+(design-system.md §5).
 
 ### Pagination (paginador Anterior/Siguiente) — ADR p42
 
@@ -1162,7 +1161,7 @@ Mapeo (no crear enums ni clases nuevas):
 | `canceled` | Cancelada | `badge-danger` |
 | `no_show` | No se presentó | `badge-default` (unificado; antes el modal usaba `badge-secondary`) |
 
-Migrados a `StatusBadge`: `TodayAgendaList`, `AppointmentQuickModal`. NO migrados aún (deuda contenida, no piecemeal): `billing`, `cash`, `petDetail`, `appointments`, `AppointmentBreakdown`.
+Migrados: `TodayAgendaList`, `AppointmentQuickModal`, `petDetail` y la agenda (`appointments.jsx`). `AppointmentBreakdown` usa `statusLabel` con pills propias. `billing` y `cash` muestran estados de cobro y de caja, fuera de este componente.
 
 ### AppointmentQuickModal (acciones rápidas de cita) — ADR p35
 
@@ -1280,6 +1279,22 @@ Para edición: "Guardar cambios" → `handleWizardSave()` directo.
 **Posicionamiento del popover:** `getPopoverPos` busca `.modal.modal-md` en el DOM y coloca el popover a su derecha (o izquierda si no hay espacio). El spotlight sigue apuntando al elemento dentro del formulario.
 
 **Gate de animación:** `localStorage.getItem("multi_presentation_animation_seen")` — se muestra una sola vez por dispositivo.
+
+### Recepciones según el servidor (orden 4, I01)
+
+`components/ReceptionsModal.jsx` no lee nada del navegador: consulta `GET /inventory/receptions/` sin ningún
+identificador, así que sirve también en una sesión recién iniciada en un navegador vacío.
+`api/inventory.js::receiveStock(presentación, captura, operationId)` prepara y después ejecuta; `localStorage`
+guarda como mucho un atajo de reintento (fallar al escribirlo o perderlo no cambia nada).
+
+- Se abre desde el botón «Recepciones» y desde el aviso de pendientes, que `pages/inventory.jsx` carga del servidor.
+- **Nunca elige por el usuario**: ni con una sola candidata; resolver exige seleccionarla y confirmar.
+- `allowed_actions` lo decide el servidor. Las recepciones identificadas usan siempre la identidad recuperada;
+  «Registrar una recepción nueva» es otra acción, con otra identidad.
+- Mostrar `applied_lines` como lo que entró y `current_balance` como saldo acumulado: **nunca** presentar el segundo
+  como cantidad de la operación.
+- Un `409` no se reintenta: se recarga el detalle y se muestra lo que el servidor sabe ahora.
+- Refrescar tras resolver sin pasar por `loading` de la página, o se desmonta el panel con la evidencia.
 
 ### `api/inventory.js` — funciones disponibles
 
@@ -1448,8 +1463,8 @@ Reglas (no negociables — voz de producto):
 - **EN VIVO sobre la UI real, no un modal de mocks.** El recorrido opera la pantalla real:
   abre el formulario de nueva cita, y el **modal de detalle REAL** de la cita.
 - **Cita demo Luna NO persistida**: `makeDemoLuna()` (`public_id="__demo__"`) se inyecta
-  SOLO en el grid local (`tourDemoAppt` → merge en `weekAppts`, **no** en las stats,
-  **nunca** al backend) para que aparezca como `ApptBadge` real y abra el `DetailModal`
+  SOLO en el grid local (`tourDemoAppt` → merge en `visibleAppointments`, **no** en las stats,
+  **nunca** al backend) para que aparezca como evento real del calendario y abra el `DetailModal`
   real. Se limpia en `skip`/`finish` (`setViewAppt(null)` + `setTourDemoAppt(null)` +
   `setSelectedSlot(null)`). Resuelve el problema de clínica vacía sin escribir datos.
 - **Contar una HISTORIA, no listar features.** Narra la visita de un paciente (**Luna**)
@@ -1531,8 +1546,6 @@ Notas:
   pantalla es administrativa → Mascota; si es el acto clínico → Paciente.
 - La mascota genérica de walk-in se etiqueta en agenda como *"Atención sin mascota
   registrada — vincular mascota"* (no "Paciente anónimo").
-- Deuda conocida (no clínica, fuera del piloto): `platform/createOrganization`
-  aún valida `"Username requerido."` (anglicismo "Username").
 
 ## Punto de Venta (`/pos`)
 
@@ -1623,9 +1636,8 @@ pnpm test:watch   # vitest (desarrollo)
 ### CI (gate bloqueante)
 
 El job `frontend` corre `pnpm run test` como paso **bloqueante** (ADR/plan P1-4
-Fase A): `.github/workflows/ci.yml`. Un test rojo tumba el merge. `lint` sigue
-siendo advisory (`continue-on-error`); ver el plan para la condición de pasarlo a
-blocking (Fase D).
+Fase A): `.github/workflows/ci.yml`. Un test rojo tumba el merge. `lint` bloquea por errores desde el orden 5; los warnings `exhaustive-deps` no bloquean.
+`src/test/lintDisableReason.test.js` exige motivo en las supresiones de reglas de react-hooks.
 
 ### Convenciones (obligatorias)
 
@@ -1659,10 +1671,7 @@ blocking (Fase D).
 
 - `mapFieldErrors` aplana cada error anidado a **dos** claves (dotted
   `presentation_input.sale_price` + plana `sale_price`); ambas load-bearing
-  (`inventory.jsx` las consume como fallback). El docstring de la función está
-  desactualizado (solo menciona la dotted) — ver deuda fase 4.
-- `PaymentLinesEditor` recalcula `sum`/`remaining`/`change` **inline**, duplicando la
-  matemática de `payments.js` (deuda fase 4). El test de float-drift ancla ese cálculo.
+  (`inventory.jsx` las consume como fallback).
 - Botón eliminar de `PaymentLinesEditor` con 1 sola línea: `visibility:hidden` →
   queda **fuera** del árbol de accesibilidad (no matchea `getAllByRole('button')`).
   Es el contrato: el usuario no puede borrar el único método de pago.
@@ -1670,13 +1679,7 @@ blocking (Fase D).
   (`productStockValue`); el `/cf` normaliza el precio de la presentación a unidad base.
   Conviven **dos** definiciones de "bajo stock": `stockStatus.low` (frontend, `min>0 &&
   stock<min`) y `metrics.lowStock` (flag backend `is_low_stock`). No unificar sin ADR.
-- **Bug conocido (deuda fase 3 B7):** el sort de la columna "Valor en stock" ordena por
-  `sale_price × stock` **sin** `/cf` → no coincide con el valor mostrado para productos
-  con `conversion_factor ≠ 1`. Bug de UX (orden), sin pérdida de datos. Fix: usar
-  `productStockValue`/`productStockQty` en el comparador.
 
 ### Pendiente (siguientes fases)
 
-- B7 (deuda fase 3): alinear el sort "Valor en stock" con `productStockValue` (fix + test).
-- C: extraer la lógica pura restante (billing sub-componentes, dedup sum/remaining).
-- D: triar los ~6 errores `react-hooks` (lint) para pasar lint a blocking.
+- C: extraer la lógica pura restante (dedup sum/remaining). Los subcomponentes de billing (`RefundModal`, `DispenseLotSelect`, `PrescriptionDispensePanel`, `refundReasons`) ya viven en `components/billing/` con pruebas de caracterización.

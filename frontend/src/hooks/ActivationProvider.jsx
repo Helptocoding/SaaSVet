@@ -1,13 +1,7 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getActivation } from "../api/dashboardSummary";
 import { useAuth } from "../auth/authContext";
+import { ActivationContext } from "./activationContext";
 
 /**
  * Fuente de verdad de la activación de la clínica (primer uso).
@@ -29,12 +23,6 @@ import { useAuth } from "../auth/authContext";
  * No hace polling: la activación cambia poco. Refetcha en mount, al recibir
  * `dashboard:refresh` y bajo demanda (`refetch`, p.ej. al volver al dashboard).
  */
-const ActivationContext = createContext({
-  activation: null,
-  loading: true,
-  refetch: () => {},
-});
-
 export function ActivationProvider({ children }) {
   const { user } = useAuth();
   const [activation, setActivation] = useState(null);
@@ -56,6 +44,7 @@ export function ActivationProvider({ children }) {
 
   useEffect(() => {
     mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial desde la API al montar
     refetch();
 
     const onRefresh = () => refetch();
@@ -72,8 +61,4 @@ export function ActivationProvider({ children }) {
       {children}
     </ActivationContext.Provider>
   );
-}
-
-export function useActivationContext() {
-  return useContext(ActivationContext);
 }

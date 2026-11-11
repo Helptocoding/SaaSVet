@@ -30,6 +30,7 @@ export function useDashboardSummary() {
 
   useEffect(() => {
     mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial desde la API al montar
     fetch();
 
     timerRef.current = setInterval(fetch, POLL_INTERVAL);

@@ -1,4 +1,4 @@
-import { memo, useState, useMemo, useLayoutEffect, Component } from "react";
+import { memo, useState, useMemo, Component } from "react";
 import {
   ComposedChart, Bar, Line, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -86,20 +86,12 @@ function DashboardChart({ allPoints, hasCorrupt }) {
   const [chartError, setChartError] = useState(false);
 
   // Resolve CSS vars once after mount — SVG attrs don't support var()
-  const [colors, setColors] = useState({
-    primary: "#1a4434",
-    accent:  "#d67b5c",
-    text3:   "#8a8a7f",
-    border:  "#deded9",
-  });
-  useLayoutEffect(() => {
-    setColors({
-      primary: readCssVar("--c-primary", "#1a4434"),
-      accent:  readCssVar("--c-accent",  "#d67b5c"),
-      text3:   readCssVar("--c-text-3",  "#8a8a7f"),
-      border:  readCssVar("--c-border",  "#deded9"),
-    });
-  }, []);
+  const [colors] = useState(() => ({
+    primary: readCssVar("--c-primary", "#1a4434"),
+    accent:  readCssVar("--c-accent",  "#d67b5c"),
+    text3:   readCssVar("--c-text-3",  "#8a8a7f"),
+    border:  readCssVar("--c-border",  "#deded9"),
+  }));
 
   const chartData = useMemo(() => transformOpsData(allPoints ?? []), [allPoints]);
   const hasLive   = useMemo(() => (allPoints ?? []).some((p) => p.isLive), [allPoints]);

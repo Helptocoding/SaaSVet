@@ -95,6 +95,7 @@ const SidePanel = ({ recordId, pet, refreshKey = 0, compact = false }) => {
 
   useEffect(() => {
     if (!recordId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sin consulta seleccionada se limpia el panel
       setSummary(null);
       setError(null);
       setLoading(false);

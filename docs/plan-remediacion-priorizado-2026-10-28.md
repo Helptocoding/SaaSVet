@@ -101,6 +101,8 @@ Los CASCADE observados son deuda de conservación; su presencia no demuestra que
 
 ## 5. Calidad del frontend y experiencia de uso
 
+**Alcance acordado el 09-11-2026:** [plan del orden 5](plan-remediacion-orden-5-2026-11-09.md) y [prompts por entrega](remediaciones/orden-5/README.md). Cubre los ocho IDs en trece entregas, solo frontend. El lint real de la app eran 61 errores, no 198: el resto era `frontend/standalone`, ignorado por git. C3 mueve los providers en lugar de repuntar importadores, `allowPartial` se retira y la tabla de Inventario adopta `.table`. Estos documentos no acreditan implementación.
+
 | Prioridad | IDs | Pendiente | Orden y motivo |
 |---|---|---|---|
 | **P2; priorizar reglas sensibles** | F01 | Lint: 198 errores y 19 warnings en la revisión del 27-10 | Separar app/standalone y agrupar por regla/impacto. Revisar primero auth, hooks y comportamiento; después avisos cosméticos. Pasar a blocking al cerrar el alcance definido, no simplemente ocultar errores. |

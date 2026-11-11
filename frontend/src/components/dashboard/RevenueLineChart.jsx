@@ -1,4 +1,4 @@
-import { memo, useId, useMemo, useLayoutEffect, useState } from "react";
+import { memo, useId, useMemo, useState } from "react";
 import {
   AreaChart, Area,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -55,13 +55,10 @@ function RevenueLineChart({ rangeDays = 30 }) {
   const gAccrual = `${uid}-accrual`;
 
   // Resolve CSS vars once after mount — SVG attrs don't support var()
-  const [colors, setColors] = useState({ primary: "#1a4434", accent: "#d67b5c" });
-  useLayoutEffect(() => {
-    setColors({
-      primary: readCssVar("--c-primary", "#1a4434"),
-      accent:  readCssVar("--c-accent",  "#d67b5c"),
-    });
-  }, []);
+  const [colors] = useState(() => ({
+    primary: readCssVar("--c-primary", "#1a4434"),
+    accent:  readCssVar("--c-accent",  "#d67b5c"),
+  }));
 
   const { series, today, loading } = useFinancialSeries(rangeDays, true);
 

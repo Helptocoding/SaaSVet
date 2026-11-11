@@ -1,4 +1,4 @@
-import { memo, useLayoutEffect, useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { useAuth } from "../../auth/authContext";
 import { useNavigate } from "react-router-dom";
@@ -56,8 +56,7 @@ export default function DashboardTopBar({ summary, revenueToday, revenueSpark, r
   const navigate = useNavigate();
   const isAdmin  = user?.role === "ADMIN" || user?.role === "ADMIN_SAAS";
 
-  const [color, setColor] = useState("#1a4434");
-  useLayoutEffect(() => { setColor(readCssVar("--c-primary", "#1a4434")); }, []);
+  const [color] = useState(() => readCssVar("--c-primary", "#1a4434"));
 
   const dateLabel = useMemo(
     () => new Date().toLocaleDateString("es-ES", {

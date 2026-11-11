@@ -155,17 +155,90 @@ class Presentation(PublicIdMixin, OrganizationalModel):
 
 
 class StockReceptionReceipt(models.Model):
-    """Idempotency record for an explicitly identified lot reception."""
+    """Durable identity of one lot reception, recorded BEFORE it touches stock.
+
+    pending   -> intent committed; no stock applied. Only its actor may execute it.
+    confirmed -> stock applied in the same transaction that set this status.
+    discarded -> closed by a person; never applied. Terminal, like confirmed.
+
+    Because execution needs a request issued after the intent is durable, a client
+    that lost everything can always discover what the server holds: a late or lost
+    prepare only ever yields a harmless pending row. `payload` is NULL only on rows
+    from before migration 0031, whose quantities cannot be reconstructed: `result`
+    there holds cumulative lot balances at confirmation, not received quantities.
+    What a confirmed operation applied is read from `movements`, never from balances.
+    """
+    STATUS_PENDING = 'pending'
+    STATUS_CONFIRMED = 'confirmed'
+    STATUS_DISCARDED = 'discarded'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Sin confirmar'),
+        (STATUS_CONFIRMED, 'Confirmada'),
+        (STATUS_DISCARDED, 'Descartada'),
+    ]
+    DISCARD_REASON_CHOICES = [
+        ('not_received', 'La mercancía no se recibió'),
+        ('already_registered', 'Ya se registró por otra vía'),
+        ('entered_in_error', 'Captura equivocada'),
+    ]
+
     organization = models.ForeignKey('organizations.Organization', on_delete=models.PROTECT)
     actor = models.ForeignKey('users.User', on_delete=models.PROTECT)
     presentation = models.ForeignKey(Presentation, on_delete=models.PROTECT)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='+')
     operation_id = models.UUIDField()
     payload_hash = models.CharField(max_length=64)
+    payload = models.JSONField(null=True, blank=True)
+    conversion_factor_snapshot = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True,
+    )
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING)
     result = models.JSONField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.ForeignKey(
+        'users.User', on_delete=models.PROTECT, null=True, blank=True, related_name='+',
+    )
+    discard_reason = models.CharField(
+        max_length=32, choices=DISCARD_REASON_CHOICES, blank=True, default='',
+    )
+    discard_note = models.CharField(max_length=255, blank=True, default='')
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=['organization', 'operation_id'], name='stock_reception_operation_unique')]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'operation_id'],
+                name='stock_reception_operation_unique',
+            ),
+            # One unresolved reception per person and product: resending has to
+            # go through the open intent instead of creating an ambiguous second one.
+            models.UniqueConstraint(
+                fields=['organization', 'actor', 'product'],
+                condition=models.Q(status='pending'),
+                name='stock_reception_one_pending',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(status='pending', result__isnull=True, resolved_at__isnull=True)
+                    | models.Q(status='confirmed', result__isnull=False)
+                    | (
+                        models.Q(status='discarded', result__isnull=True, resolved_at__isnull=False)
+                        & ~models.Q(discard_reason='')
+                    )
+                ),
+                name='stock_reception_state_consistent',
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=['organization', 'actor', '-created_at', '-id'],
+                name='idx_reception_org_actor',
+            ),
+            models.Index(
+                fields=['organization', '-created_at', '-id'],
+                name='idx_reception_org_created',
+            ),
+        ]
 
 
 class StockLot(PublicIdMixin, OrganizationalModel):
@@ -330,11 +403,26 @@ class StockMovement(OrganizationalModel):
         blank=True,
         related_name='stock_movements_created',
     )
+    # Operation that produced this entry, written in the same transaction. NULL on
+    # every entry without an identified reception: never inferred afterwards.
+    reception_operation = models.ForeignKey(
+        'inventory.StockReceptionReceipt',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='movements',
+        db_index=False,
+    )
     # created_at heredado de OrganizationalModel
 
     class Meta:
         ordering = ['-created_at']
         indexes = [
+            models.Index(
+                fields=['reception_operation'],
+                condition=models.Q(reception_operation__isnull=False),
+                name='idx_stockmov_reception_op',
+            ),
             # Capa 3 — analytics. ProductDailyConsumption + "días de stock
             # restantes" calculan consumo medio sobre ventana móvil de
             # movements por presentation.

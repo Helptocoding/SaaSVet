@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthProvider, useAuth } from "./authContext";
+import { AuthProvider } from "./AuthProvider";
+import { useAuth } from "./authContext";
 import { clearTokens, getItem, setTokens } from "./tokenStorage";
 
 const jwt = (secondsFromNow) => {

@@ -6,7 +6,7 @@
 
 > Alta de presentación adicional: el stock positivo también entra mediante el writer en unidades base; para productos con lotes debe usarse recepción identificada. El PATCH de presentación rechaza asignaciones directas de stock.
 
-> Recepción de lotes admite `X-Idempotency-Key` UUID: la misma operación, actor, presentación y payload validado devuelve el receipt confirmado; cambios incompatibles devuelven 409. Sin cabecera conserva el comportamiento anterior. El wizard guarda la operación para reintentar tras recarga; la pérdida total del almacenamiento local sigue pendiente de reconciliación autoritativa. Ver [expediente](../remediaciones/orden-4/README.md).
+> Recepción de lotes: la app registra una **intención durable en el servidor** antes de tocar stock y la ejecuta en otra petición, así que se puede recuperar o conciliar sin conservar nada en el navegador. Ver [Operaciones de recepción](#operaciones-de-recepción-intención-durable) y el [expediente](../remediaciones/orden-4/README.md).
 
 > **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo.
 
@@ -184,6 +184,40 @@ movimiento `in` lot-scoped. `quantity` de la línea en unidades de **presentaci�
 `conversion_factor`). Solo `tracks_lots` (los demás usan el ajuste histórico). Endpoint
 `POST /presentations/<id>/receive/`; frontend en `StockEntryModal` (sección de lotes condicional).
 
+### Operaciones de recepción: intención durable
+
+`StockReceptionReceipt` es la identidad de una recepción, y existe **antes** de que esta toque stock:
+
+| Estado | Significado | Stock |
+|---|---|---|
+| `pending` | Intención confirmada con la captura guardada. Puede haber una ejecución en curso | No aplicado |
+| `confirmed` | Terminal. Publicado en la misma transacción que el stock y los movimientos | Aplicado una vez |
+| `discarded` | Terminal. Cerrada por una persona, con motivo, autor y fecha | Nunca aplicado |
+
+**Por qué son dos peticiones.** Si intención y efecto viajaran juntos, una petición aún en vuelo sería
+invisible: la lista vacía no probaría nada y otra entrada podría sumarse a una que todavía va a ejecutarse.
+Separadas, la ejecución solo sale tras conocer la respuesta de la intención. Una intención perdida o tardía
+deja, como mucho, un `pending` inerte; una ejecución en vuelo ya es visible como `pending`, y completar o
+descartar se serializan con ella por el lock de la fila.
+
+- **Sin identidad local.** `GET /receptions/` lista lo que el usuario puede ver sin pedir ningún identificador.
+- **Una entrada nueva exige resolver la anterior.** `UniqueConstraint` parcial: como máximo un `pending` por
+  organización, actor y producto; otro → `409 reception_unresolved`. **No deduplica por contenido**: dos
+  recepciones idénticas son válidas si la primera ya está resuelta.
+- **Lo que aplicó sale del libro.** `StockMovement.reception_operation` se escribe en la misma transacción;
+  `applied_lines` se lee de ahí, y `current_balance` se publica aparte porque acumula otras entradas y salidas.
+- **Actor.** Solo quien capturó puede ejecutar. Sin facultad de supervisión, una operación ajena da 404.
+  `staff.reset_password` (administración del equipo, ya existente) añade `scope=organization` en lectura y
+  permite cerrar una operación ajena, nunca ejecutarla: así una persona que ya no está no deja nada sin salida.
+- **Factor.** Se congela al preparar: si cambia, `409 reception_factor_changed` en vez de aplicar otra cantidad.
+
+**Límites.** Las filas anteriores a `inventory.0031` no conservan captura ni cantidades: quedan `confirmed` con
+`evidence_level=legacy_receipt` y solo se publica la identidad de sus lotes, porque los saldos de ese recibo no
+son la cantidad recibida. Las entradas sin operación (llamadas directas, históricas, `adjust` de productos sin
+lotes con motivo «Entrada de mercancía») aparecen en `/receptions/unattributed/`: son hechos del libro que nada
+permite atribuir a un intento, y las concilia una persona. `POST /receive/` con clave conserva su contrato en una
+sola petición, sin la visibilidad en vuelo; la app ya no lo usa para recepciones nuevas.
+
 ## `apply_stock_movement()` — contrato
 
 **Único escritor autorizado de `Product.stock_quantity`.** Ubicación: `apps/inventory/services.py`.
@@ -267,8 +301,9 @@ El frontend ordena: primero agotados (`stock_quantity = 0`), luego bajo mínimo.
 `python manage.py audit_stock_integrity [--org N] [--verbose] [--json]`
 
 - Fuente de verdad: `Product.stock_quantity`
-- Baseline: último `StockMovement(quantity_unit='base', movement_type='adjustment')` por producto
-- Movimientos legacy (`quantity_unit='presentation'`) ignorados
+- Recorre el libro de cada producto: sin `adjustment` de producto parte de 0, un `adjustment` de producto fija el saldo y uno de lote mueve el agregado por su diferencia con ese lote
+- Saldo sin movimientos que lo expliquen = drift. Todo stock entra por `apply_stock_movement`, incluido el inicial
+- `no_baseline`: solo productos con movimientos legacy (sin producto o en unidades de presentación) y sin `adjustment` posterior; informativo, no drift
 - Exit: 0 sin drift, 1 drift detectado, 2 error
 
 ## Barcode lookup (POS scanner)
@@ -334,8 +369,9 @@ Capa UX **solo de entrada** sobre el ajuste existente. NO crea productos ni edit
 
 - **Producto con `tracks_lots` (B1):** el modal muestra una sección de **lotes** (proveedor
   opcional + N filas lote/caducidad/cantidad, "+ Agregar lote") en vez del stepper simple, y
-  confirma vía `receiveStock` (`POST /presentations/<id>/receive/`). Producto sin lotes: el
-  modal se comporta igual que antes (stepper + `adjustPresentationStock`).
+  confirma vía `receiveStock`, que prepara y ejecuta una operación con identidad propia. Reintentar la misma
+  captura conserva la identidad; sin respuesta definitiva lleva al panel Recepciones. Producto sin lotes: el
+  modal se comporta igual que antes (stepper + `adjustPresentationStock`), sin identidad de operación.
 
 No reemplaza el ajuste manual (`adjust_stock` / corrección, inventario físico) — ambos coexisten.
 
@@ -360,6 +396,12 @@ No reemplaza el ajuste manual (`adjust_stock` / corrección, inventario físico)
 | `PATCH`  | `/api/inventory/presentations/<id>/`                | Editar presentación                       |
 | `DELETE` | `/api/inventory/presentations/<id>/`                | Eliminar (con checks)                     |
 | `POST`   | `/api/inventory/presentations/<id>/adjust/`         | Ajustar stock de presentación específica  |
+| `POST`   | `/api/inventory/presentations/<id>/receptions/`     | Registrar intención (`X-Idempotency-Key` UUID obligatorio). `201` nueva, `200` repetición; `409 reception_unresolved` · `reception_operation_conflict` |
+| `GET`    | `/api/inventory/receptions/`                        | Descubrir operaciones (`?status=&product=&scope=own\|organization&cursor=&page_size=`, máx. 100). Requiere `inventory.update` |
+| `GET`    | `/api/inventory/receptions/unattributed/`           | Entradas del libro sin identidad de operación (`?scope=&cursor=`) |
+| `GET`    | `/api/inventory/receptions/<operation_id>/`         | Evidencia: lo capturado, lo aplicado, saldo actual aparte y entradas desde la intención |
+| `POST`   | `/api/inventory/receptions/<operation_id>/complete/` | Ejecutar la captura guardada. Repetir devuelve lo confirmado sin movimientos; `409 reception_discarded` · `reception_factor_changed` · `reception_payload_unavailable` |
+| `POST`   | `/api/inventory/receptions/<operation_id>/discard/` | Cerrar sin aplicar (`{reason: not_received\|already_registered\|entered_in_error, note?}`); `409 reception_already_confirmed` |
 | `POST`   | `/api/inventory/presentations/<id>/receive/`        | Recepción multi-lote (B1, solo `tracks_lots`) |
 | `GET`    | `/api/inventory/movements/`                         | Historial de movimientos (paginado cursor, ADR p42) |
 | `GET`    | `/api/inventory/units/`                             | Catálogo de unidades válidas              |

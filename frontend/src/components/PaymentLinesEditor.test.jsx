@@ -10,12 +10,11 @@ import PaymentLinesEditor from "./PaymentLinesEditor";
 // useState reproduce ese contrato para observar el comportamiento real (footer, inputs)
 // tras la interacción — sin espiar estado interno ni mockear payments.js.
 
-function Host({ total = 500, allowPartial = false, allowChange = false, initial, disabled = false }) {
+function Host({ total = 500, allowChange = false, initial, disabled = false }) {
   const [lines, setLines] = useState(initial ?? [{ method: "cash", amount: "" }]);
   return (
     <PaymentLinesEditor
       total={total}
-      allowPartial={allowPartial}
       allowChange={allowChange}
       lines={lines}
       setLines={setLines}
@@ -28,9 +27,7 @@ function Host({ total = 500, allowPartial = false, allowChange = false, initial,
 const methodSelects = () => screen.getAllByRole("combobox");
 const amountInputs = () => screen.getAllByRole("spinbutton"); // input type=number → spinbutton
 const addButton = () => screen.getByRole("button", { name: /otro método/i });
-// Botones de basura: sin nombre accesible (solo icono) → se identifican por exclusión.
-const removeButtons = () =>
-  screen.getAllByRole("button").filter((b) => !/otro método/i.test(b.textContent || ""));
+const removeButtons = () => screen.queryAllByRole("button", { name: /quitar método/i });
 
 describe("PaymentLinesEditor — render inicial", () => {
   it("muestra una línea con los 4 métodos de pago del catálogo (payments.js real)", () => {
@@ -95,7 +92,7 @@ describe("PaymentLinesEditor — captura de cantidad", () => {
 describe("PaymentLinesEditor — pago exacto", () => {
   it("500 en efectivo sobre total 500 → 'Exacto', sin faltante ni cambio", async () => {
     const user = userEvent.setup();
-    render(<Host total={500} allowPartial={false} />);
+    render(<Host total={500} />);
     await user.type(amountInputs()[0], "500");
 
     expect(screen.getByText("Exacto")).toBeInTheDocument();
@@ -234,6 +231,19 @@ describe("PaymentLinesEditor — valores inválidos (comportamiento existente, s
     render(<Host total={500} initial={[{ method: "cash", amount: "-50" }]} />);
     expect(screen.getByText(/Ingresado \$-50\.00/)).toBeInTheDocument();
     expect(screen.getByText("Falta $550.00")).toBeInTheDocument();
+  });
+});
+
+describe("PaymentLinesEditor — nombres accesibles", () => {
+  it("cada control de una línea tiene nombre accesible propio", async () => {
+    const user = userEvent.setup();
+    render(<Host total={500} />);
+    await user.click(addButton());
+
+    expect(screen.getByRole("combobox", { name: "Método de pago 1" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Método de pago 2" })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: "Monto del método 2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Quitar método 1" })).toBeEnabled();
   });
 });
 

@@ -1,9 +1,10 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Pagination from "../../components/Pagination";
 import { groupImportIssues } from "./groupImportIssues";
 import { getEntityConfig } from "./entityConfig";
 import s from "./imports.module.css";
 import ConflictPages from "./ConflictPages";
+import ConflictCard from "./ConflictCard";
 
 const PAGE_SIZE = 25;
 
@@ -36,47 +37,6 @@ function downloadCsv(items, labelByKey, filename, csvActions) {
     URL.revokeObjectURL(url);
 }
 
-/* ── Card de conflicto individual ── */
-const ConflictCard = ({ conflict, cfg }) => {
-    const c = cfg.conflict;
-    const link = c.link ? c.link(conflict) : null;
-    return (
-        <div className={s.conflictCard}>
-            <div className={s.conflictRow}>
-                <span className={s.conflictNum}>Fila #{conflict.row}</span>
-            </div>
-            <div className={s.conflictCompare}>
-                <div className={s.conflictSide}>
-                    <div className={s.conflictSideLabel}>En tu archivo</div>
-                    <div className={s.conflictSideValue}>
-                        {conflict.incoming?.[c.incomingPrimaryKey] || "—"}
-                    </div>
-                    <div className={s.conflictSideMeta}>
-                        {conflict.incoming?.[c.incomingSecondaryKey] || "—"}
-                    </div>
-                </div>
-                <div className={s.conflictSide}>
-                    <div className={s.conflictSideLabel}>Ya registrado</div>
-                    <div className={s.conflictSideValue}>
-                        {conflict.existing ? c.existingPrimary(conflict.existing) : "—"}
-                    </div>
-                    <div className={s.conflictSideMeta}>
-                        {conflict.existing ? (c.existingSecondary(conflict.existing) || "") : ""}
-                    </div>
-                </div>
-            </div>
-            <p className={s.conflictHint}>
-                {conflict.match_confidence === "high" ? c.highText : c.cardUncertainText}
-            </p>
-            {link && (
-                <a href={link} target="_blank" rel="noopener noreferrer" className={s.conflictLink}>
-                    {c.linkText}
-                </a>
-            )}
-        </div>
-    );
-};
-
 /* ── Grupo colapsable genérico (conflictos) ── */
 const CollapseGroup = ({ icon, title, count, intro, items, open, onToggle, variant }) => {
     const [page, setPage] = useState(1);
@@ -103,19 +63,13 @@ const CollapseGroup = ({ icon, title, count, intro, items, open, onToggle, varia
 };
 
 /* ── Panel de revisión tipo inbox ── */
-const ReviewPanel = ({ blockingGroups, warningsGroups, labelByKey }) => {
+const ReviewPanel = ({ blockingGroups, warningsGroups }) => {
     const allItems = [
         ...blockingGroups.map((g) => ({ ...g, kind: "blocking" })),
         ...warningsGroups.map((g) => ({ ...g, kind: "warning" })),
     ];
 
-    const [selected, setSelected] = useState(null);
-
-    useEffect(() => {
-        if (!selected && allItems.length > 0) {
-            setSelected(allItems[0]);
-        }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const [selected, setSelected] = useState(() => allItems[0] ?? null);
 
     const selectedGroup = allItems.find(
         (g) => g.field === selected?.field && g.kind === selected?.kind,
@@ -282,6 +236,7 @@ const PreviewStep = ({
     );
     const warningsGroups = useMemo(
         () => groupImportIssues(warnings, labelByKey),
+        // eslint-disable-next-line react-hooks/preserve-manual-memoization -- labelByKey ya está memoizada y las acciones de cfg no la mutan
         [warnings, labelByKey],
     );
 
@@ -407,7 +362,6 @@ const PreviewStep = ({
                 <ReviewPanel
                     blockingGroups={blockingGroups}
                     warningsGroups={[]}
-                    labelByKey={labelByKey}
                 />
             )}
 
@@ -491,7 +445,7 @@ const PreviewStep = ({
                 </div>
             )}
 
-            <ConflictPages key={r.conflict_report?.version} publicId={jobPublicId} report={r.conflict_report} highTotal={conflictsHighTotal} uncertainTotal={conflictsUncertainTotal} />
+            <ConflictPages key={r.conflict_report?.version} publicId={jobPublicId} report={r.conflict_report} highTotal={conflictsHighTotal} uncertainTotal={conflictsUncertainTotal} cfg={cfg} />
 
             {/* ── Descarga CSV ── */}
             {(blocking.length > 0 || warnings.length > 0) && (

@@ -192,16 +192,24 @@ def clean_inventory_row(data, org):
         clean['quantity'] = Decimal('1')
     else:
         cf = _qty4(factor)
-        if cf <= 0 or cf.quantize(_MONEY, rounding=ROUND_HALF_UP) <= 0:
-            # p.ej. "0.001": cabe en conversion_factor pero quantity(10,2) lo
-            # haría 0 — mejor rechazarlo aquí, determinista.
+        if cf <= 0:
+            # p.ej. "0.00001" redondea a 0 con 4 decimales: no es un factor válido.
             errors.append({
                 'field': 'presentation.conversion_factor',
                 'message': 'El factor de conversión debe ser mayor a 0.',
             })
             cf = Decimal('1')
+        elif cf != factor:
+            # Orden 4, I02: igual que el alta manual, no se redondea un factor en silencio.
+            # Comparar valores deja pasar los ceros a la derecha ("1.50000"), que no pierden nada.
+            errors.append({
+                'field': 'presentation.conversion_factor',
+                'message': 'El factor de conversión admite como máximo 4 decimales.',
+            })
         clean['conversion_factor'] = cf
-        clean['quantity'] = cf.quantize(_MONEY, rounding=ROUND_HALF_UP)
+        # Orden 4, I02: desde inventory.0028 el alias admite los mismos 4 decimales que el
+        # factor, así que se copia exacto, igual que en el alta manual.
+        clean['quantity'] = cf
 
     # Derivados a unidades base (paridad con alta manual: stock×cf).
     clean['stock_base'] = _qty4(clean['stock'] * clean['conversion_factor'])

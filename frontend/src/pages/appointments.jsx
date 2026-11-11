@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useConfirm } from "../components/useConfirm";
 import { isAppointmentChanged, appointmentChangedCurrent } from "../utils/apiError";
-import { statusLabel } from "../utils/appointmentStatus";
+import { statusLabel, statusBadgeClass } from "../utils/appointmentStatus";
 import { toast } from "sonner";
 import {
     getAppointments, createAppointment,
@@ -20,6 +20,7 @@ import { Icon } from "../components/icons";
 import ViewModeButtonGroup from "../components/ViewModeButtonGroup";
 import EmptyState from "../components/EmptyState";
 import SpotlightTour from "../components/SpotlightTour";
+import StatusBadge from "../components/StatusBadge";
 import { useAgendaTour } from "../features/appointments/tour/useAgendaTour";
 import { AGENDA_TOUR_KEY } from "../features/appointments/tour/agendaSteps";
 import api from "../api/client";
@@ -47,22 +48,6 @@ const PAL = {
     slate:  { bg:"#F1F4F8", text:"#2E3A4E", border:"#7A8FA6" },
 };
 
-const S_BADGE = {
-    scheduled:   "badge-info",
-    confirmed:   "badge-purple",
-    in_progress: "badge-warning",
-    done:        "badge-success",
-    canceled:    "badge-danger",
-    no_show:     "badge-secondary",
-};
-const S_LABEL = {
-    scheduled:   "Programada",
-    confirmed:   "Confirmada",
-    in_progress: "En consulta",
-    done:        "Completada",
-    canceled:    "Cancelada",
-    no_show:     "No se presentó",
-};
 
 const APPOINTMENT_CATEGORIES = [
     ["general_consultation", "Consulta general"],
@@ -100,10 +85,6 @@ function weekTitle(ws) {
 
 function toDateStr(d) {
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-
-function apptHour(a) {
-    return parseInt(a.start_time?.split(":")[0] ?? "9", 10);
 }
 
 // ── Shared style atoms ─────────────────────────────────────────────────────────
@@ -172,32 +153,6 @@ function MiniCalendar({ today, selectedDate, onSelect }) {
     );
 }
 
-// ── ApptBadge (calendar cell) ──────────────────────────────────────────────────
-function ApptBadge({ appt, pal, petName, ownerName, onClick }) {
-    const canceled = appt.status === "canceled";
-    const c = canceled
-        ? { bg:"var(--c-subtle)", text:"var(--c-text-3)", border:"var(--c-border-2)" }
-        : pal;
-    return (
-        <div
-            data-tour={appt.public_id === "__demo__" ? "agenda-appt-demo" : undefined}
-            onClick={e=>{e.stopPropagation(); onClick(appt);}} style={{
-            position:"absolute", left:"3px", right:"3px", top:"3px",
-            background:c.bg, borderLeft:`3px solid ${c.border}`,
-            borderRadius:"5px", padding:"3px 6px", cursor:"pointer", zIndex:2,
-            overflow:"hidden", opacity: canceled ? 0.55 : 1,
-        }}>
-            <span style={{display:"block",fontSize:"11px",fontWeight:"600",
-                color:c.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-                {petName}{ownerName ? ` · ${ownerName}` : ""}
-            </span>
-            <span style={{fontSize:"10px",color:c.text,opacity:0.72}}>
-                {appt.reason}
-            </span>
-        </div>
-    );
-}
-
 // ── localTodayStr ──────────────────────────────────────────────────────────────
 function localTodayStr() {
     const d = new Date();
@@ -255,9 +210,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                 <div className="modal-header">
                     <div>
                         <h3 style={{marginBottom:"5px"}}>{petName || "—"}</h3>
-                        <span className={`badge ${S_BADGE[appt.status] || "badge-info"}`}>
-                            {S_LABEL[appt.status] || appt.status}
-                        </span>
+                        <StatusBadge status={appt.status} />
                     </div>
                     <button className="modal-close" onClick={onClose}>×</button>
                 </div>
@@ -359,11 +312,11 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                     ) : history.map(h => (
                                         <div key={h.id} style={{marginBottom:"8px"}}>
                                             <div style={{display:"flex",alignItems:"center",gap:"6px",fontSize:"12.5px"}}>
-                                                <span className={`badge ${S_BADGE[h.from_status] || "badge-default"}`} style={{fontSize:"10px"}}>
+                                                <span className={`badge ${statusBadgeClass(h.from_status)}`} style={{fontSize:"10px"}}>
                                                     {h.from_status_display || h.from_status}
                                                 </span>
                                                 <span style={{color:"var(--c-text-3)"}}>→</span>
-                                                <span className={`badge ${S_BADGE[h.to_status] || "badge-default"}`} style={{fontSize:"10px"}}>
+                                                <span className={`badge ${statusBadgeClass(h.to_status)}`} style={{fontSize:"10px"}}>
                                                     {h.to_status_display || h.to_status}
                                                 </span>
                                             </div>
@@ -619,6 +572,7 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
     const warnedPastRef = useRef(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- precarga la hora del horario elegido; el usuario puede cambiarla
         if (slot?.hour !== undefined) setHour(slot.hour);
     }, [slot?.hour]);
 
@@ -633,6 +587,7 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
     }, [slot]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- preselecciona al veterinario cuando llega la sesión
         if (user?.role === "VET") setVetId(String(user.id));
     }, [user]);
 
@@ -945,656 +900,6 @@ function WalkInModal({ staff, user, onClose, onSave, allowAnonymousWalkIn }) {
     );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
-const Appointments = () => {
-    const { token, initializing, user, can } = useAuth();
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const formRef  = useRef(null);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const [appointments, setAppointments] = useState([]);
-    const [staff,        setStaff]        = useState([]);
-    const [loading,      setLoading]      = useState(true);
-
-    const [weekOffset,   setWeekOffset]   = useState(0);
-    const [selectedSlot, setSelectedSlot] = useState(null);
-    const [viewAppt,     setViewAppt]     = useState(null);
-    const [editingAppt,  setEditingAppt]  = useState(null);
-    const [walkInOpen,   setWalkInOpen]   = useState(false);
-    const [filterVetId,  setFilterVetId]  = useState("");
-    const [orgSettings,  setOrgSettings]  = useState(null);
-    // Recorrido guiado (spotlight sobre la UI real). La cita demo se inyecta SOLO en el
-    // grid local (nunca al backend) y se limpia al terminar.
-    const [tourDemoAppt, setTourDemoAppt] = useState(null);
-    const tourActions = useMemo(() => ({
-        setWeekOffset, setSelectedSlot, setViewAppt, setTourDemoAppt,
-    }), []);
-    const tour = useAgendaTour(tourActions);
-    const tourStartedRef = useRef(false);
-
-    useEffect(() => {
-        if (token) {
-            loadAll();
-            getOrgSettings().then(setOrgSettings).catch(() => {});
-        }
-    }, [token]);
-
-    // Deep-link: ?appointment=<public_id> → abrir modal de esa cita
-    useEffect(() => {
-        const apptId = searchParams.get("appointment");
-        if (apptId && token) {
-            api.get(`appointments/${apptId}/`).then(r => {
-                setViewAppt(r.data);
-            }).catch(() => {});
-        }
-    }, [searchParams, token]);
-
-    const loadAll = async () => {
-        try {
-            const [staffData, apptData] = await Promise.all([
-                getStaff(),
-                getAppointments(token),
-            ]);
-            setStaff(staffData.filter(s => s.role === 'VET' || s.role === 'ADMIN'));
-            setAppointments(Array.isArray(apptData) ? apptData : (apptData.results || []));
-        } catch (err) {
-            console.error(apiError(err));
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const loadAppointments = async () => {
-        try {
-            const data = await getAppointments(token);
-            setAppointments(Array.isArray(data) ? data : (data.results || []));
-        } catch (err) {
-            console.error(apiError(err));
-        }
-    };
-
-    // Vet → palette (assigned by staff index)
-    const vetPalMap = {};
-    staff.forEach((s, i) => { vetPalMap[s.id] = PAL[PAL_KEYS[i % PAL_KEYS.length]]; });
-    const getVetPal = id => vetPalMap[id] || PAL.teal;
-
-    const getStaffById = id => staff.find(s => s.id === id);
-    const getVetName   = id => {
-        const s = getStaffById(id);
-        return s ? `${s.first_name} ${s.last_name}` : null;
-    };
-
-    // Week
-    const weekStart = getWeekStart(today, weekOffset);
-    const weekDays  = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(weekStart); d.setDate(d.getDate() + i); return d;
-    });
-
-    // Filtered appointments for this week's grid. La cita demo del recorrido se inyecta
-    // SOLO aquí (grid), no en las stats — nunca toca el backend.
-    const gridAppts = tourDemoAppt ? [...appointments, tourDemoAppt] : appointments;
-    const weekAppts = gridAppts.filter(a => {
-        const d = (() => { const [y,m,d] = a.date.split('-').map(Number); return new Date(y,m-1,d); })();
-        const inWeek = weekDays.some(wd => isSameDay(d, wd));
-        const vetOk  = !filterVetId || String(a.veterinarian) === filterVetId;
-        return inWeek && vetOk;
-    });
-
-    const apptForCell = (date, hour) => weekAppts.filter(a => {
-        const d = (() => { const [y,m,d] = a.date.split('-').map(Number); return new Date(y,m-1,d); })();
-        return isSameDay(d, date) && apptHour(a) === hour;
-    });
-
-    // Stats (always use full unfiltered list)
-    const todayCount = appointments.filter(a => {
-        const d = (() => { const [y,m,d] = a.date.split('-').map(Number); return new Date(y,m-1,d); })();
-        return isSameDay(d, today);
-    }).length;
-
-    const ws0 = getWeekStart(today, 0);
-    const we0 = new Date(ws0); we0.setDate(we0.getDate() + 6);
-    const weekCount = appointments.filter(a => {
-        const d = (() => { const [y,m,d] = a.date.split('-').map(Number); return new Date(y,m-1,d); })();
-        return d >= ws0 && d <= we0;
-    }).length;
-
-    // Permissions
-    const canCreate = user?.role !== "ASSISTANT";
-    const canEdit   = user?.role === "ADMIN" || user?.role === "VET";
-
-    // Auto-inicia el recorrido en la 1ª visita (solo quien puede crear citas). El gate
-    // `agenda_tour_seen` es preferencia de UI; se marca al terminar/saltar.
-    const startTour = tour.start;
-    useEffect(() => {
-        if (tourStartedRef.current || !canCreate) return;
-        let seen = true;
-        try { seen = localStorage.getItem(AGENDA_TOUR_KEY) === "true"; } catch { /* ignore */ }
-        if (!seen) { tourStartedRef.current = true; startTour(); }
-    }, [canCreate, startTour]);
-
-    // ── Handlers ──────────────────────────────────────────────────────────────
-    const handleSlotClick = (date, hour) => {
-        if (!canCreate) return;
-        const label = `${DAYS_ES[date.getDay()]} ${date.getDate()} ${MONTHS_S[date.getMonth()]} · ${pad(hour)}:00 hs`;
-        setSelectedSlot({ date, hour, label });
-        setTimeout(() => formRef.current?.scrollIntoView({ behavior:"smooth", block:"nearest" }), 50);
-    };
-
-    const handleFormSave = async ({ petId, vetId, reason, category, notes, start_time, end_time }) => {
-        // ADR p18: body FK fields siguen PK entero (PrimaryKeyRelatedField).
-        // SearchSelect entrega `item.id` = PK consistente. Sin parseInt para
-        // fail-fast si alguna vez se cambia el contrato (NaN explícito).
-        await createAppointment(token, {
-            pet:          petId,
-            veterinarian: vetId,
-            date:         toDateStr(selectedSlot.date),
-            start_time, end_time, reason, category, notes,
-            status: "scheduled",
-        });
-        window.dispatchEvent(new Event("dashboard:refresh"));
-        setSelectedSlot(null);
-        loadAppointments();
-    };
-
-    const handleSaveWithPatient = async (data) => {
-        await createAppointmentWithPatient(data);
-        window.dispatchEvent(new Event("dashboard:refresh"));
-        setSelectedSlot(null);
-        loadAppointments();
-    };
-
-    /** Qué decirle al usuario cuando el dominio rechaza por INV-A.
-     *
-     * Nunca «error al guardar»: el mensaje dice QUÉ cambió, porque quien lo lee
-     * tiene que decidir otra vez con el estado real delante. */
-    const conflictMessage = (err) => {
-        const current = appointmentChangedCurrent(err);
-        // Fuente única de etiquetas de estado — no re-crear el mapa aquí.
-        const label = current?.status ? statusLabel(current.status) : "";
-        const cuando = current?.date && current?.start_time
-            ? ` (${current.date} ${String(current.start_time).slice(0, 5)})`
-            : "";
-        return label
-            ? `Esta cita cambió mientras la tenías abierta: ahora está "${label}"${cuando}. Se recargó la agenda.`
-            : "Esta cita cambió mientras la tenías abierta. Se recargó la agenda.";
-    };
-
-    const STATUS_MSG = {
-        confirmed:   "Cita confirmada",
-        in_progress: "Consulta iniciada",
-        done:        "Consulta completada",
-        canceled:    "Cita cancelada",
-        no_show:     "Marcada como no presentado",
-        scheduled:   "Cita reprogramada",
-    };
-
-    const handleStatusChange = async (id, newStatus, expected = null) => {
-        try {
-            const p = (async () => {
-                const updated = await updateAppointmentStatus(token, id, newStatus, expected);
-                window.dispatchEvent(new Event("dashboard:refresh"));
-                refreshAppointment(updated);
-                await loadAppointments();
-                return updated;
-            })();
-            toast.promise(p, {
-                loading: 'Actualizando estado...',
-                success: () => STATUS_MSG[newStatus] || "Estado actualizado",
-                error: (err) => (isAppointmentChanged(err)
-                    ? conflictMessage(err)
-                    : apiError(err, "Error al cambiar estado")),
-            });
-            return await p;
-        } catch (err) {
-            // INV-A: la cita cambió mientras el usuario la miraba. NO se
-            // reintenta —reintentar sin precondición es la sobrescritura que
-            // esto existe para impedir—: se recarga la agenda para que vea el
-            // estado real y vuelva a decidir.
-            if (isAppointmentChanged(err)) await loadAppointments();
-            return null;
-        }
-    };
-
-    const handleAttendNow = async (appt) => {
-        let current = appt;
-        if (current.status === "in_progress") {
-            const petParam = current.pet_public_id;
-            const recordParam = current.medical_record_public_ids?.length > 0
-                ? appt.medical_record_public_ids[0] : null;
-            setViewAppt(null);
-            // Sin MR aún: el stepper lo creará ligado a la cita (appointmentId
-            // por router state). Con MR existente solo se navega al registro.
-            const qs = recordParam
-                ? `record=${recordParam}`
-                : `pet=${petParam}&appointment=${current.public_id}`;
-            navigate(`/medical-records?${qs}`, recordParam ? undefined : { state: { appointmentId: current.id } });
-            return;
-        }
-
-        try {
-            const r = await api.get(`appointments/${current.public_id}/`);
-            current = r.data;
-        } catch {
-            toast.error("No se pudo verificar el estado de la cita");
-            return;
-        }
-
-        if (current.status === "in_progress") {
-            toast.info(`Esta consulta ya fue iniciada por ${current.veterinarian_name || "otro veterinario"}.`, {
-                action: { label: "Continuar", onClick: () => {
-                    const petParam = current.pet_public_id;
-                    const recId = current.medical_record_public_ids?.length > 0
-                        ? current.medical_record_public_ids[0] : null;
-                    setViewAppt(null);
-                    const qs = recId
-                        ? `record=${recId}`
-                        : `pet=${petParam}&appointment=${current.public_id}`;
-                    navigate(`/medical-records?${qs}`, recId ? undefined : { state: { appointmentId: current.id } });
-                }},
-                cancel: { label: "Cancelar" },
-                duration: 8000,
-            });
-            return;
-        }
-
-        if (current.status !== "scheduled" && current.status !== "confirmed") {
-            toast.error("Esta cita ya no está disponible para atender");
-            return;
-        }
-
-        try {
-            // `current` viene de releer la cita justo arriba (o de la que se
-            // abrió): es lo que el usuario tiene delante al pulsar "Atender".
-            await updateAppointmentStatus(token, current.public_id, "in_progress", current);
-            window.dispatchEvent(new Event("dashboard:refresh"));
-            loadAppointments();
-        } catch {
-            toast.info("Hubo un problema menor al abrir la cita, pero puedes continuar normalmente.");
-        }
-
-        setViewAppt(null);
-        // El MedicalRecord lo crea el stepper (lazy), ligado a esta cita vía
-        // router state (appointmentId = PK; el body FK usa PK entero, ADR p18).
-        // Antes se pre-creaba aquí un MR y el stepper creaba OTRO sin
-        // appointment: ese segundo MR, al cerrarse, no completaba la cita.
-        navigate(
-            `/medical-records?pet=${current.pet_public_id}&appointment=${current.public_id}`,
-            { state: { appointmentId: current.id } },
-        );
-    };
-
-    const refreshAppointment = (updatedAppt) => {
-        setAppointments(prev => prev.map(a => a.id === updatedAppt.id ? updatedAppt : a));
-        setViewAppt(updatedAppt);
-    };
-
-    const handleWalkIn = async (data) => {
-        await walkInAppointment(token, data);
-        window.dispatchEvent(new Event("dashboard:refresh"));
-        setWalkInOpen(false);
-        loadAppointments();
-    };
-
-    const handleNewFromAppt = () => {
-        setSelectedSlot(null);
-        setTimeout(() => formRef.current?.scrollIntoView({ behavior:"smooth", block:"nearest" }), 50);
-    };
-
-    const handleEditSave = async (form) => {
-        await updateAppointment(token, editingAppt.public_id, {
-            pet:          editingAppt.pet,
-            veterinarian: parseInt(form.veterinarian),
-            date:         form.date,
-            start_time:   form.start_time,
-            end_time:     form.end_time,
-            reason:       form.reason,
-            category:     form.category,
-            notes:        form.notes,
-            status:       editingAppt.status,
-        // INV-A: la cita tal como se abrió el formulario. Si alguien la movió
-        // mientras tanto, el dominio rechaza en vez de pisar su decisión.
-        }, editingAppt);
-        window.dispatchEvent(new Event("dashboard:refresh"));
-        setEditingAppt(null);
-        loadAppointments();
-    };
-
-    const handleMiniSelect = (date) => {
-        const ws   = getWeekStart(date, 0);
-        const base = getWeekStart(today, 0);
-        const diff = Math.round((ws - base) / (7 * 86400000));
-        setWeekOffset(diff);
-    };
-
-    if (initializing || loading) {
-        return (
-            <div style={{display:"flex",justifyContent:"center",alignItems:"center",height:"50vh"}}>
-                <p style={{color:"var(--c-text-3)",fontSize:"13px"}}>Cargando...</p>
-            </div>
-        );
-    }
-
-    return (
-        <div>
-            <style>{`
-                .apt-slot:hover { background: var(--c-primary-light) !important; }
-                .apt-slot:hover .apt-hint { opacity: 1 !important; }
-                .apt-body::-webkit-scrollbar { width: 4px; }
-                .apt-body::-webkit-scrollbar-thumb { background: var(--c-border-2); border-radius: 4px; }
-            `}</style>
-
-            {/* Page header */}
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Citas</h1>
-                    <p className="page-subtitle">{weekTitle(weekStart)}</p>
-                </div>
-                <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-                    <button className="btn btn-secondary btn-md"
-                        style={{display:"flex",alignItems:"center",gap:"6px"}}
-                        onClick={()=>tour.start()}>
-                        <Icon.Help s={15} /> Cómo funciona
-                    </button>
-                    {canEdit && (
-                        <button className="btn btn-primary btn-md"
-                            data-tour="agenda-walkin"
-                            style={{display:"flex",alignItems:"center",gap:"6px"}}
-                            onClick={()=>setWalkInOpen(true)}>
-                            <Icon.Plus s={15} /> Atención sin cita
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* Empty state complementario — clínica sin citas. NO reemplaza el
-                calendario (queda debajo): guía a agendar haciendo clic en una celda
-                o a registrar un walk-in. */}
-            {appointments.length === 0 && (
-                <div className="card" style={{ marginBottom: "16px" }}>
-                    <EmptyState
-                        compact
-                        icon={Icon.CalendarClock}
-                        title="Tu agenda está vacía"
-                        body="Haz clic en un horario del calendario para agendar tu primera cita, o registra un paciente sin cita previa."
-                        actions={[
-                            can("appointment.create_walkin")
-                                ? { label: "Registrar atención sin cita", onClick: () => setWalkInOpen(true), variant: "primary" }
-                                : null,
-                        ]}
-                    />
-                </div>
-            )}
-
-            {/* Main grid: calendar + sidebar */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 296px",gap:"16px",alignItems:"start"}}>
-
-                {/* ── Calendar panel ── */}
-                <div data-tour="agenda-calendar" style={{
-                    background:"var(--c-surface)",border:"1px solid var(--c-border)",
-                    borderRadius:"var(--r-xl)",overflow:"hidden",boxShadow:"var(--shadow-sm)",
-                }}>
-                    {/* Header */}
-                    <div style={{
-                        display:"flex",alignItems:"center",justifyContent:"space-between",
-                        padding:"14px 20px",borderBottom:"1px solid var(--c-border)",
-                    }}>
-                        <span style={{fontSize:"15px",fontWeight:"700",color:"var(--c-text)"}}>
-                            {weekTitle(weekStart)}
-                        </span>
-                        <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
-                            <button style={calNavBtn} onClick={()=>setWeekOffset(o=>o-1)}>‹</button>
-                            <button style={{...calNavBtn,fontSize:"12px",padding:"5px 10px"}}
-                                onClick={()=>setWeekOffset(0)}>Hoy</button>
-                            <button style={calNavBtn} onClick={()=>setWeekOffset(o=>o+1)}>›</button>
-                        </div>
-                    </div>
-
-                    {/* Day labels */}
-                    <div style={{
-                        display:"grid",gridTemplateColumns:"52px repeat(7,1fr)",
-                        borderBottom:"1px solid var(--c-border)",
-                    }}>
-                        <div />
-                        {weekDays.map((d, i) => {
-                            const isToday = isSameDay(d, today);
-                            return (
-                                <div key={i} style={{textAlign:"center",padding:"10px 4px",
-                                    borderLeft:"1px solid var(--c-border)"}}>
-                                    <div style={{fontSize:"10px",fontWeight:"600",textTransform:"uppercase",
-                                        letterSpacing:"0.07em",
-                                        color: isToday?"var(--c-primary)":"var(--c-text-3)"}}>
-                                        {DAYS_ES[d.getDay()]}
-                                    </div>
-                                    <div style={{fontSize:"15px",marginTop:"2px",
-                                        fontWeight: isToday?"700":"400",
-                                        color: isToday?"var(--c-primary)":"var(--c-text)"}}>
-                                        {d.getDate()}
-                                    </div>
-                                    {isToday && (
-                                        <div style={{width:"5px",height:"5px",borderRadius:"50%",
-                                            background:"var(--c-primary)",margin:"3px auto 0"}}/>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Time grid */}
-                    <div className="apt-body" style={{overflowY:"auto",maxHeight:"490px"}}>
-                        {HOURS.map(hour => (
-                            <div key={hour} style={{display:"grid",gridTemplateColumns:"52px repeat(7,1fr)"}}>
-                                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"flex-end",
-                                    paddingTop:"6px",paddingRight:"8px"}}>
-                                    <span style={{fontSize:"11px",color:"var(--c-text-3)",
-                                        fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap"}}>
-                                        {hour}:00
-                                    </span>
-                                </div>
-                                {weekDays.map((date, di) => {
-                                    const cellAppts = apptForCell(date, hour);
-                                    const isToday   = isSameDay(date, today);
-                                    return (
-                                        <div key={di}
-                                            className="apt-slot"
-                                            onClick={()=>handleSlotClick(date, hour)}
-                                            style={{
-                                                borderTop:"1px solid var(--c-border)",
-                                                borderLeft:"1px solid var(--c-border)",
-                                                minHeight:"56px", position:"relative",
-                                                cursor: canCreate?"pointer":"default",
-                                                background: isToday?"rgba(26,68,52,0.03)":"transparent",
-                                                transition:"background 0.12s",
-                                            }}
-                                        >
-                                            {cellAppts.length === 0 && canCreate && (
-                                                <span className="apt-hint" style={{
-                                                    position:"absolute",top:"50%",left:"50%",
-                                                    transform:"translate(-50%,-50%)",
-                                                    fontSize:"11px",color:"var(--c-primary)",
-                                                    opacity:0,whiteSpace:"nowrap",pointerEvents:"none",
-                                                    fontWeight:"500",transition:"opacity 0.12s",
-                                                }}>
-                                                    + Agendar
-                                                </span>
-                                            )}
-                                            {cellAppts.map(a => (
-                                                <ApptBadge
-                                                    key={a.id}
-                                                    appt={a}
-                                                    pal={getVetPal(a.veterinarian)}
-                                                    petName={a.pet_name || "—"}
-                                                    ownerName={a.owner_name || ""}
-                                                    onClick={setViewAppt}
-                                                />
-                                            ))}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* ── Sidebar ── */}
-                <div style={{display:"flex",flexDirection:"column",gap:"14px"}}>
-
-                    {/* Mini calendar + vet filter */}
-                    <div style={{
-                        background:"var(--c-surface)",border:"1px solid var(--c-border)",
-                        borderRadius:"var(--r-xl)",padding:"18px 20px",boxShadow:"var(--shadow-sm)",
-                    }}>
-                        <MiniCalendar
-                            today={today}
-                            selectedDate={selectedSlot?.date}
-                            onSelect={handleMiniSelect}
-                        />
-
-                        <div style={{borderTop:"1px solid var(--c-border)",marginTop:"14px",paddingTop:"14px"}}>
-                            <p style={{fontSize:"11px",fontWeight:"700",color:"var(--c-text-3)",
-                                textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:"10px"}}>
-                                Veterinarios
-                            </p>
-                            <div style={{display:"flex",flexWrap:"wrap",gap:"5px"}}>
-                                {/* All chip */}
-                                <div onClick={()=>setFilterVetId("")} style={{
-                                    display:"inline-flex",alignItems:"center",gap:"5px",
-                                    padding:"3px 9px",borderRadius:"var(--r-full)",cursor:"pointer",
-                                    background: filterVetId===""?"var(--c-primary)":"var(--c-subtle)",
-                                    color:      filterVetId===""?"#fff":"var(--c-text-2)",
-                                    fontSize:"11px",fontWeight:"500",transition:"all 0.15s",
-                                    border: filterVetId===""?"1px solid var(--c-primary)":"1px solid var(--c-border)",
-                                }}>
-                                    Todos
-                                </div>
-                                {staff.map((s, i) => {
-                                    const c = PAL[PAL_KEYS[i % PAL_KEYS.length]];
-                                    const isActive = filterVetId === String(s.id);
-                                    return (
-                                        <div key={s.id}
-                                            onClick={()=>setFilterVetId(f=>f===String(s.id)?"":String(s.id))}
-                                            style={{
-                                                display:"inline-flex",alignItems:"center",gap:"5px",
-                                                padding:"3px 9px",borderRadius:"var(--r-full)",cursor:"pointer",
-                                                background: isActive?c.border:c.bg,
-                                                color:      isActive?"#fff":c.text,
-                                                fontSize:"11px",fontWeight:"500",transition:"all 0.15s",
-                                            }}
-                                        >
-                                            <span style={{width:"6px",height:"6px",borderRadius:"50%",flexShrink:0,
-                                                background: isActive?"#fff":c.border}}/>
-                                            {s.first_name} {s.last_name}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* New appointment form */}
-                    <div data-tour="agenda-form" style={{
-                        background:"var(--c-surface)",border:"1px solid var(--c-border)",
-                        borderRadius:"var(--r-xl)",padding:"18px 20px",boxShadow:"var(--shadow-sm)",
-                    }}>
-                        {canCreate ? (
-                            <SidebarForm
-                                slot={selectedSlot}
-                                onSave={handleFormSave}
-                                onSaveWithPatient={handleSaveWithPatient}
-                                onClear={()=>setSelectedSlot(null)}
-                                staff={staff}
-                                user={user}
-                                formRef={formRef}
-                            />
-                        ) : (
-                            <p style={{fontSize:"12.5px",color:"var(--c-text-3)",
-                                fontStyle:"italic",textAlign:"center"}}>
-                                Modo lectura — sin permiso para crear citas
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Stats */}
-                    <div style={{
-                        background:"var(--c-primary-light)", border:"1px solid var(--sage-400)",
-                        borderRadius:"var(--r-xl)", padding:"14px 18px",
-                        display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px",
-                    }}>
-                        {[["Hoy", todayCount], ["Esta semana", weekCount]].map(([label,count])=>(
-                            <div key={label}>
-                                <div style={{fontSize:"11px",color:"var(--c-primary-dark)",marginBottom:"2px"}}>
-                                    {label}
-                                </div>
-                                <div style={{fontSize:"26px",fontWeight:"700",color:"var(--c-primary-dark)",lineHeight:1}}>
-                                    {count}
-                                </div>
-                                <div style={{fontSize:"11px",color:"var(--c-primary-dark)",opacity:0.7,marginTop:"2px"}}>
-                                    cita{count!==1?"s":""}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Detail Modal */}
-            {viewAppt && (
-                <DetailModal
-                    appt={viewAppt}
-                    petName={viewAppt.pet_name || "—"}
-                    vetName={getVetName(viewAppt.veterinarian) || viewAppt.veterinarian_name}
-                    petId={viewAppt.pet_public_id}
-                    onClose={()=>setViewAppt(null)}
-                    onStatusChange={handleStatusChange}
-                    onAttendNow={handleAttendNow}
-                    onEdit={appt=>{ setEditingAppt(appt); setViewAppt(null); }}
-                    onNewFromAppt={appt=>{ setViewAppt(null); handleNewFromAppt(appt); }}
-                    navigate={navigate}
-                    canEdit={canEdit}
-                    showHistory={!!orgSettings?.show_status_change_history}
-                    onRefresh={refreshAppointment}
-                />
-            )}
-
-            {/* Edit Modal */}
-            {editingAppt && (
-                <EditModal
-                    appt={editingAppt}
-                    staff={staff}
-                    user={user}
-                    onClose={()=>setEditingAppt(null)}
-                    onSave={handleEditSave}
-                />
-            )}
-
-            {/* Walk-in Modal */}
-            {walkInOpen && (
-                <WalkInModal
-                    staff={staff}
-                    user={user}
-                    allowAnonymousWalkIn={!!orgSettings?.allow_anonymous_walkin}
-                    onClose={()=>setWalkInOpen(false)}
-                    onSave={handleWalkIn}
-                />
-            )}
-
-            {/* Recorrido guiado de Agenda (historia de Luna) — spotlight sobre la UI real */}
-            {tour.active && (
-                <SpotlightTour
-                    steps={tour.steps}
-                    stepIdx={tour.stepIdx}
-                    onNext={tour.next}
-                    onPrev={tour.prev}
-                    onSkip={tour.skip}
-                    onFinish={tour.finish}
-                />
-            )}
-        </div>
-    );
-};
-
 // ── Event manager view ───────────────────────────────────────────────────────
 const EVENT_VIEWS = { day: "timeGridDay", week: "timeGridWeek", month: "dayGridMonth" };
 const STATUS_FILTERS = [["", "Todas"], ["scheduled", "Programadas"], ["confirmed", "Confirmadas"], ["in_progress", "En consulta"], ["done", "Completadas"], ["walk_in", "Sin cita"]];
@@ -1674,7 +979,7 @@ function DayPlanner({ selectedDate, appointments, today, canCreate, onSelectSlot
             <div className="week-planner-actions"><div className="week-planner-nav"><button type="button" onClick={() => onNavigate("prev")} aria-label="Día anterior">‹</button><button type="button" onClick={() => onNavigate("today")}>Hoy</button><button type="button" onClick={() => onNavigate("next")} aria-label="Día siguiente">›</button></div><ViewModeButtonGroup className="week-planner-switcher" value={calendarView} onChange={onChangeView} /></div>
         </header>
         <div className="day-planner-stats"><div><span>Citas hoy</span><strong>{dayAppointments.length}</strong></div><div><span>Pendientes</span><strong>{pendingCount}</strong></div><div><span>Atendidas</span><strong>{completedCount}</strong></div></div>
-        <div className="day-planner-list">{dayAppointments.length === 0 ? <div className="day-planner-empty"><strong>{isPast ? "No hubo citas este día" : "No hay citas programadas"}</strong>{!isPast && canCreate && <button type="button" onClick={() => onSelectSlot(selectedDate, 9)}>Crear primera cita</button>}</div> : dayAppointments.map((appointment) => { const palette = CATEGORY_PALETTE[appointment.category] || PAL.teal; return <button key={appointment.id} type="button" className="day-appointment-row" style={{ "--appointment-accent": palette.border }} onClick={() => onViewAppointment(appointment)}><time>{String(appointment.start_time).slice(0, 5)}</time><span className="day-appointment-pet"><strong>{appointment.pet_name || "Paciente"}</strong><small>{appointment.owner_name || "Sin propietario"}</small></span><span className="day-appointment-reason">{categoryLabel(appointment.category)}</span><span className={`badge ${S_BADGE[appointment.status]}`}>{S_LABEL[appointment.status]}</span></button>; })}</div>
+        <div className="day-planner-list">{dayAppointments.length === 0 ? <div className="day-planner-empty"><strong>{isPast ? "No hubo citas este día" : "No hay citas programadas"}</strong>{!isPast && canCreate && <button type="button" onClick={() => onSelectSlot(selectedDate, 9)}>Crear primera cita</button>}</div> : dayAppointments.map((appointment) => { const palette = CATEGORY_PALETTE[appointment.category] || PAL.teal; return <button key={appointment.id} type="button" className="day-appointment-row" style={{ "--appointment-accent": palette.border }} onClick={() => onViewAppointment(appointment)}><time>{String(appointment.start_time).slice(0, 5)}</time><span className="day-appointment-pet"><strong>{appointment.pet_name || "Paciente"}</strong><small>{appointment.owner_name || "Sin propietario"}</small></span><span className="day-appointment-reason">{categoryLabel(appointment.category)}</span><StatusBadge status={appointment.status} /></button>; })}</div>
     </section>;
 }
 
@@ -1689,10 +994,11 @@ function AppointmentList({ appointments, onViewAppointment }) {
         (result[appointment.date] ||= []).push(appointment);
         return result;
     }, {});
-    useEffect(() => setPage(1), [appointments]);
+    const [prevAppointments, setPrevAppointments] = useState(appointments);
+    if (prevAppointments !== appointments) { setPrevAppointments(appointments); setPage(1); }
 
     return <section className="appointment-list-view" data-tour="agenda-list" aria-label="Lista de citas">
-        {pageItems.length === 0 ? <div className="appointment-list-empty">No hay citas que coincidan con los filtros.</div> : Object.entries(groups).map(([date, items]) => <div key={date} className="appointment-date-group"><h3>{new Date(`${date}T00:00:00`).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</h3><div className="appointment-date-items">{items.map((appointment) => { const palette = CATEGORY_PALETTE[appointment.category] || PAL.teal; return <button key={appointment.id} type="button" className="appointment-list-card" style={{ "--appointment-accent": palette.border }} onClick={() => onViewAppointment(appointment)}><time>{String(appointment.start_time).slice(0, 5)} - {String(appointment.end_time).slice(0, 5)}</time><span className="appointment-list-main"><strong>{appointment.pet_name || "Paciente"}</strong><small>{appointment.reason || categoryLabel(appointment.category)}</small></span><span className="appointment-list-tags"><em>{categoryLabel(appointment.category)}</em><em>{appointment.owner_name || "Sin propietario"}</em></span><span className={`badge ${S_BADGE[appointment.status]}`}>{S_LABEL[appointment.status]}</span></button>; })}</div></div>)}
+        {pageItems.length === 0 ? <div className="appointment-list-empty">No hay citas que coincidan con los filtros.</div> : Object.entries(groups).map(([date, items]) => <div key={date} className="appointment-date-group"><h3>{new Date(`${date}T00:00:00`).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</h3><div className="appointment-date-items">{items.map((appointment) => { const palette = CATEGORY_PALETTE[appointment.category] || PAL.teal; return <button key={appointment.id} type="button" className="appointment-list-card" style={{ "--appointment-accent": palette.border }} onClick={() => onViewAppointment(appointment)}><time>{String(appointment.start_time).slice(0, 5)} - {String(appointment.end_time).slice(0, 5)}</time><span className="appointment-list-main"><strong>{appointment.pet_name || "Paciente"}</strong><small>{appointment.reason || categoryLabel(appointment.category)}</small></span><span className="appointment-list-tags"><em>{categoryLabel(appointment.category)}</em><em>{appointment.owner_name || "Sin propietario"}</em></span><StatusBadge status={appointment.status} /></button>; })}</div></div>)}
         {pageCount > 1 && <nav className="appointment-pagination" aria-label="Paginación de citas"><button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={currentPage === 1}>Anterior</button>{Array.from({ length: pageCount }, (_, index) => <button key={index + 1} type="button" className={currentPage === index + 1 ? "is-active" : ""} onClick={() => setPage(index + 1)}>{index + 1}</button>)}<button type="button" onClick={() => setPage((value) => Math.min(pageCount, value + 1))} disabled={currentPage === pageCount}>Siguiente</button></nav>}
     </section>;
 }
@@ -1748,6 +1054,7 @@ function EventManagerAppointments() {
         try { const data = await getAppointments(token); setAppointments(Array.isArray(data) ? data : (data.results || [])); }
         catch (err) { console.error(apiError(err)); }
     };
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial desde la API al montar
     useEffect(() => { if (token) { loadAll(); getOrgSettings().then(setOrgSettings).catch(() => {}); } }, [token]);
     useEffect(() => { const appointmentId = searchParams.get("appointment"); if (appointmentId && token) api.get(`appointments/${appointmentId}/`).then((response) => setViewAppt(response.data)).catch(() => {}); }, [searchParams, token]);
     useEffect(() => { if (weekOffset) calendarRef.current?.getApi().gotoDate(getWeekStart(today, weekOffset)); }, [today, weekOffset]);
@@ -1763,7 +1070,7 @@ function EventManagerAppointments() {
         calendar.setOption("dayMaxEvents", 2);
     }, [calendarView, canEdit, today]);
     const startTour = tour.start;
-    useEffect(() => { if (tourStartedRef.current || !canCreate) return; let seen = true; try { seen = localStorage.getItem(AGENDA_TOUR_KEY) === "true"; } catch {} if (!seen) { tourStartedRef.current = true; startTour(); } }, [canCreate, startTour]);
+    useEffect(() => { if (tourStartedRef.current || !canCreate) return; let seen = true; try { seen = localStorage.getItem(AGENDA_TOUR_KEY) === "true"; } catch { /* localStorage no disponible: se asume visto */ } if (!seen) { tourStartedRef.current = true; startTour(); } }, [canCreate, startTour]);
 
     const vetPalette = useMemo(() => new Map(staff.map((member, index) => [member.id, PAL[PAL_KEYS[index % PAL_KEYS.length]]])), [staff]);
     const getVetName = (id) => { const member = staff.find((item) => item.id === id); return member ? `${member.first_name} ${member.last_name}` : null; };
@@ -2000,7 +1307,7 @@ function EventManagerAppointments() {
         <div className="agenda-global-view-switcher"><ViewModeButtonGroup value={calendarView} onChange={changeView} /></div>
         {calendarView === "day" && <DayPlanner selectedDate={dayAnchor} appointments={visibleAppointments} today={today} canCreate={canCreate} onSelectSlot={selectSlot} onViewAppointment={setViewAppt} onNavigate={navigateDay} calendarView={calendarView} onChangeView={changeView} />}
         {calendarView === "list" && <AppointmentList key={`${search}|${filterVetId}|${statusFilter}|${categoryFilter}`} appointments={visibleAppointments} onViewAppointment={setViewAppt} />}
-        <div className="agenda-grid"><div className="agenda-shell" data-tour="agenda-calendar"><div className="agenda-toolbar"><div><div style={{ color:"var(--c-text)", fontSize:"16px", fontWeight:750 }}>{calendarView === "list" ? "Lista de citas" : calendarTitle}</div>{calendarView !== "list" && <div style={{ display:"flex", gap:"6px", marginTop:"8px" }}><button style={calNavBtn} onClick={() => navigateCalendar("prev")}>‹</button><button style={{ ...calNavBtn, fontSize:"12px" }} onClick={() => navigateCalendar("today")}>Hoy</button><button style={calNavBtn} onClick={() => navigateCalendar("next")}>›</button></div>}</div><ViewModeButtonGroup value={calendarView} onChange={changeView} dataTour="agenda-view-switcher" /></div>{calendarView === "list" ? <div className="agenda-list">{visibleAppointments.length === 0 ? <p style={{ color:"var(--c-text-3)", padding:"18px", textAlign:"center" }}>No hay citas que coincidan con los filtros.</p> : [...visibleAppointments].sort((a,b) => `${a.date}${a.start_time}`.localeCompare(`${b.date}${b.start_time}`)).map((appointment) => { const palette = vetPalette.get(appointment.veterinarian) || PAL.teal; return <button key={appointment.id} className="agenda-list-item" style={{ borderLeftColor:palette.border }} onClick={() => setViewAppt(appointment)}><strong>{appointment.pet_name || "Paciente"} · {appointment.reason || "Cita"}</strong><span className="agenda-list-meta">{appointment.date} · {String(appointment.start_time).slice(0,5)} · {appointment.owner_name || "Sin propietario"}</span><span className={`badge ${S_BADGE[appointment.status]}`}>{S_LABEL[appointment.status]}</span></button>; })}</div> : <div className="agenda-calendar"><FullCalendar ref={calendarRef} plugins={[dayGridPlugin,timeGridPlugin,interactionPlugin]} initialView={EVENT_VIEWS.week} initialDate={today} headerToolbar={false} allDaySlot={false} slotMinTime="07:00:00" slotMaxTime="20:00:00" slotDuration="00:30:00" nowIndicator height="auto" weekends events={calendarEvents} selectable={canCreate} selectMirror editable={canEdit} eventStartEditable={canEdit} eventDurationEditable={canEdit} dateClick={(info) => selectSlot(info.date, info.allDay ? 9 : info.date.getHours())} select={handleCalendarSelect} eventClick={(info) => setViewAppt(info.event.extendedProps.appointment)} eventDrop={saveCalendarMutation} eventResize={saveCalendarMutation} eventAllow={(dropInfo, draggedEvent) => canEdit && ["scheduled","confirmed"].includes(draggedEvent.extendedProps.appointment.status)} eventDidMount={(info) => { if (info.event.extendedProps.appointment.public_id === "__demo__") info.el.dataset.tour = "agenda-appt-demo"; }} datesSet={(info) => setCalendarTitle(calendarRangeLabel(info.view))} /></div>}</div>
+        <div className="agenda-grid"><div className="agenda-shell" data-tour="agenda-calendar"><div className="agenda-toolbar"><div><div style={{ color:"var(--c-text)", fontSize:"16px", fontWeight:750 }}>{calendarView === "list" ? "Lista de citas" : calendarTitle}</div>{calendarView !== "list" && <div style={{ display:"flex", gap:"6px", marginTop:"8px" }}><button style={calNavBtn} onClick={() => navigateCalendar("prev")}>‹</button><button style={{ ...calNavBtn, fontSize:"12px" }} onClick={() => navigateCalendar("today")}>Hoy</button><button style={calNavBtn} onClick={() => navigateCalendar("next")}>›</button></div>}</div><ViewModeButtonGroup value={calendarView} onChange={changeView} dataTour="agenda-view-switcher" /></div>{calendarView === "list" ? <div className="agenda-list">{visibleAppointments.length === 0 ? <p style={{ color:"var(--c-text-3)", padding:"18px", textAlign:"center" }}>No hay citas que coincidan con los filtros.</p> : [...visibleAppointments].sort((a,b) => `${a.date}${a.start_time}`.localeCompare(`${b.date}${b.start_time}`)).map((appointment) => { const palette = vetPalette.get(appointment.veterinarian) || PAL.teal; return <button key={appointment.id} className="agenda-list-item" style={{ borderLeftColor:palette.border }} onClick={() => setViewAppt(appointment)}><strong>{appointment.pet_name || "Paciente"} · {appointment.reason || "Cita"}</strong><span className="agenda-list-meta">{appointment.date} · {String(appointment.start_time).slice(0,5)} · {appointment.owner_name || "Sin propietario"}</span><StatusBadge status={appointment.status} /></button>; })}</div> : <div className="agenda-calendar"><FullCalendar ref={calendarRef} plugins={[dayGridPlugin,timeGridPlugin,interactionPlugin]} initialView={EVENT_VIEWS.week} initialDate={today} headerToolbar={false} allDaySlot={false} slotMinTime="07:00:00" slotMaxTime="20:00:00" slotDuration="00:30:00" nowIndicator height="auto" weekends events={calendarEvents} selectable={canCreate} selectMirror editable={canEdit} eventStartEditable={canEdit} eventDurationEditable={canEdit} dateClick={(info) => selectSlot(info.date, info.allDay ? 9 : info.date.getHours())} select={handleCalendarSelect} eventClick={(info) => setViewAppt(info.event.extendedProps.appointment)} eventDrop={saveCalendarMutation} eventResize={saveCalendarMutation} eventAllow={(dropInfo, draggedEvent) => canEdit && ["scheduled","confirmed"].includes(draggedEvent.extendedProps.appointment.status)} eventDidMount={(info) => { if (info.event.extendedProps.appointment.public_id === "__demo__") info.el.dataset.tour = "agenda-appt-demo"; }} datesSet={(info) => setCalendarTitle(calendarRangeLabel(info.view))} /></div>}</div>
         <aside className="agenda-sidebar"><div className="agenda-sidebar-card"><input className="agenda-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar mascota, cliente o motivo…" aria-label="Buscar citas" /><div style={{ borderTop:"1px solid var(--c-border)", marginTop:"14px", paddingTop:"14px" }}><p className="agenda-section-label">Estado</p><div className="agenda-filters">{STATUS_FILTERS.map(([value,label]) => <button key={value || "all"} className={`agenda-filter${statusFilter === value ? " is-active" : ""}`} onClick={() => setStatusFilter(value)}>{label}</button>)}</div></div><div style={{ borderTop:"1px solid var(--c-border)", marginTop:"14px", paddingTop:"14px" }}><p className="agenda-section-label">Veterinarios</p><div className="agenda-staff"><button className={`agenda-staff-button${filterVetId === "" ? " is-active" : ""}`} onClick={() => setFilterVetId("")}>Todos</button>{staff.map((member) => { const palette = vetPalette.get(member.id) || PAL.teal; const active = filterVetId === String(member.id); return <button key={member.id} className="agenda-staff-button" onClick={() => setFilterVetId((current) => current === String(member.id) ? "" : String(member.id))} style={{ background:active ? palette.border : palette.bg, borderColor:palette.border, color:active ? "#fff" : palette.text }}>{member.first_name} {member.last_name}</button>; })}</div></div></div><div className="agenda-sidebar-card"><MiniCalendar today={today} selectedDate={selectedSlot?.date} onSelect={(date) => { setWeekOffset(0); calendarRef.current?.getApi().gotoDate(date); }} /></div><div className="agenda-sidebar-card" data-tour="agenda-form">{canCreate ? <SidebarForm slot={selectedSlot} onSave={handleFormSave} onSaveWithPatient={handleSaveWithPatient} onClear={() => setSelectedSlot(null)} staff={staff} user={user} formRef={formRef} /> : <p style={{ color:"var(--c-text-3)", fontSize:"12.5px", fontStyle:"italic", textAlign:"center" }}>Modo lectura — sin permiso para crear citas</p>}</div><div className="agenda-stats">{[["Hoy",todayCount],["Esta semana",weekCount]].map(([label,count]) => <div key={label}><div style={{ color:"var(--c-primary-dark)", fontSize:"11px" }}>{label}</div><div style={{ color:"var(--c-primary-dark)", fontSize:"26px", fontWeight:750, lineHeight:1.15 }}>{count}</div><div style={{ color:"var(--c-primary-dark)", fontSize:"11px", opacity:.7 }}>cita{count !== 1 ? "s" : ""}</div></div>)}</div></aside></div>
         {viewAppt && <DetailModal appt={viewAppt} petName={viewAppt.pet_name || "—"} vetName={getVetName(viewAppt.veterinarian) || viewAppt.veterinarian_name} petId={viewAppt.pet_public_id} onClose={() => setViewAppt(null)} onStatusChange={handleStatusChange} onAttendNow={handleAttendNow} onEdit={(appointment) => { setEditingAppt(appointment); setViewAppt(null); }} onNewFromAppt={(appointment) => { setViewAppt(null); selectSlot(new Date(`${appointment.date}T${appointment.start_time}`), parseInt(appointment.start_time,10)); }} navigate={navigate} canEdit={canEdit} showHistory={!!orgSettings?.show_status_change_history} onRefresh={(updated) => { setAppointments((previous) => previous.map((item) => item.id === updated.id ? updated : item)); setViewAppt(updated); }} />}
         {createModalOpen && <AppointmentCreateModal slot={selectedSlot} onClose={() => { setCreateModalOpen(false); setSelectedSlot(null); }} onSave={handleFormSave} onSaveWithPatient={handleSaveWithPatient} staff={staff} user={user} formRef={formRef} />}
@@ -2008,5 +1315,4 @@ function EventManagerAppointments() {
     </div>;
 }
 
-export { Appointments };
 export default EventManagerAppointments;

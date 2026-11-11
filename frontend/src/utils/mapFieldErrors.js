@@ -1,17 +1,21 @@
 /**
- * mapFieldErrors — Normaliza respuestas DRF a claves planas (Opción A determinista)
+ * mapFieldErrors — Normaliza respuestas DRF a claves planas (opción A determinista).
+ *
+ * Cada error anidado se publica con DOS claves: la plana de raíz y la dotted.
+ * Ambas son contrato: el wizard de inventario las consume como fallback.
  *
  * Comportamiento:
- *   - Top-level: sale_price: ["X"] → sale_price: "X"
- *   - Nested: presentation_input: { sale_price: ["Y"] } → presentation_input.sale_price: "Y"
- *   - Colisión: ambas claves se guardan (nunca se sobrescribe):
- *     sale_price: ["X"], presentation_input: { sale_price: ["Y"] }
+ *   - Top-level: { sale_price: ["X"] } → { sale_price: "X" }
+ *   - Anidado sin colisión: { presentation_input: { sale_price: ["Y"] } }
+ *     → { sale_price: "Y", "presentation_input.sale_price": "Y" }
+ *   - Colisión: { sale_price: ["X"], presentation_input: { sale_price: ["Y"] } }
  *     → { sale_price: "X", "presentation_input.sale_price": "Y" }
  *
- * Razonamiento:
- *   1. Intenta guardar en root primero (sale_price).
- *   2. Si ya existe en root, también guarda la versión nested (presentation_input.sale_price).
- *   3. Nunca sobrescribe; determinista para ambos casos.
+ * Reglas:
+ *   1. Un error top-level siempre ocupa su clave plana.
+ *   2. Un error anidado ocupa la clave plana solo si aún está libre.
+ *   3. La clave dotted se escribe siempre.
+ *   4. De cada lista se toma únicamente el primer mensaje.
  */
 export default function mapFieldErrors(data = {}) {
   const result = {};

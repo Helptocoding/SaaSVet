@@ -43,6 +43,7 @@ const ClinicSection = ({ org, onOrgChange, onOnboardingDone }) => {
         }
       }
     } catch {
+      /* toast.promise ya mostró el error */
     } finally {
       setSaving(false);
     }

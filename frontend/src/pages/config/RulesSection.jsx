@@ -26,6 +26,7 @@ const RulesSection = ({ settings, onSettingsChange, canManage }) => {
       const updated = await req;   // sonner: await la promesa REAL, no toast.promise
       if (updated && typeof updated === "object") onSettingsChange(updated);
     } catch {
+      /* toast.promise ya mostró el error */
     } finally {
       setSaving(false);
     }
