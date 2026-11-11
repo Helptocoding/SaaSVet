@@ -4,7 +4,6 @@ import { getServices } from "../../api/billing";
 import { getConfiguration } from "../../api/organizations";
 import { apiError } from "../../utils/apiError";
 import { toList } from "../../utils/toList";
-import { useAuth } from "../../auth/authContext";
 import { Icon } from "../../components/icons";
 import styles from "./config.module.css";
 
@@ -56,6 +55,7 @@ const SettingsLayout = ({ user, token }) => {
   useEffect(() => {
     if (!token) return;
     if (!showTenantSections) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- operador sin clínica: no hay configuración que cargar
       setLoading(false);
       return;
     }

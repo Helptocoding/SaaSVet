@@ -121,6 +121,22 @@ Cambios: eliminado el componente `Appointments` (sin importadores; precondición
 Observaciones: sin imports sin uso tras el borrado.
 Límites: suite completa no corrida.
 
+## E08 — Configuración, analítica, importador y consulta (2026-11-10)
+
+| Comando | Resultado |
+|---|---|
+| `eslint src/pages/config src/pages/analytics src/pages/imports src/pages/medicalRecords` | 0 errores, 3 warnings `exhaustive-deps` |
+| `eslint .` | 0 errores, 14 warnings |
+| `eslint . --quiet` | `exit=0` |
+| `vitest run src/pages/imports src/pages/medicalRecords` | 8 archivos, 76/76 pasan |
+| `vitest run` (suite completa) | 819/820; 1 timeout de 5000 ms en `src/pages/inbox/index.test.jsx` («cap global de 20 intentos») por carga |
+| `vitest run src/pages/inbox/index.test.jsx` (solo) | 93/93 pasan |
+| `pnpm run build` | OK |
+
+Warnings finales por regla: `react-hooks/exhaustive-deps` 13; sin regla (aviso de directiva en `__smoke__`) 1.
+Cambios: comentarios en los `catch` vacíos de config; import sin uso de `useAuth` fuera de `config/index.jsx`; `PreviewStep` con selección inicial perezosa (sin efecto) y `ReviewPanel` sin prop `labelByKey`; `loadAllData` y `loadRecords` como declaraciones de función; supresiones justificadas; dos directivas sin uso eliminadas.
+Límites: ninguno.
+
 Plantilla por entrega:
 
 ```markdown

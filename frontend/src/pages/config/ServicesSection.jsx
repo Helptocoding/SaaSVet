@@ -53,6 +53,7 @@ const ServicesSection = ({ services, onServicesChange, onOnboardingDone }) => {
       }
       onServicesChange();
     } catch {
+      /* toast.promise ya mostró el error */
     } finally {
       setSaving(false);
     }
@@ -66,7 +67,7 @@ const ServicesSection = ({ services, onServicesChange, onOnboardingDone }) => {
         loading: "Eliminando...", success: "Eliminado", error: "No se puede eliminar: puede estar en uso"
       });
       onServicesChange();
-    } catch { }
+    } catch { /* toast.promise ya mostró el error */ }
   };
 
   const fmt = (n) => Number(n || 0).toFixed(2);

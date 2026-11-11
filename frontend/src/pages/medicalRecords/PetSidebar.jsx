@@ -75,9 +75,9 @@ const PetSidebar = ({
 
     // Carga inicial: primeras mascotas (sin query) para poder elegir sin escribir.
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial desde la API al montar
         fetchFirst("");
         return () => { if (debRef.current) clearTimeout(debRef.current); };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const onQueryChange = (v) => {

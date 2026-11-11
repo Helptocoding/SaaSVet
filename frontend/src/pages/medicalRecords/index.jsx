@@ -86,6 +86,7 @@ const MedicalRecords = () => {
     const appointmentParam = searchParams.get("appointment");
     const recordParam = searchParams.get("record");
     if (petParam) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- aplica los parámetros de la URL (deep-link) al entrar
       setSelectedPet(petParam);
       // Deep-link: resolvemos el objeto de la mascota por public_id (ya no hay
       // lista completa en memoria de la que sacarlo).
@@ -129,7 +130,7 @@ const MedicalRecords = () => {
     }
   }, [searchParams, token, location.state]);
 
-  const loadAllData = async () => {
+  async function loadAllData() {
     // El sidebar busca mascotas server-side (ya NO se carga la lista completa, ni
     // todos los medical records para contar — eso no escalaba con clínicas
     // importadas de miles de pacientes). Aquí solo el catálogo de productos para
@@ -140,9 +141,9 @@ const MedicalRecords = () => {
     } catch { setProducts([]); }
 
     setLoading(false);
-  };
+  }
 
-  const loadRecords = async () => {
+  async function loadRecords() {
     try {
       const filters = { page };
       if (selectedPet) filters.pet = selectedPet;
@@ -152,7 +153,7 @@ const MedicalRecords = () => {
       setTotalPages(data.total_pages || 1);
       setTotalCount(data.count ?? list.length);
     } catch { /* carga best-effort; no bloquea la UI */ }
-  };
+  }
 
   const refreshAfterMutation = () => loadRecords();
 

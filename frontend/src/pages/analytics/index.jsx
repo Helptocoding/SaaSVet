@@ -77,6 +77,7 @@ const Analytics = () => {
 
     useEffect(() => {
         if (scope === SCOPE.FINANCIAL && !isAdmin) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- corrige un alcance no permitido antes de cargar
             setScope(SCOPE.OPERATIONS);
             return;
         }
@@ -214,6 +215,7 @@ const ProtocolSection = ({ rangeDays }) => {
 
     useEffect(() => {
         let cancelled = false;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- marca carga justo antes de la petición
         setLoading(true);
         const to = new Date();
         const from = new Date();

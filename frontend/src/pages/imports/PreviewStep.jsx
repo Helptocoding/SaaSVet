@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Pagination from "../../components/Pagination";
 import { groupImportIssues } from "./groupImportIssues";
 import { getEntityConfig } from "./entityConfig";
@@ -63,19 +63,13 @@ const CollapseGroup = ({ icon, title, count, intro, items, open, onToggle, varia
 };
 
 /* ── Panel de revisión tipo inbox ── */
-const ReviewPanel = ({ blockingGroups, warningsGroups, labelByKey }) => {
+const ReviewPanel = ({ blockingGroups, warningsGroups }) => {
     const allItems = [
         ...blockingGroups.map((g) => ({ ...g, kind: "blocking" })),
         ...warningsGroups.map((g) => ({ ...g, kind: "warning" })),
     ];
 
-    const [selected, setSelected] = useState(null);
-
-    useEffect(() => {
-        if (!selected && allItems.length > 0) {
-            setSelected(allItems[0]);
-        }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const [selected, setSelected] = useState(() => allItems[0] ?? null);
 
     const selectedGroup = allItems.find(
         (g) => g.field === selected?.field && g.kind === selected?.kind,
@@ -242,6 +236,7 @@ const PreviewStep = ({
     );
     const warningsGroups = useMemo(
         () => groupImportIssues(warnings, labelByKey),
+        // eslint-disable-next-line react-hooks/preserve-manual-memoization -- labelByKey ya está memoizada y las acciones de cfg no la mutan
         [warnings, labelByKey],
     );
 
@@ -367,7 +362,6 @@ const PreviewStep = ({
                 <ReviewPanel
                     blockingGroups={blockingGroups}
                     warningsGroups={[]}
-                    labelByKey={labelByKey}
                 />
             )}
 

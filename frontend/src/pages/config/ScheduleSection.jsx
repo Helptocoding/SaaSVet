@@ -43,6 +43,7 @@ const ScheduleSection = ({ schedule, onScheduleChange }) => {
       const updated = await req;   // sonner: await la promesa REAL, no toast.promise
       if (Array.isArray(updated)) onScheduleChange(updated);
     } catch {
+      /* toast.promise ya mostró el error */
     } finally {
       setSaving(false);
     }

@@ -352,6 +352,7 @@ export default function ConsultationForm({
   useEffect(() => {
     const prod = productLine.product ? productMap[productLine.product.id] : null;
     if (!prod?.tracks_lots || !prod?.public_id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- producto sin lotes: limpia la lista antes de cualquier carga
       setProductLots([]);
       return undefined;
     }
@@ -371,7 +372,6 @@ export default function ConsultationForm({
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productLine.product, productMap]);
 
   const handleProductSearch = useCallback(
