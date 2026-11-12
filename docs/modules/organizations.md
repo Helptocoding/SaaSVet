@@ -462,7 +462,7 @@ Eventos emitidos a stdout (Docker stdout — `docker compose logs backend`):
 - `TENANT_MISMATCH_DETECTED` — intento de acceso a datos de otra organizacion
 - `DEPRECATED_ENDPOINT_HIT` — uso de un endpoint deprecado vigente (logger `core.deprecation`; ver `logs.md`)
 
-Gate para corte del fallback: `RBAC_FALLBACK_ALLOWED` ausente en logs por 7 dias consecutivos → se puede eliminar el campo `User.role`.
+Corte del fallback (deuda B3): **aplazado** en el orden 6. El gate de 7 dias de logs no es alcanzable sin produccion. Cuando se retome, `User.role` se conserva como etiqueta y deja de autorizar (ver [plan del orden 6](../plan-remediacion-orden-6-2026-11-11.md), §1).
 
 **Default DRF (PR-4A / ADR p15):** `REST_FRAMEWORK['DEFAULT_PERMISSION_CLASSES'] = ('rest_framework.permissions.IsAuthenticated',)`. Cualquier vista nueva que olvide declarar `permission_classes` queda cerrada por defecto. Las vistas publicas (`/api/token/`, `/api/token/refresh/`) declaran `AllowAny` explicito.
 

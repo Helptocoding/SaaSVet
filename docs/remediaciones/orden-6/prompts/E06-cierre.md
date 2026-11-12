@@ -14,7 +14,9 @@ Registrar en la deuda el estado de los nueve IDs del orden, comprobar el conjunt
 
 - `docs/deuda/fase2-prioridad-alta.md`, `docs/deuda/fase3-prioridad-media.md`, `docs/deuda/fase4-prioridad-baja.md`
 - `docs/modules/organizations.md` (solo la línea indicada)
+- `docs/runbooks/pre-launch-security.md` (solo la línea indicada)
 - Expediente del orden 6 (`README.md`, `MATRIZ.md`, `EVIDENCIA.md`)
+- Este prompt, `docs/remediaciones/orden-6/prompts/E06-cierre.md`: se ajustó tras revisar E03. Aparecerá como modificado en `git status`; inclúyelo en el commit **sin editarlo**.
 
 ## Paso 1. Líneas de estado en la deuda
 
@@ -102,6 +104,22 @@ por
 Corte del fallback (deuda B3): **aplazado** en el orden 6. El gate de 7 dias de logs no es alcanzable sin produccion. Cuando se retome, `User.role` se conserva como etiqueta y deja de autorizar (ver [plan del orden 6](../plan-remediacion-orden-6-2026-11-11.md), §1).
 ```
 
+## Paso 2b. `docs/runbooks/pre-launch-security.md`
+
+Pendiente que dejó E03: la prueba E2E manual aún nombra `createsuperuser`. Dentro del bloque de §2.4, sustituye la línea
+
+```text
+2. Login con admin SaaS (createsuperuser bootstrap)
+```
+
+por
+
+```text
+2. Login con admin SaaS (creado con manage.py bootstrap_superuser)
+```
+
+Después, desde la raíz, `git grep -n "createsuperuser" -- docs/production-runbook.md docs/runbooks docs/security docs/modules .env.prod.example scripts/pre-launch-security-check.sh` solo puede mostrar líneas que digan que **no** se use (`No usar`, `no sirve`, `Do not use`).
+
 ## Paso 3. Verificación final
 
 Desde `backend/`, conservando cada salida:
@@ -141,6 +159,6 @@ Al terminar, detén el cluster sin borrarlo:
 
 ## Cierre
 
-Commit con los tres archivos de deuda, `docs/modules/organizations.md` y el expediente: `docs(order6): record debt status and close order 6`.
+Commit con los tres archivos de deuda, `docs/modules/organizations.md`, `docs/runbooks/pre-launch-security.md`, el expediente y este prompt: `docs(order6): record debt status and close order 6`.
 
 En «Para revisar»: subir la rama y confirmar CI, y leer el procedimiento de `bootstrap_superuser` antes del próximo despliegue.

@@ -95,7 +95,7 @@ Flow completo HTTPS desde laptop con navegador (no curl):
 
 ```
 1. Visitar https://app.tu-dominio.com
-2. Login con admin SaaS (createsuperuser bootstrap)
+2. Login con admin SaaS (creado con manage.py bootstrap_superuser)
 3. Provision org via POST /api/platform/organizations/
 4. Login con admin de org recién creada
 5. Crear Owner + Pet

@@ -9,10 +9,10 @@ Se actualiza al cerrar cada entrega. Estados permitidos: `PENDIENTE`, `EN_CURSO`
 | B5 | E03 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E03 | EVIDENCIA.md §E03 |
 | B6 | E04 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E04 | EVIDENCIA.md §E04 |
 | D2 | E05 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E05 | EVIDENCIA.md §E05 |
-| A1 + B4 | E06 | PENDIENTE | | |
-| B3 | E06 | PENDIENTE | | |
-| C1 | E06 | PENDIENTE | | |
-| C7 | E06 | PENDIENTE | | |
+| A1 + B4 | E06 | CERRADO_PREVIAMENTE | f325ee7 | EVIDENCIA.md §E06 |
+| B3 | E06 | APLAZADO | | EVIDENCIA.md §E06 |
+| C1 | E06 | FUERA_DE_ALCANCE | | EVIDENCIA.md §E06 |
+| C7 | E06 | FUERA_DE_ALCANCE | | EVIDENCIA.md §E06 |
 
 ## Avance
 
@@ -24,4 +24,4 @@ Se actualiza al cerrar cada entrega. Estados permitidos: `PENDIENTE`, `EN_CURSO`
 | E03 | Ran 17 / OK (test_bootstrap); 189 / OK (apps.users apps.organizations) | ver commit E03 |
 | E04 | Ran 7 / OK (test_seed_permissions_prune); 65 / OK con grants, agent_identity y ReleaseScriptTests | ver commit E04 |
 | E05 | Ran 48 / OK (apps.organizations + test_url_audit); 83 / OK con test_admin_explicit_grants | ver commit E05 |
-| E06 | | |
+| E06 | Ran 600 / OK (skipped=7) corrida amplia; Ran 2 / OK ReleaseScriptTests | ver commit E06 |

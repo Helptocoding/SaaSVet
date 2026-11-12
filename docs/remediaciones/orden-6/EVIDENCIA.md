@@ -131,3 +131,26 @@ Pruebas eliminadas, autorizadas: clase `OrganizationLegacyViewTests` (7 pruebas 
 
 Límites: ninguno.
 Observaciones sin cambio: `DEPRECATED_ENDPOINT_HIT` sigue vivo para `DELETE /api/appointments/<id>/` y `GET /api/inbox/conversations/`.
+
+## E06 — Cierre (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| Precondición (`git log a7dbdaf..HEAD`: siete commits; B2, C2, B5, B6, D2 verificados localmente) | OK |
+| `grep -c "orden 6"` en `fase2`, `fase3`, `fase4` | 2, 5, 3 |
+| `git grep createsuperuser` en runbooks, docs, `.env.prod.example` y script de pre-launch | solo líneas que dicen que no se use |
+| `check` | sin problemas |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| `test apps.core apps.users apps.organizations apps.prescriptions apps.billing` | Ran 600 / OK (skipped=7) |
+| `test apps.agent.tests.test_identity_evidence.ReleaseScriptTests` | Ran 2 / OK |
+| `git diff a7dbdaf --stat -- '*/migrations/*' frontend scripts/release.sh` | sin salida |
+| Cluster aislado | detenido (`stop exit=0`), no borrado |
+
+El recuento 600 coincide con el esperado: 586 de la línea base + 4 (E01) + 3 (E02) + 6 (E03) + 7 (E04) − 6 (E05).
+
+Se cerró también el pendiente de E03: `docs/runbooks/pre-launch-security.md` ya no recomienda `createsuperuser`.
+
+Límites:
+- La suite global (más de 3.800 pruebas) solo queda probada en CI cuando el usuario suba la rama.
+- Sin despliegue. `bootstrap_superuser` y `--prune` no se ejecutaron contra ninguna base real.
+- El cluster aislado quedó detenido y no se borró.
