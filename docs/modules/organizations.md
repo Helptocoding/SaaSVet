@@ -111,9 +111,18 @@ Desde SSH al servidor:
 python manage.py seed_permissions
 ```
 
-O simplemente hacer redeploy — el Procfile lo ejecuta automaticamente antes de iniciar el servidor.
+O simplemente hacer redeploy — `scripts/release.sh` lo ejecuta antes de iniciar el servidor.
 
 Si `seed_permissions` no se ejecuta, todos los endpoints de la org nueva retornan `403`. El endpoint `POST /api/platform/organizations/` NO depende de esto (corre el seed por org via signal).
+
+**Poda de permisos retirados (deuda B6, orden 6).** Un código que sale de `PERMISSION_CODES` deja de concederse a los roles de sistema en el siguiente seed, pero su fila `Permission` sigue en la base y en cualquier rol propio que la tenga. Para retirarlo, en una ventana de mantenimiento y nunca desde `release.sh`:
+
+```bash
+python manage.py seed_permissions --prune --dry-run   # lista lo que se borraría
+python manage.py seed_permissions --prune             # borra y registra SEED_PERMISSIONS_PRUNED
+```
+
+Nunca poda comodines (`*.*`, `recurso.*`): los gobierna el preflight de ADR p63.
 
 ## Como el ADMIN_SAAS resetea credenciales de staff (ADR p45)
 

@@ -98,3 +98,17 @@ Límites: ninguno.
 Observaciones sin cambio:
 - `docs/production-runbook.md` tenía una segunda mención de `createsuperuser` (línea 195, instalación desde cero con `$COMPOSE`) que el prompt no listaba. Se sustituyó por el mismo procedimiento con `bootstrap_superuser`.
 - `docs/runbooks/pre-launch-security.md:98` aún dice «Login con admin SaaS (createsuperuser bootstrap)». Está fuera de los archivos permitidos y no se tocó; la comprobación final del prompt lo muestra.
+
+## E04 — B6: `seed_permissions --prune` (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| Precondiciones (`prune` ausente en el comando y en `release.sh`) | OK |
+| `test test_admin_explicit_grants test_agent_identity` antes | Ran 56 / OK |
+| `py_compile` (comando y prueba nueva) | OK |
+| `test test_seed_permissions_prune test_admin_explicit_grants test_agent_identity test_identity_evidence.ReleaseScriptTests` | Ran 65 / OK |
+
+La poda no se ejecutó contra ninguna base real; solo pruebas en el cluster aislado.
+
+Límites: ninguno.
+Observaciones sin cambio: el seed sin `--prune` solo informa de los permisos fuera del catálogo; `test_admin_explicit_grants` y `test_agent_identity` siguen en 56 en conjunto.

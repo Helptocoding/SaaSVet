@@ -107,6 +107,16 @@ Accion requerida: pasar al comando ambas variables. Nunca van en `.env.prod`.
 
 ---
 
+### `SEED_PERMISSIONS_PRUNED` · WARNING
+
+`seed_permissions --prune` (deuda B6, orden 6) borro permisos de la base que ya no estan en `PERMISSION_CODES`. Con ellos desaparecen sus concesiones en roles propios; los roles de sistema ya las perdian en cada seed. Nunca borra comodines (`*.*`, `recurso.*`). Logger `rbac.events`.
+
+Campos: `event`, `count`, `codes`
+
+Accion requerida: ninguna si una persona lanzo la poda en una ventana de mantenimiento. Nunca deberia aparecer en un release: `release.sh` no usa `--prune`.
+
+---
+
 ## Eventos de validacion tenant en serializers (`apps.tenant_validation`)
 
 ### `TENANT_VALIDATION_REJECTED` · WARNING

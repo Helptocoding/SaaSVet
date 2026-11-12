@@ -7,7 +7,7 @@ Se actualiza al cerrar cada entrega. Estados permitidos: `PENDIENTE`, `EN_CURSO`
 | B2 | E01 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E01 | EVIDENCIA.md §E01 |
 | C2 | E02 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E02 | EVIDENCIA.md §E02 |
 | B5 | E03 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E03 | EVIDENCIA.md §E03 |
-| B6 | E04 | PENDIENTE | | |
+| B6 | E04 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | ver commit E04 | EVIDENCIA.md §E04 |
 | D2 | E05 | PENDIENTE | | |
 | A1 + B4 | E06 | PENDIENTE | | |
 | B3 | E06 | PENDIENTE | | |
@@ -22,6 +22,6 @@ Se actualiza al cerrar cada entrega. Estados permitidos: `PENDIENTE`, `EN_CURSO`
 | E01 | Ran 19 / OK (apps.prescriptions); 31 / OK con test_tenant_validation | ver commit E01 |
 | E02 | Ran 76 / OK (apps.billing); 93 / OK con auditorías core | ver commit E02 |
 | E03 | Ran 17 / OK (test_bootstrap); 189 / OK (apps.users apps.organizations) | ver commit E03 |
-| E04 | | |
+| E04 | Ran 7 / OK (test_seed_permissions_prune); 65 / OK con grants, agent_identity y ReleaseScriptTests | ver commit E04 |
 | E05 | | |
 | E06 | | |
