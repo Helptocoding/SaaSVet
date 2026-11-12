@@ -28,3 +28,19 @@ Plantilla por entrega:
 Límites: ...
 Observaciones sin cambio: ...
 ```
+
+## E00 — Línea base (12-11-2026, `9da1b8b` sobre `a7dbdaf`)
+
+Cluster: ya existía (`PG_VERSION` presente); no se creó en esta entrega. Estaba detenido y se arrancó con `pg_ctl`; `status exit=0`.
+
+| Comando | Resultado |
+|---|---|
+| `git switch -c fix/orden-6-arquitectura-backend` + commit de documentos y runner | `9da1b8b` encima de `a7dbdaf` |
+| `init-db` | `Base orden6_iso_20261111 lista.` |
+| `check` | `System check identified no issues (0 silenced).` |
+| `migrate --noinput` | `No migrations to apply.` |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| `test apps.core apps.users apps.organizations apps.prescriptions apps.billing --keepdb --noinput` | `Ran 586 tests in 254.476s` / `OK (skipped=7)` |
+
+Límites: ninguno.
+Observaciones sin cambio: ninguna.

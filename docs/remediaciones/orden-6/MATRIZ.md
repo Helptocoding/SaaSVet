@@ -18,7 +18,7 @@ Se actualiza al cerrar cada entrega. Estados permitidos: `PENDIENTE`, `EN_CURSO`
 
 | Entrega | Pruebas (Ran / resultado) | Commit |
 |---|---|---|
-| E00 | | |
+| E00 | Ran 586 / OK (skipped=7) | 9da1b8b (docs); línea base sin cambios de código |
 | E01 | | |
 | E02 | | |
 | E03 | | |
