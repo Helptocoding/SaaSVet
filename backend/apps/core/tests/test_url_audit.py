@@ -30,8 +30,6 @@ ALLOWED_INT_PATTERNS = (
     re.compile(r'medical-records/<str:[A-Za-z_][A-Za-z0-9_]*>/services/<int:pk>'),
     # PrescriptionItem (child interno bajo Prescription UUID parent)
     re.compile(r'prescriptions/<str:[A-Za-z_][A-Za-z0-9_]*>/items/<int:pk>'),
-    # InvoiceItem (child interno bajo Invoice UUID parent) — Día 6 audit F12
-    re.compile(r'billing/invoices/<str:[A-Za-z_][A-Za-z0-9_]*>/items/<int:pk>'),
     # channels.Message (WA-RETRY-01) NO va aquí: un patrón suelto aceptaría la
     # ruta en cualquier archivo y con cualquier handler. Su excepción vive en
     # INTERNAL_MESSAGE_RETRY_ROUTE, atada a agent/urls.py y a views.retry_message.

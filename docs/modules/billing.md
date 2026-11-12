@@ -72,6 +72,8 @@ Payment ledger / Invoice paid
   `confirmed` ni `cancelled` en el contrato vigente.
 - Una Invoice y sus InvoiceItems son snapshots financieros inmutables. La colección
   `/api/billing/invoices/` es de lectura; la creación genérica está deshabilitada.
+  `InvoiceSerializer` e `InvoiceItemSerializer` son de solo lectura y no validan
+  escrituras. El tipo de la Invoice lo fija `Checkout.origin` (orden 6, C2).
 
 ### InvoiceItem y ledgers físicos
 

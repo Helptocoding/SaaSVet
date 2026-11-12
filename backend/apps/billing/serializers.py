@@ -8,7 +8,6 @@ from .models import (
     CheckoutItem, ReplacementWaiver, CheckoutDispute,
 )
 from .money import discount_amount, money
-from apps.core.tenant_validation import require_same_organization, same_organization
 from apps.core.sanitize import sanitize_text
 
 SERVICE_NAME_REGEX = re.compile(r'^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ\s\-\(\)\/\%\+]+$')
@@ -91,6 +90,11 @@ class ServiceSerializer(serializers.ModelSerializer):
 
 
 class InvoiceItemSerializer(serializers.ModelSerializer):
+    """Línea de una Invoice, de solo lectura (ADR p62).
+
+    Las líneas nacen al postear un Checkout y no se editan después. No existe un
+    endpoint que las escriba, así que aquí no se validan escrituras.
+    """
     service_name = serializers.CharField(source='service.name', read_only=True)
     presentation_name = serializers.SerializerMethodField()
     unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -117,7 +121,7 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
             'lot', 'tracks_lots', 'lot_number', 'lot_effective_status',
             'has_stock_allocation',
         ]
-        read_only_fields = ['id', 'subtotal', 'invoice', 'dispensed']
+        read_only_fields = fields
 
     def get_presentation_name(self, obj):
         if obj.presentation:
@@ -134,105 +138,15 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
         gross = money(obj.quantity * obj.unit_price)
         return str(discount_amount(gross, obj.discount_type, obj.discount_value))
 
-    def validate(self, data):
-        service = data.get('service')
-        presentation = data.get('presentation')
-        quantity = data.get('quantity')
-        discount_type = data.get('discount_type')
-        discount_value = data.get('discount_value', Decimal('0.00'))
-
-        # Validar cantidad
-        if quantity is not None and quantity <= 0:
-            raise serializers.ValidationError("La cantidad debe ser mayor a cero.")
-
-        # XOR: exactamente uno de los dos
-        if service and presentation:
-            raise serializers.ValidationError(
-                "Un ítem es o un servicio o una presentación de inventario, no ambos."
-            )
-        # Día 6 audit: "must have one" solo aplica a CREATE (sin instance).
-        # PATCH parcial (ej. `{"quantity": "2"}`) deja service/presentation en
-        # None dentro de validated_data, pero self.instance ya los tiene
-        # asignados. Sin este gate, todo PATCH parcial fallaba con 400.
-        if not self.instance and not service and not presentation:
-            raise serializers.ValidationError(
-                "Debe especificar 'service' o 'presentation'."
-            )
-
-        # Día 6 audit F11: tenant validation canonical (ADR-13). Antes
-        # comparaba contra invoice.organization_id (correcto pero sin log
-        # estructurado). require_same_organization valida contra request.user.org
-        # y emite TENANT_VALIDATION_REJECTED uniforme con InvoiceSerializer.
-        # Invariante: invoice.organization == request.user.organization
-        # (garantizado por _get_invoice via for_organization()).
-        invoice = self.context.get('invoice')
-        if invoice is None:
-            raise RuntimeError(
-                "InvoiceItemSerializer requiere 'invoice' en su contexto."
-            )
-        request = self.context.get('request')
-        assert request is not None, (
-            "InvoiceItemSerializer requiere 'request' en su context. "
-            "Si lo invocas fuera de una view DRF (shell, mgmt command), "
-            "pasa context={'request': fake_request} con user.organization seteado."
-        )
-
-        if service:
-            require_same_organization(service, request, field='service', serializer='InvoiceItemSerializer')
-            if not self.instance and InvoiceItem.objects.filter(invoice=invoice, service=service).exists():
-                raise serializers.ValidationError(
-                    "Este servicio ya está incluido en la factura."
-                )
-
-        if presentation:
-            require_same_organization(presentation, request, field='presentation', serializer='InvoiceItemSerializer')
-            # Availability is never inferred from Presentation.stock (legacy).
-            # Checkout posting settles Product/StockLot under locks; InvoiceItem
-            # serialization must not introduce a competing stock authority.
-            # Lote (B2b): obligatorio y consumible si el producto lo trackea (P1/P2).
-            # Solo en CREATE (el lote es inmutable; PATCH parcial no lo re-valida).
-            lot = data.get('lot')
-            if presentation.product.tracks_lots:
-                if not self.instance:
-                    if lot is None:
-                        raise serializers.ValidationError({'lot': 'Selecciona el lote a consumir.'})
-                    if not same_organization(lot, request, field='lot', serializer=type(self).__name__):
-                        raise serializers.ValidationError({'lot': 'Lote fuera de tu organización.'})
-                    if lot.product_id != presentation.product_id:
-                        raise serializers.ValidationError({'lot': 'El lote no corresponde a este producto.'})
-                    if not lot.is_consumable:
-                        raise serializers.ValidationError(
-                            {'lot': f"El lote {lot.lot_number} no está disponible ({lot.effective_status})."}
-                        )
-            elif lot is not None:
-                raise serializers.ValidationError({'lot': 'Este producto no usa control de lotes.'})
-            # ADR p26: la venta de un producto `requires_prescription` en una
-            # venta directa YA NO se bloquea aquí. El gate autoritativo (atestación
-            # de receta externa + permiso billing.rx_dispense) vive en
-            # InvoiceItemCreateView.perform_create, que crea el registro legal
-            # append-only en el mismo atomic bajo lock de la Invoice.
-
-        # Validación de descuento (NUEVO)
-        if discount_value is not None and discount_value < 0:
-            raise serializers.ValidationError("El valor del descuento no puede ser negativo.")
-
-        if discount_type == 'percentage' and discount_value > 100:
-            raise serializers.ValidationError("El descuento porcentual no puede superar 100%.")
-
-        if discount_type and (discount_value is None or discount_value <= 0):
-            raise serializers.ValidationError(
-                "Si se especifica tipo de descuento, el valor debe ser mayor a cero."
-            )
-
-        if discount_value and discount_value > 0 and not discount_type:
-            raise serializers.ValidationError(
-                "Debe especificar 'discount_type' si indica un valor de descuento."
-            )
-
-        return data
-
 
 class InvoiceSerializer(serializers.ModelSerializer):
+    """Proyección de lectura de una Invoice (ADR p62).
+
+    Una Invoice nace al postear un Checkout y es inmutable: `/api/billing/invoices/`
+    solo lista y muestra, así que aquí no se validan escrituras. La regla «cliente
+    genérico ⇒ venta directa» que vivía en este serializer la retiró p62: el tipo lo
+    fija `Checkout.origin` al postear (deuda C2, orden 6).
+    """
     items = InvoiceItemSerializer(many=True, read_only=True)
     pet_name = serializers.SerializerMethodField()
     # Día 6 B1: public_id de FKs embebidos para evitar PK en deep links
@@ -279,16 +193,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'posted_at', 'paid_at', 'voided_at', 'created_at', 'updated_at',
             'items', 'prescription_suggestions', 'credit_notes',
         ]
-        read_only_fields = [
-            'id', 'public_id', 'pet_public_id', 'owner_public_id',
-            'appointment_public_id', 'medical_record_public_id',
-            'prescription_public_id',
-            'subtotal', 'tax_amount', 'total',
-            'amount_paid', 'remaining_balance', 'credit_notes',
-            'created_by', 'posted_at', 'paid_at', 'voided_at',
-            'created_at', 'updated_at',
-            'tax_rate', 'due_at', 'credit_reason',
-        ]
+        read_only_fields = fields
 
     def _paid_amount(self, obj):
         # Prefiere la anotación `_paid_sum` (list view) para evitar N+1; si no
@@ -354,76 +259,6 @@ class InvoiceSerializer(serializers.ModelSerializer):
                 'reversed': is_reversed,
             })
         return out
-
-    def validate_notes(self, value):
-        from apps.core.sanitize import sanitize_text
-        return sanitize_text(value or '', max_length=5000)
-
-    def _get_request(self):
-        """Acceso defensivo + assert. Loud failure si falta el context."""
-        request = self.context.get('request')
-        assert request is not None, (
-            "InvoiceSerializer requiere 'request' en su context. "
-            "Si lo invocas fuera de una view DRF (shell, admin, mgmt command), "
-            "pasa context={'request': fake_request} con user.organization seteado."
-        )
-        return request
-
-    def validate_owner(self, owner):
-        return require_same_organization(owner, self._get_request(), field='owner', serializer='InvoiceSerializer')
-
-    def validate_pet(self, pet):
-        return require_same_organization(pet, self._get_request(), field='pet', serializer='InvoiceSerializer')
-
-    def validate_appointment(self, appointment):
-        return require_same_organization(appointment, self._get_request(), field='appointment', serializer='InvoiceSerializer')
-
-    def validate_medical_record(self, mr):
-        return require_same_organization(mr, self._get_request(), field='medical_record', serializer='InvoiceSerializer')
-
-    def validate(self, data):
-        # Resolver owner/pet/invoice_type considerando partial PATCH: los campos
-        # ausentes heredan del instance actual. CREATE no tiene instance →
-        # fallback None / default del modelo. Fix 4 (ADR p14): permite PATCH
-        # minimalistas tipo {"notes": "x"} sin re-enviar pet/owner.
-        owner = data.get('owner', getattr(self.instance, 'owner', None))
-        pet = data.get('pet', getattr(self.instance, 'pet', None))
-        invoice_type = data.get(
-            'invoice_type',
-            getattr(self.instance, 'invoice_type', None) or 'consultation',
-        )
-
-        # Owner genérico fuerza venta directa (ADR generic-client-direct-sale).
-        if owner and getattr(owner, 'is_generic', False):
-            data['invoice_type'] = 'direct_sale'
-            invoice_type = 'direct_sale'
-
-        # Requisito de pet por tipo (ADR p25):
-        #   - consultation: pet obligatorio (el acto clínico requiere paciente).
-        #   - direct_sale:  pet OPCIONAL, con o sin cliente registrado.
-        # El mensaje conserva la subcadena "mascota es requerida" que asertan
-        # los tests de regresión.
-        if invoice_type == 'consultation' and pet is None:
-            raise serializers.ValidationError(
-                {'pet': 'La mascota es requerida para una factura de consulta.'}
-            )
-
-        # Guard de integridad (ADR p25): cuando el payload SETEA una mascota,
-        # ésta debe pertenecer al propietario resuelto. NO es constraint de
-        # modelo — mismo patrón que el owner_id guard de appointments. Acotado a
-        # `'pet' in data` para no re-validar PATCH que solo tocan owner (no
-        # rompe `test_patch_owner_same_org_preserves_existing_pet`).
-        if 'pet' in data and pet is not None and owner is not None:
-            if getattr(pet, 'is_generic', False) and not getattr(owner, 'is_generic', False):
-                raise serializers.ValidationError(
-                    {'pet': 'No se puede asignar el paciente genérico a un cliente registrado.'}
-                )
-            if pet.owner_id != owner.pk:
-                raise serializers.ValidationError(
-                    {'pet': 'La mascota no pertenece al propietario seleccionado.'}
-                )
-
-        return data
 
     def _linked_prescription(self, obj):
         """Receta de la consulta vinculada (OneToOne MedicalRecord.prescription)."""

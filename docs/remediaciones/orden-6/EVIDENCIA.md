@@ -60,3 +60,21 @@ Efecto: `POST /api/prescriptions/<uuid>/items/` con `quantity` `0` o `-1.00` pas
 
 Límites: ninguno.
 Observaciones sin cambio: las pruebas existentes de `/items/` usan `rx.pk` en la URL; las nuevas usan `public_id` y funcionan.
+
+## E02 — C2: serializers de Invoice de solo lectura (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| Precondición 1 (`InvoiceSerializer(` / `InvoiceItemSerializer(` fuera de tests) | solo las dos definiciones, el anidado `read_only=True` y tres usos en `views.py` sin `data=` |
+| Precondición 2 (`invoices/<str:pk>/items`, `InvoiceItemCreateView`) | solo el comentario borrado de `InvoiceItemSerializer.validate` |
+| `test apps.billing` antes | Ran 73 / OK |
+| `py_compile` (serializers y cuatro archivos de prueba) | OK |
+| `grep same_organization\|_get_request\|InvoiceItemCreateView` en serializers | sin resultados |
+| `grep "def validate"` en serializers | 4: `validate_quantity`, `validate_name`, `validate_description`, `validate_base_price` |
+| `test apps.billing` + `test_tenant_validation` + `test_url_audit` + `test_public_id_dual_exposure_audit` + `test_tenant_scoping_audit` | Ran 93 / OK |
+| `test apps.billing` después | Ran 76 / OK (73 + 3: detalle de solo lectura y dos estructurales) |
+
+Pruebas eliminadas, autorizadas: las tres filas de `InvoiceSerializer` en `FIELD_VALIDATORS`. Entradas retiradas de `ALLOWED_INT_PATTERNS` (ruta de ítems ya inexistente) y de `BASELINE` (`InvoiceItem.filter` de serializers, por el código borrado).
+
+Límites: ninguno.
+Observaciones sin cambio: la salida JSON no cambia; un campo de solo lectura se serializa igual.

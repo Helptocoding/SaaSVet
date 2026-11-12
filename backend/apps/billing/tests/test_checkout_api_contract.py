@@ -1,11 +1,13 @@
+import uuid
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.billing.checkout_services import add_checkout_item, create_direct_sale_checkout, post_checkout
 from apps.billing.models import Checkout, Invoice, Service
+from apps.billing.serializers import InvoiceItemSerializer, InvoiceSerializer
 from apps.organizations.models import Organization
 from apps.patients.models import Owner
 from apps.users.models import User
@@ -39,6 +41,13 @@ class CheckoutApiContractTests(TestCase):
     def test_invoice_collection_is_read_only(self):
         response = self.client.post('/api/billing/invoices/', {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_invoice_detail_is_read_only(self):
+        for method in ('patch', 'put', 'delete'):
+            with self.subTest(method=method):
+                response = getattr(self.client, method)(
+                    f'/api/billing/invoices/{uuid.uuid4()}/', {'notes': 'x'}, format='json')
+                self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_checkout_creation_is_tenant_scoped(self):
         response = self.client.post('/api/billing/checkouts/direct-sale/', {
@@ -137,3 +146,22 @@ class CheckoutApiContractTests(TestCase):
             f'/api/billing/invoices/{invoice.public_id}/', {'notes': 'rewrite'}, format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class InvoiceSerializersAreReadOnly(SimpleTestCase):
+    """C2 (orden 6): las Invoice nacen al postear un Checkout (ADR p62). Sus
+    serializers solo proyectan; no puede volver a ellos validación de escritura."""
+
+    def test_no_field_is_writable(self):
+        for serializer_class in (InvoiceSerializer, InvoiceItemSerializer):
+            with self.subTest(serializer=serializer_class.__name__):
+                writable = [name for name, field in serializer_class().fields.items()
+                            if not field.read_only]
+                self.assertEqual(writable, [])
+
+    def test_no_write_validation_is_declared(self):
+        for serializer_class in (InvoiceSerializer, InvoiceItemSerializer):
+            with self.subTest(serializer=serializer_class.__name__):
+                declared = [name for name in vars(serializer_class)
+                            if name == 'validate' or name.startswith('validate_')]
+                self.assertEqual(declared, [])
