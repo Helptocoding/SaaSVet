@@ -3,23 +3,19 @@ from .models import Prescription, PrescriptionItem
 from apps.core.tenant_validation import require_same_organization
 from apps.core.sanitize import sanitize_text
 
-# Logger dedicado para rechazos de tenant en serializers (ADR p14). Separado
-# de TENANT_MISMATCH_DETECTED (HybridPermission, ERROR) — éste es WARNING.
 
-class PrescriptionItemSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(source='product.name', read_only=True)
-    product_unit = serializers.SerializerMethodField()
+class _PrescriptionItemBase(serializers.ModelSerializer):
+    """Validación común de un medicamento recetado (deuda B2, orden 6).
 
-    def get_product_unit(self, obj):
-        pres = obj.product.presentations.first()
-        return pres.base_unit if pres else None
+    La comparten el anidado de `PrescriptionSerializer.items` y el endpoint
+    `/prescriptions/<id>/items/`. Cada subclase declara solo su diferencia. Una regla
+    nueva va aquí: si se pone en una sola subclase, las dos vías vuelven a divergir,
+    como pasó con `validate_quantity`, que faltaba en el endpoint y dejaba un 500.
+    """
 
     class Meta:
         model = PrescriptionItem
-        fields = [
-            'id', 'product', 'product_name', 'product_unit',
-            'dose', 'duration', 'quantity', 'instructions',
-        ]
+        fields = ['id', 'product', 'dose', 'duration', 'quantity', 'instructions']
 
     def validate_dose(self, value):
         clean = sanitize_text(value or '', max_length=255)
@@ -39,15 +35,31 @@ class PrescriptionItemSerializer(serializers.ModelSerializer):
         return value
 
     def validate_product(self, product):
-        # Tenant isolation (ADR p14 — P0 #9). Aplica también a items nested
-        # en PrescriptionSerializer.items (DRF propaga context al child).
+        # Tenant isolation (ADR p14 — P0 #9). En el anidado, DRF propaga al hijo el
+        # context del padre.
         request = self.context.get('request')
         assert request is not None, (
-            "PrescriptionItemSerializer requiere 'request' en su context. "
-            "Si se invoca via PrescriptionSerializer nested, el context se "
-            "propaga automáticamente desde el parent (DRF default)."
+            f"{type(self).__name__} requiere 'request' en su context."
         )
-        return require_same_organization(product, request, field='product', serializer='PrescriptionItemSerializer')
+        return require_same_organization(
+            product, request, field='product', serializer=type(self).__name__)
+
+
+class PrescriptionItemSerializer(_PrescriptionItemBase):
+    """Anidado en `PrescriptionSerializer.items`: no exige `requires_prescription`."""
+
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_unit = serializers.SerializerMethodField()
+
+    def get_product_unit(self, obj):
+        pres = obj.product.presentations.first()
+        return pres.base_unit if pres else None
+
+    class Meta(_PrescriptionItemBase.Meta):
+        fields = [
+            'id', 'product', 'product_name', 'product_unit',
+            'dose', 'duration', 'quantity', 'instructions',
+        ]
 
 
 class PrescriptionSerializer(serializers.ModelSerializer):
@@ -186,31 +198,13 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         return instance
 
 
-class PrescriptionItemWriteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PrescriptionItem
-        fields = ['id', 'product', 'dose', 'duration', 'quantity', 'instructions']
-
-    def validate_dose(self, value):
-        clean = sanitize_text(value or '', max_length=255)
-        if not clean.strip():
-            raise serializers.ValidationError("La dosis es obligatoria.")
-        return clean
-
-    def validate_duration(self, value):
-        return sanitize_text(value or '', max_length=255)
-
-    def validate_instructions(self, value):
-        return sanitize_text(value or '', max_length=5000)
+class PrescriptionItemWriteSerializer(_PrescriptionItemBase):
+    """Endpoint `/prescriptions/<id>/items/`: además exige un producto con receta."""
 
     def validate_product(self, product):
-        # Tenant check primero — no revelar `requires_prescription` de productos
-        # de otra organización (ADR p14 — P0 #9).
-        request = self.context.get('request')
-        assert request is not None, (
-            "PrescriptionItemWriteSerializer requiere 'request' en su context."
-        )
-        require_same_organization(product, request, field='product', serializer='PrescriptionItemWriteSerializer')
+        # El chequeo de organización va primero: no revelar `requires_prescription`
+        # de productos de otra clínica (ADR p14 — P0 #9).
+        product = super().validate_product(product)
         if not product.requires_prescription:
             raise serializers.ValidationError(
                 "Este producto no requiere receta. Puede dispensarse directamente desde inventario."

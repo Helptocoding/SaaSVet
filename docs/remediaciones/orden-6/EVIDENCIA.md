@@ -44,3 +44,19 @@ Cluster: ya existía (`PG_VERSION` presente); no se creó en esta entrega. Estab
 
 Límites: ninguno.
 Observaciones sin cambio: ninguna.
+
+## E01 — B2: validación común de ítems de receta (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| `grep "requiere 'request' en su context"` en tests | sin resultados |
+| `test apps.prescriptions` antes de editar | Ran 15 / OK |
+| `py_compile` de `serializers.py` y `test_multitenancy.py` | OK |
+| conteo de validadores / `require_same_organization` | 4 / 4 |
+| `test apps.prescriptions apps.core.tests.test_tenant_validation` | Ran 31 / OK |
+| `test apps.prescriptions` después | Ran 19 / OK (15 + 4: dos de API, dos estructurales) |
+
+Efecto: `POST /api/prescriptions/<uuid>/items/` con `quantity` `0` o `-1.00` pasa de 500 (solo lo frenaba el CHECK `prescriptionitem_quantity_positive`) a 400 con `errors.quantity`.
+
+Límites: ninguno.
+Observaciones sin cambio: las pruebas existentes de `/items/` usan `rx.pk` en la URL; las nuevas usan `public_id` y funcionan.
