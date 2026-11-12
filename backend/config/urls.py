@@ -36,7 +36,6 @@ from apps.patients.views import PetViewSet, OwnerViewSet
 from apps.imports.views import ImportJobViewSet
 from apps.organizations.views import (
     OrganizationMeView,
-    OrganizationLegacyView,
     OrganizationSettingsView,
     OrganizationScheduleView,
     OrganizationConfigurationView,
@@ -210,7 +209,6 @@ urlpatterns = [
     path('api/organizations/schedule/', OrganizationScheduleView.as_view(), name='organization-schedule'),
     path('api/organizations/settings/', OrganizationSettingsView.as_view()),
     path('api/organizations/me/', OrganizationMeView.as_view(), name='organization-me'),
-    path('api/organizations/<int:pk>/', OrganizationLegacyView.as_view(), name='organization-legacy'),
     path('api/settings/configuration/', OrganizationConfigurationView.as_view(), name='configuration-aggregate'),
     path('api/appointments/', include('apps.appointments.urls')),
     path('api/token/', ThrottledTokenObtainPairView.as_view(), name='token_obtain_pair'),

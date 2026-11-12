@@ -112,3 +112,22 @@ La poda no se ejecutó contra ninguna base real; solo pruebas en el cluster aisl
 
 Límites: ninguno.
 Observaciones sin cambio: el seed sin `--prune` solo informa de los permisos fuera del catálogo; `test_admin_explicit_grants` y `test_agent_identity` siguen en 56 en conjunto.
+
+## E05 — D2: retirada de `/api/organizations/<pk>/` (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| Precondición 1 (`organizations/${` en `frontend/src`) | sin resultados |
+| Precondición 2 (`endpoint_sunset` fuera de tests) | `apps/organizations/views.py` y un comentario en `apps/appointments/views.py:47` (futuro 410 del DELETE de citas; no es código) |
+| `test apps.organizations test_url_audit` antes | Ran 54 / OK |
+| `py_compile` (views, urls, tres archivos de prueba) | OK |
+| `grep` de restos Sunset en `views.py` / `OrganizationLegacyView` en `urls.py` | sin resultados |
+| `check` | sin problemas |
+| `test apps.organizations test_url_audit` después | Ran 48 / OK (54 − 7 + 1) |
+| `test` anterior + `test_admin_explicit_grants` | Ran 83 / OK |
+| `git grep OrganizationLegacyView\|organization-legacy -- backend docs/modules` | sin resultados |
+
+Pruebas eliminadas, autorizadas: clase `OrganizationLegacyViewTests` (7 pruebas del 410, encabezados y log de la vista retirada). Añadida `test_legacy_pk_route_is_gone` (GET/PATCH/DELETE → 404). Las dos pruebas de `test_legacy_view_org_id_writable.py` pasan de 410 a 404 y conservan sus aserciones sobre la organización.
+
+Límites: ninguno.
+Observaciones sin cambio: `DEPRECATED_ENDPOINT_HIT` sigue vivo para `DELETE /api/appointments/<id>/` y `GET /api/inbox/conversations/`.

@@ -239,18 +239,9 @@ Devuelve/actualiza la organizacion del usuario autenticado sin exponer el PK en 
 
 **Día 6 (ADR p18):** `Organization` ahora tiene campo `public_id` (UUID v4). El response de `/me/` expone tanto `id` (PK, retrocompat pre-beta) como `public_id` (UUID). Frontend nuevo debe consumir `public_id` o `organization_public_id` desde `MeView`. Cleanup post-beta: ticket `POST-BETA-001`.
 
-### Legacy — deprecado
+### Legacy — retirado
 
-```
-GET   /api/organizations/<pk>/
-PATCH /api/organizations/<pk>/
-```
-
-Mantenido por retrocompat hasta **2026-08-17** (RFC 8594 Sunset). Reglas:
-- `pk == request.user.organization_id` valida explicitamente — si no calza, **404** (no devuelve silenciosamente "tu org")
-- Headers en TODO response: `Deprecation: true`, `Sunset: Mon, 17 Aug 2026 23:59:59 GMT`, `Link: </api/organizations/me/>; rel="successor-version"`
-- Cada hit emite log `DEPRECATED_ENDPOINT_HIT` para tracking de adopcion
-- **Post-Sunset (>2026-08-17): responde 410 Gone automaticamente** via `_EndpointSunsetException` raised en `initial()`
+`GET/PATCH /api/organizations/<pk>/` se retiró en el orden 6 (deuda D2), tras su Sunset RFC 8594 del 17-08-2026. La ruta ya no existe y responde 404. Usar `/api/organizations/me/`.
 
 ### Removidos
 
@@ -469,7 +460,7 @@ Eventos emitidos a stdout (Docker stdout — `docker compose logs backend`):
 - `RBAC_FALLBACK_ALLOWED` — permiso concedido por fallback (no deberia verse en produccion estable)
 - `RBAC_DENIED` — acceso denegado
 - `TENANT_MISMATCH_DETECTED` — intento de acceso a datos de otra organizacion
-- `DEPRECATED_ENDPOINT_HIT` — uso del legacy `/api/organizations/<pk>/` (logger `core.deprecation`)
+- `DEPRECATED_ENDPOINT_HIT` — uso de un endpoint deprecado vigente (logger `core.deprecation`; ver `logs.md`)
 
 Gate para corte del fallback: `RBAC_FALLBACK_ALLOWED` ausente en logs por 7 dias consecutivos → se puede eliminar el campo `User.role`.
 

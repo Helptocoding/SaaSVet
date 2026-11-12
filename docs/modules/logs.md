@@ -133,11 +133,11 @@ Accion requerida: investigar si es bug o intento — el cliente recibio 400 "Acc
 
 ### `DEPRECATED_ENDPOINT_HIT` · WARNING
 
-Un cliente uso un endpoint marcado deprecado via RFC 8594. Hoy el unico es `/api/organizations/<pk>/` (PR-4B / ADR p16) cuyo successor es `/api/organizations/me/`. Post-Sunset (2026-08-17) el endpoint responde 410 Gone automaticamente.
+Un cliente uso un endpoint marcado deprecado via RFC 8594. Hoy lo emiten `DELETE /api/appointments/<id>/` (ADR p57) y `GET /api/inbox/conversations/` (bandeja del agente). `/api/organizations/<pk>/` se retiro en el orden 6 (deuda D2) y ya responde 404.
 
 Campos: `event`, `endpoint`, `method`, `user_id`, `org_id`, `successor`, `sunset`
 
-Accion requerida: monitorear adopcion frontend. Gate para corte total: 0 hits durante 7 dias consecutivos antes del Sunset.
+Accion requerida: identificar el cliente que aun usa el endpoint y migrarlo a su sucesor (campo `successor`).
 
 ---
 
@@ -449,7 +449,7 @@ Filtrar el stdout por nombre de evento:
 | `RBAC_FALLBACK_ALLOWED` | Decrece hasta cero | Usuarios sin rol en DB — correr `seed_permissions` |
 | `RBAC_DENIED` | Bajo, ocasional | Permisos mal configurados o bug en frontend |
 | `TENANT_VALIDATION_REJECTED` | Bajo, ocasional | Typo UI / ID stale; si frecuente revisar frontend |
-| `DEPRECATED_ENDPOINT_HIT` | Decrece hasta cero antes de 2026-08-17 | Frontend aun usa `/api/organizations/<pk>/`; migrar a `/me/` |
+| `DEPRECATED_ENDPOINT_HIT` | Decrece hasta cero antes del Sunset de cada endpoint | Un cliente aun usa un endpoint deprecado; migrarlo al `successor` |
 | `AUDIT_ORPHAN_FKS_TARGET_ORPHANS` | Nunca | Integridad referencial rota — seguir runbook |
 | `RBAC_ALLOWED_DB` | La mayoria de requests | Estado normal |
 | `MEDICAL_RECORD_DELETED` | Bajo, ocasional | Normal — registro vacio eliminado por error |

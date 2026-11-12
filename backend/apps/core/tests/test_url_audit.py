@@ -24,8 +24,6 @@ URLS_GLOB = list((REPO_ROOT / 'backend' / 'apps').rglob('urls.py'))
 # una regresión hipotética en `billing/services/<int:pk>` (Service es modelo
 # público, debe ser <str:pk>).
 ALLOWED_INT_PATTERNS = (
-    # OrganizationLegacyView — Sunset RFC 8594 (ADR-15 / p16)
-    re.compile(r'organizations/<int:pk>'),
     # MedicalRecordService (child interno bajo MR UUID parent)
     re.compile(r'medical-records/<str:[A-Za-z_][A-Za-z0-9_]*>/services/<int:pk>'),
     # PrescriptionItem (child interno bajo Prescription UUID parent)
