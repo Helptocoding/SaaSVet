@@ -25,22 +25,33 @@ No existe un endpoint de API para crear organizaciones desde fuera. El flujo es 
 
 ### En VPS (produccion)
 
-El ADMIN_SAAS se crea automaticamente en cada deploy si las siguientes variables de entorno estan seteadas:
+El ADMIN_SAAS se crea **una vez** con el comando explícito `bootstrap_superuser` (deuda B5, orden 6). Ya no hay signal `post_migrate` ni paso de `release.sh` que lo haga.
 
+Las credenciales **no** van en `.env.prod`: el pre-launch lo bloquea, porque quedarían legibles en `/proc/<pid>/environ` de procesos que viven días. Se pasan solo al proceso del comando:
+
+```bash
+read -r -p "Usuario plataforma: " DJANGO_SUPERUSER_USERNAME
+read -r -s -p "Contraseña: " DJANGO_SUPERUSER_PASSWORD; echo
+read -r -p "Correo (opcional): " DJANGO_SUPERUSER_EMAIL
+export DJANGO_SUPERUSER_USERNAME DJANGO_SUPERUSER_PASSWORD DJANGO_SUPERUSER_EMAIL
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm \
+  -e DJANGO_SUPERUSER_USERNAME -e DJANGO_SUPERUSER_PASSWORD -e DJANGO_SUPERUSER_EMAIL \
+  backend python manage.py bootstrap_superuser
+unset DJANGO_SUPERUSER_USERNAME DJANGO_SUPERUSER_PASSWORD DJANGO_SUPERUSER_EMAIL
 ```
-DJANGO_SUPERUSER_USERNAME=admin_saas
-DJANGO_SUPERUSER_PASSWORD=TuClave123!
-DJANGO_SUPERUSER_EMAIL=admin@vetcare.example.com   # opcional pero recomendado
-```
 
-Esto ejecuta `_create_default_superuser` en el signal `post_migrate` de `apps/users/apps.py`.
+En local basta `python manage.py bootstrap_superuser` con esas variables en el entorno.
 
-**Guard anti-escalación (PR-4A / ADR p15):** El signal usa `filter().first()` + predicado `_is_platform_superuser` (requiere `is_superuser=True AND is_staff=True AND role='ADMIN_SAAS' AND email coincide case-insensitive cuando se provee`). Si una clinica registra un VET con el mismo username que `DJANGO_SUPERUSER_USERNAME`, el deploy ya NO escala al VET ni le resetea password — log CRITICAL `SUPERUSER_BOOTSTRAP_SKIPPED` y abort sin mutacion.
+No usar `createsuperuser`: `User` no tiene manager propio y crea un superusuario con `role='ASSISTANT'` y sin organización, que no pasa el permiso de plataforma (`role == 'ADMIN_SAAS'`).
+
+Salida `0`: creado o ya existente (idempotente; nunca cambia la contraseña de un superusuario legítimo). Salida `1`: variables ausentes o incompletas, o colisión con un usuario que no es el superusuario de plataforma.
+
+**Guard anti-escalación (PR-4A / ADR p15):** el comando usa `filter().first()` + predicado `_is_platform_superuser` (requiere `is_superuser=True AND is_staff=True AND role='ADMIN_SAAS' AND email coincide case-insensitive cuando se provee`). Si una clinica registra un VET con el mismo username que `DJANGO_SUPERUSER_USERNAME`, el comando NO escala al VET ni le resetea password: log CRITICAL `SUPERUSER_BOOTSTRAP_SKIPPED`, sin mutacion y salida 1.
 
 Eventos emitidos por el bootstrap:
 - `SUPERUSER_BOOTSTRAP_CREATED` (INFO) — superuser nuevo creado
 - `SUPERUSER_BOOTSTRAP_SKIPPED` (CRITICAL) — username collision con usuario non-platform
-- `SUPERUSER_BOOTSTRAP_RACE_RESOLVED` (WARNING) — race multi-worker resuelto
+- `SUPERUSER_BOOTSTRAP_RACE_RESOLVED` (WARNING) — dos ejecuciones simultaneas del comando
 - `SUPERUSER_BOOTSTRAP_INCOMPLETE_ENV` (WARNING) — solo `USERNAME` o solo `PASSWORD` seteado
 
 ### Flujo para crear una clinica nueva

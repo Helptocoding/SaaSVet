@@ -6,8 +6,8 @@
 
 ## Pre-requisitos
 
-- Cuenta `ADMIN_SAAS` activa (creada por el bootstrap signal con
-  `DJANGO_SUPERUSER_*` env vars en el VPS).
+- Cuenta `ADMIN_SAAS` activa (creada una vez con `manage.py bootstrap_superuser`;
+  ver [organizations, En VPS](../modules/organizations.md)).
 - Backend `develop` deployed con el endpoint `/api/platform/organizations/`
   habilitado (commits posteriores a 2026-05-22 / ADR p19).
 - Datos del cliente listos: nombre de la clínica, timezone, tax_rate,

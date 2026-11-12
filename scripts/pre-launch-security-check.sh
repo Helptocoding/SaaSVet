@@ -160,7 +160,7 @@ section "7. Bootstrap superuser must NOT be in env"
 # ---------------------------------------------------------------------------
 
 if grep -qE "^DJANGO_SUPERUSER_(USERNAME|PASSWORD)=" "$ENV_FILE"; then
-  blocker "DJANGO_SUPERUSER_* present in .env.prod — remove (creds leak via /proc/<pid>/environ). Bootstrap manually via createsuperuser once."
+  blocker "DJANGO_SUPERUSER_* present in .env.prod — remove (creds leak via /proc/<pid>/environ). Bootstrap once via manage.py bootstrap_superuser, passing the vars only to that process."
 else
   ok "no DJANGO_SUPERUSER_* in .env.prod"
 fi

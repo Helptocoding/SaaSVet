@@ -78,3 +78,23 @@ Pruebas eliminadas, autorizadas: las tres filas de `InvoiceSerializer` en `FIELD
 
 Límites: ninguno.
 Observaciones sin cambio: la salida JSON no cambia; un campo de solo lectura se serializa igual.
+
+## E03 — B5: comando `bootstrap_superuser` (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| Precondiciones (`_create_default_superuser` solo en `apps.py` y `test_bootstrap.py`; comando inexistente) | OK |
+| `test apps.users.tests.test_bootstrap` antes | Ran 11 / OK |
+| `py_compile` (`bootstrap.py`, `apps.py`, comando, `test_bootstrap.py`) | OK |
+| `grep _create_default_superuser\|post_migrate.connect` fuera de tests | sin resultados |
+| `test apps.users apps.organizations` | Ran 189 / OK |
+| `test apps.users.tests.test_bootstrap` después | Ran 17 / OK (11 + 6) |
+| `check` / `makemigrations --check --dry-run` | sin problemas / `No changes detected` |
+| `bash -n scripts/pre-launch-security-check.sh` | OK |
+
+El comando no se ejecutó contra ningún despliegue; solo pruebas en el cluster aislado.
+
+Límites: ninguno.
+Observaciones sin cambio:
+- `docs/production-runbook.md` tenía una segunda mención de `createsuperuser` (línea 195, instalación desde cero con `$COMPOSE`) que el prompt no listaba. Se sustituyó por el mismo procedimiento con `bootstrap_superuser`.
+- `docs/runbooks/pre-launch-security.md:98` aún dice «Login con admin SaaS (createsuperuser bootstrap)». Está fuera de los archivos permitidos y no se tocó; la comprobación final del prompt lo muestra.
