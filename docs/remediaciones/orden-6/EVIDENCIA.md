@@ -154,3 +154,22 @@ Límites:
 - La suite global (más de 3.800 pruebas) solo queda probada en CI cuando el usuario suba la rama.
 - Sin despliegue. `bootstrap_superuser` y `--prune` no se ejecutaron contra ninguna base real.
 - El cluster aislado quedó detenido y no se borró.
+
+## Integración en develop y CI (12-11-2026)
+
+Por petición del usuario, la rama se subió y se abrió el [PR #4](https://github.com/Helptocoding/SaaSVet/pull/4) contra `develop`. El usuario lo mergeó: `71fce57`, con padres `a7dbdaf` (`develop`) y `eb741d0` (la rama). `develop` no se movió mientras el PR estuvo abierto y `git diff eb741d0 71fce57` no imprime nada, así que las dos corridas probaron el mismo árbol.
+
+| Corrida | Evento | Commit probado | Resultado |
+|---|---|---|---|
+| [43276598767](https://github.com/Helptocoding/SaaSVet/actions/runs/43276598767) | `pull_request` | merge provisional de `eb741d0` sobre `a7dbdaf` | 4 jobs OK |
+| [43290761119](https://github.com/Helptocoding/SaaSVet/actions/runs/43290761119) | `push` a `develop` | `71fce57` | 4 jobs OK |
+
+En las dos:
+
+- Backend: `makemigrations --check`, migraciones, `audit_billing_schema` y los corpus B0, B3, B4 y B5 (17, 43, 70 y 37 pruebas). Suite global: `Ran 4023 tests` / `OK (skipped=20)`.
+- Frontend, images y security (gitleaks bloqueante): OK.
+
+Con esto se cierra el primer límite de E06. Siguen vigentes:
+
+- Sin despliegue. `bootstrap_superuser` y `--prune` no se ejecutaron contra ninguna base real; conviene leer el procedimiento de `bootstrap_superuser` antes del próximo despliegue.
+- El cluster aislado sigue detenido y sin borrar.
