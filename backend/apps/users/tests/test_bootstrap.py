@@ -1,4 +1,4 @@
-"""Tests del bootstrap signal `_create_default_superuser` (Issue #12, ADR p15).
+"""Tests del bootstrap del superusuario de plataforma (Issue #12, ADR p15; comando desde el orden 6, B5).
 
 Vector cerrado: si una clínica registra un usuario con username == DJANGO_SUPERUSER_USERNAME,
 el signal previo escalaba ese usuario a superuser platform-wide y reseteaba su password (CVSS 9.9).
@@ -6,13 +6,18 @@ La nueva implementación bifurca por filter().first() + chequea is_platform_supe
 de tocar nada. Si no calza, log CRITICAL + abort sin mutación.
 """
 import os
+from io import StringIO
+from pathlib import Path
 from unittest import mock
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
+from django.core.management.base import CommandError
+from django.core.management.sql import emit_post_migrate_signal
 from django.test import TestCase
 
 from apps.organizations.models import Organization
-from apps.users.apps import _create_default_superuser
+from apps.users.bootstrap import CREATED, MISSING_ENV, bootstrap_platform_superuser
 
 User = get_user_model()
 
@@ -20,16 +25,16 @@ User = get_user_model()
 class SuperuserBootstrapTests(TestCase):
     """Cobertura completa de los 7 escenarios del guard anti-escalación."""
 
-    def _run_signal(self, username='superadmin', password='SuperPass123!', email=''):
+    def _run_bootstrap(self, username='superadmin', password='SuperPass123!', email=''):
         with mock.patch.dict(os.environ, {
             'DJANGO_SUPERUSER_USERNAME': username,
             'DJANGO_SUPERUSER_PASSWORD': password,
             'DJANGO_SUPERUSER_EMAIL': email,
         }):
-            _create_default_superuser(sender=None)
+            return bootstrap_platform_superuser()
 
     def test_creates_superuser_when_absent(self):
-        self._run_signal()
+        self.assertEqual(self._run_bootstrap(), CREATED)
         u = User.objects.get(username='superadmin')
         self.assertTrue(u.is_superuser)
         self.assertTrue(u.is_staff)
@@ -50,7 +55,7 @@ class SuperuserBootstrapTests(TestCase):
         original_role = vet.role
 
         with self.assertLogs('rbac.events', level='CRITICAL') as logs:
-            self._run_signal(username='admin', password='SuperPass123!')
+            self._run_bootstrap(username='admin', password='SuperPass123!')
 
         vet.refresh_from_db()
         self.assertEqual(vet.role, original_role)
@@ -91,7 +96,7 @@ class SuperuserBootstrapTests(TestCase):
         )
         original_password_hash = existing.password
 
-        self._run_signal(username='superadmin', password='NewDifferentPass456!')
+        self._run_bootstrap(username='superadmin', password='NewDifferentPass456!')
 
         existing.refresh_from_db()
         # Verificar via check_password (intención) en vez de hash literal.
@@ -116,7 +121,7 @@ class SuperuserBootstrapTests(TestCase):
             organization=org,
             is_active=False,
         )
-        self._run_signal(username='superadmin', password='ignored')
+        self._run_bootstrap(username='superadmin', password='ignored')
         existing.refresh_from_db()
         self.assertTrue(existing.is_active)
 
@@ -132,7 +137,7 @@ class SuperuserBootstrapTests(TestCase):
         )
         org_count_before = Organization.objects.count()
         with self.assertLogs('rbac.events', level='CRITICAL'):
-            self._run_signal(username='admin', password='whatever')
+            self._run_bootstrap(username='admin', password='whatever')
         self.assertEqual(Organization.objects.count(), org_count_before)
         self.assertFalse(Organization.objects.filter(name='Vet Care Internal').exists())
 
@@ -150,7 +155,7 @@ class SuperuserBootstrapTests(TestCase):
             email='legit@example.com',
         )
         with self.assertLogs('rbac.events', level='CRITICAL') as logs:
-            self._run_signal(
+            self._run_bootstrap(
                 username='superadmin', password='x', email='attacker@evil.com'
             )
         log_text = ' '.join(logs.output)
@@ -162,7 +167,8 @@ class SuperuserBootstrapTests(TestCase):
 
     def test_noop_when_env_vars_absent(self):
         with mock.patch.dict(os.environ, {}, clear=True):
-            _create_default_superuser(sender=None)
+            result = bootstrap_platform_superuser()
+        self.assertEqual(result, MISSING_ENV)
         self.assertFalse(User.objects.filter(username='superadmin').exists())
 
     def test_skipped_when_existing_superuser_has_non_admin_saas_role(self):
@@ -180,7 +186,7 @@ class SuperuserBootstrapTests(TestCase):
             organization=org,
         )
         with self.assertLogs('rbac.events', level='CRITICAL') as logs:
-            self._run_signal(username='superadmin', password='NewPass456!')
+            self._run_bootstrap(username='superadmin', password='NewPass456!')
         existing.refresh_from_db()
         self.assertEqual(existing.role, 'ADMIN')  # sin cambio
         self.assertTrue(
@@ -205,7 +211,7 @@ class SuperuserBootstrapTests(TestCase):
             organization=org,
         )
         with self.assertLogs('rbac.events', level='CRITICAL'):
-            self._run_signal(username='superadmin', password='NewPass456!')
+            self._run_bootstrap(username='superadmin', password='NewPass456!')
 
     def test_email_check_is_case_insensitive(self):
         """Email normalization defense: comparación case-insensitive para
@@ -221,7 +227,7 @@ class SuperuserBootstrapTests(TestCase):
             email='Admin@Example.COM',
         )
         # Env trae mismo email en diferente casing — debe ser match, no skip
-        self._run_signal(
+        self._run_bootstrap(
             username='superadmin', password='ignored', email='admin@example.com',
         )
         existing.refresh_from_db()
@@ -244,7 +250,7 @@ class SuperuserBootstrapTests(TestCase):
             email='',  # vacío en DB
         )
         with self.assertLogs('rbac.events', level='CRITICAL') as logs:
-            self._run_signal(
+            self._run_bootstrap(
                 username='superadmin', password='ignored',
                 email='legit@example.com',  # operador pasa email
             )
@@ -254,3 +260,58 @@ class SuperuserBootstrapTests(TestCase):
             logs.records[0].__dict__.get('reason'),
             'username_collision_non_platform_user',
         )
+
+
+ENV = {
+    'DJANGO_SUPERUSER_USERNAME': 'superadmin',
+    'DJANGO_SUPERUSER_PASSWORD': 'SuperPass123!',
+    'DJANGO_SUPERUSER_EMAIL': '',
+}
+
+
+class BootstrapCommandTests(TestCase):
+    """B5 (orden 6): comando explícito con código de salida, sin signal."""
+
+    def _call(self, env):
+        out = StringIO()
+        with mock.patch.dict(os.environ, env, clear=True):
+            call_command('bootstrap_superuser', stdout=out)
+        return out.getvalue()
+
+    def test_creates_and_then_is_idempotent(self):
+        self.assertIn('creado', self._call(ENV))
+        self.assertIn('ya existía', self._call(ENV))
+        self.assertEqual(User.objects.filter(username='superadmin').count(), 1)
+
+    def test_missing_env_fails(self):
+        with self.assertRaisesMessage(CommandError, 'DJANGO_SUPERUSER_USERNAME'):
+            self._call({})
+
+    def test_incomplete_env_fails_without_creating(self):
+        with self.assertLogs('rbac.events', level='WARNING'):
+            with self.assertRaisesMessage(CommandError, 'define ambos'):
+                self._call({'DJANGO_SUPERUSER_USERNAME': 'superadmin'})
+        self.assertFalse(User.objects.filter(username='superadmin').exists())
+
+    def test_collision_fails_without_touching_the_user(self):
+        org = Organization.objects.create(name='Clinica X')
+        vet = User.objects.create_user(
+            username='superadmin', password='VetPass123!', organization=org, role='VET',
+        )
+        with self.assertLogs('rbac.events', level='CRITICAL'):
+            with self.assertRaisesMessage(CommandError, 'no es el superusuario de plataforma'):
+                self._call(ENV)
+        vet.refresh_from_db()
+        self.assertFalse(vet.is_superuser)
+        self.assertTrue(vet.check_password('VetPass123!'))
+
+    def test_migrate_no_longer_bootstraps(self):
+        with mock.patch.dict(os.environ, ENV):
+            emit_post_migrate_signal(verbosity=0, interactive=False, db='default')
+        self.assertFalse(User.objects.filter(username='superadmin').exists())
+
+    def test_release_does_not_bootstrap(self):
+        path = Path(__file__).resolve().parents[3] / 'scripts' / 'release.sh'
+        body = [line for line in path.read_text(encoding='utf-8').splitlines()
+                if line.strip() and not line.lstrip().startswith('#')]
+        self.assertFalse(any('bootstrap_superuser' in line for line in body))

@@ -13,7 +13,6 @@ from rest_framework import serializers
 from rest_framework.test import APIClient
 
 from apps.appointments.serializers import AppointmentSerializer
-from apps.billing.serializers import InvoiceSerializer
 from apps.core.tenant_validation import require_same_organization, same_organization
 from apps.inventory.serializers import MedicalRecordProductSerializer
 from apps.medical_records.serializers import MedicalRecordSerializer, VaccineRecordSerializer
@@ -50,9 +49,6 @@ FIELD_VALIDATORS = [
     (VaccineRecordSerializer, 'validate_medical_record', 'medical_record', ACCESS),
     (PrescriptionSerializer, 'validate_medical_record', 'medical_record', ACCESS),
     (PrescriptionSerializer, 'validate_pet', 'pet', ACCESS),
-    (InvoiceSerializer, 'validate_owner', 'owner', ACCESS),
-    (InvoiceSerializer, 'validate_pet', 'pet', ACCESS),
-    (InvoiceSerializer, 'validate_appointment', 'appointment', ACCESS),
 ]
 
 

@@ -33,6 +33,8 @@ Items que NO son bugs ni vulnerabilidades, sino decisiones arquitectónicas que 
 
 **Estimación:** 1 sprint completo (incluye coordinación + frontend + ADR + tests).
 
+**Estado:** fuera del alcance del orden 6 por decisión del usuario: exige ADR, cambio de contrato y frontend coordinado. Sigue P3.
+
 ---
 
 ## C2 — `InvoiceSerializer.validate()` acoplamiento de reglas (generic owner forces direct_sale)
@@ -81,6 +83,8 @@ def create_invoice(*, organization, owner, pet=None, invoice_type='consultation'
 - Tests DRF (test_invoice_multitenancy) siguen pasando.
 
 **Estimación:** 1 día (post A2).
+
+**Estado:** cerrado en el orden 6 ([expediente](../remediaciones/orden-6/README.md)). ADR p62 dejó la regla sin uso: las Invoice nacen al postear un Checkout y su tipo lo fija `Checkout.origin`. En lugar de moverla a un servicio, se retiró el código de escritura muerto de `InvoiceSerializer` e `InvoiceItemSerializer`.
 
 ---
 
@@ -224,6 +228,8 @@ afecta al test runner. No vale la pena antes de testers.
 - `python manage.py test apps` sin `_FailedTest` espurios.
 
 **Estimación:** 0.5–1 día (rename mecánico + migración de ContentType + verificación).
+
+**Estado:** fuera del alcance del orden 6 por decisión del usuario. El workaround de etiquetas de prueba completas sigue vigente.
 
 ---
 

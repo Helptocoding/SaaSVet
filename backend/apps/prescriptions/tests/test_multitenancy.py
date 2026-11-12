@@ -8,6 +8,7 @@ Cliente podía crear recetas con productos cross-org, y el PDF
 """
 from decimal import Decimal
 
+from django.test import SimpleTestCase
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -183,6 +184,31 @@ class PrescriptionMultitenancyTests(APITestCase):
         self.assertNotIn('Acceso inválido', str(r.data['errors']['product']))
         self.assertIn('no requiere receta', str(r.data['errors']['product']))
 
+    def test_add_item_endpoint_rejects_non_positive_quantity(self):
+        """B2 (orden 6): /items/ comparte validate_quantity con el anidado. Antes
+        respondía 500, porque solo lo frenaba el CHECK de la base."""
+        rx = self._create_prescription()
+        for quantity in ('0', '-1.00'):
+            with self.subTest(quantity=quantity):
+                r = self.client.post(f'/api/prescriptions/{rx.public_id}/items/', {
+                    'product': self.product_a_rx.pk,
+                    'dose': '1ml',
+                    'quantity': quantity,
+                }, format='json')
+                self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.content)
+                self.assertEqual(r.data['errors'], {'quantity': ['La cantidad debe ser mayor a 0.']})
+        self.assertEqual(rx.items.count(), 1)
+
+    def test_add_item_endpoint_accepts_positive_quantity(self):
+        rx = self._create_prescription()
+        r = self.client.post(f'/api/prescriptions/{rx.public_id}/items/', {
+            'product': self.product_a_rx.pk,
+            'dose': '2ml',
+            'quantity': '2.00',
+        }, format='json')
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.content)
+        self.assertEqual(rx.items.count(), 2)
+
     # --- Observabilidad -------------------------------------------------------
 
     def test_cross_tenant_emits_tenant_validation_rejected_log(self):
@@ -237,3 +263,25 @@ class PrescriptionMultitenancyTests(APITestCase):
         self.assertEqual(rx.notes, 'actualizado')
         self.assertEqual(rx.items.count(), 1)
         self.assertEqual(rx.items.first().pk, original_item_id)
+
+
+class PrescriptionItemSerializersShareValidation(SimpleTestCase):
+    """B2 (orden 6): una regla nueva no puede quedar en un solo serializer de ítems."""
+
+    def test_both_inherit_the_shared_validators(self):
+        from apps.prescriptions.serializers import (
+            PrescriptionItemSerializer, PrescriptionItemWriteSerializer, _PrescriptionItemBase,
+        )
+        shared = ('validate_dose', 'validate_duration', 'validate_instructions', 'validate_quantity')
+        for serializer_class in (PrescriptionItemSerializer, PrescriptionItemWriteSerializer):
+            for name in shared:
+                with self.subTest(serializer=serializer_class.__name__, validator=name):
+                    self.assertIs(getattr(serializer_class, name), getattr(_PrescriptionItemBase, name))
+
+    def test_only_the_dedicated_endpoint_adds_a_product_rule(self):
+        from apps.prescriptions.serializers import (
+            PrescriptionItemSerializer, PrescriptionItemWriteSerializer, _PrescriptionItemBase,
+        )
+        self.assertIs(PrescriptionItemSerializer.validate_product, _PrescriptionItemBase.validate_product)
+        self.assertIsNot(
+            PrescriptionItemWriteSerializer.validate_product, _PrescriptionItemBase.validate_product)

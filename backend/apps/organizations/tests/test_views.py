@@ -1,17 +1,11 @@
 """
-Tests del refactor OrganizationViewSet → OrganizationMeView + OrganizationLegacyView
-(Issue #10 / PR-4B / ADR p16).
+Tests del refactor OrganizationViewSet → OrganizationMeView (Issue #10 / PR-4B / ADR p16).
 
 Cubre:
-- Singleton /api/organizations/me/ — GET/PATCH/405/HEAD/OPTIONS + guard null org
-- Legacy /api/organizations/<pk>/ — validación explícita pk == user.org_id,
-  404 en mismatch (no filtrado silencioso), headers RFC 8594 en todos los
-  responses (200, 404, 405), log estructurado DEPRECATED_ENDPOINT_HIT,
-  fail-safe 410 Gone post-Sunset
+- Singleton /api/organizations/me/ — GET/PATCH/405 + guard null org
 - Router list/create/destroy removidos → 404 en /api/organizations/
+- Legacy /api/organizations/<pk>/ retirado en el orden 6 (D2) → 404
 """
-from datetime import datetime, timezone
-from unittest.mock import patch
 
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -96,84 +90,6 @@ class OrganizationMeViewTests(APITestCase):
         )
 
 
-class OrganizationLegacyViewTests(APITestCase):
-    """Legacy /api/organizations/<pk>/ — validación pk + headers Sunset."""
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.org_a = Organization.objects.create(name="Org Legacy A", timezone="UTC")
-        cls.org_b = Organization.objects.create(name="Org Legacy B", timezone="UTC")
-        cls.admin_a = _make_user("adm_leg_a", cls.org_a, "ADMIN")
-
-    def setUp(self):
-        self.client.force_authenticate(self.admin_a)
-
-    def _assert_deprecation_headers(self, response):
-        self.assertEqual(response.get('Deprecation'), 'true')
-        self.assertIn('Sunset', response)
-        self.assertIn('successor-version', response.get('Link', ''))
-        self.assertIn('/api/organizations/me/', response.get('Link', ''))
-
-    def _assert_sunset_response(self, response):
-        self.assertEqual(response.status_code, status.HTTP_410_GONE)
-        self.assertEqual(response.data['code'], 'endpoint_sunset')
-        self.assertIn('removido', response.data['message'])
-        self._assert_deprecation_headers(response)
-
-    def test_legacy_pk_matches_returns_410_after_sunset(self):
-        r = self.client.get(f'/api/organizations/{self.org_a.pk}/')
-        self._assert_sunset_response(r)
-
-    def test_legacy_pk_mismatch_returns_410_after_sunset(self):
-        r = self.client.get(f'/api/organizations/{self.org_b.pk}/')
-        self._assert_sunset_response(r)
-
-    def test_legacy_unknown_pk_returns_410_after_sunset(self):
-        r = self.client.get('/api/organizations/999999/')
-        self._assert_sunset_response(r)
-
-    def test_legacy_patch_is_rejected_after_sunset(self):
-        r = self.client.patch(
-            f'/api/organizations/{self.org_a.pk}/',
-            {'name': 'Legacy Patched'},
-            format='json',
-        )
-        self._assert_sunset_response(r)
-        self.org_a.refresh_from_db()
-        self.assertEqual(self.org_a.name, 'Org Legacy A')
-
-    def test_legacy_delete_returns_410_after_sunset(self):
-        r = self.client.delete(f'/api/organizations/{self.org_a.pk}/')
-        self._assert_sunset_response(r)
-
-    def test_legacy_emits_deprecation_log_event(self):
-        with self.assertLogs('core.deprecation', level='WARNING') as logs:
-            self.client.get(f'/api/organizations/{self.org_a.pk}/')
-        self.assertTrue(any('DEPRECATED_ENDPOINT_HIT' in rec for rec in logs.output))
-        self.assertEqual(getattr(logs.records[0], 'event', None), 'DEPRECATED_ENDPOINT_HIT')
-        self.assertEqual(getattr(logs.records[0], 'successor', None), '/api/organizations/me/')
-
-    def test_legacy_post_sunset_returns_410_gone(self):
-        """Fail-safe RFC 8594 (security HIGH): tras _SUNSET_DATETIME el
-        endpoint deja de servir y responde 410 Gone — la "deprecation"
-        deja de ser voluntaria."""
-        # Mockear datetime.now() para simular post-Sunset (2026-08-18).
-        post_sunset = datetime(2026, 8, 18, 0, 0, 0, tzinfo=timezone.utc)
-
-        class _FixedDatetime(datetime):
-            @classmethod
-            def now(cls, tz=None):
-                return post_sunset
-
-        with patch('apps.organizations.views.datetime', _FixedDatetime):
-            r = self.client.get(f'/api/organizations/{self.org_a.pk}/')
-        self.assertEqual(r.status_code, status.HTTP_410_GONE)
-        # APIException pasa por custom_exception_handler → shape {code, message}
-        self.assertEqual(r.data['code'], 'endpoint_sunset')
-        self.assertIn('removido', r.data['message'])
-        self._assert_deprecation_headers(r)
-
-
 class OrganizationRouterRemovedTests(APITestCase):
     """Verifica que /api/organizations/ (list/create) ya no existe."""
 
@@ -194,3 +110,13 @@ class OrganizationRouterRemovedTests(APITestCase):
         """POST /api/organizations/ ya no está enrutado."""
         r = self.client.post('/api/organizations/', {'name': 'X', 'timezone': 'UTC'}, format='json')
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_legacy_pk_route_is_gone(self):
+        """D2 (orden 6): la vista legacy se retiró tras su Sunset; la ruta ya no existe."""
+        for method in ('get', 'patch', 'delete'):
+            with self.subTest(method=method):
+                r = getattr(self.client, method)(
+                    f'/api/organizations/{self.org.pk}/', {'name': 'X'}, format='json')
+                self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
+        self.org.refresh_from_db()
+        self.assertEqual(self.org.name, 'Org Router Test')

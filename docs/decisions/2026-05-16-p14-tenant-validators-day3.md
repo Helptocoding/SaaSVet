@@ -227,3 +227,5 @@ Se hizo la extracción prevista, como función y no como mixin: los sitios tiene
 - Se conservan el estado HTTP, la forma del error y el mensaje de cada campo.
 
 **Único cambio de comportamiento, deliberado:** este helper dejaba pasar un actor o un recurso sin organización, mientras que `appointments`, `inventory` y `medical_records` los rechazaban. Extraerlo tal cual habría abierto esas tres apps. Se adoptó la regla estricta en todas. Es un endurecimiento en `billing` y `prescriptions`.
+
+**Orden 6 (C2, 11-11-2026):** `InvoiceSerializer` e `InvoiceItemSerializer` quedaron de solo lectura, porque desde ADR p62 ninguna vía escribe Invoices por API, y perdieron sus validadores de escritura. Con ellos se fue el único llamador directo de `same_organization()` (el lote), que sigue siendo la base de `require_same_organization()`.

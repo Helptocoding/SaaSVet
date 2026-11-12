@@ -118,6 +118,8 @@ No se repitió lint para ordenar el backlog: las cifras son las del inventario y
 
 ## 6. Arquitectura backend y permisos
 
+**Alcance acordado el 11-11-2026:** [plan del orden 6](plan-remediacion-orden-6-2026-11-11.md) y [prompts por entrega](remediaciones/orden-6/README.md). Se implementan B2, C2, B5, B6 y D2 en siete entregas, con pruebas en un PostgreSQL aislado. A1+B4 ya estaban cerrados por `f325ee7`, con funciones en lugar de un mixin, y solo se concilian en documentación. B3 se aplaza: el gate de logs de producción no es alcanzable, y queda registrada la política de `User.role` para retomarlo. C1 y C7 quedan fuera. C2 se cierra retirando código muerto, porque ADR p62 dejó la regla sin uso. B5 no entra en `release.sh` y sustituye a `createsuperuser`, que crea un superusuario sin rol de plataforma. Estos documentos no acreditan implementación.
+
 | Prioridad | IDs | Pendiente | Dependencia / cierre |
 |---|---|---|---|
 | **P2** | B3 | Corte de fallback RBAC | Solo tras evidencia operativa de categoría 1. Migrar checks directos y conservar permisos efectivos. |

@@ -115,6 +115,8 @@ class PrescriptionItemWriteSerializer(_PrescriptionItemBase):
 
 **Estimación:** 1 día (post A1).
 
+**Estado:** cerrado en el orden 6 ([expediente](../remediaciones/orden-6/README.md)). La base común es `_PrescriptionItemBase`, sin mixin: la validación de organización la aporta `require_same_organization`. Corrigió un 500 de `/items/` con cantidad no positiva.
+
 ---
 
 ## B3 — RBAC Fase 4 — quitar `User.role` legacy
@@ -146,6 +148,8 @@ class PrescriptionItemWriteSerializer(_PrescriptionItemBase):
 
 **Estimación:** 2-3 días (incluye monitoreo + cleanup).
 
+**Estado:** aplazado en el orden 6 por decisión del usuario (11-11-2026). El gate de siete días de logs de producción no es alcanzable sin producción. Política acordada para cuando se retome: `User.role` se conserva como etiqueta (qué rol de sistema se asigna, `ADMIN_SAAS`, veterinario agendable, documentos legales) y deja de autorizar; las capacidades de clínica pasan a códigos de permiso, y archivar/restaurar usa un código nuevo solo para ADMIN. Sustituye el paso 3 de este ítem (`User.role` nullable). Ver el [plan del orden 6](../plan-remediacion-orden-6-2026-11-11.md), §1.
+
 ---
 
 ## B4 — `_validate_same_org` helper duplicado eliminado por Mixin
@@ -163,6 +167,8 @@ class PrescriptionItemWriteSerializer(_PrescriptionItemBase):
 - Suite completa OK.
 
 **Estimación:** 1 hora (mecánico, post A1).
+
+**Estado:** cerrado previamente por `f325ee7` junto con A1: `_validate_same_org` ya no existe y `NoNewAdHocTenantChecks` impide reintroducirlo. Conciliado en el orden 6 ([expediente](../remediaciones/orden-6/README.md)).
 
 ---
 
@@ -209,6 +215,8 @@ Signal en `apps.py` se elimina. `post_migrate.connect(...)` removido.
 
 **Estimación:** 1 día (incluye verificación de Procfile y rollback plan).
 
+**Estado:** cerrado en el orden 6 ([expediente](../remediaciones/orden-6/README.md)). El comando no va en `release.sh`, porque el pre-launch prohíbe `DJANGO_SUPERUSER_*` en `.env.prod`: las variables se pasan solo a su proceso. Sustituye a `createsuperuser` en los runbooks, que creaba `role='ASSISTANT'` sin organización.
+
 ---
 
 ## B6 — `seed_permissions --prune` destructivo de Permission huérfanos
@@ -249,6 +257,8 @@ def handle(self, *args, **options):
 - Procfile NO incluye `--prune` automático.
 
 **Estimación:** 1 día.
+
+**Estado:** cerrado en el orden 6 ([expediente](../remediaciones/orden-6/README.md)). `--dry-run` ya existía por ADR p63. `--prune` nunca borra comodines y nunca corre en `release.sh`. Al borrar un `Permission` solo desaparecen sus concesiones en roles: no borra `UserRole`.
 
 ---
 

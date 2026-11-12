@@ -90,7 +90,6 @@ BASELINE = {
     # garantía la da después `lock_appointment_and_veterinarians`, que verifica
     # el valor contra la fila ya bloqueada.
     ('appointments', 'services.py', 'Appointment', 'filter'),
-    ('billing', 'serializers.py', 'InvoiceItem', 'filter'),
     # Revisado 2026-11-02 (reporte de conflictos de importación): ImportConflict
     # es `models.Model` PLANO y NO tiene campo `organization` — es un hijo de
     # ImportJob por FK CASCADE. `for_organization` no es que se omita: no es

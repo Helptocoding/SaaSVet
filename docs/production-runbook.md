@@ -121,8 +121,15 @@ cd /home/deploy/apps
 docker compose -f docker-compose.prod.yml --env-file .env.prod build
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d postgres
 docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm release
-# bootstrap del admin de plataforma (UNA vez, NO en el env):
-docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py createsuperuser
+# bootstrap del admin de plataforma (UNA vez; credenciales solo para este proceso,
+# nunca en .env.prod). Ver docs/modules/organizations.md § En VPS (produccion).
+read -r -p "Usuario plataforma: " DJANGO_SUPERUSER_USERNAME
+read -r -s -p "Contraseña: " DJANGO_SUPERUSER_PASSWORD; echo
+export DJANGO_SUPERUSER_USERNAME DJANGO_SUPERUSER_PASSWORD
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm \
+  -e DJANGO_SUPERUSER_USERNAME -e DJANGO_SUPERUSER_PASSWORD \
+  backend python manage.py bootstrap_superuser
+unset DJANGO_SUPERUSER_USERNAME DJANGO_SUPERUSER_PASSWORD
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
 
@@ -192,7 +199,12 @@ $COMPOSE build
 $COMPOSE up -d postgres
 $COMPOSE ps                       # esperar postgres → (healthy)
 $COMPOSE run --rm release         # migrate + collectstatic + seed_permissions
-$COMPOSE run --rm backend python manage.py createsuperuser   # admin plataforma, UNA vez
+# admin plataforma, UNA vez (credenciales solo para este proceso; ver docs/modules/organizations.md)
+read -r -p "Usuario plataforma: " DJANGO_SUPERUSER_USERNAME
+read -r -s -p "Contraseña: " DJANGO_SUPERUSER_PASSWORD; echo
+export DJANGO_SUPERUSER_USERNAME DJANGO_SUPERUSER_PASSWORD
+$COMPOSE run --rm -e DJANGO_SUPERUSER_USERNAME -e DJANGO_SUPERUSER_PASSWORD backend python manage.py bootstrap_superuser
+unset DJANGO_SUPERUSER_USERNAME DJANGO_SUPERUSER_PASSWORD
 $COMPOSE up -d
 ```
 

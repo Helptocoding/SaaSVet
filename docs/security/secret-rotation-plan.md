@@ -151,13 +151,10 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 ### 5.3 `DJANGO_SUPERUSER_PASSWORD` (platform admin)
 
 - **No portar.** El `.env.prod.example` ya lo excluye deliberadamente ("NOT included on purpose").
-- Bootstrap una sola vez en el VPS:
-
-  ```bash
-  python manage.py createsuperuser
-  ```
-
-  con password fresca, fuerte, no reusada.
+- Bootstrap una sola vez en el VPS con `python manage.py bootstrap_superuser`, pasando
+  `DJANGO_SUPERUSER_*` solo a ese proceso (procedimiento en
+  [organizations, En VPS](../modules/organizations.md)), con password fresca, fuerte,
+  no reusada. `createsuperuser` no sirve: crea `role='ASSISTANT'` sin organización.
 - Razón: dejar credenciales en env las hace legibles desde `/proc/<pid>/environ` y rompe
   el audit trail de rotación. Cambiar también el username si era previsible (`admin`, etc.).
 
@@ -167,7 +164,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 |---|---|---|
 | `SECRET_KEY` | Generar nueva (`secrets.token_urlsafe(64)`), no reusar Railway | Sí |
 | Password Postgres (`PGPASSWORD`/`POSTGRES_PASSWORD`/`DATABASE_URL`) | Nueva, única, usuario distinto | Sí |
-| `DJANGO_SUPERUSER_PASSWORD` | `createsuperuser` con password fresca; no portar | Sí |
+| `DJANGO_SUPERUSER_PASSWORD` | `bootstrap_superuser` con password fresca; no portar | Sí |
 
 ---
 
@@ -255,7 +252,7 @@ git filter-repo --path backend/.env --path frontend/.env --invert-paths
 
 6. **`/proc/<pid>/environ` y el patrón del platform admin.** El `.env.prod.example` ya
    excluye `DJANGO_SUPERUSER_*` por esta razón. No reintroducir esas vars en `.env.prod`
-   "por comodidad" del primer boot — usar `createsuperuser` interactivo.
+   "por comodidad" del primer boot — usar `bootstrap_superuser` con las variables solo en ese proceso.
 
 ---
 
@@ -263,7 +260,7 @@ git filter-repo --path backend/.env --path frontend/.env --invert-paths
 
 - **Rotación obligatoria pre-prod (3)**: `SECRET_KEY`, password Postgres
   (`PGPASSWORD`/`DB_PASSWORD`/`POSTGRES_PASSWORD`/`DATABASE_URL` = un solo secreto),
-  `DJANGO_SUPERUSER_PASSWORD` (vía `createsuperuser`, no portar).
+  `DJANGO_SUPERUSER_PASSWORD` (vía `bootstrap_superuser`, no portar).
 - **Recomendable**: cambiar usernames (admin + Postgres); rotar DSNs de Sentry solo por
   higiene/abuso de cuota; auditar tokens/deploy keys de GitHub.
 - **No necesario**: hosts/puertos/nombres de DB Railway (infra muerta), flags de config,

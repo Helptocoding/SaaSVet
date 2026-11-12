@@ -69,27 +69,27 @@ Accion requerida: investigar de inmediato. Identificar el `user_id`, el `endpoin
 
 ### `SUPERUSER_BOOTSTRAP_CREATED` · INFO
 
-El signal `_create_default_superuser` (PR-4A / ADR p15) creo exitosamente un nuevo superuser de plataforma desde `DJANGO_SUPERUSER_USERNAME`/`PASSWORD`/`EMAIL`. Junto con la organizacion "Vet Care Internal" si no existia.
+El comando `bootstrap_superuser` (deuda B5, orden 6; guard de PR-4A / ADR p15) creo exitosamente un nuevo superuser de plataforma desde `DJANGO_SUPERUSER_USERNAME`/`PASSWORD`/`EMAIL`. Junto con la organizacion "Vet Care Internal" si no existia.
 
 Campos: `event`, `username`, `user_id`, `org_id`
 
-Accion requerida: ninguna en deploy nuevo. Si aparece en deploys subsecuentes (despues del primero), investigar — el signal deberia ser idempotente.
+Accion requerida: ninguna si alguien ejecuto el comando a proposito. Si aparece sin esa ejecucion, investigar.
 
 ---
 
 ### `SUPERUSER_BOOTSTRAP_SKIPPED` · CRITICAL
 
-Una clinica registro un usuario con el mismo `username` que `DJANGO_SUPERUSER_USERNAME`. El signal detecto que ese usuario NO es el platform-superuser legitimo (no cumple `is_superuser=True AND is_staff=True AND role='ADMIN_SAAS' AND email coincide`) y aborto sin tocar nada. Esto cierra el vector de escalacion CVSS 9.9 que permitia que el signal escalara cualquier usuario a superuser y le reseteara password.
+Una clinica registro un usuario con el mismo `username` que `DJANGO_SUPERUSER_USERNAME`. El comando detecto que ese usuario NO es el platform-superuser legitimo (no cumple `is_superuser=True AND is_staff=True AND role='ADMIN_SAAS' AND email coincide`) y aborto sin tocar nada. Esto cierra el vector de escalacion CVSS 9.9 que permitia que el antiguo signal escalara cualquier usuario a superuser y le reseteara password.
 
 Campos: `event`, `reason` (`username_collision_non_platform_user` o `race_condition_created_unexpected_user`), `username`, `existing_user_id`, `existing_role`, `existing_org_id`, `existing_is_superuser`, `existing_is_staff`
 
-Accion requerida: investigar de inmediato. Cambiar `DJANGO_SUPERUSER_USERNAME` a un valor que NO colisione con usuarios de clinicas, o bien crear el platform-superuser manualmente y remover las env vars.
+Accion requerida: investigar de inmediato. El comando termina con codigo 1 sin tocar al usuario. Usar un `DJANGO_SUPERUSER_USERNAME` que NO colisione con usuarios de clinicas.
 
 ---
 
 ### `SUPERUSER_BOOTSTRAP_RACE_RESOLVED` · WARNING
 
-Race condition multi-worker: dos workers de `post_migrate` ejecutaron el signal en paralelo, uno gano la creacion y el otro recibio `IntegrityError`. El que perdio re-fetch el usuario creado y aplica el mismo predicado de validacion. Comportamiento esperado en deploys multi-worker.
+Race condition: dos ejecuciones simultaneas del comando, una gano la creacion y la otra recibio `IntegrityError`. La que perdio re-fetch el usuario creado y aplica el mismo predicado de validacion. Solo ocurre si alguien lanza el comando dos veces a la vez.
 
 Campos: `event`, `username`, `user_id`
 
@@ -99,11 +99,21 @@ Accion requerida: ninguna salvo que aparezca con frecuencia anormal.
 
 ### `SUPERUSER_BOOTSTRAP_INCOMPLETE_ENV` · WARNING
 
-Solo `DJANGO_SUPERUSER_USERNAME` o solo `DJANGO_SUPERUSER_PASSWORD` esta seteado. Config del entorno probablemente errónea — el signal aborta sin crear nada.
+Solo `DJANGO_SUPERUSER_USERNAME` o solo `DJANGO_SUPERUSER_PASSWORD` esta seteado. Config del entorno probablemente errónea — el comando aborta sin crear nada y termina con codigo 1.
 
 Campos: `event`, `has_username` (bool), `has_password` (bool)
 
-Accion requerida: revisar `.env.prod` en el VPS. Setear ambas o ninguna.
+Accion requerida: pasar al comando ambas variables. Nunca van en `.env.prod`.
+
+---
+
+### `SEED_PERMISSIONS_PRUNED` · WARNING
+
+`seed_permissions --prune` (deuda B6, orden 6) borro permisos de la base que ya no estan en `PERMISSION_CODES`. Con ellos desaparecen sus concesiones en roles propios; los roles de sistema ya las perdian en cada seed. Nunca borra comodines (`*.*`, `recurso.*`). Logger `rbac.events`.
+
+Campos: `event`, `count`, `codes`
+
+Accion requerida: ninguna si una persona lanzo la poda en una ventana de mantenimiento. Nunca deberia aparecer en un release: `release.sh` no usa `--prune`.
 
 ---
 
@@ -123,11 +133,11 @@ Accion requerida: investigar si es bug o intento — el cliente recibio 400 "Acc
 
 ### `DEPRECATED_ENDPOINT_HIT` · WARNING
 
-Un cliente uso un endpoint marcado deprecado via RFC 8594. Hoy el unico es `/api/organizations/<pk>/` (PR-4B / ADR p16) cuyo successor es `/api/organizations/me/`. Post-Sunset (2026-08-17) el endpoint responde 410 Gone automaticamente.
+Un cliente uso un endpoint marcado deprecado via RFC 8594. Hoy lo emiten `DELETE /api/appointments/<id>/` (ADR p57) y `GET /api/inbox/conversations/` (bandeja del agente). `/api/organizations/<pk>/` se retiro en el orden 6 (deuda D2) y ya responde 404.
 
 Campos: `event`, `endpoint`, `method`, `user_id`, `org_id`, `successor`, `sunset`
 
-Accion requerida: monitorear adopcion frontend. Gate para corte total: 0 hits durante 7 dias consecutivos antes del Sunset.
+Accion requerida: identificar el cliente que aun usa el endpoint y migrarlo a su sucesor (campo `successor`).
 
 ---
 
@@ -435,11 +445,11 @@ Filtrar el stdout por nombre de evento:
 | Que buscar | Frecuencia esperada | Que significa si aparece |
 |---|---|---|
 | `TENANT_MISMATCH_DETECTED` | Nunca | Prioridad inmediata — posible incidente de seguridad |
-| `SUPERUSER_BOOTSTRAP_SKIPPED` | Nunca despues del deploy inicial | Posible colision con usuario de clinica — investigar |
+| `SUPERUSER_BOOTSTRAP_SKIPPED` | Nunca | Posible colision con usuario de clinica — investigar |
 | `RBAC_FALLBACK_ALLOWED` | Decrece hasta cero | Usuarios sin rol en DB — correr `seed_permissions` |
 | `RBAC_DENIED` | Bajo, ocasional | Permisos mal configurados o bug en frontend |
 | `TENANT_VALIDATION_REJECTED` | Bajo, ocasional | Typo UI / ID stale; si frecuente revisar frontend |
-| `DEPRECATED_ENDPOINT_HIT` | Decrece hasta cero antes de 2026-08-17 | Frontend aun usa `/api/organizations/<pk>/`; migrar a `/me/` |
+| `DEPRECATED_ENDPOINT_HIT` | Decrece hasta cero antes del Sunset de cada endpoint | Un cliente aun usa un endpoint deprecado; migrarlo al `successor` |
 | `AUDIT_ORPHAN_FKS_TARGET_ORPHANS` | Nunca | Integridad referencial rota — seguir runbook |
 | `RBAC_ALLOWED_DB` | La mayoria de requests | Estado normal |
 | `MEDICAL_RECORD_DELETED` | Bajo, ocasional | Normal — registro vacio eliminado por error |

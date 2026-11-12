@@ -201,3 +201,9 @@ Detalle completo en `docs/deuda/fase2-prioridad-alta.md` y `docs/deuda/fase3-pri
 - **PR-4B pendiente:** Issue #10 (organizations singleton) + Issue #11 (cascade + ProtectedError handler).
 - **Deuda generada:** A5-A7 (Fase 2), B5-B6 (Fase 3).
 - **Sin cambios en:** modelos, migraciones, endpoints existentes (excepto declaración explícita de `AllowAny` en token endpoints).
+
+---
+
+## Addendum 2026-11-11: el signal pasa a comando (deuda B5, orden 6)
+
+`_create_default_superuser` dejó de recibir `post_migrate`. Su lógica vive en `apps/users/bootstrap.py` y solo la invoca `python manage.py bootstrap_superuser`, que termina con código 1 ante variables ausentes o incompletas o ante colisión. El guard anti-escalación no cambia. El comando no está en `release.sh`, porque el pre-launch prohíbe `DJANGO_SUPERUSER_*` en `.env.prod`: las credenciales se pasan solo a ese proceso. Sustituye a `createsuperuser` en los runbooks, que creaba `role='ASSISTANT'` sin organización.

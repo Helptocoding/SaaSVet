@@ -63,6 +63,8 @@ class TenantScopedSerializerMixin:
 
 **Estimación:** 1 sprint de 3-5 días (extracción + migración + tests + revisión cross-modular).
 
+**Estado:** cerrado previamente por `f325ee7` (04-11-2026, auditoría run-1, H-3) con funciones en `apps/core/tenant_validation.py` en lugar del mixin; el motivo está en el addendum de [ADR p14](../decisions/2026-05-16-p14-tenant-validators-day3.md). Conciliado en el orden 6 ([expediente](../remediaciones/orden-6/README.md)).
+
 ---
 
 ## A2 — `Invoice.clean()` → service-layer + DB CHECK constraint
@@ -331,6 +333,8 @@ En `close_medical_record_service` (cuando A3 esté implementado), poblar `vet_na
 - Post-Sunset: confirmar 410 Gone funciona en producción + remover el view completo (PR separate).
 
 **Estimación:** 1h tracking + 1h cleanup post-Sunset.
+
+**Estado:** cerrado en el orden 6 ([expediente](../remediaciones/orden-6/README.md)). Sin producción no había métrica de uso que acreditar, y el frontend no llamaba al endpoint. La vista se borró y la ruta responde 404.
 
 ---
 

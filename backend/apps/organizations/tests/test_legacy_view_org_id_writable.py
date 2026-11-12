@@ -2,7 +2,7 @@
 test_legacy_view_org_id_writable.py — Día 6 audit F21 (ADR p18 Fase 4)
 
 Cubre el caso específico de body con campos `id` o `public_id` en PATCH
-sobre OrganizationLegacyView/OrganizationMeView. Ambos deben ser
+sobre la ruta legacy (retirada en el orden 6, D2) y OrganizationMeView. Ambos deben ser
 read_only — DRF los ignora silenciosamente, pero verificamos que la
 mutación NO ocurre (defense-in-depth contra audit drift).
 """
@@ -34,7 +34,7 @@ def _make_admin(username, org):
 
 
 class OrganizationLegacyImmutableIdTests(APITestCase):
-    """El endpoint legacy ya venció: ningún body puede mutar la org."""
+    """La ruta legacy se retiró (orden 6, D2): ningún body puede mutar la org."""
 
     @classmethod
     def setUpTestData(cls):
@@ -46,20 +46,19 @@ class OrganizationLegacyImmutableIdTests(APITestCase):
     def setUp(self):
         self.client.force_authenticate(self.admin)
 
-    def test_patch_with_id_in_body_is_rejected_after_sunset(self):
+    def test_patch_with_id_in_body_to_removed_route_is_404(self):
         """El legacy retirado no admite mutaciones aunque incluya un id."""
         r = self.client.patch(
             f'/api/organizations/{self.org.pk}/',
             {'id': 999999, 'name': 'After Patch'},
             format='json',
         )
-        self.assertEqual(r.status_code, status.HTTP_410_GONE, r.content)
-        self.assertEqual(r.data['code'], 'endpoint_sunset')
+        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
         self.org.refresh_from_db()
         self.assertEqual(self.org.pk, self.original_pk)
         self.assertEqual(self.org.name, 'Org IdMut')
 
-    def test_patch_with_public_id_in_body_is_rejected_after_sunset(self):
+    def test_patch_with_public_id_in_body_to_removed_route_is_404(self):
         """El endpoint retirado no puede cambiar ni nombre ni identificador."""
         foreign_uuid = uuid4()
         r = self.client.patch(
@@ -67,8 +66,7 @@ class OrganizationLegacyImmutableIdTests(APITestCase):
             {'public_id': str(foreign_uuid), 'name': 'PubId Patch'},
             format='json',
         )
-        self.assertEqual(r.status_code, status.HTTP_410_GONE, r.content)
-        self.assertEqual(r.data['code'], 'endpoint_sunset')
+        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
         self.org.refresh_from_db()
         self.assertEqual(self.org.public_id, self.original_public_id)
         self.assertNotEqual(self.org.public_id, foreign_uuid)

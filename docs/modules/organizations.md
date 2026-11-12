@@ -25,22 +25,33 @@ No existe un endpoint de API para crear organizaciones desde fuera. El flujo es 
 
 ### En VPS (produccion)
 
-El ADMIN_SAAS se crea automaticamente en cada deploy si las siguientes variables de entorno estan seteadas:
+El ADMIN_SAAS se crea **una vez** con el comando explícito `bootstrap_superuser` (deuda B5, orden 6). Ya no hay signal `post_migrate` ni paso de `release.sh` que lo haga.
 
+Las credenciales **no** van en `.env.prod`: el pre-launch lo bloquea, porque quedarían legibles en `/proc/<pid>/environ` de procesos que viven días. Se pasan solo al proceso del comando:
+
+```bash
+read -r -p "Usuario plataforma: " DJANGO_SUPERUSER_USERNAME
+read -r -s -p "Contraseña: " DJANGO_SUPERUSER_PASSWORD; echo
+read -r -p "Correo (opcional): " DJANGO_SUPERUSER_EMAIL
+export DJANGO_SUPERUSER_USERNAME DJANGO_SUPERUSER_PASSWORD DJANGO_SUPERUSER_EMAIL
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm \
+  -e DJANGO_SUPERUSER_USERNAME -e DJANGO_SUPERUSER_PASSWORD -e DJANGO_SUPERUSER_EMAIL \
+  backend python manage.py bootstrap_superuser
+unset DJANGO_SUPERUSER_USERNAME DJANGO_SUPERUSER_PASSWORD DJANGO_SUPERUSER_EMAIL
 ```
-DJANGO_SUPERUSER_USERNAME=admin_saas
-DJANGO_SUPERUSER_PASSWORD=TuClave123!
-DJANGO_SUPERUSER_EMAIL=admin@vetcare.example.com   # opcional pero recomendado
-```
 
-Esto ejecuta `_create_default_superuser` en el signal `post_migrate` de `apps/users/apps.py`.
+En local basta `python manage.py bootstrap_superuser` con esas variables en el entorno.
 
-**Guard anti-escalación (PR-4A / ADR p15):** El signal usa `filter().first()` + predicado `_is_platform_superuser` (requiere `is_superuser=True AND is_staff=True AND role='ADMIN_SAAS' AND email coincide case-insensitive cuando se provee`). Si una clinica registra un VET con el mismo username que `DJANGO_SUPERUSER_USERNAME`, el deploy ya NO escala al VET ni le resetea password — log CRITICAL `SUPERUSER_BOOTSTRAP_SKIPPED` y abort sin mutacion.
+No usar `createsuperuser`: `User` no tiene manager propio y crea un superusuario con `role='ASSISTANT'` y sin organización, que no pasa el permiso de plataforma (`role == 'ADMIN_SAAS'`).
+
+Salida `0`: creado o ya existente (idempotente; nunca cambia la contraseña de un superusuario legítimo). Salida `1`: variables ausentes o incompletas, o colisión con un usuario que no es el superusuario de plataforma.
+
+**Guard anti-escalación (PR-4A / ADR p15):** el comando usa `filter().first()` + predicado `_is_platform_superuser` (requiere `is_superuser=True AND is_staff=True AND role='ADMIN_SAAS' AND email coincide case-insensitive cuando se provee`). Si una clinica registra un VET con el mismo username que `DJANGO_SUPERUSER_USERNAME`, el comando NO escala al VET ni le resetea password: log CRITICAL `SUPERUSER_BOOTSTRAP_SKIPPED`, sin mutacion y salida 1.
 
 Eventos emitidos por el bootstrap:
 - `SUPERUSER_BOOTSTRAP_CREATED` (INFO) — superuser nuevo creado
 - `SUPERUSER_BOOTSTRAP_SKIPPED` (CRITICAL) — username collision con usuario non-platform
-- `SUPERUSER_BOOTSTRAP_RACE_RESOLVED` (WARNING) — race multi-worker resuelto
+- `SUPERUSER_BOOTSTRAP_RACE_RESOLVED` (WARNING) — dos ejecuciones simultaneas del comando
 - `SUPERUSER_BOOTSTRAP_INCOMPLETE_ENV` (WARNING) — solo `USERNAME` o solo `PASSWORD` seteado
 
 ### Flujo para crear una clinica nueva
@@ -100,9 +111,18 @@ Desde SSH al servidor:
 python manage.py seed_permissions
 ```
 
-O simplemente hacer redeploy — el Procfile lo ejecuta automaticamente antes de iniciar el servidor.
+O simplemente hacer redeploy — `scripts/release.sh` lo ejecuta antes de iniciar el servidor.
 
 Si `seed_permissions` no se ejecuta, todos los endpoints de la org nueva retornan `403`. El endpoint `POST /api/platform/organizations/` NO depende de esto (corre el seed por org via signal).
+
+**Poda de permisos retirados (deuda B6, orden 6).** Un código que sale de `PERMISSION_CODES` deja de concederse a los roles de sistema en el siguiente seed, pero su fila `Permission` sigue en la base y en cualquier rol propio que la tenga. Para retirarlo, en una ventana de mantenimiento y nunca desde `release.sh`:
+
+```bash
+python manage.py seed_permissions --prune --dry-run   # lista lo que se borraría
+python manage.py seed_permissions --prune             # borra y registra SEED_PERMISSIONS_PRUNED
+```
+
+Nunca poda comodines (`*.*`, `recurso.*`): los gobierna el preflight de ADR p63.
 
 ## Como el ADMIN_SAAS resetea credenciales de staff (ADR p45)
 
@@ -219,18 +239,9 @@ Devuelve/actualiza la organizacion del usuario autenticado sin exponer el PK en 
 
 **Día 6 (ADR p18):** `Organization` ahora tiene campo `public_id` (UUID v4). El response de `/me/` expone tanto `id` (PK, retrocompat pre-beta) como `public_id` (UUID). Frontend nuevo debe consumir `public_id` o `organization_public_id` desde `MeView`. Cleanup post-beta: ticket `POST-BETA-001`.
 
-### Legacy — deprecado
+### Legacy — retirado
 
-```
-GET   /api/organizations/<pk>/
-PATCH /api/organizations/<pk>/
-```
-
-Mantenido por retrocompat hasta **2026-08-17** (RFC 8594 Sunset). Reglas:
-- `pk == request.user.organization_id` valida explicitamente — si no calza, **404** (no devuelve silenciosamente "tu org")
-- Headers en TODO response: `Deprecation: true`, `Sunset: Mon, 17 Aug 2026 23:59:59 GMT`, `Link: </api/organizations/me/>; rel="successor-version"`
-- Cada hit emite log `DEPRECATED_ENDPOINT_HIT` para tracking de adopcion
-- **Post-Sunset (>2026-08-17): responde 410 Gone automaticamente** via `_EndpointSunsetException` raised en `initial()`
+`GET/PATCH /api/organizations/<pk>/` se retiró en el orden 6 (deuda D2), tras su Sunset RFC 8594 del 17-08-2026. La ruta ya no existe y responde 404. Usar `/api/organizations/me/`.
 
 ### Removidos
 
@@ -449,9 +460,9 @@ Eventos emitidos a stdout (Docker stdout — `docker compose logs backend`):
 - `RBAC_FALLBACK_ALLOWED` — permiso concedido por fallback (no deberia verse en produccion estable)
 - `RBAC_DENIED` — acceso denegado
 - `TENANT_MISMATCH_DETECTED` — intento de acceso a datos de otra organizacion
-- `DEPRECATED_ENDPOINT_HIT` — uso del legacy `/api/organizations/<pk>/` (logger `core.deprecation`)
+- `DEPRECATED_ENDPOINT_HIT` — uso de un endpoint deprecado vigente (logger `core.deprecation`; ver `logs.md`)
 
-Gate para corte del fallback: `RBAC_FALLBACK_ALLOWED` ausente en logs por 7 dias consecutivos → se puede eliminar el campo `User.role`.
+Corte del fallback (deuda B3): **aplazado** en el orden 6. El gate de 7 dias de logs no es alcanzable sin produccion. Cuando se retome, `User.role` se conserva como etiqueta y deja de autorizar (ver [plan del orden 6](../plan-remediacion-orden-6-2026-11-11.md), §1).
 
 **Default DRF (PR-4A / ADR p15):** `REST_FRAMEWORK['DEFAULT_PERMISSION_CLASSES'] = ('rest_framework.permissions.IsAuthenticated',)`. Cualquier vista nueva que olvide declarar `permission_classes` queda cerrada por defecto. Las vistas publicas (`/api/token/`, `/api/token/refresh/`) declaran `AllowAny` explicito.
 
