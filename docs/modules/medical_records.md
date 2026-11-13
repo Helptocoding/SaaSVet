@@ -128,6 +128,9 @@ La receta medica es un documento clinico independiente de la factura.
 Reglas de negocio:
 - la receta contiene los medicamentos que el veterinario indica clinicamente
 - la receta por si sola NO descuenta stock ni crea items financieros
+- emitirla (`POST /api/prescriptions/`) exige que quien la emite tenga cédula
+  profesional, porque es quien la firma: si no, `400` con `errors.license_number`
+  (M01, orden 7). El PATCH de una receta existente no lo exige
 - una consulta `closed` no admite receta nueva ni modificacion de receta existente
 
 Flujo en cobros (ver [Billing](billing.md)):
@@ -179,8 +182,10 @@ por página, "Página N de M"). Reglas:
   `receta_<id>_<mascota>_<YYYY-MM-DD>.pdf` vía `pdf_filename()` (fecha local de
   creación). Requiere `CORS_EXPOSE_HEADERS=['content-disposition']` en settings para
   que el frontend pueda leer el nombre (test de contrato en core).
-- La receta incluye bloque de firma del veterinario (nombre + especialidad). La cédula
-  profesional llega en Fase 2 (`User.license_number`, pendiente).
+- La receta incluye bloque de firma del veterinario: nombre, especialidad y cédula
+  profesional (M01, orden 7; ADR p64). La consulta muestra la cédula junto al
+  veterinario. En documentos cerrados sale del snapshot `vet_license_at_close`; en
+  abiertos, del usuario vivo.
 
 Distincion funcional importante:
 - receta medica: medicamentos prescritos para administracion posterior o entrega al cliente
@@ -477,6 +482,10 @@ Comportamiento:
 Validaciones en cierre (solo para consultas que no están ya cerradas):
 - `diagnosis` no puede estar vacío (todos los tipos)
 - `treatment` no puede estar vacío **excepto** si `consultation_type = vaccine`
+- el veterinario de la consulta, que la firma, debe tener cédula profesional
+  (`license_number`), aunque cierre un ADMIN. Si no, `400` con `errors.license_number`.
+  Al cerrar, la cédula se congela en `vet_license_at_close` junto al nombre y la
+  especialidad (M01, orden 7; ADR p64)
 
 **Excepción para vacunación**: Las consultas de tipo `vaccine` pueden cerrarse sin tratamiento documentado, ya que en muchos flujos reales una vacunación no requiere tratamiento adicional.
 

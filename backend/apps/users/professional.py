@@ -20,3 +20,18 @@ def normalize_license_number(value):
     if value and not LICENSE_NUMBER_RE.fullmatch(value):
         raise serializers.ValidationError(LICENSE_FORMAT_MESSAGE)
     return value
+
+
+def require_signer_license(user, action):
+    """Exige cédula a quien firma una consulta o una receta, sea cual sea su rol.
+
+    `action` completa el mensaje («cerrar la consulta», «emitir la receta»). Sin
+    firmante también se rechaza: un documento clínico sin veterinario no se firma.
+    """
+    if user is None:
+        raise serializers.ValidationError({'license_number': [
+            f'La consulta no tiene veterinario asignado; no se puede {action}.']})
+    if not user.license_number:
+        name = f'{user.first_name} {user.last_name}'.strip() or user.username
+        raise serializers.ValidationError({'license_number': [
+            f'Registra la cédula profesional de {name} en Equipo para {action}.']})

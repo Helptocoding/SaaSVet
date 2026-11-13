@@ -52,7 +52,8 @@ class EmergencyMaterializationTests(TestCase):
         self.org = Organization.objects.create(name='Org Emerg', timezone='UTC', tax_rate=Decimal('0'))
         self.roles = _seed_roles(self.org)
         self.vet = User.objects.create_user(
-            username='vet_em', password='pass1234!', organization=self.org, role='VET')
+            username='vet_em', password='pass1234!', organization=self.org, role='VET',
+            license_number='1234567')  # M01 (orden 7): firma la consulta
         UserRole.objects.get_or_create(user=self.vet, role=self.roles['VET'])
         self.owner = Owner.objects.create(name='Dueño E', phone='5550000040', organization=self.org)
         self.pet = Pet.objects.create(name='Toby', species='dog', owner=self.owner, organization=self.org)

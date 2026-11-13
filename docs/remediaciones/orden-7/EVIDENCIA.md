@@ -74,3 +74,15 @@ Observaciones sin cambio: ninguna.
 
 Límites: los cierres de consulta y las recetas aún no exigen la cédula (E03).
 Observaciones sin cambio: ninguna.
+
+## E03 — M01: quien firma necesita cédula (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| `py_compile` de los 7 archivos Python principales | `compilado`, sin FAIL |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| `test apps.medical_records apps.prescriptions test_pdf_markup_injection test_demo_reset test_late_arrival_observability test_physical_deletion --keepdb` | `Ran 195 tests` / `OK` |
+| `git diff --stat HEAD -- backend/apps/analytics` | solo `test_late_arrival_observability.py`, 1 línea añadida |
+
+Límites: el sistema no verifica la cédula contra la SEP; editar una receta existente (PATCH) no la exige.
+Observaciones sin cambio: ninguna.

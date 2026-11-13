@@ -228,6 +228,12 @@ class Command(BaseCommand):
                 is_active=True,
             )
             self.stdout.write(f"  usuario creado: {u['username']} ({u['role']})")
+        # M01 (orden 7): la demo cierra consultas y emite recetas, y quien firma
+        # necesita cédula. Solo rellena la vacía: no pisa una capturada a mano.
+        for u in DEMO_USERS:
+            if u.get("license_number"):
+                User.objects.filter(username=u["username"], license_number="").update(
+                    license_number=u["license_number"])
         return {
             "admin": User.objects.get(username=DEMO_USERS[0]["username"]),
             "vet": User.objects.get(username=DEMO_USERS[1]["username"]),

@@ -72,6 +72,8 @@ class ExamMarkupThroughTheRealApi(APITestCase):
     def setUpTestData(cls):
         cls.org = Organization.objects.create(name='Clinica', timezone='UTC')
         cls.vet = _make_user('vet_markup', cls.org, 'VET')
+        cls.vet.license_number = '1234567'  # M01 (orden 7): firma la consulta
+        cls.vet.save(update_fields=['license_number'])
         owner = Owner.objects.create(name='Carlos', phone='5559876543', organization=cls.org)
         cls.pet = Pet.objects.create(name='Luna', species='cat', owner=owner, organization=cls.org,
                                      birth_date='2020-01-01')

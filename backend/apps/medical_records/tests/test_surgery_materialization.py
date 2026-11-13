@@ -50,7 +50,8 @@ class SurgeryMaterializationTests(TestCase):
         self.org = Organization.objects.create(name='Org Surg', timezone='UTC', tax_rate=Decimal('0'))
         self.roles = _seed_roles(self.org)
         self.vet = User.objects.create_user(
-            username='vet_surg', password='pass1234!', organization=self.org, role='VET')
+            username='vet_surg', password='pass1234!', organization=self.org, role='VET',
+            license_number='1234567')  # M01 (orden 7): firma la consulta
         UserRole.objects.get_or_create(user=self.vet, role=self.roles['VET'])
         self.owner = Owner.objects.create(name='Dueño S', phone='5550000030', organization=self.org)
         self.pet = Pet.objects.create(name='Rex', species='dog', owner=self.owner, organization=self.org)
