@@ -8,7 +8,7 @@ Registrar la decisión de M01 en un ADR, actualizar los documentos operativos, c
 
 ## Precondición
 
-`git log --oneline bb5a070..HEAD` muestra siete commits: los dos de E00 y uno por cada entrega E01–E04. En `MATRIZ.md`, M01 y M03 están en `IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE`. Si no, `BLOQUEADA`.
+`git log --oneline bb5a070..HEAD` muestra siete commits: los dos de E00, uno por cada entrega E01–E04 y el ajuste de prompts previo a E05 (`docs(order7): adjust test commands and record commit hashes before E05`). En `MATRIZ.md`, M01 y M03 están en `IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE`. Si no, `BLOQUEADA`.
 
 ## Archivos permitidos
 
@@ -161,7 +161,7 @@ $R check 2>&1 | tail -2
 $R makemigrations --check --dry-run 2>&1 | tail -2
 ```
 
-Después, la corrida amplia de las reglas comunes, §5. Esperado: `No changes detected` y **`Ran 852 tests`** con `OK (skipped=7)`: las 825 de la línea base más 5 de E01, 15 de E02 y 7 de E03. Si el número difiere pero todo pasa, explica la diferencia en evidencia. Si algo falla, `BLOQUEADA`.
+Después, la corrida amplia de las reglas comunes, §5, en sus tres llamadas. Esperado: `No changes detected` y que los tres `Ran` sumen **852**, todos con `OK` y 7 `skipped` en total: las 825 de la línea base más 5 de E01, 15 de E02 y 7 de E03. Anota en evidencia el `Ran` de cada llamada y la suma. Si la suma difiere pero todo pasa, explica la diferencia en evidencia. Si algo falla, `BLOQUEADA`.
 
 Frontend: los cuatro comandos de las reglas comunes, §6. Esperado: **79 archivos y 851 pruebas**, `lint exit=0`, `build exit=0` y `url_construction.cjs — OK`.
 

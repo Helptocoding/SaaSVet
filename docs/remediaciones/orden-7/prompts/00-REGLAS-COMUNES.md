@@ -78,17 +78,25 @@ python -m py_compile apps/ruta/archivo.py && echo "py_compile OK"
 
 Las etiquetas de prueba van con ruta completa (`apps.core.tests.test_x`). Nunca uses la etiqueta suelta `apps.platform`: choca con el módulo `platform` de la librería estándar (deuda C7).
 
-**Corrida amplia** (E00 y E05). Tarda unos 8 minutos con la base de pruebas ya creada:
+**Corrida amplia** (E00 y E05). En una sola llamada tardó 790 s en E00 y superó el límite de 600 s de la herramienta, que la pasó a segundo plano. Por eso va en **tres llamadas separadas**, cada una en primer plano, con su propio `cd` y `R=`:
 
 ```bash
-$R test apps.core apps.users apps.organizations apps.medical_records apps.prescriptions apps.billing \
-  apps.analytics.tests.test_late_arrival_observability apps.platform.tests.test_physical_deletion \
+# Llamada 1
+$R test apps.core --keepdb --noinput 2>&1 | grep -E "^Ran |^OK|^FAILED|^FAIL:|^ERROR:" | head -40
+
+# Llamada 2
+$R test apps.users apps.organizations apps.legal apps.platform.tests.test_physical_deletion \
   apps.platform.tests.test_demo_purge_authorization apps.platform.tests.test_view_integration \
-  apps.patients.tests.test_owner_phone_identity apps.legal apps.inventory.tests.test_order4_alias_writers \
+  apps.patients.tests.test_owner_phone_identity apps.inventory.tests.test_order4_alias_writers \
+  --keepdb --noinput 2>&1 | grep -E "^Ran |^OK|^FAILED|^FAIL:|^ERROR:" | head -40
+
+# Llamada 3
+$R test apps.medical_records apps.prescriptions apps.billing \
+  apps.analytics.tests.test_late_arrival_observability \
   --keepdb --noinput 2>&1 | grep -E "^Ran |^OK|^FAILED|^FAIL:|^ERROR:" | head -40
 ```
 
-En la validación en seco dio **825 pruebas** sobre `bb5a070` y **852** con las cinco entregas aplicadas, siempre `OK (skipped=7)`.
+Las tres juntas cubren las mismas etiquetas que la corrida única de E00. El total es la **suma de los tres `Ran`**: dio **825 pruebas** sobre `bb5a070` y **852** con las cinco entregas aplicadas, siempre con `OK` (los `skipped` suman 7). Si la herramienta pasa alguna llamada a segundo plano pese a todo, espera a que termine, anota en evidencia cuál fue y no la marques `BLOQUEADA` por eso.
 
 ## 6. Comandos de frontend
 
@@ -96,13 +104,15 @@ Desde `frontend/`. `VITE_API_URL` es el mismo valor ficticio que usa CI: `src/ap
 
 ```bash
 cd /c/Users/LAP/Desktop/VeterinariaSaaS/frontend
-VITE_API_URL=http://127.0.0.1:8000/api pnpm run test 2>&1 | grep -E "Test Files|Tests  |FAIL" | head -20
+VITE_API_URL=http://127.0.0.1:8000/api pnpm exec vitest run --maxWorkers=2 2>&1 | grep -E "Test Files|Tests  |FAIL" | head -20
 pnpm run lint > /dev/null 2>&1; echo "lint exit=$?"
 VITE_API_URL=http://127.0.0.1:8000/api pnpm run build > /dev/null 2>&1; echo "build exit=$?"
 pnpm run smoke:urls 2>&1 | tail -2
 ```
 
 En la validación en seco: 78 archivos y 846 pruebas sobre `bb5a070`; 79 y 851 con E04. `build` deja `frontend/dist/`, que git ignora.
+
+`--maxWorkers=2` es deliberado. Con el paralelismo por defecto, en este equipo las pruebas de `src/pages/inbox/index.test.jsx` agotan su límite de 5000 ms: una vez en E00 y en 4 de 4 corridas en E04. Ninguna entrega del orden 7 toca ese archivo, y el código es el mismo que pasó en la validación en seco. CI conserva `pnpm run test`. No subas timeouts ni toques pruebas de Inbox.
 
 ## 7. Cierre de cada entrega
 

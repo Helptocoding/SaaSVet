@@ -100,3 +100,14 @@ Observaciones sin cambio: ninguna.
 
 Límites: sin prueba manual en navegador; la cubren las pruebas de Vitest con el cliente HTTP sustituido.
 Observaciones sin cambio: las pruebas de `inbox/index.test.jsx` (no tocadas) agotan 5 s con el paralelismo por defecto en este equipo cargado; ya falló una en E00 y la archivo solo pasa 93/93. No se subió ningún timeout. Con `--maxWorkers=2` pasa todo. Vigilar en E05.
+
+## Ajuste previo a E05 (12-11-2026, revisión entre entregas)
+
+Sin cambios de código. Antes de E05 cambian los prompts y la matriz:
+
+- **Corrida amplia de backend:** pasa a tres llamadas en primer plano (reglas comunes, §5). En una sola llamada, la de E00 tardó 790 s, superó el límite de 600 s de la herramienta y esta la pasó a segundo plano.
+- **Suite de frontend:** se corre con `--maxWorkers=2` (reglas comunes, §6). Con el paralelismo por defecto, `src/pages/inbox/index.test.jsx` agotó su timeout una vez en E00 y en 4 de 4 corridas en E04. Ninguna entrega toca ese archivo. CI no cambia.
+- **Precondición de E05:** cuenta este commit; el prompt decía siete commits cuando las entregas solo producen seis.
+- **`MATRIZ.md`:** los marcadores «(commit E0X)» se sustituyen por los hashes reales.
+
+Revisión de E01–E04: cada prompt se reaplicó sobre el estado anterior y el código de cada commit resultó idéntico al del prompt (E01 24 cambios, E02 28, E03 26, E04 12).
