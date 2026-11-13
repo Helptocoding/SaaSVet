@@ -61,3 +61,16 @@ Observaciones sin cambio: la primera corrida completa de frontend falló 1 prueb
 
 Límites: la columna `MedicalRecord.weight` sigue en la base hasta su `RemoveField`; la reversa de la migración no borra las filas copiadas.
 Observaciones sin cambio: ninguna.
+
+## E02 — M01: cédula profesional en el usuario y en Equipo (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| `py_compile` de los 14 archivos Python | `compilado`, sin FAIL |
+| `grep StaffDeactivateView` fuera de tests y services.py | sin salida |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| `migrate --noinput` | `medical_records.0031_medicalrecord_vet_license_at_close... OK`, `users.0012_user_license_number... OK` |
+| `test apps.users` + 6 módulos de `apps.core.tests` (`--keepdb`) | `Ran 226 tests` / `OK` |
+
+Límites: los cierres de consulta y las recetas aún no exigen la cédula (E03).
+Observaciones sin cambio: ninguna.

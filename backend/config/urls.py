@@ -27,7 +27,7 @@ from apps.users.views import (
     MeView,
     StaffListView,
     StaffCreateView,
-    StaffDeactivateView,
+    StaffDetailView,
     StaffResetPasswordView,
     ChangeMyPasswordView,
 )
@@ -218,7 +218,7 @@ urlpatterns = [
     path('api/me/', MeView.as_view()),
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
     path('api/staff/create/', StaffCreateView.as_view(), name='staff-create'),
-    path('api/staff/<str:pk>/', StaffDeactivateView.as_view(), name='staff-deactivate'),
+    path('api/staff/<str:pk>/', StaffDetailView.as_view(), name='staff-detail'),
     # ADR p21: admin-initiated password reset for staff member.
     path('api/staff/<str:pk>/reset-password/', StaffResetPasswordView.as_view(),
          name='staff-reset-password'),

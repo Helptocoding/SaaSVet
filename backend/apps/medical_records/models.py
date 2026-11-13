@@ -74,6 +74,10 @@ class MedicalRecord(PublicIdMixin, OrganizationalModel):
     vet_public_id_at_close = models.UUIDField(null=True, blank=True, editable=False)
     vet_name_at_close = models.CharField(max_length=255, blank=True, default='', editable=False)
     vet_specialty_at_close = models.CharField(max_length=100, blank=True, default='', editable=False)
+    # M01 (orden 7, ADR p64): cédula del veterinario congelada al cerrar.
+    vet_license_at_close = models.CharField(
+        max_length=10, blank=True, default='', db_default='', editable=False,
+    )
     vet_snapshot_source = models.CharField(
         max_length=16, default='unknown', editable=False,
         choices=(('captured', 'Capturado al cierre'),

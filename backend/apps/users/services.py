@@ -455,6 +455,37 @@ def deactivate_staff(
 AGENT_USERNAME_TEMPLATE = 'agent.whatsapp.{org_public_id}'
 
 
+def update_staff_profile(*, admin, target_user, changes):
+    """Edita especialidad y cédula de un miembro de Equipo (M01, orden 7).
+
+    La view ya limita el target a la organización del ADMIN; aquí se repite como
+    defensa en profundidad (404-as-403). El log lleva nombres de campo, no valores.
+    """
+    if (
+        target_user.organization_id is None
+        or target_user.organization_id != admin.organization_id
+        or getattr(target_user, 'role', None) == 'ADMIN_SAAS'
+        or getattr(target_user, 'is_service_account', False)
+    ):
+        from django.http import Http404
+        raise Http404("Usuario no encontrado.")
+    fields = sorted(changes)
+    for field in fields:
+        setattr(target_user, field, changes[field])
+    target_user.save(update_fields=fields)
+    logger.info(
+        "STAFF_PROFILE_UPDATED",
+        extra={
+            'event': 'STAFF_PROFILE_UPDATED',
+            'actor_id': admin.pk,
+            'target_user_id': target_user.pk,
+            'organization_id': admin.organization_id,
+            'fields': fields,
+        },
+    )
+    return target_user
+
+
 def ensure_agent_user(organization):
     """
     Garantiza el user AGENT (service account) de una organización (ADR p51).

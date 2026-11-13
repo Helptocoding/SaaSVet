@@ -198,6 +198,7 @@ class CreateStaffOrgImmutableTests(APITestCase):
             "first_name": "Evil",
             "last_name": "Vet",
             "role": "VET",
+            "license_number": "1234567",  # M01 (orden 7): obligatoria para VET
             "organization_id": self.org_b.id,
         }
         r = self.client.post("/api/staff/create/", payload, format="json")
