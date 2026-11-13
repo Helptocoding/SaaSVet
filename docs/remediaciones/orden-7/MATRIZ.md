@@ -14,7 +14,7 @@ Se actualiza al cerrar cada entrega. Estados permitidos: `PENDIENTE`, `EN_CURSO`
 
 | Entrega | Pruebas (Ran / resultado) | Commit |
 |---|---|---|
-| E00 | | |
+| E00 | Backend Ran 825 / OK (skipped=7); frontend 78 archivos, 846 pruebas OK | (ver commit de cierre E00) |
 | E01 | | |
 | E02 | | |
 | E03 | | |

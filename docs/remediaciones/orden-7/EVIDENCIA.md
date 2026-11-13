@@ -28,3 +28,23 @@ Plantilla por entrega:
 Límites: ...
 Observaciones sin cambio: ...
 ```
+
+## E00 — Línea base (12-11-2026, sobre `bb5a070`; commit de docs `2fcd62d`)
+
+Rama `fix/orden-7-clinica` creada. El cluster `orden7_pg18_20261112` ya existía (no se creó en esta entrega); estaba detenido y se arrancó con el bloque de reglas comunes §4 (`status exit=0`).
+
+| Comando | Resultado |
+|---|---|
+| `git rev-parse --short HEAD` / rama / status previos | `bb5a070`; rama inexistente; solo las rutas permitidas |
+| `init-db` | `Base orden7_iso_20261112 lista.` |
+| `check` | `System check identified no issues (0 silenced).` |
+| `migrate --noinput` | OK, última `users.0011_user_is_service_account_alter_user_role` |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| Prueba corta `apps.users.tests.test_email_identity_constraint --keepdb` | `Ran 4 tests` / `OK` |
+| Corrida amplia backend (reglas comunes §5) | `Ran 825 tests in 790.762s` / `OK (skipped=7)` |
+| Frontend `pnpm run test` | 78 archivos, 846 pruebas pasadas |
+| `lint` / `build` | `exit=0` / `exit=0` |
+| `smoke:urls` | `url_construction.cjs — OK (5/5 gates verde, 0 matches)` |
+
+Límites: la corrida amplia superó los 600 s de la herramienta y pasó a segundo plano; terminó con exit 0.
+Observaciones sin cambio: la primera corrida completa de frontend falló 1 prueba (`src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > aplica el cap global de 20 intentos entre sesiones`, 845/846). Ese archivo solo pasó 93/93 y una segunda corrida completa dio 846/846: prueba inestable bajo carga, sin cambios en el código. Vigilar en E05.
