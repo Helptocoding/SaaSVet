@@ -38,8 +38,10 @@ def _seed_roles(org):
 
 
 def _make_user(username, org, role_name):
+    # M01 (orden 7): quien emite la receta necesita cédula.
     u = User.objects.create_user(
         username=username, password="pass", organization=org, role=role_name,
+        license_number="1234567",
     )
     _seed_roles(org)
     role = Role.objects.get(name=role_name, organization=org)

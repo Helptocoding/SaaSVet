@@ -9,6 +9,7 @@ from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_publi
 # La inmutabilidad post-cierre la define el dominio dueño de la consulta. Mismo
 # precedente que `inventory/views.py`, que ya consume estas policies.
 from apps.medical_records.policies import assert_can_modify_medical_record
+from apps.users.professional import require_signer_license
 
 from .models import Prescription, PrescriptionItem
 from .serializers import PrescriptionSerializer, PrescriptionItemWriteSerializer
@@ -45,6 +46,8 @@ class PrescriptionListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
+        # M01 (orden 7, ADR p64): quien emite la receta la firma; sin cédula no puede.
+        require_signer_license(self.request.user, 'emitir la receta')
         serializer.save(
             organization=self.request.user.organization,
             veterinarian=self.request.user,
@@ -192,7 +195,13 @@ def prescription_pdf(request, pk):
     if vet or prescription.medical_record.status == 'closed':
         specialty = (prescription.medical_record.vet_specialty_at_close
                      if prescription.medical_record.status == 'closed' else vet.specialty)
+        # M01 (orden 7): cédula congelada al cierre; la del usuario mientras está abierta.
+        license_number = (prescription.medical_record.vet_license_at_close
+                          if prescription.medical_record.status == 'closed'
+                          else vet.license_number)
         spec = f" &nbsp;·&nbsp; {pdf_markup(specialty)}" if specialty else ""
+        if license_number:
+            spec += f" &nbsp;·&nbsp; Céd. Prof. {pdf_markup(license_number)}"
         flow += section(st, theme, "Veterinario")
         flow.append(Paragraph(f"{pdf_markup(vet_name)}{spec}", st['body']))
 
@@ -221,7 +230,8 @@ def prescription_pdf(request, pk):
     if vet or prescription.medical_record.status == 'closed':
         flow += signature_block(
             st, theme, pdf_markup(vet_name),
-            [pdf_markup(specialty)] if specialty else (),
+            [pdf_markup(specialty) if specialty else '',
+             f"Cédula profesional {pdf_markup(license_number)}" if license_number else ''],
         )
 
     buffer = BytesIO()

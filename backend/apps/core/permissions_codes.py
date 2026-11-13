@@ -109,6 +109,8 @@ PERMISSION_CODES = [
     # Equipo (gestión de usuarios internos)
     "staff.list",
     "staff.create",
+    # M01 (orden 7): editar especialidad y cédula profesional. Solo ADMIN.
+    "staff.update",
     "staff.destroy",
     # ADR p21: admin reset de password de staff. Solo ADMIN de la org.
     "staff.reset_password",
@@ -205,7 +207,7 @@ SENSITIVE_CODES = frozenset({
     "invoice.replace_manage", "invoice.replace_waive", "invoice.void_terminal",
     "billing.clinical_charge.reprice", "billing.refund",
     "checkout.dispute.resolve", "collection.resolve",
-    "staff.create", "staff.destroy", "staff.reset_password",
+    "staff.create", "staff.update", "staff.destroy", "staff.reset_password",
     "organization.update", "import.commit", "dashboard.financial.view",
     "agentinbox.config", "agentinbox.identity_verify",
     "inventory.destroy", "medicalrecord.destroy",
@@ -249,7 +251,8 @@ PERMISSIONS = {
         "inventory.destroy", "inventory.view",
         "prescription.list", "prescription.retrieve", "prescription.create",
         "prescription.update", "prescription.destroy",
-        "staff.list", "staff.create", "staff.destroy", "staff.reset_password",
+        "staff.list", "staff.create", "staff.update", "staff.destroy",
+        "staff.reset_password",
         "organization.list", "organization.retrieve", "organization.update",
         "dashboard.view", "dashboard.financial.view", "dashboard.summary",
         "cashsession.list", "cashsession.retrieve", "cashsession.open", "cashsession.close",

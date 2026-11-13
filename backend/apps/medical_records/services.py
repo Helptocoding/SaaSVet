@@ -56,6 +56,7 @@ def close_medical_record_service(request, pk):
     from apps.appointments.services import complete_appointment_on_record_close
     from apps.core.sanitize import sanitize_text
     from apps.core.views import resolve_public_id
+    from apps.users.professional import require_signer_license
     from .policies import can_close_medical_record, log_ownership_denied
 
     with transaction.atomic():
@@ -111,6 +112,8 @@ def close_medical_record_service(request, pk):
                 'user_id': request.user.id, 'organization_id': request.user.organization_id,
             })
             raise ValidationError({'treatment': 'El tratamiento es obligatorio.'})
+        # M01 (orden 7, ADR p64): firma el veterinario de la consulta, no quien cierra.
+        require_signer_license(record.veterinarian, 'cerrar la consulta')
 
         apply_consultation_draft_on_close(record, request)
         record.status = MedicalRecord.Status.CLOSED
@@ -123,12 +126,13 @@ def close_medical_record_service(request, pk):
             record.vet_public_id_at_close = vet.public_id
             record.vet_name_at_close = name
             record.vet_specialty_at_close = vet.specialty
+            record.vet_license_at_close = vet.license_number
             record.vet_snapshot_source = 'captured'
             record.vet_snapshot_recorded_at = record.closed_at
         record.save(update_fields=[
             'status', 'closed_at', 'closed_at_source', 'closed_by',
             'vet_public_id_at_close', 'vet_name_at_close', 'vet_specialty_at_close',
-            'vet_snapshot_source', 'vet_snapshot_recorded_at',
+            'vet_license_at_close', 'vet_snapshot_source', 'vet_snapshot_recorded_at',
         ])
         complete_appointment_on_record_close(record.appointment, request.user)
         get_or_create_primary_checkout_for_medical_record(record, owner=request.user)

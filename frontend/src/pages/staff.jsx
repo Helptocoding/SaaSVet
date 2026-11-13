@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getStaff, createStaff, deactivateStaff, resetStaffPassword } from "../api/staff";
+import { getStaff, createStaff, updateStaff, deactivateStaff, resetStaffPassword } from "../api/staff";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { useConfirm } from "../components/useConfirm";
@@ -13,8 +13,20 @@ const EMPTY_FORM = {
     email: "",
     password: "",
     role: "VET",
-    specialty: ""
+    specialty: "",
+    license_number: ""
 };
+
+// M01 (orden 7): cédula profesional, solo dígitos (5 a 10). Obligatoria para VET.
+const LICENSE_RE = /^\d{5,10}$/;
+const LICENSE_REQUIRED = "La cédula profesional es obligatoria para veterinarios";
+const LICENSE_FORMAT = "La cédula profesional debe tener solo dígitos, entre 5 y 10";
+
+function licenseError(role, value) {
+    const license = value.trim();
+    if (!license) return role === "VET" ? LICENSE_REQUIRED : null;
+    return LICENSE_RE.test(license) ? null : LICENSE_FORMAT;
+}
 
 const ROLE_BADGE = {
     ADMIN_SAAS: "badge-danger",
@@ -31,15 +43,18 @@ const ROLE_LABELS = {
 };
 
 const Staff = () => {
-    const { user, initializing } = useAuth();
+    const { user, initializing, can } = useAuth();
     const confirm = useConfirm();
     const isAdmin = user?.role === "ADMIN";
+    const canEdit = can("staff.update");
 
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState(EMPTY_FORM);
+    // Edición de especialidad y cédula: { member, specialty, license_number } | null
+    const [editing, setEditing] = useState(null);
     // Temp password modal state — surfaced once after successful reset.
     const [resetResult, setResetResult] = useState(null);
     const [resetCopied, setResetCopied] = useState(false);
@@ -76,10 +91,12 @@ const Staff = () => {
         if (!form.password || form.password.length < 8) { toast.error("La contraseña debe tener al menos 8 caracteres"); return; }
         if (!/[A-Z]/.test(form.password)) { toast.error("La contraseña debe contener al menos una mayúscula"); return; }
         if (!/[0-9]/.test(form.password)) { toast.error("La contraseña debe contener al menos un número"); return; }
+        const licenseProblem = licenseError(form.role, form.license_number);
+        if (licenseProblem) { toast.error(licenseProblem); return; }
 
         setSaving(true);
         try {
-            await toast.promise(createStaff(form), {
+            await toast.promise(createStaff({ ...form, license_number: form.license_number.trim() }), {
                 loading: 'Creando usuario...',
                 success: 'Usuario creado exitosamente',
                 error: (err) => {
@@ -124,6 +141,41 @@ const Staff = () => {
     const closeModal = () => {
         setForm(EMPTY_FORM);
         setShowModal(false);
+    };
+
+    const openEdit = (member) => {
+        setEditing({
+            member,
+            specialty: member.specialty || "",
+            license_number: member.license_number || "",
+        });
+    };
+
+    const handleEditSave = async () => {
+        if (!editing) return;
+        const licenseProblem = licenseError(editing.member.role, editing.license_number);
+        if (licenseProblem) { toast.error(licenseProblem); return; }
+
+        setSaving(true);
+        try {
+            await toast.promise(
+                updateStaff(editing.member.public_id, {
+                    specialty: editing.specialty.trim(),
+                    license_number: editing.license_number.trim(),
+                }),
+                {
+                    loading: "Guardando...",
+                    success: "Miembro actualizado",
+                    error: (err) => apiError(err, "Error al guardar"),
+                },
+            );
+            setEditing(null);
+            fetchStaff();
+        } catch {
+            // El modal queda abierto: el toast ya mostró el error.
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleResetPassword = async (member) => {
@@ -210,6 +262,7 @@ const Staff = () => {
                                 <th>Correo</th>
                                 <th>Rol</th>
                                 <th>Especialidad</th>
+                                <th>Cédula</th>
                                 {isAdmin && <th></th>}
                             </tr>
                         </thead>
@@ -227,9 +280,19 @@ const Staff = () => {
                                         </span>
                                     </td>
                                     <td style={{ color: "var(--c-text-3)" }}>{member.specialty || "—"}</td>
+                                    <td style={{ color: "var(--c-text-3)", fontFamily: "var(--font-mono)" }}>{member.license_number || "—"}</td>
                                     {isAdmin && (
                                         <td>
                                             <div style={{ display: "flex", gap: "6px" }}>
+                                                {canEdit && member.role !== "ADMIN_SAAS" && (
+                                                    <button
+                                                        className="btn btn-secondary btn-sm"
+                                                        onClick={() => openEdit(member)}
+                                                        title="Editar"
+                                                    >
+                                                        <Icon.Edit s={14} />
+                                                    </button>
+                                                )}
                                                 {member.role !== "ADMIN_SAAS" && (
                                                     <button
                                                         className="btn btn-secondary btn-sm"
@@ -325,6 +388,55 @@ const Staff = () => {
                 </div>
             )}
 
+            {/* Modal Editar Miembro — especialidad y cédula (M01, orden 7) */}
+            {editing && (
+                <div className="modal-overlay">
+                    <div className="modal modal-sm">
+                        <div className="modal-header">
+                            <h3>Editar miembro</h3>
+                            <button className="modal-close" onClick={() => setEditing(null)} disabled={saving}><Icon.X s={16} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <p style={{ fontWeight: "600", marginBottom: "12px" }}>
+                                {editing.member.first_name} {editing.member.last_name}
+                                <span style={{ color: "var(--c-text-3)", fontWeight: "400" }}> · {ROLE_LABELS[editing.member.role] || editing.member.role}</span>
+                            </p>
+                            <div className="form-group">
+                                <label className="form-label" htmlFor="edit-specialty">ESPECIALIDAD</label>
+                                <input
+                                    id="edit-specialty"
+                                    className="input"
+                                    placeholder="Cirugía, Dermatología..."
+                                    value={editing.specialty}
+                                    onChange={e => setEditing({ ...editing, specialty: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label" htmlFor="edit-license">
+                                    CÉDULA PROFESIONAL{editing.member.role === "VET" ? " *" : ""}
+                                </label>
+                                <input
+                                    id="edit-license"
+                                    className="input"
+                                    inputMode="numeric"
+                                    placeholder="Solo dígitos"
+                                    value={editing.license_number}
+                                    onChange={e => setEditing({ ...editing, license_number: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={handleEditSave} disabled={saving}>
+                                {saving ? "Guardando..." : "Guardar"}
+                            </button>
+                            <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => setEditing(null)} disabled={saving}>
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Modal Nuevo Miembro */}
             {showModal && (
                 <div className="modal-overlay">
@@ -398,13 +510,26 @@ const Staff = () => {
                                             <option value="ADMIN">Administrador</option>
                                         </select>
                                     </div>
-                                    <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                                    <div className="form-group">
                                         <label className="form-label">ESPECIALIDAD</label>
                                         <input
                                             className="input"
                                             placeholder="Cirugía, Dermatología..."
                                             value={form.specialty}
                                             onChange={e => setForm({ ...form, specialty: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label" htmlFor="create-license">
+                                            CÉDULA PROFESIONAL{form.role === "VET" ? " *" : ""}
+                                        </label>
+                                        <input
+                                            id="create-license"
+                                            className="input"
+                                            inputMode="numeric"
+                                            placeholder="Solo dígitos"
+                                            value={form.license_number}
+                                            onChange={e => setForm({ ...form, license_number: e.target.value })}
                                         />
                                     </div>
                                 </div>

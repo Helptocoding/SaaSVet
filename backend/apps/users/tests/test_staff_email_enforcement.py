@@ -31,6 +31,7 @@ class StaffEmailEnforcementTests(APITestCase):
         payload = {
             "username": "newvet", "email": "new@a.test",
             "password": "VetPass1234", "role": "VET",
+            "license_number": "1234567",  # M01: obligatoria para VET
         }
         payload.update(over)
         return self.client.post("/api/staff/create/", payload, format="json")

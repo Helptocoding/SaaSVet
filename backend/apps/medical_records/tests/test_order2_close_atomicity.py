@@ -23,7 +23,8 @@ class CloseAtomicityTests(TransactionTestCase):
         self.owner = Owner.objects.create(organization=self.org, name='Cliente cierre')
         self.pet = Pet.objects.create(organization=self.org, owner=self.owner, name='Mascota cierre')
         self.vet = User.objects.create_user(username='order2_close_vet', password='synthetic',
-            role='VET', organization=self.org, first_name='Vet', last_name='Prueba')
+            role='VET', organization=self.org, first_name='Vet', last_name='Prueba',
+            license_number='1234567')  # M01 (orden 7): firma la consulta
         self.record = MedicalRecord.objects.create(organization=self.org, pet=self.pet,
             veterinarian=self.vet, diagnosis='Diagnóstico', treatment='Tratamiento')
         self.url = f'/api/medical-records/{self.record.public_id}/close/'

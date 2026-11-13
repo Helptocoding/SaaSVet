@@ -134,6 +134,8 @@ No se repitió lint para ordenar el backlog: las cifras son las del inventario y
 
 ## 7. Clínica y analítica
 
+**Alcance acordado el 12-11-2026:** [plan del orden 7](plan-remediacion-orden-7-2026-11-12.md) y [prompts por entrega](remediaciones/orden-7/README.md). Se implementan M03 y M01 en seis entregas, con pruebas en un PostgreSQL aislado. M03 deja `VitalSigns` como única fuente del peso; el `RemoveField` de `MedicalRecord.weight` queda para después. M01 hace obligatoria la cédula profesional para quien firma una consulta o una receta, sea cual sea su rol, y para todo VET, con edición en Equipo bajo un permiso nuevo `staff.update` (ADR p64). M02 y M04 quedan fuera: la analítica no entra en la primera versión para clínicas piloto. M05 no se seleccionó; su TODO resultó contradecir el CHECK `invoiceitem_exactly_one_source`. Estos documentos no acreditan implementación.
+
 | Prioridad | IDs | Pendiente | Dependencia / cierre |
 |---|---|---|---|
 | **P2** | M01 | Cédula profesional en usuario/documentos | Definir captura, modelo y PDF, con revisión del requisito aplicable. |

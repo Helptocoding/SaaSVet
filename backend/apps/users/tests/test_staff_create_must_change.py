@@ -40,6 +40,7 @@ class StaffCreateMustChangeTests(APITestCase):
                 'email': 'vet@clinic.test',
                 'password': 'VetPass1234',
                 'role': 'VET',
+                'license_number': '1234567',  # M01: obligatoria para VET
             },
             format='json',
         )

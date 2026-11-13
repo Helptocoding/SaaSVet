@@ -199,11 +199,14 @@ Authorization: Bearer <token ADMIN>
   "first_name": "Laura",
   "last_name": "Garcia",
   "role": "VET",
-  "specialty": "Cirugia"
+  "specialty": "Cirugia",
+  "license_number": "1234567"
 }
 ```
 
 Validaciones de password: minimo 8 caracteres, al menos una mayuscula, al menos un numero.
+
+`license_number` es la cédula profesional (M01, orden 7; ADR p64): solo dígitos, de 5 a 10, sin verificar contra la SEP. Es **obligatoria para `VET`** y opcional para los demás roles. Hay además un CHECK en base de datos (`user_license_number_digits`). Este endpoint devuelve `serializer.errors` sin el sobre `{code, errors}`.
 
 La contraseña es **temporal de un solo uso**: el usuario creado entra con `password_must_change=True` y el sistema lo obliga a cambiarla en el primer login (`MustChangePasswordGate`). Sin `password_temp_issued_at` → no caduca (a diferencia del reset admin de 24h). El flag se setea en `CreateEmployeeSerializer.create` (ruta de alta por endpoint), nunca en `User.create_user` ni en signals. Ver ADR p21 (addendum 2026-06-24).
 
@@ -224,6 +227,19 @@ Authorization: Bearer <token ADMIN>
 ```
 
 No elimina el usuario, marca `is_active = False`.
+
+### Editar especialidad y cédula (M01, orden 7)
+
+```
+PATCH /api/staff/<public_id>/
+Authorization: Bearer <token ADMIN>
+
+{ "specialty": "Cirugia", "license_number": "1234567" }
+```
+
+Permiso `staff.update` (sensible, solo ADMIN; ADR p63 y p64). Solo acepta esas dos claves: cualquier otra es `400`, para no aparentar que se guardó un cambio de rol, correo o contraseña. Un `VET` no puede quedar sin cédula. Alcance: la misma organización, usuarios activos, sin `ADMIN_SAAS` ni cuentas de servicio (fuera de eso, `404`). El ADMIN puede editar también la suya. Registra `STAFF_PROFILE_UPDATED` con los nombres de los campos, nunca sus valores.
+
+La misma ruta con `DELETE` sigue desactivando (`staff.destroy`): `StaffDetailView` deriva el permiso del método.
 
 ## Endpoints de Organization (PR-4B / ADR p16, p18)
 

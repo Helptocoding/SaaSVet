@@ -41,6 +41,8 @@ DEMO_USERS = [
         "first_name": "Laura",
         "last_name": "Hernández",
         "role": "ADMIN",
+        # M01 (orden 7): números de demostración, no cédulas reales.
+        "license_number": "00000001",
     },
     {
         "username": "demo-vet@saaslyvet.com",
@@ -49,6 +51,7 @@ DEMO_USERS = [
         "last_name": "Ramírez",
         "role": "VET",
         "specialty": "Medicina general",
+        "license_number": "00000002",
     },
     {
         "username": "demo-recepcion@saaslyvet.com",

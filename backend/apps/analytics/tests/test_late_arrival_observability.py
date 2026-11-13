@@ -269,6 +269,7 @@ class LateArrivalObservabilityTests(TestCase):
         vet = User.objects.create_user(
             username="vet_t8", password="x",
             organization=org, role="VET",
+            license_number="1234567",  # M01 (orden 7): firma la consulta
         )
 
         # Seed RBAC so make_permission('medicalrecord.close') can resolve.

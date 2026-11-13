@@ -10,17 +10,21 @@ from django.contrib.auth import get_user_model
 
 from apps.core.network import get_client_ip, get_user_agent
 from apps.core.mixins import NoStoreResponseMixin
-from apps.core.permissions import make_permission, build_permissions_list, NotDemoAccount
+from apps.core.permissions import (
+    HybridPermission, NotDemoAccount, build_permissions_list, make_permission,
+)
 from apps.core.views import resolve_public_id
 from apps.users.serializers import (
     UserSerializer,
     CreateEmployeeSerializer,
     ChangePasswordSerializer,
+    UpdateEmployeeSerializer,
 )
 from apps.users.services import (
     change_password,
     deactivate_staff,
     reset_password_for_staff,
+    update_staff_profile,
 )
 
 User = get_user_model()
@@ -113,8 +117,30 @@ class StaffCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class StaffDeactivateView(APIView):
-    permission_classes = [make_permission("staff.destroy")]
+class StaffDetailView(APIView):
+    """DELETE desactiva (`staff.destroy`); PATCH edita especialidad y cédula
+    (`staff.update`, M01 orden 7). HybridPermission deriva el código del método."""
+    permission_classes = [HybridPermission]
+    resource_name = "staff"
+    http_method_names = ['patch', 'delete', 'options']
+
+    def patch(self, request, pk):
+        target = resolve_public_id(
+            User.objects.filter(
+                organization=request.user.organization,
+                is_active=True,
+            ).exclude(role='ADMIN_SAAS').exclude(is_service_account=True),
+            pk,
+        )
+        serializer = UpdateEmployeeSerializer(
+            data=request.data,
+            context={'request': request, 'target': target},
+        )
+        serializer.is_valid(raise_exception=True)
+        user = update_staff_profile(
+            admin=request.user, target_user=target, changes=serializer.validated_data,
+        )
+        return Response(UserSerializer(user).data)
 
     def delete(self, request, pk):
         # Día 6 Fase 5 (Issue #38): lookup por public_id (UUID).

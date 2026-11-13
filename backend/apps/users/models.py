@@ -35,6 +35,11 @@ class User(AbstractUser):
     )
     role = models.CharField(max_length=15, choices=ROLE_CHOICES, default='ASSISTANT')
     specialty = models.CharField(max_length=100, blank=True, default='')
+    # M01 (orden 7, ADR p64): cédula profesional, solo dígitos (5 a 10), sin
+    # verificar contra la SEP. Obligatoria para VET y para quien firma consultas y
+    # recetas: lo exigen apps/users/professional.py y el dominio clínico. db_default
+    # mantiene aditiva la migración (ver la nota de Organization.is_active).
+    license_number = models.CharField(max_length=10, blank=True, default='', db_default='')
     is_active = models.BooleanField(default=True)
 
     # ADR p21: credential lifecycle — forced password change.
@@ -72,5 +77,12 @@ class User(AbstractUser):
                 Lower("email"),
                 name="user_email_ci_unique",
                 condition=~models.Q(email=""),
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(license_number='')
+                    | models.Q(license_number__regex=r'^[0-9]{5,10}$')
+                ),
+                name='user_license_number_digits',
             ),
         ]

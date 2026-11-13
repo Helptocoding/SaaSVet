@@ -5,6 +5,9 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from apps.organizations.models import Organization
+from apps.users.professional import (
+    LICENSE_REQUIRED_MESSAGE, LICENSE_REQUIRED_ROLES, normalize_license_number,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +59,8 @@ class UserSerializer(serializers.ModelSerializer):
         # Día 6 Fase 5: expone public_id para que frontend construya
         # URLs /staff/<uuid>/. id se conserva pre-beta.
         fields = ['id', 'public_id', 'username', 'email', 'first_name', 'last_name',
-                  'role', 'specialty', 'is_active', 'organization', 'organization_name']
+                  'role', 'specialty', 'license_number', 'is_active', 'organization',
+                  'organization_name']
         read_only_fields = ['id', 'public_id']
 
 
@@ -71,6 +75,8 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
         default='ASSISTANT'
     )
     specialty = serializers.CharField(required=False, allow_blank=True, default='')
+    # M01 (orden 7): obligatoria para VET (validate).
+    license_number = serializers.CharField(required=False, allow_blank=True, default='')
     # Día 6 Fase 4 (Issue #40): organization_id NO writable.
     # ADR p18: organization siempre se deriva de request.user.organization (JWT).
     # Aceptarlo en body permite que un ADMIN cree usuarios en otra org →
@@ -80,7 +86,7 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'email', 'password', 'first_name', 'last_name',
-                  'role', 'specialty', 'organization_id']
+                  'role', 'specialty', 'license_number', 'organization_id']
 
     def validate_username(self, value):
         if not USERNAME_REGEX.match(value):
@@ -128,6 +134,15 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La contraseña debe contener al menos un número.")
         return value
 
+    def validate_license_number(self, value):
+        return normalize_license_number(value)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs.get('role') in LICENSE_REQUIRED_ROLES and not attrs.get('license_number'):
+            raise serializers.ValidationError({'license_number': LICENSE_REQUIRED_MESSAGE})
+        return attrs
+
     def create(self, validated_data):
         # Día 6 Fase 4: organization_id es read_only — extra-safety pop por si
         # algún caller histórico envía el campo (DRF ignora read_only en input,
@@ -144,6 +159,7 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             specialty=validated_data.get('specialty', ''),
+            license_number=validated_data.get('license_number', ''),
             role=validated_data.get('role', 'ASSISTANT'),
             organization=organization,
         )
@@ -177,6 +193,39 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
                 "ejecuta seed_permissions",
                 user.role, organization.id, user.id,
             )
+
+
+class UpdateEmployeeSerializer(serializers.Serializer):
+    """PATCH /api/staff/<uuid>/ (M01, orden 7): solo especialidad y cédula.
+
+    Cualquier otra clave es 400: rol, correo o contraseña tienen sus propios
+    caminos, y descartarla en silencio haría creer que se guardó.
+    """
+    EDITABLE_FIELDS = frozenset({'specialty', 'license_number'})
+
+    specialty = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    license_number = serializers.CharField(required=False, allow_blank=True)
+
+    def to_internal_value(self, data):
+        unknown = sorted(set(data) - self.EDITABLE_FIELDS) if hasattr(data, 'keys') else []
+        if unknown:
+            raise serializers.ValidationError({'non_field_errors': [
+                'Solo se pueden editar la especialidad y la cédula profesional.']})
+        return super().to_internal_value(data)
+
+    def validate_license_number(self, value):
+        return normalize_license_number(value)
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError({'non_field_errors': [
+                'Indica la especialidad o la cédula profesional.']})
+        target = self.context.get('target')
+        assert target is not None, 'UpdateEmployeeSerializer requiere context["target"]'
+        license_number = attrs.get('license_number', target.license_number)
+        if target.role in LICENSE_REQUIRED_ROLES and not license_number:
+            raise serializers.ValidationError({'license_number': LICENSE_REQUIRED_MESSAGE})
+        return attrs
 
 
 class ChangePasswordSerializer(serializers.Serializer):

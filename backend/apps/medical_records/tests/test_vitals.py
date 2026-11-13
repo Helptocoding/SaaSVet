@@ -199,7 +199,8 @@ class VitalSignsTests(APITestCase):
         self.assertTrue(r.data["last_vitals"]["has_vitals"])
         self.assertEqual(str(r.data["last_vitals"]["weight"]), "5.50")
 
-    def test_summary_no_vitals_falls_back_to_record_weight(self):
+    def test_summary_without_vitals_ignores_legacy_record_weight(self):
+        # M03 (orden 7): MedicalRecord.weight ya no es fuente del peso.
         mr = self._make_record()
         mr.weight = "7.20"
         mr.save(update_fields=["weight"])
@@ -207,20 +208,26 @@ class VitalSignsTests(APITestCase):
         r = self.client.get(self._summary_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertFalse(r.data["last_vitals"]["has_vitals"])
-        self.assertEqual(str(r.data["last_vitals"]["weight"]), "7.20")
+        self.assertIsNone(r.data["last_vitals"]["weight"])
 
-    def test_summary_vital_weight_null_falls_back_to_record_weight(self):
+    def test_summary_vital_weight_null_uses_previous_vital_weight(self):
+        # M03 (orden 7): si el último vital no trae peso, se usa el vital anterior
+        # que sí lo trae, nunca MedicalRecord.weight.
         mr = self._make_record()
         mr.weight = "8.00"
         mr.save(update_fields=["weight"])
         VitalSigns.objects.create(
             medical_record=mr, organization=self.org_a,
-            weight=None, temperature="38.0",
+            weight="6.00", recorded_at=timezone.now().replace(year=2025, month=1, day=1),
+        )
+        VitalSigns.objects.create(
+            medical_record=mr, organization=self.org_a,
+            weight=None, temperature="38.0", recorded_at=timezone.now(),
         )
         self.client.force_authenticate(self.vet_a)
         r = self.client.get(self._summary_url(mr.public_id))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
-        self.assertEqual(str(r.data["last_vitals"]["weight"]), "8.00")
+        self.assertEqual(str(r.data["last_vitals"]["weight"]), "6.00")
 
     def test_summary_totals_present_when_auto_invoice_created(self):
         """El signal crea una invoice draft automáticamente — totals nunca es null para registros nuevos."""

@@ -30,7 +30,9 @@ def _seed_roles(org):
 
 
 def _make_user(username, org, role_name):
-    u = User.objects.create_user(username=username, password="pass", organization=org, role=role_name)
+    # M01 (orden 7): quien firma necesita cédula; la regla se prueba en test_signer_license.
+    u = User.objects.create_user(username=username, password="pass", organization=org,
+                                 role=role_name, license_number="1234567")
     roles = _seed_roles(org)
     UserRole.objects.get_or_create(user=u, role=roles[role_name])
     return u

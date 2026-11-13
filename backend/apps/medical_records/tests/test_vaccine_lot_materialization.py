@@ -44,7 +44,8 @@ class VaccineLotMaterializationTests(TestCase):
         self.org = Organization.objects.create(name='Org VacLot', timezone='UTC', tax_rate=Decimal('0'))
         self.roles = _seed_roles(self.org)
         self.admin = User.objects.create_user(
-            username='adm_vl', password='pass1234!', organization=self.org, role='ADMIN')
+            username='adm_vl', password='pass1234!', organization=self.org, role='ADMIN',
+            license_number='1234567')  # M01 (orden 7): el ADMIN firma la consulta
         UserRole.objects.get_or_create(user=self.admin, role=self.roles['ADMIN'])
         self.owner = Owner.objects.create(name='Dueño VL', phone='5550000020', organization=self.org)
         self.pet = Pet.objects.create(name='Luna', species='dog', owner=self.owner, organization=self.org)
