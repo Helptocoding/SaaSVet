@@ -48,3 +48,16 @@ Rama `fix/orden-7-clinica` creada. El cluster `orden7_pg18_20261112` ya existía
 
 Límites: la corrida amplia superó los 600 s de la herramienta y pasó a segundo plano; terminó con exit 0.
 Observaciones sin cambio: la primera corrida completa de frontend falló 1 prueba (`src/pages/inbox/index.test.jsx > Inbox — aislamiento del borrador > aplica el cap global de 20 intentos entre sesiones`, 845/846). Ese archivo solo pasó 93/93 y una segunda corrida completa dio 846/846: prueba inestable bajo carga, sin cambios en el código. Vigilar en E05.
+
+## E01 — M03: VitalSigns como única fuente del peso (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| `py_compile` de los 7 archivos Python tocados | `compilado`, sin FAIL |
+| `grep MinValueValidator\|MaxValueValidator\|force_weight` en serializers | Sin validadores; `force_weight` solo en líneas 27–110, antes de `class MedicalRecordSerializer` (línea 128) |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| `migrate --noinput` | `Applying medical_records.0030_backfill_vitals_weight_from_record... OK` |
+| `test test_weight_single_source test_vitals test_pdf test_close test_hybrid_permission_nested --keepdb` | `Ran 79 tests` / `OK` |
+
+Límites: la columna `MedicalRecord.weight` sigue en la base hasta su `RemoveField`; la reversa de la migración no borra las filas copiadas.
+Observaciones sin cambio: ninguna.

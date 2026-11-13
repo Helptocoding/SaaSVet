@@ -34,6 +34,9 @@ class MedicalRecord(PublicIdMixin, OrganizationalModel):
     diagnosis = models.TextField(max_length=400, blank=True)
     treatment = models.TextField(max_length=400, blank=True)
     notes = models.TextField(max_length=5000, blank=True)
+    # DEPRECADO (orden 7, M03): VitalSigns es la única fuente del peso. Nadie lee ni
+    # escribe esta columna; la migración 0030 copió sus valores a VitalSigns. Se
+    # borra con un RemoveField en una entrega posterior (fase contract).
     weight = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     consultation_type = models.CharField(
         max_length=20,
@@ -486,8 +489,8 @@ class MedicalRecordService(OrganizationalModel):
 
 def _get_last_weight(pet):
     """
-    Historial global del paciente: último peso entre VitalSigns y MedicalRecord.
-    Prioriza VitalSigns (más granular). Ordenado por recorded_at (momento clínico).
+    Historial global del paciente: último peso registrado en VitalSigns, la única
+    fuente desde el orden 7 (M03). Ordenado por recorded_at (momento clínico).
 
     Día 6 audit F15: defense-in-depth — for_organization(pet.organization)
     antes del filter. Caller debe pasar pet ya tenant-validated; el guard
@@ -501,24 +504,19 @@ def _get_last_weight(pet):
         .order_by('-recorded_at', '-created_at')
         .first()
     )
-    if last_vital:
-        return last_vital.weight
-    last_mr = (
-        MedicalRecord.objects
-        .for_organization(org)
-        .filter(pet=pet, weight__isnull=False)
-        .order_by('-created_at')
-        .first()
-    )
-    return last_mr.weight if last_mr else None
+    return last_vital.weight if last_vital else None
 
 
 def get_current_weight(record):
     """
     Peso a mostrar para una consulta específica (panel lateral).
     Diferente a _get_last_weight, que busca en toda la historia del paciente.
+    Último VitalSigns de la consulta con peso; nunca MedicalRecord.weight (M03).
     """
-    last_vital = record.vital_signs.order_by('-recorded_at', '-created_at').first()
-    if last_vital and last_vital.weight is not None:
-        return last_vital.weight
-    return record.weight
+    last_vital = (
+        record.vital_signs
+        .filter(weight__isnull=False)
+        .order_by('-recorded_at', '-created_at')
+        .first()
+    )
+    return last_vital.weight if last_vital else None

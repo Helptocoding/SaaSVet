@@ -599,8 +599,6 @@ def medical_record_pdf(request, pk):
             vital_pairs.append(("Frec. cardiaca", f"{last_vital.heart_rate} lpm"))
         if last_vital.respiratory_rate is not None:
             vital_pairs.append(("Frec. respiratoria", f"{last_vital.respiratory_rate} rpm"))
-    elif record.weight is not None:
-        vital_pairs.append(("Peso", f"{record.weight} kg"))
     if vital_pairs:
         flow += section(st, theme, "Signos vitales")
         flow += info_card(st, theme, vital_pairs, columns=4)

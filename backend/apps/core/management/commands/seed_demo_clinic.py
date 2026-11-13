@@ -610,8 +610,7 @@ class Command(BaseCommand):
                 recorded_by=vet, recorded_at=when,
             )
 
-            # Datos clínicos
-            mr.weight = weight
+            # Datos clínicos (el peso vive solo en VitalSigns, M03)
             mr.diagnosis = "" if no_diagnosis else tmpl["diagnosis"]
             mr.treatment = tmpl["treatment"]
             if close:

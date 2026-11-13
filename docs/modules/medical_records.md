@@ -20,7 +20,7 @@ Una consulta medica puede incluir:
 - diagnostico
 - tratamiento
 - notas
-- peso (campo heredado; historial detallado en `VitalSigns`)
+- peso: lectura derivada del último `VitalSigns` con peso (la columna `weight` está deprecada, orden 7 M03)
 - signos vitales (modelo `VitalSigns`, append-only)
 - productos usados
 - servicios usados
@@ -412,9 +412,10 @@ Reglas:
 - la `organization` se asigna automaticamente desde el `medical_record` (incluso si se llama directamente a `.create()`)
 - `recorded_at` no puede ser futuro ni mayor a 10 anos en el pasado
 
-El campo `weight` de `MedicalRecord` se mantiene por compatibilidad. Los helpers centrales priorizan `VitalSigns`:
-- `_get_last_weight(pet)`: busca el ultimo peso del paciente en `VitalSigns` primero, luego en `MedicalRecord`. Usado para detectar cambios bruscos de peso.
-- `get_current_weight(record)`: peso a mostrar en el panel lateral de una consulta. Usa el ultimo vital con `weight != None`, sino cae al campo del registro.
+Desde el orden 7 (M03), `VitalSigns` es la **única** fuente del peso. La columna `MedicalRecord.weight` queda deprecada, sin lectores ni escritores: la migración `medical_records.0030` copió sus valores a `VitalSigns` (con `recorded_by` vacío y `recorded_at` igual al alta de la consulta) y su `RemoveField` llega en una entrega posterior.
+- `_get_last_weight(pet)`: último peso del paciente en `VitalSigns`. Usado para detectar cambios bruscos de peso.
+- `get_current_weight(record)`: último `VitalSigns` de la consulta con peso, o `null`.
+- `MedicalRecordSerializer.weight`: solo lectura; el mismo valor, calculado sobre los vitales prefetchados. Un `weight` en el PATCH de la consulta se ignora.
 
 Endpoints:
 
@@ -452,7 +453,7 @@ Respuesta:
 ```
 
 Notas:
-- `last_vitals.weight`: usa `get_current_weight(record)` — prioriza `VitalSigns.weight`, sino cae a `MedicalRecord.weight`
+- `last_vitals.weight`: usa `get_current_weight(record)` — último `VitalSigns` con peso, o `null` (sin fallback a `MedicalRecord.weight` desde el orden 7)
 - `totals`: usa Invoice si ya fue posteada; de lo contrario usa el Checkout
   primario si existe; es `null` antes de ambos
 - `next_vaccine_date`: proxima vacuna futura de la mascota (de cualquier consulta, no solo esta)
@@ -547,18 +548,17 @@ financieros se corrigen con void/replacement o contra-asientos; el
 
 ## Validacion de peso
 
-El campo `weight` tiene las siguientes validaciones en el serializer:
+El peso se valida al registrar `VitalSigns` (`VitalSignsSerializer`), su único escritor desde el orden 7:
 
 - Minimo: `0.01 kg`, maximo: `200.00 kg`
-- Cambio brusco: si el peso nuevo difiere mas del 150% respecto al ultimo peso registrado para esa mascota, el sistema retorna error. El ultimo peso se busca con `_get_last_weight(pet)`, que prioriza `VitalSigns` sobre `MedicalRecord`.
+- Cambio brusco: si el peso nuevo difiere mas del 150% respecto al ultimo peso registrado para esa mascota, el sistema retorna error. El ultimo peso se busca con `_get_last_weight(pet)`, solo en `VitalSigns`.
 
   ```
   Cambio brusco de peso: último registro 5.00 kg → nuevo 80.00 kg. Envía force_weight=true para confirmar.
   ```
 
-- Se puede forzar enviando `force_weight: true` en el body (campo declarado explicitamente en el serializer — aparece en el schema OpenAPI)
-- La validacion de cambio brusco aplica tanto en actualizaciones de `MedicalRecord` como al registrar nuevos `VitalSigns`
-- La funcion `_validate_weight_change(pet, new_weight, force)` es compartida entre `MedicalRecordSerializer` y `VitalSignsSerializer`
+- Se puede forzar enviando `force_weight: true` en el body de `POST /medical-records/<id>/vitals/`
+- `MedicalRecordSerializer` ya no acepta `weight` ni `force_weight` (M03); `_validate_weight_change(pet, new_weight, force)` solo la usa `VitalSignsSerializer`
 
 **Helper de conversion segura** (frontend): El stepper usa `toNumberOrNull(v)` para convertir valores de input:
 
@@ -596,14 +596,14 @@ ahora"); los siguientes hacen `PATCH` parcial.
 Si el paso 1 falla, los vitales no se guardan (consistencia por orden, no por transacción DB).
 El hash evita duplicar registros idénticos de vitales en autosaves sucesivos.
 
-**Doble fuente de peso**:
-- `MedicalRecord.weight` — campo legacy, se mantiene por compatibilidad con datos históricos
-- `VitalSigns.weight` — fuente de verdad para signos vitales
-- Solo se envía `weight` a `createVitals()`, nunca a `updateMedicalRecord()`
+**Fuente única de peso** (orden 7, M03):
+- `VitalSigns.weight` — única fuente; se escribe con `createVitals()`
+- `MedicalRecord.weight` — columna deprecada, sin lectores ni escritores hasta su `RemoveField`
+- el `weight` que devuelve la API de la consulta es de solo lectura y sale de `VitalSigns`
 
 **Edición de consulta existente**: al editar, `ConsultationForm` precarga los vitales
-desde `initialRecord.latest_vitals`, con fallback a `initialRecord.weight` si no hay
-vitales registrados.
+desde `initialRecord.latest_vitals`, con fallback a `initialRecord.weight`, que ya es el
+mismo peso derivado de `VitalSigns`.
 
 ## Registro de vacunas
 

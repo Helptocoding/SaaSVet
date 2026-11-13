@@ -4,7 +4,6 @@ from datetime import date, timedelta
 from apps.core.tenant_validation import require_same_organization
 from apps.core.datetime_utils import serializer_today
 from decimal import Decimal
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from rest_framework import serializers
 from apps.core.sanitize import sanitize_text
@@ -22,8 +21,8 @@ ALLOWED_CONSULTATION_DRAFT_KEYS = {"vaccine", "general", "surgery", "emergency"}
 
 def _validate_weight_change(pet, new_weight, force=False):
     """
-    Detecta cambio brusco de peso (>150%) buscando el último peso en VitalSigns
-    y MedicalRecord via _get_last_weight. Compartida por ambos serializers.
+    Detecta cambio brusco de peso (>150%) contra el último peso en VitalSigns
+    (_get_last_weight). La usa VitalSignsSerializer, único escritor del peso (M03).
     
     Usa el patrón de metadatos con '__' para señalizar force_weight_required.
     """
@@ -183,23 +182,13 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         checkout = obj.checkouts.filter(kind='primary_consultation').order_by('-created_at').first()
         return str(checkout.public_id) if checkout else None
 
-    force_weight = serializers.BooleanField(write_only=True, required=False, default=False)
-
     # Scratchpad de UI (borrador de secciones en progreso). Writable pero NO es
     # fuente de verdad — ver comentario del modelo y validate_consultation_draft.
     consultation_draft = serializers.JSONField(required=False)
 
-    weight = serializers.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        required=False,
-        allow_null=True,
-        validators=[
-            MinValueValidator(Decimal('0.01'), message='El peso debe ser mayor a 0.'),
-            # límite funcional (dominio clínico); el técnico de DB es 999.99 (max_digits=5)
-            MaxValueValidator(Decimal('200.00'), message='El peso no puede superar 200 kg.'),
-        ],
-    )
+    # M03 (orden 7): solo lectura y derivado de VitalSigns. El peso se escribe con
+    # POST /medical-records/<id>/vitals/; un `weight` en el PATCH se ignora.
+    weight = serializers.SerializerMethodField()
 
     class Meta:
         model = MedicalRecord
@@ -211,7 +200,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             'vet_snapshot_source', 'vet_snapshot_recorded_at', 'vet_specialty_at_close',
             'appointment', 'appointment_public_id', 'appointment_date',
             'consultation_type',
-            'diagnosis', 'treatment', 'notes', 'weight', 'force_weight', 'created_at', 'updated_at',
+            'diagnosis', 'treatment', 'notes', 'weight', 'created_at', 'updated_at',
             'consultation_draft',
             'products_used',
             'prescription_id', 'prescription_public_id', 'prescription_summary',
@@ -235,8 +224,6 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         data = super().validate(data)
-        weight = data.get('weight')
-        force_weight = data.pop('force_weight', False)
 
         # Validación explícita de longitud (PostgreSQL no respeta max_length en TextField).
         # Si el valor enviado es igual al existente en DB y supera el límite,
@@ -254,13 +241,6 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         # El diagnóstico se valida al cerrar la consulta (close_medical_record),
         # no al crear. Esto permite pre-crear registros desde el flujo "Atender ahora"
         # y llenarlos progresivamente en el stepper.
-
-        # Validación de cambio brusco de peso (solo en actualizaciones con peso informado)
-        if weight and self.instance:
-            try:
-                _validate_weight_change(self.instance.pet, weight, force=force_weight)
-            except serializers.ValidationError as exc:
-                raise serializers.ValidationError({'weight': exc.detail})
         return data
 
     def update(self, instance, validated_data):
@@ -372,6 +352,15 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         if not can_modify_medical_record_charges(user, obj):
             return False
         return not medical_record_has_clinical_content(obj)
+
+    def get_weight(self, obj):
+        # Recorre la relación prefetchada (orden del modelo: -recorded_at,
+        # -created_at) para no sumar una consulta por fila en los listados.
+        weight = next(
+            (vital.weight for vital in obj.vital_signs.all() if vital.weight is not None),
+            None,
+        )
+        return None if weight is None else str(weight)
 
     def get_latest_vitals(self, obj):
         vital = obj.vital_signs.order_by('-recorded_at', '-created_at').first()
