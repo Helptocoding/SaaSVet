@@ -12,6 +12,15 @@ export const createStaff = async (data) => {
     return res.data;
 };
 
+/**
+ * Edita especialidad y cédula profesional de un miembro (M01, orden 7).
+ * El backend rechaza cualquier otra clave.
+ */
+export const updateStaff = async (publicId, data) => {
+    const res = await api.patch(`staff/${publicId}/`, data);
+    return res.data;
+};
+
 export const deactivateStaff = async (id) => {
     const res = await api.delete(`staff/${id}/`);
     return res.data;

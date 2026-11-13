@@ -86,3 +86,17 @@ Observaciones sin cambio: ninguna.
 
 Límites: el sistema no verifica la cédula contra la SEP; editar una receta existente (PATCH) no la exige.
 Observaciones sin cambio: ninguna.
+
+## E04 — M01: capturar la cédula en Equipo (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| `vitest run src/pages/staff.test.jsx` | `Tests  5 passed (5)` |
+| `pnpm run test` (paralelismo por defecto), 4 corridas | `1 failed` / `2 failed` / `1 failed` / `3 failed`, todos `Test timed out in 5000ms` en `src/pages/inbox/index.test.jsx` (corridas de ~310 s) |
+| `vitest run src/pages/inbox/index.test.jsx` solo | `Tests  93 passed (93)` |
+| `vitest run --maxWorkers=2` (suite completa) | `Test Files  79 passed (79)` / `Tests  851 passed (851)` |
+| `lint` / `build` | `exit=0` / `exit=0` |
+| `smoke:urls` | `url_construction.cjs — OK (5/5 gates verde, 0 matches)` |
+
+Límites: sin prueba manual en navegador; la cubren las pruebas de Vitest con el cliente HTTP sustituido.
+Observaciones sin cambio: las pruebas de `inbox/index.test.jsx` (no tocadas) agotan 5 s con el paralelismo por defecto en este equipo cargado; ya falló una en E00 y la archivo solo pasa 93/93. No se subió ningún timeout. Con `--maxWorkers=2` pasa todo. Vigilar en E05.
