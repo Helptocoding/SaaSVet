@@ -339,3 +339,7 @@ Decisiones aprobadas, pruebas A, B, C y D y escenarios de rollback en verde, pre
 - **Quitar `*.*` ahora con la lista generada:** habría cortado 10 rutas a todos los administradores, incluida la configuración de la clínica.
 - **Dar por resuelta H-1 con la versión reducida:** no impide que un código nuevo se conceda solo.
 - **Derivar la lista de los grupos de clasificación:** clasificar volvería a conceder.
+
+## Addendum — orden 7 (12-11-2026)
+
+Se añade `staff.update` (sensible): editar especialidad y cédula profesional de un miembro de Equipo. Entra en la lista literal del ADMIN; ningún otro rol lo recibe. Motivo y alcance en [ADR p64](2026-11-12-p64-cedula-profesional-firmante.md).

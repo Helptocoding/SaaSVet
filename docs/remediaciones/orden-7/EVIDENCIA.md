@@ -111,3 +111,30 @@ Sin cambios de código. Antes de E05 cambian los prompts y la matriz:
 - **`MATRIZ.md`:** los marcadores «(commit E0X)» se sustituyen por los hashes reales.
 
 Revisión de E01–E04: cada prompt se reaplicó sobre el estado anterior y el código de cada commit resultó idéntico al del prompt (E01 24 cambios, E02 28, E03 26, E04 12).
+
+## E05 — Cierre (12-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| `check` | `System check identified no issues (0 silenced).` |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| Corrida amplia, llamada 1 (`apps.core`) | `Ran 322 tests` / `OK (skipped=7)` |
+| Corrida amplia, llamada 2 (users, organizations, legal, 4 módulos de platform/patients/inventory) | `Ran 294 tests` / `OK` |
+| Corrida amplia, llamada 3 (medical_records, prescriptions, billing, T8 de analítica) | `Ran 236 tests` / `OK` |
+| Suma de las tres | **852** pruebas, `OK`, 7 `skipped` (825 de la línea base + 5 E01 + 15 E02 + 7 E03) |
+| Frontend `vitest run --maxWorkers=2` | `Test Files 79 passed (79)` / `Tests 851 passed (851)` |
+| `lint` / `build` | `exit=0` / `exit=0` |
+| `smoke:urls` | `url_construction.cjs — OK (5/5 gates verde, 0 matches)` |
+| `git diff bb5a070 --name-only -- '*/migrations/*'` | `medical_records/0030`, `medical_records/0031`, `users/0012` |
+| `git diff bb5a070 --name-only -- frontend` | `src/api/staff.js`, `src/pages/staff.jsx`, `src/pages/staff.test.jsx` |
+| `git diff bb5a070 --name-only -- backend/apps/analytics` | solo `test_late_arrival_observability.py` |
+| `git diff bb5a070 --stat -- scripts/release.sh` | sin cambios |
+| Cluster aislado | `stop exit=0` (detenido, no borrado) |
+
+Límites:
+- La suite global de backend (más de 4.000 pruebas) solo queda probada en CI cuando el usuario suba la rama.
+- Sin despliegue. Las migraciones no se aplicaron a ninguna base real; el `seed_permissions` del próximo despliegue dará `staff.update` a los ADMIN.
+- `MedicalRecord.weight` sigue en la base: su `RemoveField` es una entrega posterior.
+- Los VET y ADMIN existentes que firman no podrán cerrar ni recetar hasta que un ADMIN capture su cédula.
+- El frontend se verificó con `--maxWorkers=2`; con el paralelismo por defecto las pruebas de `inbox/index.test.jsx` agotan 5000 ms en este equipo (CI conserva `pnpm run test`).
+- M02, M04 (analítica excluida de la primera versión) y M05 (no seleccionado; su TODO contradice el CHECK `invoiceitem_exactly_one_source`, ver plan §3) quedan `FUERA_DE_ALCANCE`.

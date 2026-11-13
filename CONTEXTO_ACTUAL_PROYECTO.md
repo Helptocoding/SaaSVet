@@ -343,7 +343,7 @@ Stack: React 19 + Vite + React Router 7 + Axios + FullCalendar + Sonner + react-
 | `Presentation.stock`, `Presentation.base_unit`, `Presentation.min_stock` deprecated (no eliminar pre-beta) | Media | ADR p31 |
 | `cost_behavior` no tiene PATCH post-creación (by design, inmutable) | Media | ADR p32 |
 | Flip de charts a `revenue_paid_net` + bump `METRICS_SCHEMA_VERSION` tras PO sign-off | Media | ADR p29 |
-| `MedicalRecord.weight` → migrar a solo `VitalSigns` (data migration) | Media | — |
+| `MedicalRecord.weight`: `RemoveField` (fase contract). Backfill y corte de lectores hechos en el orden 7 (M03) | Media | — |
 | Frontend dashboards consumiendo `/api/v1/dashboard/*/series/` — backend listo, UI pendiente | Media | — |
 | RLS DB-side (ADR p23 propuesto) diferido post-beta | Media/Post-beta | ADR p23 |
 | Inconsistencia ortográfica: `billing='cancelled'` vs `appointments='canceled'` | Baja | — |

@@ -1,6 +1,6 @@
 # Orden 7 — expediente y prompts por entrega
 
-Contrato: [plan acordado](../../plan-remediacion-orden-7-2026-11-12.md). Estado: **plan acordado, sin implementar**. Este expediente no acredita remediación hasta que [MATRIZ](MATRIZ.md) y [EVIDENCIA](EVIDENCIA.md) lo digan.
+Contrato: [plan acordado](../../plan-remediacion-orden-7-2026-11-12.md). Estado: **implementado localmente, pendiente de revisión y subida por el usuario**. Este expediente no acredita remediación hasta que [MATRIZ](MATRIZ.md) y [EVIDENCIA](EVIDENCIA.md) lo digan.
 
 ## Cómo usarlo
 

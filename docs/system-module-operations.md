@@ -90,6 +90,7 @@ negocio dentro del SaaS** para cada dominio.
 **Requiere**
 - Un usuario `ADMIN` autenticado y perteneciente a la organización.
 - Contraseña de al menos 8 caracteres, con al menos 1 mayúscula y 1 número.
+- Si el rol es `VET`, cédula profesional: solo dígitos, de 5 a 10 (orden 7, ADR p64).
 - Que `seed_permissions` ya se haya ejecutado en la organización.
 
 **Resultado**
@@ -547,6 +548,7 @@ open → closed (terminal, irrevocable)
 
 **Requiere**
 - Consulta en `open` y sin receta previa (relación OneToOneField).
+- Cédula profesional de quien la emite, que es su firmante (orden 7, ADR p64).
 - Cada `PrescriptionItem` debe tener: `product.requires_prescription=True`, `dose` no vacío y `quantity > 0`.
 - Validación de tenant sobre cada `product`.
 
@@ -573,6 +575,7 @@ open → closed (terminal, irrevocable)
 - `diagnosis` no vacío (para todos los tipos de consulta).
 - `treatment` no vacío (excepto cuando `consultation_type=vaccine`).
 - El VET asignado (o un ADMIN).
+- Cédula profesional del veterinario de la consulta, que la firma, aunque cierre un ADMIN (orden 7, ADR p64). Se congela en `vet_license_at_close`.
 
 **Resultado** (atómico, ADR p30)
 - `status='closed'`. `closed_at = now()`. `closed_at_source='service'`. `closed_by` registrado.
