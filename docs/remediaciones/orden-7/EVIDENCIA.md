@@ -138,3 +138,24 @@ Límites:
 - Los VET y ADMIN existentes que firman no podrán cerrar ni recetar hasta que un ADMIN capture su cédula.
 - El frontend se verificó con `--maxWorkers=2`; con el paralelismo por defecto las pruebas de `inbox/index.test.jsx` agotan 5000 ms en este equipo (CI conserva `pnpm run test`).
 - M02, M04 (analítica excluida de la primera versión) y M05 (no seleccionado; su TODO contradice el CHECK `invoiceitem_exactly_one_source`, ver plan §3) quedan `FUERA_DE_ALCANCE`.
+
+## Integración en develop y CI (12-11-2026)
+
+Por petición del usuario, la rama se subió y se abrió el [PR #6](https://github.com/Helptocoding/SaaSVet/pull/6) contra `develop`. El usuario lo mergeó: `ea21232`, con padres `bb5a070` (`develop`) y `80fc42f` (la rama). `develop` no se movió mientras el PR estuvo abierto y `git diff 80fc42f ea21232` no imprime nada, así que las dos corridas probaron el mismo árbol.
+
+| Corrida | Evento | Commit probado | Resultado |
+|---|---|---|---|
+| [43359001376](https://github.com/Helptocoding/SaaSVet/actions/runs/43359001376) | `pull_request` | merge provisional de `80fc42f` sobre `bb5a070` | 4 jobs OK |
+| [43371486161](https://github.com/Helptocoding/SaaSVet/actions/runs/43371486161) | `push` a `develop` | `ea21232` | 4 jobs OK |
+
+En las dos:
+
+- Backend: migraciones y los corpus B0, B3, B4 y B5 (17, 43, 70 y 37 pruebas). Suite global: `Ran 4050 tests` / `OK (skipped=20)`. Son 27 más que las 4.023 del orden 6, las mismas que sumaron E01–E03 (5 + 15 + 7).
+- Frontend, images y security (gitleaks bloqueante): OK. En la corrida del PR, `pnpm run test` con el paralelismo por defecto dio 79 archivos y 851 pruebas: las de `inbox/index.test.jsx` no agotaron su límite en CI.
+
+Con esto se cierran el primer límite de E05 y el del frontend con `--maxWorkers=2`. Siguen vigentes:
+
+- Sin despliegue. Las migraciones `users/0012`, `medical_records/0030` y `0031` no se aplicaron a ninguna base real; el próximo `seed_permissions` dará `staff.update` a los ADMIN.
+- Tras desplegar, un ADMIN debe capturar las cédulas de quienes firman antes de que la clínica cierre consultas o emita recetas.
+- `MedicalRecord.weight` sigue en la base: su `RemoveField` es una entrega posterior.
+- El cluster aislado sigue detenido y sin borrar.

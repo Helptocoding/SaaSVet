@@ -1,6 +1,6 @@
 # Orden 7 — expediente y prompts por entrega
 
-Contrato: [plan acordado](../../plan-remediacion-orden-7-2026-11-12.md). Estado: **implementado localmente, pendiente de revisión y subida por el usuario**. Este expediente no acredita remediación hasta que [MATRIZ](MATRIZ.md) y [EVIDENCIA](EVIDENCIA.md) lo digan.
+Contrato: [plan acordado](../../plan-remediacion-orden-7-2026-11-12.md). Estado: **integrado en `develop` por el [PR #6](https://github.com/Helptocoding/SaaSVet/pull/6) (`ea21232`), con CI en verde el 12-11; sin despliegue**. Este expediente no acredita remediación hasta que [MATRIZ](MATRIZ.md) y [EVIDENCIA](EVIDENCIA.md) lo digan.
 
 ## Cómo usarlo
 
