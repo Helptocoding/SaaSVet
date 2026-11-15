@@ -1638,10 +1638,20 @@ Por qué importa: con "el primer VET por pk" la capacidad ofertada era la de
 mismo. La ocupación del día se resuelve en **una sola** llamada a la API
 (`GET /appointments/?date=`) agrupando por veterinario, no una por vet.
 
-Limitación conocida (deuda MP-5 de la auditoría): la rejilla compara
-`start_time` exacto en pasos de 30 min, así que no modela duraciones distintas
-ni citas fuera de rejilla. El dominio revalida el solape real al crear; si
-pierde la carrera, el agente re-oferta.
+**Ocupación por intervalos (deuda MP-5 de la auditoría, revalidada en el
+orden 8, G09).** Desde B2 (`9ccc31a`, 15-09) `_day_occupancy` guarda el
+inicio y el fin de cada cita activa, y `_vet_free` descarta un hueco que se
+solape con cualquiera de ellas. Por eso una cita larga (09:00–10:30) tapa
+todos los huecos que cubre y una cita fuera de la rejilla (09:15–09:45) tapa
+los dos que pisa; `check_appointment_slot` detecta también el solape parcial.
+Lo fijan las pruebas de `tests/test_slots.py`.
+
+Límite que queda: el agente ofrece citas de **30 min** (`SLOT_MINUTES`, la
+misma duración que la atención sin cita), en pasos de 30 desde la apertura de
+cada tramo del horario. Una ventana libre fuera de esa rejilla (las 09:15 tras
+una cita de 09:00 a 09:15) no se ofrece, y el dominio no tiene duración por
+servicio. El dominio revalida el solape real al crear (INV-D); si pierde la
+carrera, el agente re-oferta.
 
 ### W1 — experiencia y conservación vinculante
 
