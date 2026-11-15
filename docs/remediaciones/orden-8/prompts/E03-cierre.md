@@ -8,7 +8,7 @@ Comprobar el conjunto con la corrida de referencia, registrar los IDs que el usu
 
 ## Precondición
 
-`git log --oneline c71c0ed..HEAD` muestra cuatro commits: los dos de E00 y uno por cada entrega E01 y E02. En `MATRIZ.md`, G07 y G09 están en `IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE`. Si no, `BLOQUEADA`.
+`git log --oneline c71c0ed..HEAD` incluye `feat(agent): restrict TurnDecision verdict to the arbiter verdicts (order 8, G07)` y `test(agent): pin interval-based availability and document grid limit (order 8, G09)`. En `MATRIZ.md`, G07 y G09 están en `IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE`. Si no, `BLOQUEADA`. El número de commits no cuenta: E01 y E02 hicieron dos cada una (código y expediente), y hay además uno que ajustó este prompt.
 
 ## Archivos permitidos
 
@@ -48,7 +48,7 @@ Al terminar, detén el cluster sin borrarlo:
 
 ## Paso 2. Expediente
 
-- `MATRIZ.md`: los siete IDs restantes pasan a `FUERA_DE_ALCANCE`, todos con entrega E03 y `EVIDENCIA.md §E03`. Completa la fila E03 del avance.
+- `MATRIZ.md`: los siete IDs restantes pasan a `FUERA_DE_ALCANCE`, todos con entrega E03, `—` en la columna Commit y `EVIDENCIA.md §E03`. Completa la fila E03 del avance con el `Ran` de A y B y `—` en Commit. E03 es **un solo commit**, el de cierre, y no puede citar su propio hash.
 - `EVIDENCIA.md`: sección E03 con la salida de los comandos del paso 1 y una tabla con el motivo de cada ID fuera de alcance:
 
   | ID | Motivo |
@@ -63,6 +63,11 @@ Al terminar, detén el cluster sin borrarlo:
   - El agente sigue ofreciendo solo citas de 30 min en la rejilla (G09).
   - Las filas de `TurnDecision` anteriores a É-F5 Fase 4 conservan su texto libre (G07).
   - El cluster aislado quedó detenido y no se borró.
+
+  Y estas observaciones de la revisión entre entregas, copiadas tal cual:
+  - E00: el límite sobre `agent.0029_inbox_read_state` quedó cerrado. Al repetir `migrate --noinput` en el cluster aislado, la salida fue `No migrations to apply.`
+  - E01 y E02 hicieron dos commits cada una, uno de código y otro de expediente, para que `MATRIZ.md` citara el hash del primero. En la revisión, los 7 archivos de código y documentación coincidieron con la validación en seco del 14-11.
+  - E01: el `grep` del prompt esperaba una línea. La segunda, `decision = result.get('decision', '')`, ya existía en `c71c0ed` y no forma parte de G07.
 - `README.md`: cambia el estado a `implementado localmente, pendiente de revisión y subida por el usuario`.
 
 ## Cierre
