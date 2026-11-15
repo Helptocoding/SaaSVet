@@ -8,6 +8,7 @@ duration_ms, variable, NUNCA se afirma aquí — harían la suite intermitente).
 """
 from unittest.mock import patch
 
+from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 
 from apps.agent import arbiter, planner
@@ -45,6 +46,29 @@ class BecauseGovernanceTests(SimpleTestCase):
         self.assertLessEqual(len(TurnDecision.Because.values), 12)
 
 
+class VerdictVocabularyTests(SimpleTestCase):
+    """G07 (orden 8): `verdict` solo admite los veredictos del árbitro o vacío.
+
+    Sin DB: `choices` es una propiedad del campo y `full_clean()` la aplica al
+    guardar cualquier fila nueva, también en el flush B3."""
+
+    def test_verdict_choices_are_exactly_the_arbiter_verdicts(self):
+        self.assertEqual(tuple(TurnDecision.Verdict.values), arbiter.VERDICTS)
+
+    def test_planner_output_is_not_a_valid_verdict(self):
+        field = TurnDecision._meta.get_field('verdict')
+        for planner_output in ('reply', 'silent', 'escalate', 'planner_reply'):
+            with self.subTest(planner_output=planner_output):
+                with self.assertRaises(ValidationError):
+                    field.clean(planner_output, None)
+
+    def test_every_arbiter_verdict_and_empty_are_valid(self):
+        field = TurnDecision._meta.get_field('verdict')
+        for value in (*arbiter.VERDICTS, ''):
+            with self.subTest(value=value):
+                self.assertEqual(field.clean(value, None), value)
+
+
 class TurnDecisionSetupMixin:
     def setUp(self):
         self.org = Organization.objects.create(name="TD Org", timezone="UTC")
@@ -70,6 +94,28 @@ class TurnDecisionSetupMixin:
             author_type=Message.AUTHOR_CLIENT, body=text,
             status=Message.STATUS_PROCESSED,
         )
+
+
+class ArbiterFailureTests(TurnDecisionSetupMixin, TestCase):
+    """G07 (orden 8): si el árbitro lanza, la fila no inventa un veredicto.
+
+    Fuera de B3 `_settle_commitment` registra `AGENT_ARBITER_FAILED` y devuelve
+    `(None, None)`. Antes la fila copiaba la salida del planner en `verdict`;
+    ahora queda vacía y la salida sigue en `facts_produced['salida']`."""
+
+    def test_arbiter_failure_leaves_an_empty_verdict(self):
+        msg = self._inbound("¿eres una persona?")
+        with patch('apps.agent.arbiter.decide', side_effect=RuntimeError("boom")), \
+                self.assertLogs('agent.events', level='ERROR') as logs:
+            planner.handle_inbound(
+                self.conv, agent_settings=self.settings, triggered_by=msg,
+                burst=["¿eres una persona?"],
+            )
+        self.assertTrue(any('AGENT_ARBITER_FAILED' in line for line in logs.output))
+        row = TurnDecision.objects.get(conversation=self.conv)
+        self.assertEqual(row.verdict, '')
+        self.assertEqual(row.facts_produced['salida'], 'reply')
+        self.assertEqual(row.active_commitment, '')
 
 
 class ExhaustivenessTests(TurnDecisionSetupMixin, TestCase):
