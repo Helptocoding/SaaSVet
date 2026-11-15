@@ -74,3 +74,41 @@ Observaciones sin cambio: el `grep` del prompt esperaba una sola línea; la lín
 
 Límites: el agente sigue ofreciendo solo citas de 30 min en la rejilla que empieza en la apertura de cada tramo; ofrecer ventanas fuera de ella o duraciones por servicio es una extensión de producto fuera de este orden. Sin cambios de código de producción.
 Observaciones sin cambio: no se corrió la corrida B completa (B = 246 esperado con E02); solo `test_slots`.
+
+## E03 — Cierre: corrida de referencia, IDs fuera de alcance y expediente (14-11-2026)
+
+| Comando | Resultado |
+|---|---|
+| Precondición (`git log c71c0ed..HEAD`, MATRIZ) | `fb224bc` (G07) y `4540073` (G09) presentes; G07 y G09 `IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE` |
+| `check` | `System check identified no issues (0 silenced).` |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| Corrida de referencia A | `Ran 107 tests in 130.298s`, `OK` |
+| Corrida de referencia B | `Ran 246 tests in 170.445s`, `OK (skipped=1)` |
+| `git diff c71c0ed --name-only -- '*/migrations/*'` | `backend/apps/agent/migrations/0030_turndecision_verdict_choices.py` |
+| `git diff c71c0ed --name-only` (producción, sin tests ni migraciones) | `backend/apps/agent/models.py`, `backend/apps/agent/planner.py` |
+| `git diff c71c0ed --stat` sobre `tools.py`, `frontend`, analítica y `release.sh` | sin salida |
+| Cluster aislado | detenido sin borrar (`stop exit=0`) |
+
+Los números coinciden con lo esperado: 103 + 4 (E01) = 107 en A y 242 + 4 (E02) = 246 en B. Ninguna llamada pasó a segundo plano.
+
+### IDs fuera de alcance
+
+| ID | Motivo |
+|---|---|
+| G01 | Decisión del usuario (14-11). El transcript de origen (06-08) es anterior a p58/p59, que rehicieron la verificación; reproducirlo exige un eval contra el modelo real, que no se autorizó. La obediencia del modelo a la conducta de p58 sigue sin evidencia con proveedor real. |
+| G08 | Decisión del usuario (14-11). Es diseño previo a ampliar las capacidades del agente, que sigue sin activarse. |
+| G02, G03, G04, G05, G10 | Decisión del usuario (14-11). Extensiones de producto fuera de la beta inicial. |
+
+### Límites
+
+- La suite global de backend (más de 4.000 pruebas, incluidas las de `apps.agent` y `apps.channels` completas y las suites de procesos B3/B8/B9) solo queda probada en CI cuando el usuario suba la rama.
+- Sin despliegue ni activación del agente. La migración `agent.0030` no genera SQL y no se aplicó a ninguna base real.
+- El agente sigue ofreciendo solo citas de 30 min en la rejilla (G09).
+- Las filas de `TurnDecision` anteriores a É-F5 Fase 4 conservan su texto libre (G07).
+- El cluster aislado quedó detenido y no se borró.
+
+### Observaciones de la revisión entre entregas
+
+- E00: el límite sobre `agent.0029_inbox_read_state` quedó cerrado. Al repetir `migrate --noinput` en el cluster aislado, la salida fue `No migrations to apply.`
+- E01 y E02 hicieron dos commits cada una, uno de código y otro de expediente, para que `MATRIZ.md` citara el hash del primero. En la revisión, los 7 archivos de código y documentación coincidieron con la validación en seco del 14-11.
+- E01: el `grep` del prompt esperaba una línea. La segunda, `decision = result.get('decision', '')`, ya existía en `c71c0ed` y no forma parte de G07.

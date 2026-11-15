@@ -6,13 +6,13 @@ Se actualiza al cerrar cada entrega. Estados permitidos: `PENDIENTE`, `EN_CURSO`
 |---|---|---|---|---|
 | G07 | E01 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | fb224bc | EVIDENCIA.md §E01 |
 | G09 | E02 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | 4540073 | EVIDENCIA.md §E02 |
-| G01 | E03 | PENDIENTE | | |
-| G02 | E03 | PENDIENTE | | |
-| G03 | E03 | PENDIENTE | | |
-| G04 | E03 | PENDIENTE | | |
-| G05 | E03 | PENDIENTE | | |
-| G08 | E03 | PENDIENTE | | |
-| G10 | E03 | PENDIENTE | | |
+| G01 | E03 | FUERA_DE_ALCANCE | — | EVIDENCIA.md §E03 |
+| G02 | E03 | FUERA_DE_ALCANCE | — | EVIDENCIA.md §E03 |
+| G03 | E03 | FUERA_DE_ALCANCE | — | EVIDENCIA.md §E03 |
+| G04 | E03 | FUERA_DE_ALCANCE | — | EVIDENCIA.md §E03 |
+| G05 | E03 | FUERA_DE_ALCANCE | — | EVIDENCIA.md §E03 |
+| G08 | E03 | FUERA_DE_ALCANCE | — | EVIDENCIA.md §E03 |
+| G10 | E03 | FUERA_DE_ALCANCE | — | EVIDENCIA.md §E03 |
 
 ## Avance
 
@@ -21,4 +21,4 @@ Se actualiza al cerrar cada entrega. Estados permitidos: `PENDIENTE`, `EN_CURSO`
 | E00 | A Ran 103 / OK; B Ran 242 / OK (skipped=1) | 26e1ab7 |
 | E01 | Ran 84 / OK | fb224bc |
 | E02 | Ran 12 / OK | 4540073 |
-| E03 | | |
+| E03 | A Ran 107 / OK; B Ran 246 / OK (skipped=1) | — |
