@@ -48,3 +48,17 @@ Observaciones sin cambio: ...
 
 Límites: no se listó explícitamente `agent.0029_inbox_read_state` en la salida de `migrate` (solo se vio el `tail`); `makemigrations --check` confirma que no hay migraciones pendientes.
 Observaciones sin cambio: `docs/hector.py` no existe en la copia de trabajo; no se tocó.
+
+## E01 — G07: `TurnDecision.verdict` con vocabulario cerrado (14-11-2026, `fb224bc`)
+
+| Comando | Resultado |
+|---|---|
+| `py_compile` de los 5 archivos Python | `compilado`, sin `FAIL` |
+| `grep -n "result.get('decision', '')" planner.py` | 2 líneas: 245 (`produced['salida'] = ...`, esperada) y 319 (`decision = result.get('decision', '')`, preexistente, ajena al cambio) |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| `sqlmigrate agent 0030` | `-- (no-op)` |
+| `migrate --noinput` | `Applying agent.0030_turndecision_verdict_choices... OK` |
+| `test_turn_decision test_contracts test_arbiter test_b3_durable --keepdb` | `Ran 84 tests in 122.454s`, `OK` |
+
+Límites: las filas anteriores a É-F5 Fase 4 conservan su texto libre (append-only); la validación vive en `full_clean()`, no en un `CHECK` de base de datos, así que un `bulk_create` o un `save(validate=False)` la saltan, igual que cualquier otro campo con `choices`.
+Observaciones sin cambio: el `grep` del prompt esperaba una sola línea; la línea 319 ya existía y no es parte de G07.
