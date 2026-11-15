@@ -1,6 +1,6 @@
 # Runbook — Pre-Launch Security Review (Capa 8)
 
-Capa 8 de [DEPLOY_VPS_PLAN.md](../../DEPLOY_VPS_PLAN.md). Auditoría completa antes de invitar usuarios reales. Bloquea el go-live si cualquier BLOCKER no pasa.
+Capa 8 del plan de despliegue VPS (`DEPLOY_VPS_PLAN.md`, retirado del árbol en `8886604`; se consulta con `git show 8886604^:DEPLOY_VPS_PLAN.md`). Auditoría completa antes de invitar usuarios reales. Bloquea el go-live si cualquier BLOCKER no pasa.
 
 **Cuándo correr**:
 1. Una vez antes de cambiar DNS al VPS (gate de launch).

@@ -8,6 +8,13 @@ tener que reconstruir el razonamiento desde cero.
 
 ## `unlink_family` debería suprimir el auto-rematch igual que `reset_contact_identity`
 
+**Estado (15-11-2026): resuelto en código; no reimplementar.** `unlink_family`
+asigna `contact.auto_rematch_blocked = True` y lo guarda
+(`backend/apps/agent/views.py:433`), desde `9643c03` (19-09, B7A). Límite: la
+prueba de la vista (`test_family_link.py::test_revoke_unlinks_family_contact`)
+comprueba owner, `linked_via` y nivel de verificación, pero no el flag; falta
+una aserción que lo ancle. El texto siguiente es el registro original.
+
 **Qué**: aplicar `auto_rematch_blocked=True` también en
 `agent/views.py::unlink_family` (líneas 203-227), no solo en
 `reset_contact_identity`.
@@ -48,6 +55,12 @@ sigue fresco.
 ---
 
 ## Investigar por qué el agente re-pregunta datos de identidad ya dados
+
+**Estado (15-11-2026): sigue abierto.** Es G01 del
+[plan priorizado](docs/plan-remediacion-priorizado-2026-10-28.md), §8. El
+orden 8 lo dejó fuera de alcance por decisión del usuario: reproducirlo exige
+un eval contra el modelo real, que no está autorizado
+([expediente](docs/remediaciones/orden-8/EVIDENCIA.md#ids-fuera-de-alcance)).
 
 **Qué**: entender la causa raíz real de que el agente vuelva a pedir
 nombre/mascota/últimos-4-dígitos que el cliente ya dio en la misma

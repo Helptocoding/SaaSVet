@@ -1,5 +1,7 @@
 # PLAN — Importador de Inventario (`entity_type=inventory`)
 
+> **Estado (15-11-2026):** implementado según [ADR p61](decisions/2026-08-25-p61-importador-inventario.md) («Aceptado — implementado») e [imports.md](modules/imports.md). Las casillas del criterio de cierre no se marcaron al terminar y no indican trabajo ausente. El orden 4 corrigió después I02 e I03 sobre este importador ([expediente](remediaciones/orden-4/README.md)).
+
 > **Documento de ejecución autocontenido.** Escrito para un agente/desarrollador
 > que **no tiene contexto previo** de esta conversación. Léelo completo antes de
 > tocar código. El análisis (ingeniería inversa del importador `owner_pet`) fue

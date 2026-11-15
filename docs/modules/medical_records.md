@@ -132,6 +132,10 @@ Reglas de negocio:
   profesional, porque es quien la firma: si no, `400` con `errors.license_number`
   (M01, orden 7). El PATCH de una receta existente no lo exige
 - una consulta `closed` no admite receta nueva ni modificacion de receta existente
+- la receta conserva su consulta: `Prescription.medical_record` es PROTECT (orden 2, D6, `prescriptions.0007`).
+  Al crearse guarda `subject_snapshot` con la identidad de la mascota; `Prescription.pet` solo se separa
+  (queda en `NULL`) por el borrado físico de plataforma ([platform.md](platform.md)), y el PDF y el detalle
+  leen entonces el snapshot
 
 Flujo en cobros (ver [Billing](billing.md)):
 

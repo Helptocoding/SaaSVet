@@ -175,7 +175,7 @@ expediente ajeno.
 **Bloquea**
 - **Un expediente existente con OTRO nombre** → **409 `owner_exists`** con el candidato (`public_id`, nombre), cero escrituras.
 - **Dos o más expedientes con ese teléfono** → **409 `owner_ambiguous`**, cero escrituras y **sin** candidato en el cuerpo (publicarlo sería sugerir la elección que INV-C prohíbe).
-- Su eliminación si tiene mascotas asociadas → **409 `resource_has_dependencies`** (FK con PROTECT, ADR p16).
+- Su borrado: `DELETE` archiva el cliente y sus mascotas (orden 2); ver «Archivar y restaurar Owner o Pet».
 - La eliminación del owner genérico → **409 `generic_resource_protected`**.
 
 **Módulos involucrados**
@@ -229,13 +229,39 @@ expediente ajeno.
 - **Modo alta con dos o más expedientes** → **409 `owner_ambiguous`**: cero escrituras, se ordena el dato primero.
 - Un `owner_public_id` de otra organización → 400 (no existe para este endpoint).
 - Cambiar el cliente de una mascota existente (`owner_public_id` en `PATCH`) → 400: re-parentar es otra operación.
-- Su eliminación si tiene registros médicos, vacunas, recetas, citas o facturas asociadas → **409**.
+- Su borrado: `DELETE` archiva la mascota (orden 2); ver «Archivar y restaurar Owner o Pet».
 - La eliminación de la mascota genérica → **409 `generic_resource_protected`**.
 
 **Lo que NO cambia**: cliente nuevo → crea; cliente conocido con el mismo nombre → reutiliza, igual que hoy. Lo único nuevo es que el caso ambiguo **pregunta en vez de inventar**.
 
 **Módulos involucrados**
 `patients`.
+
+---
+
+### Acción: Archivar y restaurar Owner o Pet (orden 2, A5)
+
+**Requiere**
+- Ser ADMIN de la clínica, o operador de plataforma.
+- Organización activa.
+- Para archivar: ninguna cita `scheduled`, `confirmed` o `in_progress` ni consulta `open` de las mascotas afectadas.
+- Para restaurar una mascota: su cliente activo.
+
+**Resultado**
+- `DELETE /api/owners/<id>/` (o `POST .../archive/`) archiva el cliente y todas sus mascotas; `DELETE /api/pets/<id>/` archiva la mascota. Guarda `archived_at` y `archived_by`; nada se borra.
+- `POST .../restore/` restaura. Restaurar un cliente no restaura sus mascotas.
+
+**Desbloquea**
+- Ocultar el sujeto de listados y búsquedas sin perder su historia.
+- Para plataforma, el borrado físico excepcional del sujeto ya archivado ([platform.md](modules/platform.md)).
+
+**Bloquea**
+- Actividad abierta, organización desactivada o sujeto genérico → **409 `archive_blocked`** (el `DELETE` de un genérico sigue en **409 `generic_resource_protected`**).
+- Restaurar un cliente cuyo teléfono ocupó otro mientras estaba archivado → **409 `owner_exists`** u **`owner_ambiguous`** (INV-C).
+- Listar archivados (`?archived=true`) sin ser ADMIN → **403**.
+
+**Módulos involucrados**
+`patients`, `appointments`, `medical_records`, `platform`.
 
 ---
 

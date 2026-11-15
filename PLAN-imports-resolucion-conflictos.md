@@ -1,5 +1,7 @@
 # PLAN — Resolución de errores/conflictos en importación de clientes y mascotas
 
+> **Estado (15-11-2026):** implementado en `33f81c9` y `559da66` (16-06): la fila como unidad lógica, `blocking[]`, conflictos clasificados, vista previa legible y commit bloqueado si hay errores. El contrato vigente está en [imports.md](docs/modules/imports.md); el orden 4 (I03) paginó después el reporte de conflictos. Las casillas del final no se marcaron al terminar y no indican trabajo ausente.
+
 > **Documento de ejecución autocontenido.** Escrito para un agente/desarrollador
 > que **no tiene contexto previo** de esta conversación. Léelo completo antes de
 > tocar código. No asumas comportamiento: los archivos y líneas citados son el

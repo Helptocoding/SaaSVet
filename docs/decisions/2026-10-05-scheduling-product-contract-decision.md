@@ -12,15 +12,15 @@ Se utilizan exclusivamente contratos y evidencia existentes del proyecto:
 
 | Ref. | Fuente | Qué fundamenta |
 | --- | --- | --- |
-| C1 | [Contrato B9C](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/contrato-concurrencia-b9c.md:33) | Cupo organizativo, claim, locks, recuperación y alcance limitado de SCALE. |
-| C2 | [Elegibilidad B3/C4/W1 v1](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/contrato-elegibilidad-preclaim-b3-c4-w1-v1.md:18) | READY monotónico derivado de PostgreSQL; elegibilidad distinta de autoridad y de SLA. |
-| C3 | [Contrato B9D](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/contrato-beta-release-b9d.md:33) | Alcance/tasa del piloto, cobertura humana, gates y aprobación por organización/capacidad. |
-| C4 | [Contrato B8A](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/contrato-execution-guard-b8amd:13) | Witness, fencing, tenant, consentimiento, TTL y autoridad antes de efectos. |
-| C5 | [Contrato B5](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/contrato-safety-handoff-b5md) | Safety/handoff independientes; orientación sin prometer atención, disponibilidad ni SLA clínico. |
-| P1 | [Plan canónico, principios](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/plan-implementacion-auditoria-agente-whatsapp-2026-09md:13), [B9](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/plan-implementacion-auditoria-agente-whatsapp-2026-09md:710) | Beta acotada, servicio multi-tenant, latencia de activación medida y ampliación por alcance/tasa aprobados. |
-| E1 | [Cierre formal de E4](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/e4-preclaim-scheduling-2026-10-04/report.md) | Capacidad, tiempos preclaim y límites de la evidencia causal del HEAD posterior. |
-| E2 | [Estado congelado](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/e4-preclaim-scheduling-2026-10-04/closure.json) y [manifiesto](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/e4-preclaim-scheduling-2026-10-04/manifest.sha256.json) | E4 cerrado; no violación contractual demostrada; integridad del expediente. |
-| H1 | [Recibo histórico PROFILE/B9E](C:/Users/LAP/Desktop/VeterinariaSaaS/docs/evals/profile-beta-1-e4-2026-10-01/final.json) | FAIL histórico separado del diagnóstico posterior. |
+| C1 | [Contrato B9C](../contrato-concurrencia-b9c.md) (l. 33) | Cupo organizativo, claim, locks, recuperación y alcance limitado de SCALE. |
+| C2 | [Elegibilidad B3/C4/W1 v1](../contrato-elegibilidad-preclaim-b3-c4-w1-v1.md) (l. 18) | READY monotónico derivado de PostgreSQL; elegibilidad distinta de autoridad y de SLA. |
+| C3 | [Contrato B9D](../contrato-beta-release-b9d.md) (l. 33) | Alcance/tasa del piloto, cobertura humana, gates y aprobación por organización/capacidad. |
+| C4 | [Contrato B8A](../contrato-execution-guard-b8amd) (l. 13) | Witness, fencing, tenant, consentimiento, TTL y autoridad antes de efectos. |
+| C5 | [Contrato B5](../contrato-safety-handoff-b5md) | Safety/handoff independientes; orientación sin prometer atención, disponibilidad ni SLA clínico. |
+| P1 | [Plan canónico, principios](../plan-implementacion-auditoria-agente-whatsapp-2026-09md) (l. 13), [B9](../plan-implementacion-auditoria-agente-whatsapp-2026-09md) (l. 710) | Beta acotada, servicio multi-tenant, latencia de activación medida y ampliación por alcance/tasa aprobados. |
+| E1 | [Cierre formal de E4](../evals/e4-preclaim-scheduling-2026-10-04/report.md) | Capacidad, tiempos preclaim y límites de la evidencia causal del HEAD posterior. |
+| E2 | [Estado congelado](../evals/e4-preclaim-scheduling-2026-10-04/closure.json) y [manifiesto](../evals/e4-preclaim-scheduling-2026-10-04/manifest.sha256.json) | E4 cerrado; no violación contractual demostrada; integridad del expediente. |
+| H1 | [Recibo histórico PROFILE/B9E](../evals/profile-beta-1-e4-2026-10-01/final.json) | FAIL histórico separado del diagnóstico posterior. |
 
 E4 queda `CLOSED / CAPACITY_LIMIT_CONFIRMED / STOP_BEFORE_TUNING`. El análisis posterior verificó que, con N=1, los providers controlados requieren al menos 1,1 s de servicio secuencial por turno frente a la entrada ruidosa de un turno/s. Esa carga excede incluso su capacidad ideal. Los tres diagnósticos terminaron con 207, 224 y 201 pendientes de org3. Estas cifras describen esa carga controlada; no son capacidad universal de producción ni un nuevo compromiso de throughput [E1, §§2–3].
 

@@ -1,6 +1,6 @@
 # Runbook — Observability (Capa 7)
 
-Capa 7 de [DEPLOY_VPS_PLAN.md](../../DEPLOY_VPS_PLAN.md). Cubre lo mínimo para enterarte de fallas antes que el cliente: error tracking, uptime probe externo, disk usage alert. NO Grafana / Loki / Prometheus — overkill para beta cerrada single-VPS.
+Capa 7 del plan de despliegue VPS (`DEPLOY_VPS_PLAN.md`, retirado del árbol en `8886604`; se consulta con `git show 8886604^:DEPLOY_VPS_PLAN.md`). Cubre lo mínimo para enterarte de fallas antes que el cliente: error tracking, uptime probe externo, disk usage alert. NO Grafana / Loki / Prometheus — overkill para beta cerrada single-VPS.
 
 **Stack final**:
 - **Sentry** — backend + frontend errors + performance traces. Tier free hasta 5K events/mes.

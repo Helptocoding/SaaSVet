@@ -1,6 +1,6 @@
 # Runbook — cron jobs (Capa 6)
 
-Capa 6 de [DEPLOY_VPS_PLAN.md](../../DEPLOY_VPS_PLAN.md). Tareas recurrentes que viven en el host (no en containers persistentes).
+Capa 6 del plan de despliegue VPS (`DEPLOY_VPS_PLAN.md`, retirado del árbol en `8886604`; se consulta con `git show 8886604^:DEPLOY_VPS_PLAN.md`). Tareas recurrentes que viven en el host (no en containers persistentes).
 
 **Pre-requisitos**: VPS provisionado per [vps-hardening.md](./vps-hardening.md). Repo clonado en `/home/deploy/apps/SaaSVet`. `.env.prod` existe + es 600. Stack arriba al menos una vez.
 

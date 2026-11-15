@@ -158,4 +158,4 @@ Con esto se cierran el primer límite de E05 y el del frontend con `--maxWorkers
 - Sin despliegue. Las migraciones `users/0012`, `medical_records/0030` y `0031` no se aplicaron a ninguna base real; el próximo `seed_permissions` dará `staff.update` a los ADMIN.
 - Tras desplegar, un ADMIN debe capturar las cédulas de quienes firman antes de que la clínica cierre consultas o emita recetas.
 - `MedicalRecord.weight` sigue en la base: su `RemoveField` es una entrega posterior.
-- El cluster aislado sigue detenido y sin borrar.
+- ~~El cluster aislado sigue detenido y sin borrar.~~ Ya no aplica: el 15-11 su directorio no existía en `Temp/opencode`.

@@ -133,4 +133,4 @@ Con esto se cierra el primer límite de E03. Siguen vigentes:
 - El agente sigue ofreciendo solo citas de 30 min en la rejilla (G09).
 - Las filas de `TurnDecision` anteriores a É-F5 Fase 4 conservan su texto libre (G07).
 - La conducta de G01 sigue sin evidencia con el modelo real.
-- El cluster aislado sigue detenido y sin borrar.
+- ~~El cluster aislado sigue detenido y sin borrar.~~ Ya no aplica: se borró el 15-11 a petición del usuario, tras comprobar que estaba detenido (`pg_ctl status` exit 3). Se borraron el directorio `orden8_pg18_20261114` y su log.

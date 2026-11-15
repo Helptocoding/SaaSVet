@@ -1,5 +1,7 @@
 # Sprint: Importador CSV/Excel (migración de clínicas)
 
+> **Estado (15-11-2026):** implementado. El importador de clientes y mascotas existe desde `c0ff207` (14-06, Fase A); lo describen [ADR p43](decisions/2026-06-16-p43-importador-csv-excel.md) y [imports.md](modules/imports.md). Este documento es el plan original: sus estados internos («sin implementar», «PLAN») son los de su fecha.
+
 **Fecha**: 2026-06-14
 **Estado**: PLAN — investigación cerrada, sin implementar.
 **Audiencia**: dev que implemente el importador, QA, PO.

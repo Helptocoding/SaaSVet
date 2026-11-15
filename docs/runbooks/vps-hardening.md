@@ -1,6 +1,6 @@
 # Runbook — VPS hardening (Ubuntu 24.04)
 
-Capa 5 de [DEPLOY_VPS_PLAN.md](../../DEPLOY_VPS_PLAN.md). Esto NO es código del repo — son comandos a correr UNA VEZ en el VPS recién aprovisionado, antes del primer `docker compose up`.
+Capa 5 del plan de despliegue VPS (`DEPLOY_VPS_PLAN.md`, retirado del árbol en `8886604`; se consulta con `git show 8886604^:DEPLOY_VPS_PLAN.md`). Esto NO es código del repo — son comandos a correr UNA VEZ en el VPS recién aprovisionado, antes del primer `docker compose up`.
 
 **Audiencia**: vos (o el on-call). Asumir cero conocimiento previo del host.
 

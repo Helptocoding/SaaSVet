@@ -8,7 +8,7 @@ Aloja la infraestructura de operaciones de plataforma (SaaS-wide) que **no
 pertenece al dominio de ninguna clínica individual**:
 
 - Provisioning de nuevos tenants (Organization + admin inicial).
-- Lifecycle de tenants (futuro: suspend, reactivate, billing state).
+- Lifecycle de tenants: desactivar y reactivar organizaciones, archivar sujetos y borrado físico excepcional (orden 2, 28-10-2026). El estado de facturación del tenant sigue como futuro.
 - Herramientas de soporte / ops (futuro: impersonación controlada, health
   dashboard, métricas SaaS).
 
@@ -29,6 +29,19 @@ Cualquier feature nueva que requiera importar desde `platform` hacia
 `medical_records` / `billing` / `appointments` / `inventory` es una señal
 de que la lógica está en el lado equivocado.
 
+**Excepciones (orden 2, 28-10-2026):**
+
+- El borrado físico y el historial de un tenant leen y borran modelos de
+  `patients`, `billing`, `medical_records` y `prescriptions`
+  (`services/physical_deletion.py`, `deletion_guards.py`, `views.py`). Es la
+  única forma de borrar físicamente esos datos, así que no puede vivir en un
+  dominio.
+- `core/management/commands/seed_demo_clinic.py` importa
+  `deletion_guards.demo_purge_authorized` y `provision_organization` para el
+  reset de la demo (ADR p49).
+
+Ningún módulo de dominio importa `platform`.
+
 ## Estructura
 
 ```
@@ -36,11 +49,14 @@ backend/apps/platform/
 ├── apps.py                 # PlatformConfig + docstring de dominio
 ├── permissions.py          # IsPlatformOperator
 ├── serializers.py          # ProvisionOrgSerializer
-├── views.py                # PlatformOrgCreateView, PlatformStaffResetPasswordView (thin)
+├── models.py               # PhysicalDeletionReceipt (orden 2)
+├── deletion_guards.py      # bloquea borrados ORM fuera de la vía autorizada (orden 2)
+├── views.py                # alta, reset, estado de org, archivo, historial y borrado físico (thin)
 ├── urls.py                 # Mount: /api/platform/
 ├── services/
 │   ├── provision_organization.py
-│   └── platform_reset_password.py    # ADR p45
+│   ├── platform_reset_password.py    # ADR p45
+│   └── physical_deletion.py          # preview/execute (orden 2)
 └── tests/
     ├── test_provision_service.py
     ├── test_view_auth.py
@@ -286,12 +302,50 @@ via esta API y comparte la contraseña temporal por canal seguro.
 
 ---
 
+### Ciclo de vida del tenant y de sus sujetos (orden 2, 28-10-2026)
+
+Todas exigen `IsPlatformOperator` y usan el throttle `platform_lifecycle`,
+salvo el borrado físico, que usa `platform_physical_deletion`.
+
+| Ruta | Qué hace |
+|---|---|
+| `POST /api/platform/organizations/<uuid>/deactivate/` y `.../reactivate/` | Cambia el estado de la organización con `reason` obligatorio y deja un `OrganizationStateAudit`. Efectos sobre login, refresh, worker y sender en [organizations.md](organizations.md). |
+| `GET /api/platform/organizations/<uuid>/history/?page=N` | Clientes y mascotas archivados, facturas y expedientes del tenant, con su `subject_snapshot`, en páginas de 100. Sirve también con la organización desactivada. |
+| `POST /api/platform/organizations/<org_uuid>/owners/<uuid>/archive/` (también `restore`, y `pets` en lugar de `owners`) | Mismo servicio que usa la clínica, `patients/archive.py::change_archive_state` ([patients.md](patients.md)). |
+| `POST /api/platform/physical-deletions/preview/` | Con `organization_id`, `target_type` (`owner`, `pet` u `organization`), `target_id` y `reason` (8–255 caracteres), devuelve `eligible`, `blockers`, `impact` y una `confirmation` firmada válida 300 s, solo si no hay bloqueos. |
+| `POST /api/platform/physical-deletions/execute/` | Con el mismo payload, la `confirmation` y un `idempotency_key` UUID, borra y deja un `PhysicalDeletionReceipt`. Repetir la clave devuelve el mismo recibo. |
+
+Reglas del borrado físico:
+
+- Solo se borra un sujeto ya **archivado**. Bloquean: `target_not_archived`,
+  `generic_resource`, `unsupported_import_provenance` (trae `legacy_id` o
+  `extra_data` del importador), `unsupported_reference` (cualquier referencia que
+  no se pueda separar), `identity_not_preserved` (un documento sin snapshot v1
+  válido), `open_medical_record`, `open_checkout` y `pending_payment`.
+- Solo se separan, quedando en `NULL`, `Invoice.owner/pet`, `Checkout.customer/pet`,
+  `MedicalRecord.pet` y `Prescription.pet`. Cada documento conserva la identidad
+  del sujeto en su `subject_snapshot`; eso no es anonimización.
+- `execute` vuelve a inspeccionar bajo lock. Si el impacto difiere del firmado,
+  si la confirmación venció, es de otro actor u objetivo o ya se usó, responde
+  `409 physical_delete_conflict` y no borra nada.
+- El recibo guarda UUIDs, no FKs al objetivo, así que sobrevive al borrado.
+- `deletion_guards.py` hace fallar cualquier borrado ORM de esos modelos que no
+  pase por esta vía o por la purga del reset de la demo.
+
+Pruebas: `platform.tests.test_physical_deletion`,
+`test_physical_deletion_hidden_refs` y `test_order2_migrations`. Expediente:
+[orden 2](../remediaciones/orden-2/README.md).
+
+---
+
 ## Throttling
 
 ```python
 # config/settings.py
 REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['platform_org_create'] = '20/hour'
 REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['platform_password_reset'] = '20/hour'
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['platform_physical_deletion'] = '30/hour'   # orden 2
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['platform_lifecycle'] = '60/hour'           # orden 2
 ```
 
 Scopes aplicados vía `ScopedRateThrottle`. Aplicados por actor (no por IP).

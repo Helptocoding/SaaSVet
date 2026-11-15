@@ -2,6 +2,8 @@
 
 **Corte:** 30-10-2026 · **Texto de aviso/cookies y regla de retención:** aprobación expresa recibida en esta conversación («lo acepto todo»). **Estado del conjunto:** `PENDIENTE_DE_APROBACION_Y_OPERACION_EXTERNA`.
 
+**Seguimiento 15-11:** el estado no cambia. Este expediente entró a `develop` con el merge `7b6ed82` (04-11). En `LandingSaaS`, los cambios del candidato siguen sin commit en `feature/migration-astro` (seis archivos modificados según `git status` del 15-11), y no se publicó nada.
+
 Este expediente ejecuta el alcance local autorizado en [`plan-remediacion-orden-3-2026-10-30.md`](../../plan-remediacion-orden-3-2026-10-30.md). No declara publicado el aviso, aceptados contratos, purgados registros ni verificados servicios externos.
 
 ## Resultado del candidato

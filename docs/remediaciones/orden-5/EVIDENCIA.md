@@ -226,3 +226,24 @@ Límites:
 - El gate bloqueante solo queda probado en CI cuando el usuario suba la rama.
 - Sin despliegue.
 - Verificación visual de E06 y E10: no realizada en navegador en esta entrega; solo lint, build y pruebas.
+
+## Integración en develop y CI (11-11-2026)
+
+Registrada el 15-11 con el historial de GitHub; al cerrar la orden no se documentó.
+
+La rama `fix/orden-5-calidad-frontend`, que también llevaba el orden 4, se subió y se abrió el [PR #3](https://github.com/Helptocoding/SaaSVet/pull/3) contra `develop`. El usuario lo mergeó: `a7dbdaf`, con padres `1d985dc` (`develop`) y `9e11989` (la rama). `git diff 9e11989 a7dbdaf` no imprime nada, así que las dos corridas probaron el mismo árbol.
+
+| Corrida | Evento | Commit probado | Resultado |
+|---|---|---|---|
+| [43106615507](https://github.com/Helptocoding/SaaSVet/actions/runs/43106615507) | `pull_request` | merge provisional de `9e11989` sobre `1d985dc` | 4 jobs OK |
+| [43114137928](https://github.com/Helptocoding/SaaSVet/actions/runs/43114137928) | `push` a `develop` | `a7dbdaf` | 4 jobs OK |
+
+En las dos:
+
+- Backend: los corpus B0, B3, B4 y B5 (17, 43, 70 y 37 pruebas). Suite global: `Ran 4009 tests` / `OK (skipped=20)`.
+- Frontend, con el lint ya bloqueante, images y security (gitleaks bloqueante): OK.
+
+Con esto se cierra el primer límite de E12: el gate bloqueante quedó probado en CI. Siguen vigentes:
+
+- Sin despliegue.
+- La verificación visual de E06 y E10 en navegador no se hizo.

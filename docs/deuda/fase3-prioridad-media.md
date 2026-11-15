@@ -53,6 +53,8 @@ Trade-off: lock independiente del row, más fuerte. Pero overhead.
 
 **Estimación:** 2 días (decisión + implementación + tests).
 
+
+**Estado:** resuelto por [ADR p31](../decisions/2026-06-03-p31-product-level-stock-base-units.md): `apply_stock_movement` toma su propio `select_for_update()` sobre `Product` y, si recibe lote, lo bloquea después del producto (`apps/inventory/services.py`, docstring y líneas ~80–92). Sigue exigiendo transacción atómica y el orden global de locks; ese contrato no se retira. Conciliado el 15-11 desde el [inventario de pendientes, §7](../pendientes-documentados-2026-10-27.md).
 ---
 
 ## B2 — `PrescriptionItemSerializer` vs `PrescriptionItemWriteSerializer` duplicación
@@ -307,8 +309,10 @@ Orden real por valor: **B ($10k) > A ($1k)**. Orden que produce el sort: **A (10
 
 **Estimación:** 30 min (fix 2 líneas + test + verificación).
 
+
+**Estado:** cerrado en el orden 4 ([expediente](../remediaciones/orden-4/README.md), [matriz](../remediaciones/orden-4/MATRIZ.md)). El orden usa `compareInventoryProducts` de `utils/inventory.js` (introducido en `929b6ae`), con valor por `productStockValue` y cantidad por `productStockQty`; `utils/inventory.test.js` ancla ambas direcciones.
 ---
 
 ## Tracking
 
-Cuando un item se cierre, mover a `docs/deuda/cerrado/` con su PR asociado + fecha de cierre.
+Los ítems cerrados conservan su sección con una línea **Estado** que enlaza el expediente donde se cerraron. No se mueven a `docs/deuda/cerrado/`, como pedía la versión anterior de esta nota, para no romper los enlaces de los expedientes de remediación (criterio fijado el 15-11-2026).

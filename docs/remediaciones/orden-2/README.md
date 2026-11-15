@@ -1,6 +1,8 @@
 # Orden 2 — integridad y conservación (implementación local)
 
-**Estado: implementación y validación local de los nueve IDs; aplicación futura pendiente.** Revisión base `8886604`; cambios sin commit. Sesión local: 28–29-10-2026. La base habitual local y el VPS **permanecen intactos**. Documentos ajenos no rastreados, incluido el cierre del orden 1, permanecen sin modificar.
+**Estado (15-11):** los nueve IDs están en `develop` desde el merge `7b6ed82` (04-11) de `codex/e4-capacity-scheduling`. Los incorporó el commit `929b6ae`, que además corrigió cinco fallos del trabajo recibido. La primera CI de `develop` en verde con ellos fue [41908656391](https://github.com/Helptocoding/SaaSVet/actions/runs/41908656391), sobre `b1c75ec` (backend, frontend y security OK), y la suite global siguió en verde en los PR #3, #4, #6 y #7. Sin despliegue: la [aplicación](APLICACION.md) a una base real sigue pendiente.
+
+Al cerrar la sesión local del 29-10 el estado era: implementación y validación local de los nueve IDs, aplicación futura pendiente, revisión base `8886604` y cambios sin commit. Sesión local: 28–29-10-2026. La base habitual local y el VPS **permanecen intactos**. Documentos ajenos no rastreados, incluido el cierre del orden 1, permanecen sin modificar.
 
 ## Entregas
 

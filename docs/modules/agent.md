@@ -1778,6 +1778,11 @@ lectura humana no hay ciclo de mejora, solo intuición.
     cambia el estado en **un commit**. Escribirlo a mano —o combinar
     `clear_pending` + `escalate_to_human` por separado— reabre el hueco por el
     que la intención del cliente se perdía en silencio.
+14. **Una organización desactivada no admite trabajo nuevo** (orden 2, 28-10-2026):
+    `durable.claim_turn` no reclama sus turnos y el sender devuelve a `pending`
+    los mensajes reclamados que aún no se admitieron, sin tocar evidencia remota.
+    Los pendientes se conservan para cuando se reactive. Contrato completo en
+    [organizations.md](organizations.md).
 
 ## B4 — frontera Message / Meta (2026-09-16)
 

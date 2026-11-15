@@ -1,7 +1,7 @@
 # P1-4 — Frontend Reliability: Investigación + Plan Técnico
 
 **Fecha:** 2026-06-13 (act. 2026-06-14)
-**Estado:** Fase A + B1 + B2 **completas** (CI verde, gate vitest bloqueante). B3 / C / D pendientes.
+**Estado (act. 2026-11-15):** Fases A, B1, B2 y B3 completas (B3 en `5da196e`). C y D cerradas por el orden 5: providers separados (C3), matemática de pagos centralizada (C4), subcomponentes de billing extraídos (F02) y lint bloqueante en CI (F01). Ver el [expediente del orden 5](remediaciones/orden-5/README.md).
 **Audiencia:** dev frontend, QA.
 **Principio rector:** *"puedo cambiar billing/inventario sin miedo antes de vender clínicas"*. Estabilidad > arquitectura bonita. No buscamos frontend perfecto.
 
@@ -37,6 +37,8 @@ Tests existentes  → 2 archivos huérfanos (toList.test.js, mapFieldErrors.test
 Conclusión: no hay infraestructura de test, solo 2 archivos que no corren. Toda estrategia empieza por instalar el runner (Fase A).
 
 ### CI actual (lo que realmente bloquea)
+
+> Foto del 13-06-2026. Desde el orden 5 (PR #3, 11-11-2026) `lint` bloquea por errores y `pnpm test` también es bloqueante; la app pasó de 61 errores a 0 ([expediente](remediaciones/orden-5/README.md)). Las cifras de lint de esta sección son las de junio.
 
 | Job | Gate | Bloquea merge |
 |---|---|---|
@@ -151,11 +153,11 @@ A+B1 (1.5–2 días) ya da el 60% del valor.
 - `react-hooks/immutability` + `set-state-in-effect` (36 err) en masa — triar individual en Fase C.
 - `standalone/dist` lint — 0 trackeado, no afecta CI; opcional `globalIgnores(['standalone'])` cosmético.
 - Reescritura de inventory/billing/appointments — prohibido.
-- Lint → blocking — hasta triar los 42 errores (Fase D).
+- Lint → blocking — hasta triar los 42 errores (Fase D). *Hecho en el orden 5 (2026-11).*
 - Coverage % gate — invita a tests de relleno.
 - Playwright/Cypress — fuera de scope beta.
 - 3 features incompletas (`unitChoices`, `unitsLoaded`, `totalCount`) — deuda documentada.
-- **authContext split (deuda C3):** diferir (opción B). ~31 imports; mecánico pero riesgoso. Solo si Fase C tiene tiempo, validado con build+smoke.
+- **authContext split (deuda C3):** diferir (opción B). ~31 imports; mecánico pero riesgoso. Solo si Fase C tiene tiempo, validado con build+smoke. *Hecho en el orden 5 (2026-11), moviendo los providers.*
 
 ---
 
@@ -185,8 +187,8 @@ Cada flecha = PR independiente.
 - [x] 0 tests rojos. *(112 verde)*
 
 **Deseable (no bloqueante):**
-- [ ] billing.jsx sub-componentes extraídos.
-- [ ] duplicación `sum/remaining` eliminada.
+- [x] billing.jsx sub-componentes extraídos. (orden 5, F02, `d40bdae`)
+- [x] duplicación `sum/remaining` eliminada. (orden 5, C4, `92c4b96`)
 - [x] 42 errores react-hooks triados → lint blocking. (orden 5, 2026-11)
 
 **Señal de éxito:** un dev cambia un campo en billing/inventory, corre `pnpm test`, y si rompe la regla de cobro/stock el test falla **antes** del merge.

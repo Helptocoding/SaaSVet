@@ -271,4 +271,4 @@ infra que hoy corre** para eliminar el drift del VPS.
 
 ## Tracking
 
-Cuando un item se cierre, mover a `docs/deuda/cerrado/` con su PR asociado + fecha de cierre.
+Los ítems cerrados conservan su sección con una línea **Estado** que enlaza el expediente donde se cerraron. No se mueven a `docs/deuda/cerrado/`, como pedía la versión anterior de esta nota, para no romper los enlaces de los expedientes de remediación (criterio fijado el 15-11-2026).

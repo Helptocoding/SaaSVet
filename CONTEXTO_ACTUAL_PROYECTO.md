@@ -3,8 +3,10 @@
 Fecha de corte: 2026-06-27
 Fuente: estado real del repositorio (backend + frontend) + docs/modules/* + landingsaas.
 
+> **Nota de desfase (15-11-2026):** Billing ya no sigue la máquina `draft→confirmed→paid/cancelled` descrita más abajo: desde ADR p62 se prepara en Checkout y la Invoice nace `posted` y pasa a `paid` o `voided` ([billing.md](docs/modules/billing.md)). El estado de las órdenes de remediación está en el [plan priorizado](docs/plan-remediacion-priorizado-2026-10-28.md#estado-de-ejecución-15-11-2026). El resto de este documento conserva el corte del 27-06.
+>
 > **Notas de desfase (2026-06-27):**
-> - **Deploy:** proyecto migrado de Railway/Vercel a **Docker/VPS** (branch `develop`). Secciones 2 y 9 describen la arquitectura objetivo Docker/VPS. Ver `DEPLOY_VPS_PLAN.md` y `DEPLOY_VPS_STATUS.md` para estado real.
+> - **Deploy:** proyecto migrado de Railway/Vercel a **Docker/VPS** (branch `develop`). Secciones 2 y 9 describen la arquitectura objetivo Docker/VPS. Ver el [runbook de deploy](docs/runbooks/deploy.md). `DEPLOY_VPS_PLAN.md` y `DEPLOY_VPS_STATUS.md` se retiraron del árbol en `8886604` (23-10-2026) y quedan en el historial de git.
 > - **Changelog prosa:** llega hasta p33. Los sprints p34–p46 están en el índice de ADRs (§11); su prosa-changelog no se backfilleó en §10.
 > - **Landing:** proyecto hermano `landingsaas` (Astro) en `C:\Users\LAP\Desktop\landingsaas` — landing page de marketing con Logo.astro y favicon compartido `iconosaaslyvet.ico`.
 
@@ -339,14 +341,14 @@ Stack: React 19 + Vite + React Router 7 + Axios + FullCalendar + Sonner + react-
 | `seed_permissions` en próximo deploy: `cashsession.*`, `billing.refund`, `billing.rx_dispense` | Alta | — |
 | Wire Cron `nightly_snapshots` + `nightly_anchor_audit` con alerting on non-zero exit | Alta | — |
 | `ALLOW_LEGACY_ID_LOOKUP=False` en producción | Alta | — |
-| Deprecated `/api/organizations/<pk>/` Sunset 2026-08-17 → 410 Gone auto | Alta | — |
+| ~~Deprecated `/api/organizations/<pk>/` Sunset 2026-08-17 → 410 Gone auto~~ Retirado en el orden 6 (D2): la vista se borró y la ruta responde 404 | — | [orden 6](docs/remediaciones/orden-6/README.md) |
 | `Presentation.stock`, `Presentation.base_unit`, `Presentation.min_stock` deprecated (no eliminar pre-beta) | Media | ADR p31 |
 | `cost_behavior` no tiene PATCH post-creación (by design, inmutable) | Media | ADR p32 |
 | Flip de charts a `revenue_paid_net` + bump `METRICS_SCHEMA_VERSION` tras PO sign-off | Media | ADR p29 |
 | `MedicalRecord.weight`: `RemoveField` (fase contract). Backfill y corte de lectores hechos en el orden 7 (M03) | Media | — |
-| Frontend dashboards consumiendo `/api/v1/dashboard/*/series/` — backend listo, UI pendiente | Media | — |
+| ~~Frontend dashboards consumiendo `/api/v1/dashboard/*/series/` — backend listo, UI pendiente~~ Hecho: `frontend/src/pages/analytics/index.jsx` usa `getFinancialSeries` y `getOperationsSeries` (conciliado el 15-11-2026) | — | — |
 | RLS DB-side (ADR p23 propuesto) diferido post-beta | Media/Post-beta | ADR p23 |
-| Inconsistencia ortográfica: `billing='cancelled'` vs `appointments='canceled'` | Baja | — |
+| ~~Inconsistencia ortográfica: `billing='cancelled'` vs `appointments='canceled'`~~ No aplica: ADR p62 sustituyó el ciclo de vida de Billing (Invoice `posted/paid/voided`) | — | ADR p62 |
 
 ### Changelog prosa (p25–p33 resumen)
 

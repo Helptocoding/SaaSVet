@@ -116,6 +116,8 @@ Evaluar trade-off: trigger más flexible, FK compuesto más eficiente (sin row l
 
 **Estimación:** 1 sprint de 4-6 días (service + DB constraints + tests + smoke staging).
 
+**Estado:** cerrado en el orden 2 ([expediente](../remediaciones/orden-2/README.md), [matriz](../remediaciones/orden-2/MATRIZ.md)). No se movió `Invoice.clean()`: se añadieron claves `(id, organization)` y FKs compuestas por organización en Owner, Pet, MedicalRecord, Appointment, Checkout e Invoice (`billing.0037/.0038/.0041`, `patients.0021`, `medical_records.0027`, `appointments.0019`), con triggers de admisión. `Invoice.clean()` y el flujo de ADR p62 se mantienen. Los bypass por ORM y SQL entre organizaciones se prueban en `billing.tests.test_order2_conservation`.
+
 ---
 
 ## A3 — `closed_at` writer fuera de service (`medical_records/views.py:432`)
@@ -177,6 +179,8 @@ def close_medical_record(request, pk):
 
 **Estimación:** 1-2 días (extracción + tests + verificación analytics).
 
+**Estado:** cerrado en el orden 2 ([expediente](../remediaciones/orden-2/README.md), [matriz](../remediaciones/orden-2/MATRIZ.md)). El cierre vive en `medical_records/services.py::close_medical_record_service` y la vista HTTP delega en él. Pruebas: `medical_records.tests.test_close` y `test_order2_close_atomicity` (cierres concurrentes y rollback).
+
 ---
 
 ## A4 — `MedicalRecordProduct.delete()` no se invoca en cascade
@@ -219,6 +223,8 @@ Reversa stock vía SQL puro. Trade-off: lógica de negocio fuera de Python, más
 - Endpoint expuesto (si se decide exponerlo) con permisos restrictivos.
 
 **Estimación:** 2-3 días (solo cuando MR delete sea requisito de producto).
+
+**Estado:** cerrado en el orden 2 ([expediente](../remediaciones/orden-2/README.md), [matriz](../remediaciones/orden-2/MATRIZ.md)), sin ninguna de las tres opciones: `MedicalRecordProduct` y `MedicalRecordService` pasan a PROTECT (`inventory.0027`, `medical_records.0025`), así que un expediente con líneas clínicas no se borra en cascada. No hay borrado clínico nuevo ni restock por padre. Prueba: `medical_records.tests.test_close`.
 
 ---
 
@@ -264,6 +270,8 @@ Modelos afectados: `Owner`, `Pet`, `Organization`. `TenantManager.for_organizati
 
 **Estimación:** 5-7 días (3 modelos + manager + tests + endpoints + comunicación frontend).
 
+**Estado:** cerrado en el orden 2 ([expediente](../remediaciones/orden-2/README.md), [matriz](../remediaciones/orden-2/MATRIZ.md)). Hay archivo y restauración de Owner y Pet (`patients/archive.py`, `patients.0020`) y estado de Organization (`organizations/state.py`, `organizations.0014/.0015`). El borrado físico queda como operación excepcional de plataforma, con vista previa y receipt. Pruebas: `patients.tests.test_order2_archive` y `platform.tests.test_physical_deletion`.
+
 ---
 
 ## A6 — `InvoiceAuditLog.invoice` `CASCADE` → `SET_NULL` + snapshot `invoice_public_id_at_delete`
@@ -287,6 +295,8 @@ Modelos afectados: `Owner`, `Pet`, `Organization`. `TenantManager.for_organizati
 - Endpoint de query de audit logs por `invoice_public_id_at_delete` (admin tooling).
 
 **Estimación:** 1-2 días.
+
+**Estado:** cerrado en el orden 2 ([expediente](../remediaciones/orden-2/README.md), [matriz](../remediaciones/orden-2/MATRIZ.md)) con otra política: la FK de `InvoiceAuditLog` pasa a PROTECT y guarda `invoice_public_id` obligatorio (`billing.0036/.0042`), en lugar de SET_NULL. Una Invoice no se borra físicamente. Prueba: `billing.tests.test_order2_conservation`.
 
 ---
 
@@ -316,6 +326,8 @@ En `close_medical_record_service` (cuando A3 esté implementado), poblar `vet_na
 - Display frontend prefiere `vet_name_at_close` si `veterinarian is None`.
 
 **Estimación:** 1 día.
+
+**Estado:** cerrado en el orden 2 ([expediente](../remediaciones/orden-2/README.md), [matriz](../remediaciones/orden-2/MATRIZ.md)). Al primer cierre se guardan UUID, nombre y especialidad del veterinario (`medical_records.0026`); las filas anteriores se reconstruyen o quedan como desconocidas. El serializer y el PDF leen el snapshot. Prueba: `medical_records.tests.test_close`.
 
 ---
 
@@ -350,6 +362,8 @@ En `close_medical_record_service` (cuando A3 esté implementado), poblar `vet_na
 
 **Estimación:** 0.5 día.
 
+**Estado:** cerrado en el orden 2 ([expediente](../remediaciones/orden-2/README.md), [matriz](../remediaciones/orden-2/MATRIZ.md)) con PROTECT (`organizations.0013`) en lugar de SET_NULL: una organización con auditoría de timezone no se trata como vacía.
+
 ---
 
 ## D6 — `Prescription.medical_record` CASCADE → SET_NULL + snapshot
@@ -359,6 +373,8 @@ En `close_medical_record_service` (cuando A3 esté implementado), poblar `vet_na
 **Solución:** SET_NULL + snapshot `medical_record_public_id_at_issue` para trazabilidad.
 
 **Estimación:** 0.5 día (migración + backfill).
+
+**Estado:** cerrado en el orden 2 ([expediente](../remediaciones/orden-2/README.md), [matriz](../remediaciones/orden-2/MATRIZ.md)) con PROTECT (`prescriptions.0007`) en lugar de SET_NULL, más snapshots del paciente (`prescriptions.0008/.0009`).
 
 ---
 
@@ -370,8 +386,10 @@ En `close_medical_record_service` (cuando A3 esté implementado), poblar `vet_na
 
 **Estimación:** 1 día.
 
+**Estado:** cerrado en el orden 2 ([expediente](../remediaciones/orden-2/README.md), [matriz](../remediaciones/orden-2/MATRIZ.md)) con PROTECT en `StockMovement.product` y `StockMovement.presentation` (`inventory.0027`) en lugar de SET_NULL.
+
 ---
 
 ## Tracking
 
-Cuando un item se cierre, mover a `docs/deuda/cerrado/` con su PR asociado + fecha de cierre + ADR de implementación.
+Los ítems cerrados conservan su sección con una línea **Estado** que enlaza el expediente donde se cerraron. No se mueven a `docs/deuda/cerrado/`, como pedía la versión anterior de esta nota, para no romper los enlaces de los expedientes de remediación (criterio fijado el 15-11-2026).

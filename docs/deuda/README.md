@@ -6,15 +6,19 @@ Repositorio centralizado de deuda técnica acumulada durante el desarrollo pre-b
 
 ---
 
-## Estado actual (act. 2026-06-24)
+## Estado actual (act. 2026-11-15)
 
-| Fase | Prioridad | Items | Archivo |
-|------|-----------|-------|---------|
-| Fase 2 | 🔴 Alta — post-beta inmediato | 4 | [fase2-prioridad-alta.md](fase2-prioridad-alta.md) |
-| Fase 3 | 🟠 Media — sprint dedicado | 7 | [fase3-prioridad-media.md](fase3-prioridad-media.md) |
-| Fase 4 | 🟡 Baja — mejoras arquitectónicas | 8 | [fase4-prioridad-baja.md](fase4-prioridad-baja.md) |
-| Día 6 — Post-beta | 🔴 Alta — sprint post-cutover | 5 | [../day6/POST-BETA-DEBT.md](../day6/POST-BETA-DEBT.md) |
-| Día 6 — Post-cutover | 🟠 Media — 2026-06-19 | 1 | flag `ALLOW_LEGACY_ID_LOOKUP` cleanup (ver POST-BETA-DEBT) |
+Conteos conciliados el 15-11-2026 con la línea **Estado** de cada ítem. La tabla anterior decía 4 ítems en Fase 2, pero el archivo contiene 11.
+
+| Fase | Prioridad | Ítems | Abiertos | Archivo |
+|------|-----------|-------|----------|---------|
+| Fase 2 | 🔴 Alta — post-beta inmediato | 11 (A1–A7, D2, D5–D7) | 0: A2–A7 y D5–D7 cerrados en el orden 2, D2 en el orden 6, A1 por `f325ee7` | [fase2-prioridad-alta.md](fase2-prioridad-alta.md) |
+| Fase 3 | 🟠 Media — sprint dedicado | 7 (B1–B7) | 1: B3, aplazado hasta tener tráfico de producción | [fase3-prioridad-media.md](fase3-prioridad-media.md) |
+| Fase 4 | 🟡 Baja — mejoras arquitectónicas | 8 (C1–C8) | 3: C1 y C7 fuera de alcance por decisión del usuario; C8 espera su disparador | [fase4-prioridad-baja.md](fase4-prioridad-baja.md) |
+| Día 6 — Post-beta | 🔴 Alta — sprint post-cutover | 5 (POST-BETA-001…005) | 5, verificado en código el 15-11 | [../day6/POST-BETA-DEBT.md](../day6/POST-BETA-DEBT.md) |
+| Día 6 — Post-cutover | 🟠 Media — 2026-06-19 | 1 | 1: el flag `ALLOW_LEGACY_ID_LOOKUP` sigue en `apps/core/views.py` | [../day6/POST-BETA-DEBT.md](../day6/POST-BETA-DEBT.md) |
+
+Los IDs de Día 6 tienen su propia numeración: «D2» y «D5» de POST-BETA-DEBT no son los D2 y D5 de la Fase 2.
 
 ---
 

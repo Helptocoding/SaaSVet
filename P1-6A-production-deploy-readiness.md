@@ -5,6 +5,8 @@
 **Alcance:** auditar el repo para el primer deploy beta en un VPS único.
 **Veredicto corto:** el repositorio está **deploy-ready**. No falta código. Lo que falta es *ejecución en un VPS real* + valores de secretos + cuentas externas (todo tarea tuya), y dos mejoras operativas recomendadas antes de invitar usuarios (backup pre-deploy + runbook de rollback).
 
+> **Actualización 15-11-2026:** los huecos de código que señala este informe ya están cubiertos. `scripts/deploy.sh`, `scripts/rollback.sh` y `scripts/pre-deploy-backup.sh` existen desde `6d41e14` (19-06), integrado por el [PR #1](https://github.com/Helptocoding/SaaSVet/pull/1); el procedimiento está en el [runbook de deploy](docs/runbooks/deploy.md). `DEPLOY_VPS_STATUS.md` y `DEPLOY_VPS_PLAN.md`, que este informe cita, se retiraron del árbol en `8886604` (23-10) y quedan en el historial de git. Sigue pendiente lo que el informe asigna al operador: ejecutar el deploy en un VPS real, hoy no accesible.
+
 > **Nota de fidelidad:** `DEPLOY_VPS_STATUS.md` está fechado **2026-05-26** y dice "8/9 capas". Esa foto quedó vieja: desde entonces se agregaron **Redis (P1-1, ADR p41)**, **observabilidad P1-5** (request_id, Sentry release+scrub, `/api/version`) y **backups cifrados age + offsite B2 (ADR p40)**. El estado real es **más avanzado** que lo que reporta ese doc. Conviene refrescarlo (tarea menor, doc-only).
 
 ---

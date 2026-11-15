@@ -33,6 +33,25 @@ La prioridad indica importancia; **el estado de evidencia es independiente**. �
 
 El orden de categorías no obliga a esperar que toda una categoría termine para iniciar otra. Los gates externos pueden prepararse mientras avanza un cambio técnico independiente.
 
+## Estado de ejecución (15-11-2026)
+
+Las órdenes 1 a 8 están cerradas. Nada se desplegó: no hay VPS accesible, así que ninguna migración se aplicó a una base real.
+
+| Orden | Expediente | Integración en `develop` | Estado y lo que queda |
+|---|---|---|---|
+| 1 | [diagnóstico](diagnosticos/orden-1/2026-10-28T174848Z/README.md) | Documental, 28-10 | Diagnóstico cerrado con la parte remota exceptuada. H01, la clave de cifrado independiente de `SECRET_KEY`, se corrigió en la [auditoría de seguridad run-1](plan-implementacion-seguridad-run1-2026-10-28.md) (`9c2a613`, 02-11). Siguen a cargo del usuario confirmar la rotación de secretos (U03) y un restore real (U05). El VPS (U01/U02) sigue aplazado. No consta un triaje de dependencias (O01) posterior al diagnóstico. |
+| 2 | [orden 2](remediaciones/orden-2/README.md) | Merge `7b6ed82`, 04-11 | Los nueve IDs implementados. Falta aplicarlos a una base real. |
+| 3 | [orden 3](remediaciones/orden-3/README.md) | El expediente, en `7b6ed82`, 04-11 | `PENDIENTE_DE_APROBACION_Y_OPERACION_EXTERNA`: el candidato de la landing sigue sin commit ni publicación, y los gates de WhatsApp están aplazados. |
+| 4 | [orden 4](remediaciones/orden-4/README.md) | [PR #3](https://github.com/Helptocoding/SaaSVet/pull/3), `a7dbdaf`, 11-11 | I01, I02, I03, B7 e I05 hechos; I07 no aplica sin datos reales; I04 e I06 aplazados. |
+| 5 | [orden 5](remediaciones/orden-5/README.md) | [PR #3](https://github.com/Helptocoding/SaaSVet/pull/3), `a7dbdaf`, 11-11 | Los ocho IDs hechos; el lint bloquea en CI. |
+| 6 | [orden 6](remediaciones/orden-6/README.md) | [PR #4](https://github.com/Helptocoding/SaaSVet/pull/4), `71fce57`, 12-11 | B2, C2, B5, B6 y D2 hechos; A1+B4 conciliados; B3 aplazado; C1 y C7 fuera de alcance. |
+| 7 | [orden 7](remediaciones/orden-7/README.md) | [PR #6](https://github.com/Helptocoding/SaaSVet/pull/6), `ea21232`, 12-11 | M03 y M01 hechos; queda el `RemoveField` de `MedicalRecord.weight`; M02, M04 y M05 fuera de alcance. |
+| 8 | [orden 8](remediaciones/orden-8/README.md) | [PR #7](https://github.com/Helptocoding/SaaSVet/pull/7), `14e0ca2`, 15-11 | G07 y G09 hechos; G01–G05, G08 y G10 fuera de alcance. |
+| 9 | — | — | Sin orden: todo es P3 y espera su disparador (§9). |
+| Transversal | §11 de este plan | 15-11 | Conciliado; detalle en §11. |
+
+Las secciones siguientes conservan el texto con que se acordó cada orden; donde discrepen, manda esta tabla.
+
 ## 1. Seguridad, accesos y recuperación
 
 | Prioridad | IDs | Pendiente | Primera acción / condición de cierre |
@@ -44,9 +63,11 @@ El orden de categorías no obliga a esperar que toda una categoría termine para
 
 **Resultado esperado:** conocer qué riesgos están activos y contar con recuperación acreditada. Gitleaks PASS no sustituye O13, y un script de backup existente no sustituye O14.
 
+**Estado (15-11):** diagnóstico cerrado el 28-10 con la parte remota exceptuada ([acta](diagnosticos/orden-1/2026-10-28T174848Z/CIERRE.md)); lo pendiente está en la [tabla de estado](#estado-de-ejecución-15-11-2026).
+
 ## 2. Integridad y conservación de datos
 
-**Plan específico acordado con el usuario:** [remediación del orden 2](plan-remediacion-orden-2-2026-10-28.md) y [metaprompt ejecutor](metaprompt-remediacion-orden-2-2026-10-28.md). Contienen las decisiones vigentes de archivo, borrado excepcional y pruebas aisladas; todavía no acreditan implementación.
+**Plan específico acordado con el usuario:** [remediación del orden 2](plan-remediacion-orden-2-2026-10-28.md) y [metaprompt ejecutor](metaprompt-remediacion-orden-2-2026-10-28.md). Contienen las decisiones vigentes de archivo, borrado excepcional y pruebas aisladas; todavía no acreditan implementación. **Estado (15-11):** implementados los nueve IDs, en `develop` desde el 04-11 ([expediente](remediaciones/orden-2/README.md)). A6, D5, D6 y D7 se resolvieron con PROTECT y snapshots, no con SET_NULL.
 
 | Prioridad | IDs | Pendiente | Dependencia / criterio de cierre |
 |---|---|---|---|
@@ -64,7 +85,7 @@ Los CASCADE observados son deuda de conservación; su presencia no demuestra que
 
 ## 3. Privacidad, proveedores y activación de WhatsApp
 
-**Alcance acordado el 30-10-2026:** [plan del orden 3](plan-remediacion-orden-3-2026-10-30.md) y [metaprompt ejecutor](metaprompt-remediacion-orden-3-2026-10-30.md). El usuario limita esta entrega a privacidad de la web pública y proveedores actuales: cambios locales y pruebas aisladas en VeterinariaSaaS/LandingSaaS; cuentas y publicación a su cargo. WhatsApp y sus gates específicos quedan aplazados. El plan concilia el banner/GA4 ya existentes y sustituye para prospectos la propuesta local de 12 meses por 180 días desde el último contacto efectivo, sin campañas generales. Estos documentos no acreditan implementación ni publicación.
+**Alcance acordado el 30-10-2026:** [plan del orden 3](plan-remediacion-orden-3-2026-10-30.md) y [metaprompt ejecutor](metaprompt-remediacion-orden-3-2026-10-30.md). El usuario limita esta entrega a privacidad de la web pública y proveedores actuales: cambios locales y pruebas aisladas en VeterinariaSaaS/LandingSaaS; cuentas y publicación a su cargo. WhatsApp y sus gates específicos quedan aplazados. El plan concilia el banner/GA4 ya existentes y sustituye para prospectos la propuesta local de 12 meses por 180 días desde el último contacto efectivo, sin campañas generales. Estos documentos no acreditan implementación ni publicación. **Estado (15-11):** sin cambios; el candidato de la landing sigue sin commit ni publicación ([expediente](remediaciones/orden-3/README.md)).
 
 | Prioridad | IDs | Pendiente | Dependencia / responsable propuesto |
 |---|---|---|---|
@@ -86,7 +107,7 @@ Los CASCADE observados son deuda de conservación; su presencia no demuestra que
 
 ## 4. Inventario e importaciones
 
-**Alcance acordado el 30-10-2026:** [plan del orden 4](plan-remediacion-orden-4-2026-10-30.md) y [metaprompt ejecutor](metaprompt-remediacion-orden-4-2026-10-30.md). I01/I02/B7/I03/I05 se implementarán localmente con pruebas y migraciones solo en bases aisladas; I07 se limita a diagnóstico y propuesta con aprobación por producto; I04/I06 permanecen aplazados. El usuario acordó movimiento inicial atómico, alias/factor coherentes con corrección determinista del alias antiguo, detalle de conflictos paginado y código demo específico. Base habitual y VPS quedan intactos. Estos documentos no acreditan implementación ni regularización de históricos.
+**Alcance acordado el 30-10-2026:** [plan del orden 4](plan-remediacion-orden-4-2026-10-30.md) y [metaprompt ejecutor](metaprompt-remediacion-orden-4-2026-10-30.md). I01/I02/B7/I03/I05 se implementarán localmente con pruebas y migraciones solo en bases aisladas; I07 se limita a diagnóstico y propuesta con aprobación por producto; I04/I06 permanecen aplazados. El usuario acordó movimiento inicial atómico, alias/factor coherentes con corrección determinista del alias antiguo, detalle de conflictos paginado y código demo específico. Base habitual y VPS quedan intactos. Estos documentos no acreditan implementación ni regularización de históricos. **Estado (15-11):** cerrado e integrado por el PR #3 ([expediente](remediaciones/orden-4/README.md)). I07 dejó de aplicar el 09-11 al confirmarse que no hay datos reales.
 
 | Prioridad | IDs | Pendiente | Orden y motivo |
 |---|---|---|---|
@@ -101,7 +122,7 @@ Los CASCADE observados son deuda de conservación; su presencia no demuestra que
 
 ## 5. Calidad del frontend y experiencia de uso
 
-**Alcance acordado el 09-11-2026:** [plan del orden 5](plan-remediacion-orden-5-2026-11-09.md) y [prompts por entrega](remediaciones/orden-5/README.md). Cubre los ocho IDs en trece entregas, solo frontend. El lint real de la app eran 61 errores, no 198: el resto era `frontend/standalone`, ignorado por git. C3 mueve los providers en lugar de repuntar importadores, `allowPartial` se retira y la tabla de Inventario adopta `.table`. Estos documentos no acreditan implementación.
+**Alcance acordado el 09-11-2026:** [plan del orden 5](plan-remediacion-orden-5-2026-11-09.md) y [prompts por entrega](remediaciones/orden-5/README.md). Cubre los ocho IDs en trece entregas, solo frontend. El lint real de la app eran 61 errores, no 198: el resto era `frontend/standalone`, ignorado por git. C3 mueve los providers en lugar de repuntar importadores, `allowPartial` se retira y la tabla de Inventario adopta `.table`. Estos documentos no acreditan implementación. **Estado (15-11):** cerrado e integrado por el PR #3; el lint de la app quedó en 0 errores y bloquea en CI ([expediente](remediaciones/orden-5/README.md)).
 
 | Prioridad | IDs | Pendiente | Orden y motivo |
 |---|---|---|---|
@@ -118,7 +139,7 @@ No se repitió lint para ordenar el backlog: las cifras son las del inventario y
 
 ## 6. Arquitectura backend y permisos
 
-**Alcance acordado el 11-11-2026:** [plan del orden 6](plan-remediacion-orden-6-2026-11-11.md) y [prompts por entrega](remediaciones/orden-6/README.md). Se implementan B2, C2, B5, B6 y D2 en siete entregas, con pruebas en un PostgreSQL aislado. A1+B4 ya estaban cerrados por `f325ee7`, con funciones en lugar de un mixin, y solo se concilian en documentación. B3 se aplaza: el gate de logs de producción no es alcanzable, y queda registrada la política de `User.role` para retomarlo. C1 y C7 quedan fuera. C2 se cierra retirando código muerto, porque ADR p62 dejó la regla sin uso. B5 no entra en `release.sh` y sustituye a `createsuperuser`, que crea un superusuario sin rol de plataforma. Estos documentos no acreditan implementación.
+**Alcance acordado el 11-11-2026:** [plan del orden 6](plan-remediacion-orden-6-2026-11-11.md) y [prompts por entrega](remediaciones/orden-6/README.md). Se implementan B2, C2, B5, B6 y D2 en siete entregas, con pruebas en un PostgreSQL aislado. A1+B4 ya estaban cerrados por `f325ee7`, con funciones en lugar de un mixin, y solo se concilian en documentación. B3 se aplaza: el gate de logs de producción no es alcanzable, y queda registrada la política de `User.role` para retomarlo. C1 y C7 quedan fuera. C2 se cierra retirando código muerto, porque ADR p62 dejó la regla sin uso. B5 no entra en `release.sh` y sustituye a `createsuperuser`, que crea un superusuario sin rol de plataforma. Estos documentos no acreditan implementación. **Estado (15-11):** cerrado e integrado por el PR #4 ([expediente](remediaciones/orden-6/README.md)).
 
 | Prioridad | IDs | Pendiente | Dependencia / cierre |
 |---|---|---|---|
@@ -134,7 +155,7 @@ No se repitió lint para ordenar el backlog: las cifras son las del inventario y
 
 ## 7. Clínica y analítica
 
-**Alcance acordado el 12-11-2026:** [plan del orden 7](plan-remediacion-orden-7-2026-11-12.md) y [prompts por entrega](remediaciones/orden-7/README.md). Se implementan M03 y M01 en seis entregas, con pruebas en un PostgreSQL aislado. M03 deja `VitalSigns` como única fuente del peso; el `RemoveField` de `MedicalRecord.weight` queda para después. M01 hace obligatoria la cédula profesional para quien firma una consulta o una receta, sea cual sea su rol, y para todo VET, con edición en Equipo bajo un permiso nuevo `staff.update` (ADR p64). M02 y M04 quedan fuera: la analítica no entra en la primera versión para clínicas piloto. M05 no se seleccionó; su TODO resultó contradecir el CHECK `invoiceitem_exactly_one_source`. Estos documentos no acreditan implementación.
+**Alcance acordado el 12-11-2026:** [plan del orden 7](plan-remediacion-orden-7-2026-11-12.md) y [prompts por entrega](remediaciones/orden-7/README.md). Se implementan M03 y M01 en seis entregas, con pruebas en un PostgreSQL aislado. M03 deja `VitalSigns` como única fuente del peso; el `RemoveField` de `MedicalRecord.weight` queda para después. M01 hace obligatoria la cédula profesional para quien firma una consulta o una receta, sea cual sea su rol, y para todo VET, con edición en Equipo bajo un permiso nuevo `staff.update` (ADR p64). M02 y M04 quedan fuera: la analítica no entra en la primera versión para clínicas piloto. M05 no se seleccionó; su TODO resultó contradecir el CHECK `invoiceitem_exactly_one_source`. Estos documentos no acreditan implementación. **Estado (15-11):** cerrado e integrado por el PR #6 ([expediente](remediaciones/orden-7/README.md)).
 
 | Prioridad | IDs | Pendiente | Dependencia / cierre |
 |---|---|---|---|
@@ -145,6 +166,8 @@ No se repitió lint para ordenar el backlog: las cifras son las del inventario y
 | **P3 por decisión de negocio** | M04 | Charts revenue_paid_net | Sign-off y revisión de schema/semántica. No convertir el cambio de métrica en fix automático. |
 
 ## 8. Agente conversacional y crecimiento del producto
+
+**Alcance acordado el 14-11-2026:** [plan del orden 8](plan-remediacion-orden-8-2026-11-14.md) y [prompts por entrega](remediaciones/orden-8/README.md). Se implementan G07 y G09, acotados, en cuatro entregas con pruebas en un PostgreSQL aislado. G07 limita `TurnDecision.verdict` a los cinco veredictos del árbitro, con una migración sin SQL. G09 resultó ya resuelto en código desde B2: solo se añaden pruebas que lo fijan y se corrige la documentación. G01, G02, G03, G04, G05, G08 y G10 quedan fuera por decisión del usuario; G01 exige un eval contra el modelo real, que no se autorizó. **Estado (15-11):** cerrado e integrado por el PR #7 ([expediente](remediaciones/orden-8/README.md)).
 
 | Prioridad | IDs | Pendiente | Dependencia / cierre |
 |---|---|---|---|
@@ -212,6 +235,8 @@ No programar remediación funcional nueva para:
 - Gitleaks histórico r12: mantener su resultado histórico junto con el PASS posterior; no contarlo como miles de credenciales vigentes.
 
 Corregir referencias ausentes a POST-BETA-DEBT/DEPLOY_VPS_STATUS y los conteos antiguos de deuda/lint. El detalle está en [inventario, §7](pendientes-documentados-2026-10-27.md).
+
+**Estado (15-11-2026):** conciliado. Se actualizaron los estados de los expedientes de las órdenes 2 a 8 y el registro de deuda (`docs/deuda/`, con conteos reales), y se recuperó `docs/day6/POST-BETA-DEBT.md`, cuyos cinco tickets siguen abiertos. Se marcaron como resueltos o desactualizados `TODOS.md`, `CONTEXTO_ACTUAL_PROYECTO.md`, `P1-6A-production-deploy-readiness.md`, `p1-4-frontend-reliability.md` y los planes del importador. Los módulos `patients`, `platform`, `organizations` y `medical_records`, y `system-module-operations.md`, ahora describen el archivo de clientes y mascotas y el borrado físico del orden 2, que no estaban documentados. Las referencias a `DEPLOY_VPS_PLAN.md` en los runbooks pasan a citar su commit de retiro, y una decisión con rutas absolutas `C:/Users/...` pasa a usar enlaces relativos. No se tocaron los enlaces rotos dentro de recibos históricos (`docs/evals/`, `docs/audits/`), que apuntan a artefactos no versionados o a archivos renombrados después; corregirlos alteraría el recibo. Detalle en [inventario, §7](pendientes-documentados-2026-10-27.md#7-falsos-pendientes-y-documentación-que-necesita-reconciliarse).
 
 ## Orden concreto de ejecución propuesto
 

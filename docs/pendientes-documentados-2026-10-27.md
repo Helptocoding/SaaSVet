@@ -163,6 +163,18 @@ Otros diferidos arquitectónicos documentados, fuera de esas 13 DD:
 | Cifras antiguas de lint: ~6/42/64/199 | Cambian por fecha/candidato y alcance. La ejecución de esta revisión es 198 errores/19 warnings sobre `eslint .`, incluida `standalone`. |
 | B9-RESULTS recomienda reducir latencia antes de otra aceptación | La decisión posterior ACEPT01 tiene precedencia y retira ese bloqueo. El informe técnico permanece intacto. |
 
+**Conciliación del 15-11-2026.** Cada fila de la tabla quedó así:
+
+- `unlink_family`: `TODOS.md` lo marca resuelto (`9643c03`, 19-09) y declara que falta una aserción del flag en la prueba de la vista.
+- B1: línea de estado en [fase 3 de deuda](deuda/fase3-prioridad-media.md).
+- Consumidor de series y `cancelled`/`canceled`: corregidos en `CONTEXTO_ACTUAL_PROYECTO.md`, que además avisa que su descripción de Billing es anterior a ADR p62.
+- M2/M3/M4, Gitleaks r12, Inbox, DD-010 y B9-RESULTS: sin cambio. Sus documentos vigentes ya registraban la evidencia posterior (`CIERRE-INBOX-WHATSAPP.md` recoge el PASS del 22-10 y la decisión ACEPT01).
+- Planes del importador: aviso de estado en los tres planes.
+- P1-6A: nota de actualización al inicio; los scripts de deploy existen desde `6d41e14` (19-06).
+- `docs/deuda/README`: conteos rehechos. La Fase 2 tiene 11 ítems, todos cerrados.
+- POST-BETA-DEBT y DEPLOY_VPS_STATUS: [POST-BETA-DEBT](day6/POST-BETA-DEBT.md) se recuperó en su ruta con el estado de cada ticket (los cinco siguen abiertos). Las referencias vivas a `DEPLOY_VPS_*` citan el commit de retiro (`8886604`). Los recibos históricos que nombran esos archivos no se tocaron.
+- Lint: `p1-4-frontend-reliability.md` marca sus cifras como foto de junio y registra el lint bloqueante del orden 5. Las cifras de recibos históricos no se cambian.
+
 ## 8. Orden sugerido para convertir esto en trabajo
 
 1. **Conciliar el backlog:** retirar falsos pendientes, restaurar enlaces e identificar dueños de operación. Mantener los recibos históricos intactos.

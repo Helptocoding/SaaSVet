@@ -1,6 +1,8 @@
-# Orden 4 — expediente local en curso
+# Orden 4 — expediente
 
-Contrato: [plan acordado](../../plan-remediacion-orden-4-2026-10-30.md). Este expediente registra un avance parcial, no acredita cierre del orden. La revisión inicial era `8886604` en `codex/e4-capacity-scheduling`, con numerosos cambios previos staged, unstaged y sin seguimiento, incluidos cambios de imports, inventory y orden 2; conservarlos.
+**Estado (15-11):** cerrado. I01, I02, I03, B7 e I05 implementados y verificados; I07 no aplica sin datos reales; I04 e I06 aplazados ([MATRIZ](MATRIZ.md)). Integrado en `develop` por el [PR #3](https://github.com/Helptocoding/SaaSVet/pull/3) (`a7dbdaf`, 11-11), junto con el orden 5, con CI en verde ([corridas](../orden-5/EVIDENCIA.md#integración-en-develop-y-ci-11-11-2026)); sin despliegue. El 15-11 el directorio del cluster exclusivo `orden4_pg18_20261031` ya no existía en `Temp/opencode`, aunque la evidencia del 09-11 lo dejó conservado. Los párrafos siguientes son el registro de avance de cada sesión.
+
+Contrato: [plan acordado](../../plan-remediacion-orden-4-2026-10-30.md). Al abrirse, este expediente registraba un avance parcial, sin cierre del orden. La revisión inicial era `8886604` en `codex/e4-capacity-scheduling`, con numerosos cambios previos staged, unstaged y sin seguimiento, incluidos cambios de imports, inventory y orden 2; conservarlos.
 
 Continuación del 31-10: implementación parcial de alta manual, alias y diagnóstico, código demo específico y pruebas dirigidas. Las migraciones nuevas solo se aplicaron en PostgreSQL exclusivo y sintético de orden 4. El reporte paginado y varias verificaciones siguen pendientes: véanse [matriz](MATRIZ.md) y [evidencia](EVIDENCIA.md). No se regularizaron saldos.
 

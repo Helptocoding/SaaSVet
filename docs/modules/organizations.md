@@ -502,4 +502,4 @@ Los filtros de fecha en facturas (`paid_on`, `created_on`) respetan la timezone 
 
 `User.organization` ahora es `on_delete=PROTECT` (antes CASCADE). Borrar una `Organization` con usuarios asociados lanza `django.db.models.ProtectedError` mapeado a 409 Conflict por el handler global. Justificacion: NOM-024 retencion de datos del prestador + audit trails (`InvoiceAuditLog.changed_by`, `MedicalRecord.closed_by`, etc.).
 
-Para desactivar una organizacion: marcar `is_active=False` (soft-delete real es deuda Fase 2 A5).
+Para desactivar una organización: `POST /api/platform/organizations/<uuid>/deactivate/` con motivo (orden 2; ver el inicio de este documento). No marcar `is_active=False` a mano: el servicio `organizations/state.py` deja el `OrganizationStateAudit` y la fecha, el actor y el motivo. Borrar físicamente una organización solo es posible si está vacía, y solo por la vía de plataforma ([platform.md](platform.md)).

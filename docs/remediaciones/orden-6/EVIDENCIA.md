@@ -172,4 +172,4 @@ En las dos:
 Con esto se cierra el primer límite de E06. Siguen vigentes:
 
 - Sin despliegue. `bootstrap_superuser` y `--prune` no se ejecutaron contra ninguna base real; conviene leer el procedimiento de `bootstrap_superuser` antes del próximo despliegue.
-- El cluster aislado sigue detenido y sin borrar.
+- ~~El cluster aislado sigue detenido y sin borrar.~~ Ya no aplica: el 15-11 su directorio no existía en `Temp/opencode`.

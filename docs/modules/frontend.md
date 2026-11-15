@@ -1682,4 +1682,4 @@ Fase A): `.github/workflows/ci.yml`. Un test rojo tumba el merge. `lint` bloquea
 
 ### Pendiente (siguientes fases)
 
-- C: extraer la lógica pura restante (dedup sum/remaining). Los subcomponentes de billing (`RefundModal`, `DispenseLotSelect`, `PrescriptionDispensePanel`, `refundReasons`) ya viven en `components/billing/` con pruebas de caracterización.
+- Nada pendiente de P1-4 (act. 2026-11-15). El cálculo de suma y restante de las líneas de pago vive solo en `paymentSummary` de `utils/payments.js` (orden 5, C4). Los subcomponentes de billing (`RefundModal`, `DispenseLotSelect`, `PrescriptionDispensePanel`, `refundReasons`) viven en `components/billing/` con pruebas de caracterización (orden 5, F02).

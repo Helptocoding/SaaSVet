@@ -429,13 +429,31 @@ Requerido-para-operar (nombre) ≠ deseable (lo demás): nunca se tratan igual.
 
 `Pet.owner` paso de CASCADE a PROTECT. Justificacion: borrar un Owner cascadeaba todas sus Pets → MedicalRecords → todo el historial clinico (violacion NOM-046, retencion 5 anos).
 
-Comportamiento DELETE actual:
-- `DELETE /api/owners/<public_id>/` con pets asociadas → **409 Conflict** con shape canonico `{code: 'resource_has_dependencies', message, protected_count, protected_count_truncated, protected_sample}` (handler bounded probe `[:6]`).
-- `DELETE /api/pets/<public_id>/` con historial (MR/vaccines/prescriptions/appointments/invoices) → **409 Conflict** mismo shape.
-- Pet generico (`is_generic=True`) → **409 Conflict** con `code: 'generic_resource_protected'` (guard explicito antes del PROTECT-bound DB error).
-- Owner generico (`is_generic=True`) → **409 Conflict** mismo guard.
+Las FK PROTECT siguen vigentes, pero desde el orden 2 (A5, 28-10-2026) `DELETE` ya no borra: **archiva**. Antes respondía `409 resource_has_dependencies` cuando había mascotas o historial.
 
-Frontend pivotara a "Archivar/Desactivar" usando `is_active=False` (separate PR). Soft-delete real es deuda Fase 2 A5.
+## Archivo y restauración de clientes y mascotas (orden 2, A5)
+
+Un único servicio, `apps/patients/archive.py::change_archive_state`, para la clínica y para plataforma. Nunca borra físicamente.
+
+| Ruta | Efecto |
+|---|---|
+| `DELETE /api/owners/<public_id>/` o `POST .../archive/` | Archiva el cliente y todas sus mascotas → `204` (o `200` con el cliente en `archive`). |
+| `DELETE /api/pets/<public_id>/` o `POST .../archive/` | Archiva la mascota. |
+| `POST /api/owners/<public_id>/restore/` y `POST /api/pets/<public_id>/restore/` | Restaura. Las mascotas del cliente no se restauran con él: se restauran una a una. |
+| `GET /api/pets/?archived=true` y `GET /api/owners/?archived=true` | Lista los archivados. |
+
+Reglas:
+
+- Solo el ADMIN de la clínica, o un operador de plataforma. Los demás roles reciben `403`, también al listar archivados.
+- `409 archive_blocked` si alguna mascota afectada tiene citas `scheduled`, `confirmed` o `in_progress`, o consultas `open`; si la organización está desactivada; o si el sujeto es genérico. El `DELETE` de un genérico sigue respondiendo `409 generic_resource_protected`.
+- Restaurar una mascota exige que su cliente esté activo.
+- Archivar libera el teléfono del cliente para INV-C, porque el resolvedor solo ve clientes activos. Restaurarlo lo vuelve a ocupar: si otro cliente lo tomó mientras tanto, responde `409 owner_exists` u `owner_ambiguous`, igual que al cambiar el teléfono.
+- Los listados normales y el manager por defecto solo ven activos (`is_active=True`); `all_objects` ve todo.
+- Cada archivo guarda `archived_at` y `archived_by` (`patients.0020`).
+
+El borrado físico existe solo como operación excepcional de plataforma, sobre sujetos ya archivados ([platform.md](platform.md)). Facturas, expedientes y recetas conservan la identidad del sujeto en `subject_snapshot`.
+
+En el frontend, Mascotas tiene «Ver archivadas», «Restaurar», «Archivar cliente» y una lista paginada de clientes archivados para quien tiene `owner.destroy`. Pruebas: `patients.tests.test_order2_archive` y `pets.test.jsx`. Expediente: [orden 2](../remediaciones/orden-2/README.md).
 ## Registro individual autorizado B8E (2026-09-25)
 
 El POST humano de mascotas y REGISTER_PET comparten `apps.patients.creation`:
