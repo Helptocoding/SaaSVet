@@ -30,3 +30,21 @@ Plantilla por entrega:
 Límites: ...
 Observaciones sin cambio: ...
 ```
+
+## E00 — línea base (14-11-2026, `26e1ab7` sobre `c71c0ed`)
+
+| Comando | Resultado |
+|---|---|
+| Precondición: `develop` = `c71c0ed`; rama `fix/orden-8-agente` inexistente; `git status` solo con runner, plan y `orden-8/` | OK |
+| `git switch -c fix/orden-8-agente develop` + commit de documentos | HEAD `c71c0ed` antes del commit; commit `26e1ab7` (10 archivos) |
+| Cluster `orden8_pg18_20261114` | Ya existía (`PG_VERSION` presente); no se creó en esta entrega. Arrancado con `pg_ctl`, `status exit=0` |
+| `init-db` | `Base orden8_iso_20261114 lista.` |
+| `check` | `System check identified no issues (0 silenced).` |
+| `migrate --noinput` | OK; última aplicada vista: `users.0012_user_license_number` |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| `test test_turn_decision test_slots --keepdb` (crea base de pruebas) | `Ran 19 tests`, `OK` |
+| Corrida de referencia A | `Ran 103 tests in 156.236s`, `OK` |
+| Corrida de referencia B | `Ran 242 tests in 193.226s`, `OK (skipped=1)` |
+
+Límites: no se listó explícitamente `agent.0029_inbox_read_state` en la salida de `migrate` (solo se vio el `tail`); `makemigrations --check` confirma que no hay migraciones pendientes.
+Observaciones sin cambio: `docs/hector.py` no existe en la copia de trabajo; no se tocó.
