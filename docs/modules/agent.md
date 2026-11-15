@@ -553,7 +553,7 @@ ref; `channels.views` importa `agent.services` perezoso.
 | `ConversationGoal` | agent | **El COMPROMISO** (É-F3 W2; extendido por ADR p55 §3 — un solo modelo para tarea e identidad, R7). Estados `active/deviated/suspended/blocked/completed/abandoned/handoff` (+`cancelled` deprecado); `slots` `{slot:{value,confidence}}` YA normalizado; `missing`, `low_confidence`, `asked`, `stall_turns`; coordenadas `return_to`/`supplanted_by`/`blocked_reason`; `attempts_failed` (fallos reales ≠ turnos sin avance) y `working_state` (estado local del mecanismo). Dos constraints parciales: **uno al frente** (`active|deviated`) y **uno suspendido** por conversación |
 | `TurnOperationAssessment` | agent | Decisión append-only de un turno posterior a recibo: `conversation + anchor_message` es única/idempotente; guarda veredicto, operación, fallos, modelos/prompts y la ráfaga fuente como relación ordenada. Un `ConversationGoal` autorizado la referencia; el runtime solo habilita agenda tras autorización+verificación semánticas. |
 | `AgentSettings` | agent | OneToOne a Organization (patrón OrganizationSettings): `enabled` (kill switch, default False), `agent_user`, `faq_facts` (solo hechos sin campo propio), `default_veterinarian`, `scheduling_mode`, `nudge_enabled` |
-| `TurnDecision` | agent | Rastro **append-only** de cada turno (R12, É-F4 Fase 1). **El runtime NUNCA la lee** — es solo para diagnóstico/regresión. `verdict` (string libre todavía — cerrarlo a los 5 veredictos exige que el árbitro sea dueño de las 22 salidas del planner, que excede R3/R4/R7/R9), `because` (enum cerrado ORTOGONAL, ≤12 valores, `TurnDecision.Because`), `active_commitment`/`return_to`/`supplanted_by` (aún sin poblar, mismo motivo), `facts_consumed`/`facts_produced` (JSON, cero PII). `planner_used`/`tools_called`/`duration_ms` son DIAGNÓSTICO — ningún test afirma sobre ellos |
+| `TurnDecision` | agent | Rastro **append-only** de cada turno (R12, É-F4 Fase 1). **El runtime NUNCA la lee** — es solo para diagnóstico/regresión. `verdict` (veredicto del árbitro, `TurnDecision.Verdict`: los cinco de `arbiter.VERDICTS`, o vacío si el árbitro lanzó una excepción fuera de B3; orden 8, G07), `because` (enum cerrado ORTOGONAL, ≤12 valores, `TurnDecision.Because`), `active_commitment`/`return_to` (los del compromiso que juzgó el árbitro) y `supplanted_by`, `facts_consumed`/`facts_produced` (JSON, cero PII; la salida del planner va en `facts_produced['salida']`). Las filas anteriores a É-F5 Fase 4 conservan el texto libre de entonces. `planner_used`/`tools_called`/`duration_ms` son DIAGNÓSTICO — ningún test afirma sobre ellos |
 
 ## Flujo F0
 
@@ -1495,10 +1495,13 @@ retiró es la capacidad de la tool de terminar el turno por su cuenta. El
 parafraseo ya vivía en el `pending_action`; la bandera del `ToolOutcome` era
 redundante.
 
-> **Pendiente declarado**: `TurnDecision.verdict` sigue guardando el `decision`
-> de texto libre (~20 valores). Cerrarlo a los 5 veredictos exige que el
-> árbitro sea dueño de las 22 salidas de turno, y eso excede lo que R3/R4/R7/R9
-> necesitan. Se hará cuando el árbitro absorba el resto del `planner`.
+> **Cerrado en el orden 8 (G07, 14-11-2026)**: desde É-F5 Fase 4 el árbitro
+> corre en todos los turnos y `verdict` guarda su veredicto; sin compromiso en
+> juego es `responder`. El modelo ahora solo admite esos cinco valores o vacío
+> (`TurnDecision.Verdict`, validado por `full_clean()` al guardar). Vacío
+> significa que el árbitro lanzó una excepción, lo que solo pasa fuera de B3
+> (bajo B3 el turno falla). La salida del planner (`reply`, `silent`…) sigue
+> en `facts_produced['salida']`, como diagnóstico.
 
 #### Que el modelo vea la verdad (É-F4 Fase 2, 2026-07-30)
 
@@ -1635,10 +1638,20 @@ Por qué importa: con "el primer VET por pk" la capacidad ofertada era la de
 mismo. La ocupación del día se resuelve en **una sola** llamada a la API
 (`GET /appointments/?date=`) agrupando por veterinario, no una por vet.
 
-Limitación conocida (deuda MP-5 de la auditoría): la rejilla compara
-`start_time` exacto en pasos de 30 min, así que no modela duraciones distintas
-ni citas fuera de rejilla. El dominio revalida el solape real al crear; si
-pierde la carrera, el agente re-oferta.
+**Ocupación por intervalos (deuda MP-5 de la auditoría, revalidada en el
+orden 8, G09).** Desde B2 (`9ccc31a`, 15-09) `_day_occupancy` guarda el
+inicio y el fin de cada cita activa, y `_vet_free` descarta un hueco que se
+solape con cualquiera de ellas. Por eso una cita larga (09:00–10:30) tapa
+todos los huecos que cubre y una cita fuera de la rejilla (09:15–09:45) tapa
+los dos que pisa; `check_appointment_slot` detecta también el solape parcial.
+Lo fijan las pruebas de `tests/test_slots.py`.
+
+Límite que queda: el agente ofrece citas de **30 min** (`SLOT_MINUTES`, la
+misma duración que la atención sin cita), en pasos de 30 desde la apertura de
+cada tramo del horario. Una ventana libre fuera de esa rejilla (las 09:15 tras
+una cita de 09:00 a 09:15) no se ofrece, y el dominio no tiene duración por
+servicio. El dominio revalida el solape real al crear (INV-D); si pierde la
+carrera, el agente re-oferta.
 
 ### W1 — experiencia y conservación vinculante
 

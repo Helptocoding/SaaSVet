@@ -319,7 +319,8 @@ class B3LocalIntegrationTests(TestCase):
             self.conv.flow = {'b3_local': True}
             save_local(self.conv, update_fields=['flow'])
             create_local(TurnDecision, organization=self.org, conversation=self.conv,
-                         verdict='reply', because=TurnDecision.Because.PLANNER_HANDLED,
+                         verdict=TurnDecision.Verdict.ANSWER,
+                         because=TurnDecision.Because.PLANNER_HANDLED,
                          triggered_by_message=self.m1)
             enqueue_outbound(self.conv, 'Respuesta final')
         self.assertFalse(ConversationGoal.objects.filter(conversation=self.conv).exists())

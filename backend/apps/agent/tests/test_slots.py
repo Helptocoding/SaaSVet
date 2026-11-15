@@ -137,6 +137,53 @@ class SlotsTests(TestCase):
         self.assertNotIn("09:00", times)
         self.assertIn("09:30", times)
 
+    # ── G09 (orden 8): la ocupación se compara por intervalos reales ──────
+    # `_day_occupancy` guarda (inicio, fin) de cada cita activa y `_vet_free`
+    # descarta un hueco que se solape con cualquiera. Estas pruebas fijan ese
+    # comportamiento y el límite que queda: la oferta es de 30 min, en la
+    # rejilla que empieza en la apertura de cada tramo.
+
+    def _book_range(self, start_hhmm, end_hhmm):
+        """Cita de duración arbitraria, también fuera de la rejilla de 30 min."""
+        from datetime import datetime
+        from datetime import timezone as dt_tz
+        start = datetime.strptime(start_hhmm, "%H:%M").time()
+        end = datetime.strptime(end_hhmm, "%H:%M").time()
+        Appointment.objects.create(
+            organization=self.org, pet=self.pet, veterinarian=self.vet,
+            date=self.day, start_time=start, end_time=end, reason="x",
+            status="scheduled",
+            start_datetime=datetime.combine(self.day, start, tzinfo=dt_tz.utc),
+            end_datetime=datetime.combine(self.day, end, tzinfo=dt_tz.utc),
+        )
+
+    def test_long_appointment_blocks_every_slot_it_covers(self):
+        self._book_range("09:00", "10:30")
+        out = self._run({"date": self.day.isoformat()})
+        self.assertTrue(out.ok, out.client_error)
+        self.assertEqual([s["iso_time"] for s in out.data], ["10:30", "11:00", "11:30"])
+
+    def test_off_grid_appointment_blocks_the_slots_it_overlaps(self):
+        self._book_range("09:15", "09:45")
+        out = self._run({"date": self.day.isoformat()})
+        self.assertTrue(out.ok, out.client_error)
+        self.assertEqual([s["iso_time"] for s in out.data], ["10:00", "10:30", "11:00"])
+
+    def test_exact_time_check_detects_a_partial_overlap(self):
+        self._book_range("09:45", "10:15")
+        exact = self._check({"date": self.day.isoformat(), "time": "10:00"})
+        self.assertTrue(exact.ok, exact.client_error)
+        self.assertFalse(exact.data["available"])
+        self.assertEqual(exact.data["reason"], "slot_taken")
+
+    def test_offer_stays_on_the_half_hour_grid(self):
+        # Límite conocido: tras una cita de 09:00 a 09:15 queda libre desde
+        # las 09:15, pero la oferta sigue la rejilla y empieza a las 09:30.
+        self._book_range("09:00", "09:15")
+        out = self._run({"date": self.day.isoformat()})
+        self.assertTrue(out.ok, out.client_error)
+        self.assertEqual(out.data[0]["iso_time"], "09:30")
+
     def test_closed_day_returns_empty(self):
         # domingo (sin horario configurado) → vacío, no error
         sunday = self.day

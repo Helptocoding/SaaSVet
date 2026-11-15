@@ -22,6 +22,7 @@ from django.utils import timezone
 from apps.core.models import OrganizationalModel, PublicIdMixin
 from .operation_model_contract import OperationManager
 from .capabilities import OPERATIONS
+from . import arbiter
 
 
 class InboxReadState(OrganizationalModel):
@@ -976,14 +977,27 @@ class TurnDecision(OrganizationalModel):
     DIAGNÓSTICO — varían turno a turno con la latencia real; ningún test
     afirma sobre ellos (harían la suite intermitente y acabaría apagada).
 
-    Fase 1 no tiene árbitro todavía (llega en Fase 3): `verdict` guarda el
-    `decision` de hoy tal cual (string libre, ~20 valores en `planner.py`);
-    `because` SÍ es el enum cerrado y ortogonal desde este primer commit
-    (regla de gobernanza §0.6: un presupuesto añadido después no se añade
-    nunca) — se deriva con un mapeo grueso y deliberadamente conservador en
-    `planner._infer_because`. Fase 3 sustituye el mapeo por el veredicto real
-    del árbitro; el enum de `because` no debería necesitar romperse para eso.
+    `verdict` es el veredicto del árbitro (`Verdict`, el conjunto cerrado de
+    `arbiter.VERDICTS`, ADR p55 §2). Vacío significa que el árbitro lanzó una
+    excepción y no hubo veredicto; eso solo ocurre fuera del trabajo durable
+    B3, que relanza el fallo. La salida operativa del planner (`reply`,
+    `silent`, `escalate`…) es diagnóstico y vive en `facts_produced['salida']`
+    (orden 8, G07). Las filas anteriores a É-F5 Fase 4 conservan el texto libre
+    de entonces: la tabla es append-only y no se reescriben.
+
+    `because` es el enum cerrado y ortogonal desde É-F4 Fase 1 (regla de
+    gobernanza §0.6: un presupuesto añadido después no se añade nunca); se
+    deriva con un mapeo grueso y deliberadamente conservador en
+    `planner._infer_because`.
     """
+
+    class Verdict(models.TextChoices):
+        """Los cinco veredictos del árbitro. Un sexto exige ADR (p55 A1)."""
+        CONTINUE = arbiter.CONTINUE, 'Continuar'
+        DEVIATE = arbiter.DEVIATE, 'Desviar'
+        SUPPLANT = arbiter.SUPPLANT, 'Suplantar'
+        ABORT = arbiter.ABORT, 'Abortar'
+        ANSWER = arbiter.ANSWER, 'Responder'
 
     class Because(models.TextChoices):
         """POR QUÉ pasó — hechos, nunca coordenadas (G1: ortogonal a los
@@ -1005,7 +1019,7 @@ class TurnDecision(OrganizationalModel):
         Conversation, on_delete=models.PROTECT, related_name='turn_decisions',
     )
     # ── ORÁCULO · determinista, testeable ────────────────────────────────
-    verdict = models.CharField(max_length=40)
+    verdict = models.CharField(max_length=40, choices=Verdict.choices, blank=True)
     because = models.CharField(max_length=24, choices=Because.choices)
     active_commitment = models.CharField(max_length=32, blank=True, default='')
     return_to = models.CharField(max_length=32, blank=True, default='')

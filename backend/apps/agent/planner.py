@@ -238,13 +238,15 @@ def _record_turn_decision(conversation, result, started, triggered_by,
         # —`planner_reply`, `escalate`…— porque no había árbitro; era deuda
         # declarada en el propio docstring del modelo. Ese desenlace operativo
         # no se pierde: baja a `facts_produced`, que es diagnóstico.
+        # Sin veredicto (el árbitro lanzó una excepción) queda vacío: copiar
+        # aquí la salida del planner inventaría un veredicto que nadie dio, y
+        # el modelo ya no admite texto libre (orden 8, G07).
         produced = {'reason': result['reason']} if result.get('reason') else {}
         produced['salida'] = result.get('decision', '')
         create_local(TurnDecision,
             organization=conversation.organization,
             conversation=conversation,
-            verdict=(turn_verdict.verdict if turn_verdict
-                     else result.get('decision', '')),
+            verdict=(turn_verdict.verdict if turn_verdict else ''),
             because=because,
             active_commitment=(turn_verdict.commitment if turn_verdict else ''),
             return_to=(turn_verdict.return_to if turn_verdict else ''),
