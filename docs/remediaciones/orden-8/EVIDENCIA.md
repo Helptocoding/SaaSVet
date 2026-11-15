@@ -112,3 +112,25 @@ Los números coinciden con lo esperado: 103 + 4 (E01) = 107 en A y 242 + 4 (E02)
 - E00: el límite sobre `agent.0029_inbox_read_state` quedó cerrado. Al repetir `migrate --noinput` en el cluster aislado, la salida fue `No migrations to apply.`
 - E01 y E02 hicieron dos commits cada una, uno de código y otro de expediente, para que `MATRIZ.md` citara el hash del primero. En la revisión, los 7 archivos de código y documentación coincidieron con la validación en seco del 14-11.
 - E01: el `grep` del prompt esperaba una línea. La segunda, `decision = result.get('decision', '')`, ya existía en `c71c0ed` y no forma parte de G07.
+
+## Integración en develop y CI (15-11-2026)
+
+Por petición del usuario, la rama se subió y se abrió el [PR #7](https://github.com/Helptocoding/SaaSVet/pull/7) contra `develop`. El usuario lo mergeó: `14e0ca2`, con padres `c71c0ed` (`develop`) y `a465142` (la rama). `develop` no se movió mientras el PR estuvo abierto y `git diff a465142 14e0ca2` no imprime nada, así que las dos corridas probaron el mismo árbol.
+
+| Corrida | Evento | Commit probado | Resultado |
+|---|---|---|---|
+| [43684553777](https://github.com/Helptocoding/SaaSVet/actions/runs/43684553777) | `pull_request` | merge provisional de `a465142` sobre `c71c0ed` | 4 jobs OK |
+| [43687773477](https://github.com/Helptocoding/SaaSVet/actions/runs/43687773477) | `push` a `develop` | `14e0ca2` | 4 jobs OK |
+
+En las dos:
+
+- Backend: migraciones y los corpus B0, B3, B4 y B5 (17, 43, 70 y 37 pruebas). Suite global: `Ran 4058 tests` / `OK (skipped=20)`. Son 8 más que las 4.050 del orden 7, las mismas que sumaron E01 y E02 (4 + 4).
+- Frontend, images y security (gitleaks bloqueante): OK.
+
+Con esto se cierra el primer límite de E03. Siguen vigentes:
+
+- Sin despliegue ni activación del agente. La migración `agent.0030` no genera SQL y no se aplicó a ninguna base real.
+- El agente sigue ofreciendo solo citas de 30 min en la rejilla (G09).
+- Las filas de `TurnDecision` anteriores a É-F5 Fase 4 conservan su texto libre (G07).
+- La conducta de G01 sigue sin evidencia con el modelo real.
+- El cluster aislado sigue detenido y sin borrar.
