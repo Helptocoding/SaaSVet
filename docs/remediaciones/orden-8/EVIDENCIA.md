@@ -62,3 +62,15 @@ Observaciones sin cambio: `docs/hector.py` no existe en la copia de trabajo; no 
 
 Límites: las filas anteriores a É-F5 Fase 4 conservan su texto libre (append-only); la validación vive en `full_clean()`, no en un `CHECK` de base de datos, así que un `bulk_create` o un `save(validate=False)` la saltan, igual que cualquier otro campo con `choices`.
 Observaciones sin cambio: el `grep` del prompt esperaba una sola línea; la línea 319 ya existía y no es parte de G07.
+
+## E02 — G09: disponibilidad por intervalos reales (14-11-2026, `4540073`)
+
+| Comando | Resultado |
+|---|---|
+| `py_compile test_slots.py` | `py_compile OK` |
+| `git diff --stat HEAD -- apps/agent/tools.py` | sin salida (producción intacta) |
+| `makemigrations --check --dry-run` | `No changes detected` |
+| `test apps.agent.tests.test_slots --keepdb` | `Ran 12 tests in 3.400s`, `OK` |
+
+Límites: el agente sigue ofreciendo solo citas de 30 min en la rejilla que empieza en la apertura de cada tramo; ofrecer ventanas fuera de ella o duraciones por servicio es una extensión de producto fuera de este orden. Sin cambios de código de producción.
+Observaciones sin cambio: no se corrió la corrida B completa (B = 246 esperado con E02); solo `test_slots`.

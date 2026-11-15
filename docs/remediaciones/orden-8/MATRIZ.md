@@ -5,7 +5,7 @@ Se actualiza al cerrar cada entrega. Estados permitidos: `PENDIENTE`, `EN_CURSO`
 | ID | Entregas | Estado | Commit(s) | Evidencia |
 |---|---|---|---|---|
 | G07 | E01 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | fb224bc | EVIDENCIA.md §E01 |
-| G09 | E02 | PENDIENTE | | |
+| G09 | E02 | IMPLEMENTADO_Y_VERIFICADO_LOCALMENTE | 4540073 | EVIDENCIA.md §E02 |
 | G01 | E03 | PENDIENTE | | |
 | G02 | E03 | PENDIENTE | | |
 | G03 | E03 | PENDIENTE | | |
@@ -20,5 +20,5 @@ Se actualiza al cerrar cada entrega. Estados permitidos: `PENDIENTE`, `EN_CURSO`
 |---|---|---|
 | E00 | A Ran 103 / OK; B Ran 242 / OK (skipped=1) | 26e1ab7 |
 | E01 | Ran 84 / OK | fb224bc |
-| E02 | | |
+| E02 | Ran 12 / OK | 4540073 |
 | E03 | | |
