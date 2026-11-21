@@ -343,6 +343,7 @@ Ref: `docs/fix-provision-must-change-password-2026-06-24.md`.
   características que el reset de esta ADR (24 h, cambio obligatorio, nunca en logs) y revoca todas las
   sesiones. Comparte con el reset las funciones `_issue_temporary_password` y `_revoke_all_sessions`.
 - **Toda respuesta con contraseña temporal lleva `Cache-Control: no-store`**: el restablecimiento de esta
-  ADR (antes no lo tenía) y la reactivación.
+  ADR (antes no lo tenía), la reactivación y, desde el 2026-11-21, el restablecimiento de plataforma
+  (ADR p45), que se había quedado sin él.
 - Desde ADR p65, restablecer y reactivar también invalidan los access tokens emitidos antes (versión de
   sesión), no solo los refresh tokens.

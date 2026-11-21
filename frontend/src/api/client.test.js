@@ -99,6 +99,20 @@ describe("reintento único tras un 401 con un token ya renovado (D14)", () => {
         expect(loggedOut()).toBe(true);
     });
 
+    it("aunque el token cambie en cada intento, se reintenta una sola vez", async () => {
+        let attempt = 0;
+        respond = () => {
+            attempt += 1;
+            if (attempt > 5) return 200; // tope de la prueba: sin la guarda sería un bucle
+            tokenStorage.setAccessToken(`t${attempt}`);
+            return 401;
+        };
+        await expect(api.post("staff/", { a: 1 })).rejects.toMatchObject({ response: { status: 401 } });
+
+        expect(calls).toHaveLength(2);
+        expect(loggedOut()).toBe(true);
+    });
+
     it("un 401 con el token vigente cierra la sesión sin reintentar", async () => {
         respond = () => 401;
         await expect(api.get("me/")).rejects.toBeTruthy();
@@ -163,6 +177,34 @@ describe("reintento único tras un 401 con un token ya renovado (D14)", () => {
         expect(calls).toHaveLength(1);
     });
 
+    it.each([403, 404, 500])("si el reintento devuelve %i, lo propaga sin repetir ni cerrar sesión", async (code) => {
+        respond = (config) => {
+            if (config.headers.Authorization === "Bearer old") {
+                tokenStorage.setAccessToken("new");
+                return 401;
+            }
+            return code;
+        };
+        await expect(api.post("staff/", { a: 1 })).rejects.toMatchObject({ response: { status: code } });
+
+        expect(calls.map((c) => c.auth)).toEqual(["Bearer old", "Bearer new"]);
+        expect(access()).toBe("new");
+        expect(tokenStorage.isLoggingOut()).toBe(false);
+        expect(alertSpy).toHaveBeenCalledTimes(code >= 500 ? 1 : 0);
+    });
+
+    it("un 403 con un token ya renovado no se reintenta", async () => {
+        respond = () => {
+            tokenStorage.setAccessToken("new");
+            return 403;
+        };
+        await expect(api.post("staff/", { a: 1 })).rejects.toMatchObject({ response: { status: 403 } });
+
+        expect(calls).toHaveLength(1);
+        expect(access()).toBe("new");
+        expect(tokenStorage.isLoggingOut()).toBe(false);
+    });
+
     it("los errores que no son 401 siguen igual", async () => {
         respond = () => 500;
         await expect(api.get("me/")).rejects.toMatchObject({ response: { status: 500 } });
@@ -209,5 +251,54 @@ describe("peticiones concurrentes (D14)", () => {
             expect(calls.filter((c) => c.url === url).length).toBeLessThanOrEqual(2);
         }
         expect(loggedOut()).toBe(true);
+    });
+
+    it("una petición con el token anterior no se reintenta si otra ya cerró la sesión", async () => {
+        let releaseA;
+        const gateA = new Promise((resolve) => { releaseA = resolve; });
+        respond = async (config) => {
+            if (config.url === "a/") await gateA;
+            return 401; // b/ viaja con el token vigente y también está revocado
+        };
+        const a = api.post("a/", { x: 1 });
+        await vi.waitFor(() => expect(calls).toHaveLength(1)); // a/ ya salió con "old"
+        tokenStorage.setAccessToken("new");
+
+        await expect(api.get("b/")).rejects.toBeTruthy();
+        expect(loggedOut()).toBe(true);
+
+        releaseA();
+        await expect(a).rejects.toMatchObject({ response: { status: 401 } });
+
+        expect(calls.map((c) => [c.url, c.auth])).toEqual([
+            ["a/", "Bearer old"],
+            ["b/", "Bearer new"],
+        ]);
+        expect(loggedOut()).toBe(true);
+    });
+
+    it("un reintento que termina después de otro login no lo deshace", async () => {
+        // a/ viaja con "old", se renueva a "new" y su reintento sale con "new";
+        // mientras tanto otra pestaña inicia sesión de nuevo ("newer"). Un 200
+        // del reintento no toca el almacenamiento.
+        let releaseRetry;
+        const gateRetry = new Promise((resolve) => { releaseRetry = resolve; });
+        respond = async (config) => {
+            if (config.headers.Authorization === "Bearer old") {
+                tokenStorage.setAccessToken("new");
+                return 401;
+            }
+            await gateRetry;
+            return 200;
+        };
+        const a = api.get("a/");
+        await vi.waitFor(() => expect(calls).toHaveLength(2));
+        tokenStorage.setTokens({ access: "newer", refresh: "refresh-2", remember: true });
+        releaseRetry();
+
+        expect((await a).status).toBe(200);
+        expect(calls).toHaveLength(2);
+        expect(access()).toBe("newer");
+        expect(tokenStorage.isLoggingOut()).toBe(false);
     });
 });

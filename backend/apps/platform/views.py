@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from apps.core.mixins import NoStoreResponseMixin
 from apps.core.network import get_client_ip, get_user_agent
 from apps.core.views import resolve_public_id
 from apps.platform.permissions import IsPlatformOperator
@@ -207,11 +208,13 @@ class PlatformOrgCreateView(APIView):
         )
 
 
-class PlatformStaffResetPasswordView(APIView):
+class PlatformStaffResetPasswordView(NoStoreResponseMixin, APIView):
     """
     POST /api/platform/staff/<public_id>/reset-password/
 
-    Platform-operator cross-tenant password reset (ADR p45).
+    Platform-operator cross-tenant password reset (ADR p45). The response
+    carries a temporary password, so it is ``Cache-Control: no-store``, like
+    the clinic reset and the reactivation (plan Equipo, D11).
 
     Generates a cryptographically random temporary password, applies it
     to the target user (any active non-ADMIN_SAAS user in any org), flips

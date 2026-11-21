@@ -1,8 +1,9 @@
 """ADR p65 — versión de sesión (F0 del plan de Equipo).
 
-Garantía: un access o refresh token emitido antes de desactivar, restablecer
-(de clínica o de plataforma) o cambiar la contraseña se rechaza en su siguiente
-uso, sin esperar a que venza. La reactivación se prueba con su servicio (F3).
+Garantía: un access o refresh token emitido antes de desactivar, reactivar,
+restablecer (de clínica o de plataforma) o cambiar la contraseña se rechaza en su
+siguiente uso, sin esperar a que venza: no lee, no escribe y no se renueva. El
+flujo completo de la reactivación vive en ``test_staff_reactivate``.
 
 Las pruebas usan tokens reales y la cadena de autenticación completa; nunca
 ``force_authenticate`` para el usuario cuyo token se pone a prueba.
@@ -29,6 +30,7 @@ from apps.core.authentication import (
 )
 from apps.core.models import Permission, Role, UserRole, set_current_user
 from apps.organizations.models import Organization
+from apps.patients.models import Owner
 from apps.platform.services.platform_reset_password import platform_reset_password
 from apps.users.services import (
     bump_session_version,
@@ -105,6 +107,25 @@ class _Fixtures(APITestCase):
     def assertRevoked(self, response):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, response.data)
         self.assertEqual(response.data['code'], 'session_revoked')
+
+    @staticmethod
+    def create_owner_with(access):
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f'Bearer {access}')
+        return client.post(
+            '/api/owners/', {'name': 'Ana Lopez', 'phone': '5512345678'}, format='json',
+        )
+
+    def assertStaleTokenWritesNothing(self, access):
+        """El token viejo tampoco escribe en un dominio: 401 y cero filas.
+
+        Es además la premisa del reintento D14 del frontend: un 401 nace en la
+        autenticación, antes de la vista, así que repetir un POST es seguro.
+        """
+        before = Owner.objects.count()
+        res = self.create_owner_with(access)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED, res.data)
+        self.assertEqual(Owner.objects.count(), before)
 
     def change_password_with(self, access, current=OLD_PASSWORD, new=NEW_PASSWORD):
         client = APIClient()
@@ -185,6 +206,19 @@ class CompatibilityTests(_Fixtures):
 
 
 class EveryBumpPathRevokesTests(_Fixtures):
+    """Una prueba por operación que incrementa la versión: el token anterior deja
+    de leer, de escribir y de renovarse. El gate
+    ``test_session_version_gate.BumpOperationsGateTests`` exige que cada
+    operación productiva que la incrementa tenga aquí su prueba."""
+
+    def test_control_a_current_token_does_write(self):
+        # Sin este control, el 401 de las demás pruebas podría venir de otra cosa.
+        access, _ = self.login()
+        before = Owner.objects.count()
+        res = self.create_owner_with(access)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED, res.data)
+        self.assertEqual(Owner.objects.count(), before + 1)
+
     def _issued_before(self):
         access, refresh = self.login()
         return access, refresh, OutstandingToken.objects.count()
@@ -202,6 +236,7 @@ class EveryBumpPathRevokesTests(_Fixtures):
         res = self.admin_client.post(f'/api/staff/{self.vet.public_id}/reset-password/')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED, res.data)
         self.assertRevoked(self.probe(access))
+        self.assertStaleTokenWritesNothing(access)
         self._assert_refresh_revoked_without_rotation(refresh, count)
 
     def test_platform_reset(self):
@@ -215,6 +250,7 @@ class EveryBumpPathRevokesTests(_Fixtures):
         res = client.post(f'/api/platform/staff/{self.vet.public_id}/reset-password/')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED, res.data)
         self.assertRevoked(self.probe(access))
+        self.assertStaleTokenWritesNothing(access)
         self._assert_refresh_revoked_without_rotation(refresh, count)
 
     def test_change_password(self):
@@ -224,6 +260,7 @@ class EveryBumpPathRevokesTests(_Fixtures):
         self.assertEqual(res.status_code, status.HTTP_200_OK, res.data)
         count = OutstandingToken.objects.count()
         self.assertRevoked(self.probe(other_access))
+        self.assertStaleTokenWritesNothing(other_access)
         self._assert_refresh_revoked_without_rotation(other_refresh, count)
 
     def test_deactivate(self):
@@ -236,11 +273,26 @@ class EveryBumpPathRevokesTests(_Fixtures):
         res = self.probe(access)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertNotEqual(res.data.get('code'), 'session_revoked')
+        self.assertStaleTokenWritesNothing(access)
         self._assert_refresh_revoked_without_rotation(refresh, count)
 
         # Si alguien la reactiva fuera de la API, el token viejo sigue muerto.
         User.objects.filter(pk=self.vet.pk).update(is_active=True)
         self.assertRevoked(self.probe(access))
+        self.assertStaleTokenWritesNothing(access)
+
+    def test_reactivate(self):
+        access, refresh, count = self._issued_before()
+        # Desactivación fuera del servicio: no toca la versión ni los tokens, así
+        # que lo único que puede matarlos aquí es la reactivación.
+        User.objects.filter(pk=self.vet.pk).update(is_active=False)
+        res = self.admin_client.post(f'/api/staff/{self.vet.public_id}/reactivate/')
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED, res.data)
+        self.vet.refresh_from_db()
+        self.assertEqual(self.vet.session_version, 1)
+        self.assertRevoked(self.probe(access))
+        self.assertStaleTokenWritesNothing(access)
+        self._assert_refresh_revoked_without_rotation(refresh, count)
 
     def test_blocking_scenario_with_reset(self):
         """Login (T) → restablecer → login con la temporal → cambiar → T muerto."""

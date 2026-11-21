@@ -8,6 +8,8 @@ Secuenciales con ``APITestCase``; concurrentes con ``TransactionTestCase`` e
 hilos sincronizados con ``threading.Barrier`` (las transacciones son reales).
 """
 import threading
+import time
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.db import connection
@@ -18,6 +20,7 @@ from rest_framework.test import APIClient, APITestCase
 
 from apps.core.models import Permission, Role, UserRole, set_current_user
 from apps.organizations.models import Organization
+from apps.users import services
 from apps.users.services import (
     ActorInactive,
     LastActiveAdmin,
@@ -181,3 +184,121 @@ class LastAdminConcurrencyTests(_Concurrent):
         )
         self.assertOnlyExpectedRejections(outcomes)
         self.assertGreaterEqual(_active_admins(self.org), 1)
+
+
+class LastAdminLockWaitTests(_Concurrent):
+    """Interleaving forzado, no dejado al planificador de hilos.
+
+    La primera desactivación se detiene DENTRO de su transacción, con las filas
+    ya bloqueadas y el objetivo ya guardado. La segunda arranca entonces y la
+    prueba comprueba en ``pg_stat_activity`` que PostgreSQL la tiene esperando un
+    bloqueo. Al soltar la primera, la segunda vuelve a evaluar las filas recién
+    confirmadas (READ COMMITTED) y rechaza.
+    """
+
+    def _wait_for_a_lock_waiter(self, timeout=10):
+        deadline = time.monotonic() + timeout
+        with connection.cursor() as cursor:
+            while time.monotonic() < deadline:
+                cursor.execute(
+                    "SELECT count(*) FROM pg_stat_activity "
+                    "WHERE datname = current_database() "
+                    "AND wait_event_type = 'Lock' AND pid <> pg_backend_pid()"
+                )
+                if cursor.fetchone()[0] >= 1:
+                    return True
+                time.sleep(0.05)
+        return False
+
+    def interleave(self, first, second, first_fails=False):
+        """Corre ``first`` hasta dentro de su sección crítica, lanza ``second``,
+        verifica que espera el bloqueo y suelta ``first``. Con ``first_fails``
+        la primera lanza una excepción al soltarla (su transacción se revierte)."""
+        entered, release = threading.Event(), threading.Event()
+        claimed = threading.Lock()
+        real_revoke = services._revoke_all_sessions
+
+        def held_revoke(user):
+            # Solo el primero en llegar se detiene (y, si toca, falla).
+            if claimed.acquire(blocking=False):
+                entered.set()
+                release.wait(timeout=20)
+                if first_fails:
+                    raise RuntimeError('fallo forzado antes del commit')
+            return real_revoke(user)
+
+        outcomes = {}
+
+        def worker(label, call):
+            try:
+                call()
+                outcomes[label] = 'ok'
+            except Exception as exc:  # se clasifica en la prueba
+                outcomes[label] = exc
+            finally:
+                connection.close()
+
+        with mock.patch.object(services, '_revoke_all_sessions', held_revoke):
+            t1 = threading.Thread(target=worker, args=('first', first))
+            t2 = threading.Thread(target=worker, args=('second', second))
+            try:
+                t1.start()
+                self.assertTrue(entered.wait(timeout=10), 'la primera no llegó al bloqueo')
+                t2.start()
+                waited = self._wait_for_a_lock_waiter()
+                second_still_running = t2.is_alive()
+            finally:
+                release.set()
+                t1.join(timeout=30)
+                t2.join(timeout=30)
+
+        self.assertTrue(waited, 'la segunda transacción no esperó ningún bloqueo')
+        self.assertTrue(second_still_running, 'la segunda terminó sin esperar a la primera')
+        return outcomes
+
+    def test_mutual_deactivation_second_waits_and_finds_its_actor_inactive(self):
+        a = _user(self.org, 'lw_a', 'ADMIN')
+        b = _user(self.org, 'lw_b', 'ADMIN')
+        outcomes = self.interleave(
+            lambda: deactivate_staff(admin=User.objects.get(pk=a.pk), target_user=User.objects.get(pk=b.pk)),
+            lambda: deactivate_staff(admin=User.objects.get(pk=b.pk), target_user=User.objects.get(pk=a.pk)),
+        )
+        self.assertEqual(outcomes['first'], 'ok')
+        self.assertIsInstance(outcomes['second'], ActorInactive)
+        self.assertEqual(
+            list(User.objects.filter(organization=self.org, role='ADMIN', is_active=True)
+                 .values_list('pk', flat=True)),
+            [a.pk],
+        )
+
+    def test_non_admin_with_grant_waits_and_sees_the_admin_that_just_left(self):
+        # A desactiva a B mientras un VET con staff.destroy desactiva a A. El
+        # conjunto bloqueado por el VET incluía a B cuando empezó; al esperar,
+        # PostgreSQL relee B ya inactivo y lo deja fuera: A es el último.
+        a = _user(self.org, 'lw_a2', 'ADMIN')
+        b = _user(self.org, 'lw_b2', 'ADMIN')
+        vet = _user(self.org, 'lw_vet', 'VET')
+        outcomes = self.interleave(
+            lambda: deactivate_staff(admin=User.objects.get(pk=a.pk), target_user=User.objects.get(pk=b.pk)),
+            lambda: deactivate_staff(admin=User.objects.get(pk=vet.pk), target_user=User.objects.get(pk=a.pk)),
+        )
+        self.assertEqual(outcomes['first'], 'ok')
+        self.assertIsInstance(outcomes['second'], LastActiveAdmin)
+        self.assertEqual(_active_admins(self.org), 1)
+        self.assertTrue(User.objects.get(pk=a.pk).is_active)
+
+    def test_rolled_back_first_lets_the_second_proceed(self):
+        # Si la primera falla y se revierte, la segunda ve el estado original y
+        # puede continuar: el bloqueo no convierte un fallo en un rechazo falso.
+        a = _user(self.org, 'lw_a3', 'ADMIN')
+        b = _user(self.org, 'lw_b3', 'ADMIN')
+        c = _user(self.org, 'lw_c3', 'ADMIN')
+        outcomes = self.interleave(
+            lambda: deactivate_staff(admin=User.objects.get(pk=a.pk), target_user=User.objects.get(pk=b.pk)),
+            lambda: deactivate_staff(admin=User.objects.get(pk=c.pk), target_user=User.objects.get(pk=b.pk)),
+            first_fails=True,
+        )
+        self.assertIsInstance(outcomes['first'], RuntimeError)
+        self.assertEqual(outcomes['second'], 'ok')
+        self.assertFalse(User.objects.get(pk=b.pk).is_active)
+        self.assertEqual(_active_admins(self.org), 2)

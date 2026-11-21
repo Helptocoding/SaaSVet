@@ -6,6 +6,7 @@ y respuesta con ``no-store``. Atomicidad: la contraseña temporal solo sale
 después del commit.
 """
 import ast
+import logging
 import threading
 from datetime import timedelta
 from pathlib import Path
@@ -18,7 +19,8 @@ from django.test import TransactionTestCase, override_settings
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.core.models import Permission, Role, UserRole, set_current_user
 from apps.medical_records.models import MedicalRecord
@@ -320,6 +322,122 @@ class ReactivateAtomicityTests(TransactionTestCase):
         self.assertTrue(vet.check_password(PASSWORD))
         self.assertEqual(vet.session_version, version)
         self.assertEqual(BlacklistedToken.objects.count(), blacklisted)
+
+    SENTINEL = 'TEMP-SENTINEL-no-debe-salir-9f3c'
+
+    def _capture_every_log_record(self):
+        """Parche de ``Logger.handle``: ve cada registro de cualquier logger,
+        aunque su configuración no propague a la raíz."""
+        records = []
+        original = logging.Logger.handle
+
+        def spy(logger, record):
+            records.append(record)
+            return original(logger, record)
+
+        return records, mock.patch.object(logging.Logger, 'handle', spy)
+
+    def _assert_sentinel_absent(self, response, records):
+        self.assertNotIn(self.SENTINEL.encode(), response.content)
+        formatter = logging.Formatter()
+        for record in records:
+            rendered = formatter.format(record) + repr(record.__dict__)
+            self.assertNotIn(self.SENTINEL, rendered, record.getMessage())
+
+    def test_failure_at_every_step_rolls_back_and_reveals_nothing(self):
+        # Dos sesiones vivas (emitidas fuera de la API tras la desactivación) para
+        # que revocar a medias sea observable.
+        target = User.objects.get(pk=self.vet.pk)
+        RefreshToken.for_user(target)
+        RefreshToken.for_user(target)
+        live = OutstandingToken.objects.filter(user=target, blacklistedtoken__isnull=True)
+        self.assertEqual(live.count(), 2)
+
+        real_get_or_create = BlacklistedToken.objects.get_or_create
+        blacklist_calls = []
+
+        def fails_on_second_blacklist(**kwargs):
+            blacklist_calls.append(kwargs)
+            if len(blacklist_calls) == 2:
+                raise RuntimeError('fallo forzado a mitad de la revocación')
+            return real_get_or_create(**kwargs)
+
+        steps = {
+            'tras activar, antes de la contraseña': mock.patch(
+                'apps.users.services._issue_temporary_password',
+                side_effect=RuntimeError('fallo forzado'),
+            ),
+            'tras la contraseña, antes de revocar': mock.patch(
+                'apps.users.services._revoke_all_sessions',
+                side_effect=RuntimeError('fallo forzado'),
+            ),
+            'a mitad de la revocación': mock.patch.object(
+                BlacklistedToken.objects, 'get_or_create', side_effect=fails_on_second_blacklist,
+            ),
+            'al incrementar la versión': mock.patch(
+                'apps.users.services.bump_session_version',
+                side_effect=RuntimeError('fallo forzado'),
+            ),
+        }
+        before = User.objects.get(pk=self.vet.pk)
+        for label, failure in steps.items():
+            with self.subTest(step=label):
+                blacklist_calls.clear()
+                records, spy = self._capture_every_log_record()
+                with spy, failure, mock.patch(
+                    'apps.users.services.secrets.token_urlsafe', return_value=self.SENTINEL,
+                ), mock.patch('apps.users.services._log_staff_reactivated') as event:
+                    res = self.client.post(_reactivate_url(self.vet))
+
+                self.assertEqual(res.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+                self._assert_sentinel_absent(res, records)
+                event.assert_not_called()
+
+                vet = User.objects.get(pk=self.vet.pk)
+                self.assertFalse(vet.is_active)
+                self.assertTrue(vet.check_password(PASSWORD))
+                self.assertFalse(vet.check_password(self.SENTINEL))
+                self.assertEqual(vet.password_must_change, before.password_must_change)
+                self.assertEqual(vet.password_temp_issued_at, before.password_temp_issued_at)
+                self.assertEqual(vet.session_version, before.session_version)
+                self.assertEqual(live.count(), 2)
+
+        # El fallo no dejó nada a medio hacer: la reactivación funciona después.
+        res = self.client.post(_reactivate_url(self.vet))
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED, res.content)
+        self.assertEqual(live.count(), 0)
+
+    def test_failure_after_commit_reveals_nothing_and_leaves_a_whole_account(self):
+        # Si la respuesta falla después del commit, la reactivación quedó completa
+        # (no a medias) y la contraseña nunca se vio: se recupera con Restablecer.
+        version = User.objects.get(pk=self.vet.pk).session_version
+        records, spy = self._capture_every_log_record()
+        with spy, mock.patch(
+            'apps.users.services.secrets.token_urlsafe', return_value=self.SENTINEL,
+        ), mock.patch(
+            'apps.users.views.UserSerializer', side_effect=RuntimeError('serializador caído'),
+        ):
+            res = self.client.post(_reactivate_url(self.vet))
+        self.assertEqual(res.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self._assert_sentinel_absent(res, records)
+
+        vet = User.objects.get(pk=self.vet.pk)
+        self.assertTrue(vet.is_active)
+        self.assertTrue(vet.password_must_change)
+        self.assertIsNotNone(vet.password_temp_issued_at)
+        self.assertEqual(vet.session_version, version + 1)
+        self.assertFalse(vet.check_password(PASSWORD))
+
+        again = self.client.post(_reactivate_url(self.vet))
+        self.assertEqual(again.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(again.json()['code'], 'already_active')
+        reset = self.client.post(f'/api/staff/{self.vet.public_id}/reset-password/')
+        self.assertEqual(reset.status_code, status.HTTP_201_CREATED, reset.content)
+        login = APIClient().post(
+            '/api/token/', {'username': 'rt_vet', 'password': reset.json()['temp_password']},
+            format='json',
+        )
+        self.assertEqual(login.status_code, status.HTTP_200_OK, login.content)
 
     def test_failing_event_does_not_turn_a_committed_reactivation_into_an_error(self):
         with mock.patch(

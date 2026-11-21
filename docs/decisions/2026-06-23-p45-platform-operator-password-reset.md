@@ -211,3 +211,11 @@ No se tocan:
 - ADR p21: `2026-05-22-p21-admin-password-reset.md`
 - `apps/platform/permissions.py:IsPlatformOperator`
 - Endpoint: `POST /api/platform/staff/<public_id>/reset-password/`
+
+## Addendum 2026-11-21 — `no-store` y versión de sesión
+
+- La respuesta lleva `Cache-Control: no-store` (`NoStoreResponseMixin`), igual que el
+  restablecimiento de clínica y la reactivación (plan Equipo, D11). Antes de esta fecha no lo
+  tenía. Cubre también las respuestas de error.
+- Desde ADR p65 el restablecimiento incrementa la versión de sesión del usuario: también dejan de
+  servir sus access tokens, no solo los refresh. Las cuentas de servicio responden 404 (D13).
