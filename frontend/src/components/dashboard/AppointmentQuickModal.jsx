@@ -7,6 +7,7 @@ import { updateAppointmentStatus } from "../../api/appointments";
 import { useConfirm } from "../useConfirm";
 import { Icon } from "../icons";
 import StatusBadge from "../StatusBadge";
+import Skeleton from "react-loading-skeleton";
 import {
   apiError, appointmentChangedCurrent, isAppointmentChanged,
 } from "../../utils/apiError";
@@ -186,10 +187,20 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
   };
 
   if (loading) {
+    // Misma caja que el detalle: encabezado (mascota + estado), datos y acciones.
     return (
       <div className="modal-overlay" onClick={onClose}>
-        <div className="modal modal-sm" onClick={(e) => e.stopPropagation()} style={{ padding: "24px" }}>
-          <p style={{ color: "var(--c-text-3)", fontSize: "13px", textAlign: "center" }}>Cargando...</p>
+        <div className="modal modal-sm" onClick={(e) => e.stopPropagation()} role="status" aria-label="Cargando cita">
+          <div className="modal-header" aria-hidden="true">
+            <div>
+              <Skeleton width={140} height={16} />
+              <Skeleton width={84} height={20} borderRadius="var(--r-full)" />
+            </div>
+          </div>
+          <div className="modal-body" aria-hidden="true">
+            <Skeleton count={4} height={13} className="dash-skel-row" />
+            <Skeleton count={2} height={36} borderRadius="var(--r-lg)" className="dash-skel-row" />
+          </div>
         </div>
       </div>
     );

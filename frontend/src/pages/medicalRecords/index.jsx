@@ -25,6 +25,32 @@ import Pagination from "../../components/Pagination";
 import SegmentedControl from "../../components/SegmentedControl";
 import styles from "./medicalRecords.module.css";
 import Layout from "../../components/Layout";
+import Skeleton from "react-loading-skeleton";
+
+// Área principal mientras llega el catálogo de productos: encabezado del paciente,
+// filtros y tarjetas del historial. La barra de mascotas carga por su cuenta.
+const RecordsMainSkeleton = () => (
+  <main className={styles.mainContent} role="status" aria-label="Cargando historial clínico">
+    <div className={styles.patientHeader} aria-hidden="true">
+      <div className={styles.skelPatient}>
+        <Skeleton circle width={56} height={56} />
+        <div>
+          <Skeleton width={180} height={22} />
+          <Skeleton width={240} height={12} />
+        </div>
+      </div>
+    </div>
+    <div className={styles.filtersBar} aria-hidden="true">
+      <Skeleton width={320} height={32} borderRadius="var(--r-lg)" />
+      <Skeleton width={220} height={32} borderRadius="var(--r-lg)" />
+    </div>
+    <div className={styles.skelTimeline} aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <Skeleton key={i} height={88} borderRadius="var(--r-lg)" />
+      ))}
+    </div>
+  </main>
+);
 
 const TYPE_FILTERS = [
   { id: "all",      label: "Todos" },
@@ -299,16 +325,6 @@ const MedicalRecords = () => {
     setSidebarCollapsed(true);
   };
 
-  if (initializing || loading) {
-    return (
-      <Layout>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-          <p style={{ color: "var(--c-text-3)", fontSize: "13px" }}>Cargando historial clínico...</p>
-        </div>
-      </Layout>
-    );
-  }
-
   const canCreate = user?.role !== "ASSISTANT";
 
   // Modo consulta: el stepper se renderiza DENTRO de <Layout> (se conserva el navbar
@@ -329,7 +345,10 @@ const MedicalRecords = () => {
           />
         )}
 
-        {inConsult ? (
+        {(initializing || loading) ? (
+          // La consulta necesita el catálogo de productos: hasta tenerlo no se monta.
+          <RecordsMainSkeleton />
+        ) : inConsult ? (
           <ConsultationForm
             pet={petInfo}
             products={products}

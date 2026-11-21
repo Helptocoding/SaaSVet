@@ -1,0 +1,19 @@
+/* Esqueleto de Mascotas: misma rejilla que filtros y tarjetas. Los
+   indicadores usan StatSectionSkeleton (components/StatTiles). */
+.filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.pushRight { margin-left: auto; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(272px, 1fr)); gap: 14px; }
+.card { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.cardHead { display: flex; align-items: center; gap: 12px; }
+.cardTitle { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.cardBody {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px;
+  padding-top: 12px; border-top: 1px solid var(--c-subtle);
+}
+.petCell { display: flex; align-items: center; gap: 10px; }
+.panelSection { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+.panelLine { margin-top: 6px; }
+
+.tabs { gap: 18px; padding-bottom: 12px; }
+.infoGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 680px; }
+.infoTitle { margin-bottom: 16px; }

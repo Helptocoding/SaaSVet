@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Icon } from "./icons";
 import { apiError } from "../utils/apiError";
+import Skeleton from "react-loading-skeleton";
 import styles from "./CajaBar.module.css";
 import { useAuth } from "../auth/authContext";
 import { getCurrentSession, openSession, closeSession, registerCashMovement } from "../api/cash";
@@ -113,10 +114,26 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
         } finally { setBusy(false); }
     };
 
-    if (session === undefined) return null; // loading silencioso
+    const compact = variant === "compact";
+
+    // Cargando: misma caja que el estado real para que nada salte al resolver.
+    if (session === undefined) {
+        return (
+            <div className={`${styles.bar} ${compact ? styles.compact : styles.full}`} role="status" aria-label="Cargando caja">
+                {compact ? (
+                    <Skeleton width={150} height={24} borderRadius="var(--r-full)" />
+                ) : (
+                    <>
+                        <Skeleton circle width={16} height={16} />
+                        <span className={styles.summary}><Skeleton width={260} height={13} /></span>
+                        <Skeleton width={110} height={30} borderRadius="var(--r-lg)" />
+                    </>
+                )}
+            </div>
+        );
+    }
 
     const open = !!session;
-    const compact = variant === "compact";
 
     return (
         <div className={`${styles.bar} ${compact ? styles.compact : styles.full}`}>

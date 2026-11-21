@@ -1,0 +1,187 @@
+/* ── Indicadores «Linear Insights» ──────────────────────────────
+   Estructura adaptada de ReUI `statistic-card-2` (MIT, keenthemes/reui):
+   título + icono, valor + insignia y un pie separado por una línea.
+   Tonos sutiles: fondo claro + borde + texto del trío de cada token.
+   El tono de cada tarjeta viene de una clase .tone* (solo tokens). */
+/* Un contenedor que ya separa con gap (la columna del Dashboard) fija
+   --stat-section-gap: 0 en vez de sobrescribir el margen. */
+.section {
+  /* Contenedor: una página puede repartir la rejilla según el ancho real de
+     la sección con @container (Dashboard), no según la ventana. */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: var(--stat-section-gap, 24px);
+}
+
+.intro {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--c-text-2);
+  padding-right: 14px;
+  position: relative;
+}
+
+.eyebrow::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  width: 42px;
+  height: 1px;
+  background: var(--hairline);
+}
+
+/* Las páginas cambian las columnas con la variable, no con otra regla. */
+.grid {
+  display: grid;
+  grid-template-columns: var(--stat-grid-cols, repeat(auto-fit, minmax(150px, 1fr)));
+  gap: 16px;
+}
+
+.tile {
+  /* El valor escala con el ancho de la tarjeta: en rejillas apretadas
+     (Dashboard, 5 indicadores) un monto no desborda. */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--stat-border);
+  border-radius: var(--r-lg);
+  background: var(--stat-bg);
+  color: var(--stat-fg);
+  font: inherit;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+
+.toneInk       { --stat-bg: var(--c-surface);       --stat-border: var(--c-border);         --stat-fg: var(--c-text); }
+.tonePrimary   { --stat-bg: var(--c-primary-light); --stat-border: var(--sage-400);         --stat-fg: var(--c-primary-dark); }
+.toneAttention { --stat-bg: var(--c-warning-bg);    --stat-border: var(--c-warning-border); --stat-fg: var(--c-warning-text); }
+.toneDanger    { --stat-bg: var(--c-danger-bg);     --stat-border: var(--c-danger-border);  --stat-fg: var(--c-danger-text); }
+.toneForest    { --stat-bg: var(--c-surface);       --stat-border: var(--c-border);         --stat-fg: var(--c-primary-dark); }
+/* Un indicador de alerta en cero: nada pendiente, sin color de alarma. */
+.toneCalm      { --stat-bg: var(--c-surface);       --stat-border: var(--c-border);         --stat-fg: var(--c-text-2); }
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.icon {
+  display: flex;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.value {
+  font-size: clamp(22px, 14cqi, 28px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: opacity var(--t2);
+}
+
+.valueCounting { opacity: 0.78; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 600;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.foot strong { font-weight: 600; }
+
+.liveDot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-right: 2px;
+  border-radius: 50%;
+  background: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-ring);
+  animation: statLivePulse 2s cubic-bezier(.4, 0, .6, 1) infinite;
+}
+
+@keyframes statLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+/* Indicadores que filtran: hover, foco y estado pulsado. */
+.action {
+  cursor: pointer;
+  transition: box-shadow var(--t), transform var(--t);
+}
+.action:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.action:hover .foot { opacity: 1; }
+.action:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+.actionOn {
+  border-color: currentColor;
+  box-shadow: inset 0 0 0 1px currentColor, var(--shadow-md);
+}
+.actionOn .foot { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .action, .value { transition: none; }
+  .action:hover { transform: none; }
+  .liveDot { animation: none; }
+}
+
+@media (max-width: 1120px) {
+  .eyebrow::after { width: 32px; }
+}
+
+@media (max-width: 720px) {
+  .grid { gap: 12px; }
+}

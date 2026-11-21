@@ -94,6 +94,15 @@ curl -sS -o /dev/null -w "%{http_code}\n" https://saaslyvet.com/
    falla y obliga a `git stash`).
 4. **El SPA del SaaS ≠ la landing.** `deploy.sh` reconstruye el SPA de `app.saaslyvet.com`,
    nunca la landing.
+5. **La revocación por versión de sesión solo es efectiva sin instancias antiguas**
+   (ADR p65, riesgo R4). Una instancia con el código anterior no compara la versión de
+   sesión: mientras reciba tráfico, un token emitido antes de desactivar, reactivar,
+   restablecer o cambiar una contraseña sigue sirviendo en ella. El primer despliegue que
+   incluye p65, y cualquiera que toque `apps/core/authentication.py`, solo se da por
+   terminado cuando ya ningún contenedor del backend anterior recibe tráfico
+   (`docker compose … ps` muestra únicamente contenedores con el `IMAGE_TAG` nuevo). No hace
+   falta repetir revocaciones hechas durante el relevo: la versión ya quedó incrementada en
+   la base y se aplica en cuanto solo quedan instancias nuevas.
 
 ---
 

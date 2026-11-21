@@ -29,6 +29,11 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 | Drift de stock detectado por `audit_stock_integrity` | Escritura directa a `stock` sin pasar por `apply_stock_movement`. | Investigar el caller. Se corrige con migración de baseline o `adjustment` manual. |
 | `RBAC_FALLBACK_ALLOWED` en logs | Usuario sin `UserRole` en la base de datos. | Ejecutar `seed_permissions` en la organización. |
 | 401 en frontend tras login válido | Toggle "Recordarme" e inconsistencia en el almacenamiento del token. | Revisar `auth/tokenStorage.js` (session tiene prioridad sobre local). |
+| `409 last_active_admin` al desactivar | El objetivo es el último ADMIN activo de la clínica (INV-J). | Correcto: crear o reactivar otro ADMIN antes. Si el único ADMIN perdió el acceso, restablecimiento de plataforma (ADR p45). |
+| `403 actor_inactive` al desactivar o reactivar | Otro ADMIN desactivó al actor mientras la operación esperaba su bloqueo. | Correcto: la otra operación ganó. Volver a entrar con una cuenta activa. |
+| `409 already_active` al reactivar | El integrante ya está activo; típico tras una respuesta perdida. | No se emite otra contraseña. Si no se vio la temporal, usar Restablecer contraseña. |
+| `403 demo_seed_account` | Edición, restablecimiento o desactivación de una cuenta semilla de la demo. | Correcto (D5). Crear una cuenta propia con correo `@example.com`. |
+| 401 `session_revoked` y la persona vuelve al login | **No es un fallo.** Su token se emitió antes de un cambio de credenciales o de acceso (desactivar, reactivar, restablecer o cambiar la contraseña, ADR p65). Cambiar la contraseña también cierra sus sesiones en otros navegadores. | Volver a iniciar sesión. El log `AUTH_SESSION_REVOKED` trae `user_id` y ambas versiones. Si ocurre justo después de desplegar, comprobar que no queden instancias antiguas recibiendo tráfico (runbook de despliegue). |
 | Cita walk-in con pet genérico no se puede vincular | La cita ya está en estado `done`. | Vincular al paciente real antes de cerrar la cita. |
 | Over-refund | La suma de líneas supera el monto ya devuelto disponible. | Revisar el detalle de las notas de crédito emitidas previamente. |
 | No se puede dispensar una presentación ya usada como insumo | La línea clínica y la línea retail representan operaciones distintas y el Checkout evita colapsarlas. | Corregir el insumo en la consulta si sigue abierta o elegir la decisión comercial válida; no mutar evidencia clínica cerrada. |
@@ -77,6 +82,7 @@ invariantes del sistema y el resumen ejecutivo del negocio.
   `RefundReversal`) sólo se crean mediante sus comandos de dominio.
 - El orden de locks de Billing se define en los servicios autoritativos. No se
   deben componer locks manuales desde views o serializers.
+- **Las filas de `User` del ciclo de vida del personal se bloquean en una sola consulta ordenada por `pk`** (plan Equipo; `apps.users.services._lock_users`): desactivar (actor, objetivo y, si es ADMIN, todos los ADMIN activos) y reactivar (actor y objetivo). Nunca bloquear `User` de una en una en estas operaciones: dos transacciones en sentidos opuestos harían ABBA.
 - **`User` (veterinario) precede a `Appointment`** (ADR p57). Toda escritura que pueda entrar o salir del predicado de INV-D —crear, `create-with-patient`, atención sin cita, `PATCH` de detalle, `/status/` incluida la reactivación, y `DELETE`— toma antes un `select_for_update()` sobre la fila del veterinario vía `services.lock_veterinarians`. Con dos veterinarios (reasignación) se bloquean **ambos en orden de PK**, o dos reasignaciones cruzadas harían ABBA. Sin esta serialización la restricción de exclusión sigue siendo correcta, pero dos escrituras simultáneas al mismo hueco hacen deadlock (`40P01`) y el perdedor recibe un 500 en vez de `slot_taken`.
 - **`Appointment` precede a `MedicalRecord`** (ADR p57). Desde F0, cuatro endpoints lockean la fila de la cita explícitamente (`PATCH` detalle, `/status/`, `DELETE`, `assign-patient`) y dos de ellos tocan después el `MedicalRecord` vinculado. El único camino que va en sentido contrario —`complete_appointment_on_record_close`, invocado con el lock del `MedicalRecord` ya tomado— usa un **UPDATE condicional** justamente para no invertir el orden con un `select_for_update`. Ese UPDATE toma igualmente el row lock implícito de la cita, así que la ventana `assign-patient` ↔ `close_medical_record` sobre el mismo par sigue siendo la única con orden cruzado: es preexistente, estrecha (exige vincular paciente y cerrar consulta en el mismo instante) y PostgreSQL la resuelve abortando una de las dos, no corrompiendo nada. **No añadir un `select_for_update` a `complete_appointment_on_record_close`**: lo convertiría en un ABBA garantizado en vez de una carrera improbable.
 - **El lock de deduplicación de teléfono se toma antes de cualquier lock de fila
@@ -182,6 +188,24 @@ invariantes del sistema y el resumen ejecutivo del negocio.
     o un lote que coincidan **no** prueban que una operación se aplicó: lo prueba su estado y sus movimientos
     enlazados. Consultar nunca ejecuta, y ejecutar solo lo puede hacer quien capturó.
 
+28. **INV-I — un token emitido antes de un cambio de credenciales o de acceso no vuelve a servir** (ADR p65):
+    cada token de una persona lleva la versión de sesión de su emisión (claim `sv`; sin claim vale 0). Desactivar,
+    reactivar, restablecer (de clínica o de plataforma) y cambiar la contraseña la incrementan, y
+    `TenantJWTAuthentication` y el refresh rechazan cualquier otra versión con 401 `session_revoked`. La versión
+    solo crece y solo la escribe `apps.users.services.bump_session_version`: `User.save()` no la escribe en filas
+    existentes y un gate estático vigila cualquier otra escritura. Las cuentas de servicio nunca la incrementan.
+
+29. **INV-J — una clínica nunca queda sin al menos un ADMIN activo como consecuencia de una operación de
+    gestión de personal** (plan Equipo, II.3.1). ADMIN activo = `User` de la clínica con `role='ADMIN'`,
+    `is_active=True` y que no es cuenta de servicio. `deactivate_staff` es la única vía del producto que reduce ese
+    conjunto: bloquea en **una sola consulta ordenada por `pk`** al actor, al objetivo y, si el objetivo es ADMIN, a
+    todos los ADMIN activos, y vuelve a comprobar con el bloqueo tomado (`409 last_active_admin`,
+    `403 actor_inactive`). No hay cambio de rol después del alta y `UserRole` solo se crea. Un gate estático
+    (`apps/users/tests/test_staff_lifecycle_writers_gate.py`) enumera los escritores de `is_active=False`, `role` e
+    `is_service_account`. Fuera del invariante, a propósito: el admin de Django y la shell (operadores) y la
+    desactivación de la organización completa. Recuperación si el único ADMIN olvida su contraseña: restablecimiento
+    de plataforma (ADR p45).
+
 ---
 
 ## 4. Reglas que nunca deben romperse
@@ -203,6 +227,8 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 - Jamás borrar `Organization`, `Pet`, `Owner` o `MedicalRecord` que tengan dependencias (PROTECT + 409).
 - Jamás colocar `for_organization()` después de `select_related()` o `prefetch_related()` en la cadena del queryset.
 - Jamás leer `localStorage` directamente para obtener `access_token`, `refresh_token` o `user` fuera de `tokenStorage.js`.
+- **Jamás escribir `User.session_version` fuera de `bump_session_version`** (ADR p65): ni asignación, ni `update()`, ni `update_fields`. Una escritura que la baje revive tokens que debían estar muertos. Hay un gate estático.
+- **Jamás emitir un token para una persona sin estampar la versión de sesión** (`apps.core.authentication.stamp_session_version`). El gate de emisión enumera los sitios permitidos; uno nuevo debe clasificarse.
 - **Jamás mutar una cita sin lock de fila** (ADR p57). Toda vía que escriba sobre un `Appointment` existente entra en la matriz de mutaciones de `docs/modules/appointments.md` **antes** de mergear. Una vía nueva sin lock reintroduce el último-escritor-gana que INV-A cierra.
 - **Jamás decidir qué veterinario bloquear a partir de una lectura previa al `atomic()` que escribe** (bloqueador conocido de F0, ADR p57). `get_object()`/`resolve_public_id()` corren antes de RBAC y de instanciar el serializer; si una reasignación de la MISMA cita confirma en esa ventana, bloquear ese snapshot deja la escritura sin serializar contra el veterinario REAL — el hueco por el que se cuela el deadlock (40P01) que `lock_veterinarians` existe para prevenir. `PATCH` de detalle, `/status/` y `DELETE` usan `services.lock_appointment_and_veterinarians`, que relee el veterinario vigente DENTRO de la transacción y verifica contra la fila ya bloqueada (`VeterinarianLockRace` + `retry_on_vet_lock_race` si el peek perdió la carrera). Una vía nueva que bloquee veterinarios a mano, desde un `Appointment` resuelto antes del `atomic()`, reintroduce el mismo bug.
 - Jamás borrar la declaración de `expected_state` en `AppointmentSerializer`: DRF descarta en silencio las claves desconocidas y la precondición desaparecería sin error visible (fail-open). El gate es P0-4.

@@ -6,6 +6,7 @@ import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import ImportedDataSection from "../components/ImportedDataSection";
 import StatusBadge from "../components/StatusBadge";
+import { PetDetailSkeleton } from "../features/pets/PetsSkeleton";
 import { apiError } from "../utils/apiError";
 import api from "../api/client";
 
@@ -73,9 +74,13 @@ const PetDetail = () => {
 
     if (initializing || loading) {
         return (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-                <p style={{ color: "var(--c-text-3)", fontSize: "13px" }}>Cargando...</p>
-            </div>
+            <PetDetailSkeleton
+                backButton={(
+                    <button className="back-btn" onClick={() => navigate("/pets")}>
+                        <Icon.ChevronLeft s={14} /> Volver a mascotas
+                    </button>
+                )}
+            />
         );
     }
 

@@ -1,7 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../../components/icons";
 import { searchPets } from "../../api/lookups";
+import Skeleton from "react-loading-skeleton";
 import styles from "./medicalRecords.module.css";
+
+// Lista de mascotas buscando: misma fila que un resultado (icono + nombre + línea).
+const PetListSkeleton = () => (
+    <div role="status" aria-label="Buscando mascotas">
+        {[0, 1, 2, 3, 4, 5].map(i => (
+            <div key={i} className={styles.petListItem} aria-hidden="true">
+                <Skeleton width={36} height={36} borderRadius={8} />
+                <div className={styles.petListInfo}>
+                    <Skeleton width={90 + (i % 3) * 25} height={13} />
+                    <Skeleton width={120} height={10} />
+                </div>
+            </div>
+        ))}
+    </div>
+);
 
 const SPECIES_DOG = /perro|can[ei]|dog/i;
 const SPECIES_CAT = /gato|fel[iy]|cat/i;
@@ -154,7 +170,7 @@ const PetSidebar = ({
 
             <div className={styles.petList}>
                 {loading ? (
-                    <p className={styles.sidebarEmpty}>Cargando…</p>
+                    <PetListSkeleton />
                 ) : items.length === 0 ? (
                     <p className={styles.sidebarEmpty}>Sin resultados</p>
                 ) : (

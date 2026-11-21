@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from "react";
 import { FunnelChart, Funnel, LabelList, Tooltip, ResponsiveContainer } from "recharts";
 import { useDashboardSeries } from "../../hooks/useDashboardSeries";
 import { useFinancialSeries } from "../../hooks/useFinancialSeries";
+import Skeleton from "react-loading-skeleton";
 
 /* ── CSS var resolver ─────────────────────────────────────── */
 const readCssVar = (name, fallback) => {
@@ -96,7 +97,11 @@ function ConversionFunnel({ rangeDays = 30 }) {
   const loading = opsLoading || finLoading;
 
   if (loading && totals.citas === 0 && totals.closed === 0) {
-    return <div className="chart-area"><div className="skeleton-block sk-chart" /></div>;
+    return (
+      <div className="chart-area" role="status" aria-label="Cargando gráfica">
+        <Skeleton height={200} borderRadius="var(--r-lg)" />
+      </div>
+    );
   }
 
   if (totals.citas === 0) {

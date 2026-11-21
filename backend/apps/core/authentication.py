@@ -7,6 +7,60 @@ from apps.core.models import set_current_user
 
 logger = logging.getLogger(__name__)
 
+# ADR p65: claim con la versión de sesión del usuario al emitir el token.
+SESSION_VERSION_CLAIM = 'sv'
+SESSION_REVOKED_MESSAGE = 'La sesión ya no es válida. Inicia sesión de nuevo.'
+
+
+class SessionRevoked(AuthenticationFailed):
+    """401 de un token emitido antes del último cambio de credenciales o de
+    acceso (ADR p65). `default_code` es lo que publica el handler de errores."""
+    default_detail = SESSION_REVOKED_MESSAGE
+    default_code = 'session_revoked'
+
+
+def stamp_session_version(token, user):
+    """Estampa la versión de sesión vigente del usuario en un token (ADR p65).
+
+    Se estampa en el refresh: simplejwt copia el claim al access y lo conserva
+    al rotar. Devuelve el mismo token para encadenar.
+    """
+    token[SESSION_VERSION_CLAIM] = user.session_version
+    return token
+
+
+def token_session_version(token):
+    """Versión que declara el token: 0 si no trae el claim (tokens anteriores a
+    p65 y del agente); `None` si el claim no es un entero no negativo."""
+    try:
+        value = token[SESSION_VERSION_CLAIM]
+    except KeyError:
+        return 0
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
+
+
+def session_version_matches(token, user):
+    """True si el token pertenece a la sesión vigente del usuario (ADR p65).
+
+    Igualdad estricta: la versión solo crece, así que un token con versión
+    mayor solo saldría de una transacción revertida, que nunca responde.
+    """
+    version = token_session_version(token)
+    if version == user.session_version:
+        return True
+    logger.info(
+        "AUTH_SESSION_REVOKED",
+        extra={
+            "event": "AUTH_SESSION_REVOKED",
+            "user_id": user.pk,
+            "token_session_version": version,
+            "current_session_version": user.session_version,
+        },
+    )
+    return False
+
 
 class TenantJWTAuthentication(JWTAuthentication):
     """
@@ -40,6 +94,11 @@ class TenantJWTAuthentication(JWTAuthentication):
             raise AuthenticationFailed('Cuenta desactivada.', code='user_inactive')
         if user.organization_id and not user.organization.is_active:
             raise AuthenticationFailed('Organización desactivada.', code='organization_inactive')
+        # ADR p65: un token emitido antes de desactivar, reactivar, restablecer o
+        # cambiar la contraseña ya no sirve, aunque no haya vencido. Usa la
+        # instancia recién releída: no agrega consultas.
+        if not session_version_matches(token, user):
+            raise SessionRevoked()
 
         set_current_user(user)
         self._tag_sentry(user)

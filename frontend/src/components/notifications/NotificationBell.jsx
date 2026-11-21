@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "../icons";
 import { useNotifications } from "../../hooks/useNotifications";
 import { formatRelativeTime, getNotificationAction } from "./notificationActions";
+import Skeleton from "react-loading-skeleton";
 import styles from "./NotificationBell.module.css";
 
 const TYPE_ICON = {
@@ -111,7 +112,16 @@ export default function NotificationBell() {
             </button>
           </div>
           <div className={styles.list} role="listbox" aria-label="Lista de notificaciones">
-            {loading && <p className={styles.state}>Cargando…</p>}
+            {loading && (
+              <div className={styles.skeleton} role="status" aria-label="Cargando notificaciones">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} aria-hidden="true">
+                    <Skeleton width="75%" height={13} />
+                    <Skeleton width="45%" height={10} />
+                  </div>
+                ))}
+              </div>
+            )}
             {!loading && error && (
               <p className={styles.state}>
                 {error} <button className={styles.retry} onClick={refetch}>Reintentar</button>

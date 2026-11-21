@@ -18,3 +18,16 @@ DEMO_RESET_FLAG_TTL = 120  # segundos
 # Clave bigint estable para pg_try_advisory_xact_lock (una sola demo, ADR p49 §7).
 # Si en el futuro hay varias demos, se parametriza entonces (fuera de alcance).
 DEMO_RESET_ADVISORY_KEY = 49_00_00_01
+
+# Plan Equipo (D5): usernames de las tres cuentas semilla de la demo. El seed las
+# identifica por username (`_ensure_users`), y Equipo las protege: no se editan,
+# restablecen ni desactivan por la API. Una sola lista: `_demo_data.DEMO_USERS`
+# la reutiliza. Llevan '@', que `USERNAME_REGEX` del alta no admite, así que
+# ningún visitante puede crear un username igual. Restricción operativa (R7):
+# no renombrarlas ni modificarlas desde el admin de Django.
+DEMO_ADMIN_USERNAME = "demo-admin@saaslyvet.com"
+DEMO_VET_USERNAME = "demo-vet@saaslyvet.com"
+DEMO_RECEPTION_USERNAME = "demo-recepcion@saaslyvet.com"
+DEMO_SEED_USERNAMES = frozenset({
+    DEMO_ADMIN_USERNAME, DEMO_VET_USERNAME, DEMO_RECEPTION_USERNAME,
+})

@@ -139,6 +139,11 @@ python manage.py seed_demo_clinic --delete --yes
 - Si hay **0** o **>1** organizations con `is_demo=True` → **aborta**.
 - Las acciones destructivas exigen **`--yes`**.
 - Una org real (`is_demo=False`) es intocable por el comando.
+- **Restricción operativa (plan Equipo, riesgo R7): no renombrar ni modificar a mano
+  las tres cuentas semilla desde el admin de Django.** Equipo las protege por
+  `organization.is_demo` + username (`apps.core.demo_reset.DEMO_SEED_USERNAMES`) y el seed
+  las reconoce por username: renombrarlas les quita la protección y el reset ya no las
+  repara. Si una se rompe, corregirla con el seed, no desde el admin.
 
 > Probar siempre en **local/staging** antes de prod. El backdating y los flujos
 > de stock/cobros conviene verlos pasar las auditorías (§7) antes de tocar el VPS.

@@ -28,6 +28,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import FeedbackButton from "./components/FeedbackButton";
 import { ConfirmProvider } from "./components/ConfirmDialog";
 import { Toaster } from "sonner";
+import { SkeletonTheme } from "react-loading-skeleton";
 
 const LoadingScreen = () => (
   <div style={{
@@ -112,9 +113,13 @@ function Root() {
     <AuthProvider>
       <ActivationProvider>
         <ConfirmProvider>
-          <ErrorBoundary>
-            <AuthGate />
-          </ErrorBoundary>
+          {/* Esqueletos de carga con los tokens del sistema. La animación se apaga
+              sola con prefers-reduced-motion (CSS de la librería). */}
+          <SkeletonTheme baseColor="var(--c-subtle)" highlightColor="var(--c-surface-2)">
+            <ErrorBoundary>
+              <AuthGate />
+            </ErrorBoundary>
+          </SkeletonTheme>
           <Toaster richColors position="top-right" toastOptions={{ duration: 4000 }} visibleToasts={3} />
         </ConfirmProvider>
       </ActivationProvider>

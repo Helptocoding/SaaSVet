@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getItem, clearTokens } from "../auth/tokenStorage";
+import { getItem, clearTokens, isLoggingOut } from "../auth/tokenStorage";
 import { genRequestId } from "../utils/requestId";
 
 const rawBase = import.meta.env.VITE_API_URL;
@@ -29,10 +29,34 @@ const isLoginAttempt = (config) => {
     return url.endsWith("token/") || url.endsWith("token");
 };
 
+// Login, refresh y cierre de sesión: nunca se reintentan.
+const AUTH_ENDPOINT = /(^|\/)token(\/(refresh|logout))?\/?$/;
+
+// ADR p65 (D14): un 401 de una petición que viajó con un access token que ya no
+// es el almacenado (se renovó mientras viajaba, p. ej. al cambiar la propia
+// contraseña) se reintenta UNA vez con el vigente. Es seguro aunque sea un POST:
+// DRF rechaza la autenticación antes de ejecutar la vista. Nunca llama al
+// refresh, no comparte estado entre peticiones y compara tokens sin
+// escribirlos en ningún lado.
+const shouldRetryWithCurrentToken = (config) => {
+    if (!config || config._sessionRetried) return false;
+    if (AUTH_ENDPOINT.test(config.url || "")) return false;
+    const sent = config.headers?.Authorization;
+    if (typeof sent !== "string" || !sent.startsWith("Bearer ")) return false;
+    if (isLoggingOut()) return false;
+    const current = getItem("access_token");
+    return Boolean(current) && sent !== `Bearer ${current}`;
+};
+
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401 && !isLoginAttempt(error.config)) {
+            if (shouldRetryWithCurrentToken(error.config)) {
+                // El interceptor de peticiones pone el token vigente.
+                error.config._sessionRetried = true;
+                return api(error.config);
+            }
             clearTokens();
             window.location.href = "/login";
         } else if (error.response?.status >= 500) {

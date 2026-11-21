@@ -16,6 +16,8 @@ import handleFormError from "../utils/handleFormError";
 import { apiError } from "../utils/apiError";
 import { toList } from "../utils/toList";
 import { isCanino, isFelino, getAgeGroup } from "../utils/petFilters";
+import PetsSkeleton, { PetPanelSkeleton } from "../features/pets/PetsSkeleton";
+import { StatSection, StatTile } from "../components/StatTiles";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SEX_LABELS = { male: "Macho", female: "Hembra", unknown: "Desconocido" };
@@ -52,6 +54,9 @@ const getWeekRange = () => {
     end.setHours(23, 59, 59, 999);
     return { start, end };
 };
+
+// Insignia «N %» de un indicador; sin mascotas no hay porcentaje que mostrar.
+const shareOfTotal = (part, total) => (total > 0 ? `${Math.round((part / total) * 100)}%` : null);
 
 // ─── Species Icon helper ──────────────────────────────────────────────────────
 const SpeciesIcon = ({ pet, size = 20, color }) => {
@@ -397,9 +402,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                 {/* Body */}
                 <div style={{ flex: 1, overflowY: "auto", padding: "20px 22px" }}>
                     {loading ? (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "120px" }}>
-                            <p style={{ color: "var(--c-text-3)", fontSize: "13px" }}>Cargando datos...</p>
-                        </div>
+                        <PetPanelSkeleton />
                     ) : (
                         <>
                             {/* Cliente */}
@@ -867,13 +870,7 @@ const Pets = () => {
         setFormErrors({});
     };
 
-    if (initializing || loading) {
-        return (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-                <p style={{ color: "var(--c-text-3)", fontSize: "13px" }}>Cargando...</p>
-            </div>
-        );
-    }
+    if (initializing || loading) return <PetsSkeleton view={view} />;
 
     return (
         <div>
@@ -891,62 +888,37 @@ const Pets = () => {
                 </button>
             </div>
 
-            {/* Metrics */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px", marginBottom: "24px" }}>
-                {/* Total */}
-                <div className="stat-card" style={{ borderTop: "3px solid var(--c-primary)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-                        <p className="stat-label">Total mascotas</p>
-                        <div style={iconBox("var(--c-primary-light)")}>
-                            <Icon.Paw s={16} c="var(--c-primary-dark)" />
-                        </div>
-                    </div>
-                    <p className="stat-value" style={{ color: "var(--c-primary-dark)" }}>{stats.total}</p>
-                    <p className="stat-sub">registradas en la clínica</p>
-                </div>
-
-                {/* Caninos */}
-                <div className="stat-card" style={{ borderTop: "3px solid #3b82f6" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-                        <p className="stat-label">Caninos</p>
-                        <div style={iconBox("#dbeafe")}>
-                            <Icon.Dog s={16} c="#3b82f6" />
-                        </div>
-                    </div>
-                    <p className="stat-value" style={{ color: "#1d4ed8" }}>{stats.caninos}</p>
-                    <p className="stat-sub">
-                        {stats.total > 0 ? Math.round(stats.caninos / stats.total * 100) : 0}% del total
-                    </p>
-                </div>
-
-                {/* Felinos */}
-                <div className="stat-card" style={{ borderTop: "3px solid #ec4899" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-                        <p className="stat-label">Felinos</p>
-                        <div style={iconBox("#fce7f3")}>
-                            <Icon.Cat s={16} c="#ec4899" />
-                        </div>
-                    </div>
-                    <p className="stat-value" style={{ color: "#be185d" }}>{stats.felinos}</p>
-                    <p className="stat-sub">
-                        {stats.total > 0 ? Math.round(stats.felinos / stats.total * 100) : 0}% del total
-                    </p>
-                </div>
-
-                {/* Citas esta semana */}
-                <div className="stat-card" style={{ borderTop: "3px solid var(--c-warning-text)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-                        <p className="stat-label">Citas esta semana</p>
-                        <div style={iconBox("var(--c-warning-bg)")}>
-                            <Icon.Calendar s={16} c="var(--c-warning-text)" />
-                        </div>
-                    </div>
-                    <p className="stat-value" style={{ color: "var(--c-warning-text)" }}>{weekApptCount}</p>
-                    <p className="stat-sub">
-                        cita{weekApptCount !== 1 ? "s" : ""} en la semana
-                    </p>
-                </div>
-            </div>
+            {/* Indicadores (de toda la clínica, no de la página) */}
+            <StatSection label="Resumen de mascotas">
+                <StatTile
+                    label="Total mascotas"
+                    value={stats.total}
+                    icon={Icon.Paw}
+                    tone="primary"
+                    foot="Registradas en la clínica"
+                />
+                <StatTile
+                    label="Caninos"
+                    value={stats.caninos}
+                    icon={Icon.Dog}
+                    badge={shareOfTotal(stats.caninos, stats.total)}
+                    foot="Del total de mascotas"
+                />
+                <StatTile
+                    label="Felinos"
+                    value={stats.felinos}
+                    icon={Icon.Cat}
+                    badge={shareOfTotal(stats.felinos, stats.total)}
+                    foot="Del total de mascotas"
+                />
+                <StatTile
+                    label="Citas esta semana"
+                    value={weekApptCount}
+                    icon={Icon.Calendar}
+                    tone="forest"
+                    foot="De domingo a sábado"
+                />
+            </StatSection>
 
             {/* Filter bar */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
@@ -1234,12 +1206,5 @@ const Pets = () => {
         </div>
     );
 };
-
-// Small icon box helper
-const iconBox = (bg) => ({
-    width: "32px", height: "32px", borderRadius: "8px",
-    background: bg, display: "flex", alignItems: "center", justifyContent: "center",
-    flexShrink: 0,
-});
 
 export default Pets;

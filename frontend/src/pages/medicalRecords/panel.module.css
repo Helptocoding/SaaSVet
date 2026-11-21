@@ -72,22 +72,8 @@
   color: #999;
 }
 
-@keyframes panelPulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.8; }
-}
-
-.panelLoading {
-  font-size: 12px;
-  color: var(--c-text-3);
-  font-style: italic;
-  animation: panelPulse 1.4s ease-in-out infinite;
-}
-
-.panelCompact .panelLoading {
-  font-size: 11px;
-  color: #999;
-}
+/* Resumen cargando (react-loading-skeleton anima; aquí solo el ritmo vertical). */
+.panelSkeleton { display: flex; flex-direction: column; gap: 8px; }
 
 .panelVitalRow {
   display: flex;
@@ -172,17 +158,6 @@
   font-style: italic;
 }
 
-@keyframes panelPulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.8; }
-}
-
-.panelLoading {
-  font-size: 11px;
-  color: #999;
-  font-style: italic;
-  animation: panelPulse 1.4s ease-in-out infinite;
-}
 
 .panelVitalRow {
   display: flex;

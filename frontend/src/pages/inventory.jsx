@@ -4,7 +4,7 @@ import { apiError } from "../utils/apiError";
 import { newOperationUuid } from "../utils/idempotency";
 import handleFormError from "../utils/handleFormError";
 import { toList } from "../utils/toList";
-import { stockStatus, productStockQty, productStockValue, compareInventoryProducts, computeInitialStock, fmt, fmtCur } from "../utils/inventory";
+import { stockStatus, matchesStockFilter, productStockQty, productStockValue, compareInventoryProducts, computeInitialStock, fmt, fmtCur } from "../utils/inventory";
 import {
     getProducts, createProduct, updateProduct, deleteProduct,
     adjustStock, createPresentation, updatePresentation,
@@ -13,6 +13,9 @@ import {
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { toast } from "sonner";
+import Skeleton from "react-loading-skeleton";
+import TableSkeleton from "../components/TableSkeleton";
+import { StatSection, StatSectionSkeleton, StatTile } from "../components/StatTiles";
 import StockEntryModal from "../components/StockEntryModal";
 import LotManagerModal from "../components/LotManagerModal";
 import ReceptionsModal from "../components/ReceptionsModal";
@@ -152,6 +155,62 @@ const CategoryIcon = ({ category, size = 18 }) => {
 const ICO_CLS = { medication: s.icoMed, food: s.icoFood, accessory: s.icoAcc, other: s.icoOther };
 const BADGE_CLS = { medication: s.badgeBlue, food: s.badgeGreen, accessory: s.badgePurple, other: s.badgeGray };
 
+// ── Esqueleto de carga ─────────────────────────────────────
+// Misma estructura que la página (encabezado, indicadores, filtros, tabla) para que
+// el contenido aparezca en su sitio. El encabezado es estático: se muestra real.
+const INVENTORY_SKELETON_COLUMNS = [
+    {
+        label: "Producto",
+        cell: (row) => (
+            <div className={s.prodCell}>
+                <Skeleton width={36} height={36} borderRadius={9} />
+                <div>
+                    <Skeleton width={140 + (row % 3) * 30} height={13} />
+                    <Skeleton width={90} height={10} />
+                </div>
+            </div>
+        ),
+    },
+    { label: "Categoría", cell: () => <Skeleton width={84} height={20} borderRadius="var(--r-full)" /> },
+    { label: "Stock", width: 70 },
+    { label: "Estado", cell: () => <Skeleton width={78} height={20} borderRadius="var(--r-full)" /> },
+    { label: "Precio unit.", width: 56 },
+    { label: "Valor en stock", width: 64 },
+];
+const SKELETON_CHIP_WIDTHS = [52, 104, 82, 92, 60];
+
+const InventorySkeleton = ({ withActions }) => (
+    <div>
+        <div className={s.phead}>
+            <div>
+                <div className={s.ptag}>Control de stock</div>
+                <h1 className={s.ptitle}>Inventario</h1>
+                <p className={s.psub}>Productos, medicamentos y suministros de la clínica</p>
+            </div>
+        </div>
+        <div role="status" aria-label="Cargando inventario">
+            <StatSectionSkeleton
+                count={5}
+                gridClassName={s.statsGrid}
+                tileClassName={i => (i === 4 ? s.statWide : undefined)}
+            />
+            <div className={s.toolbar} aria-hidden="true">
+                <Skeleton width={300} height={38} borderRadius="var(--r-lg)" />
+                <Skeleton width={150} height={38} borderRadius="var(--r-lg)" />
+                <Skeleton width={72} height={38} borderRadius="var(--r-lg)" />
+            </div>
+            <div className={s.chipRow} aria-hidden="true">
+                {SKELETON_CHIP_WIDTHS.map((w, i) => (
+                    <Skeleton key={i} width={w} height={30} borderRadius="var(--r-md)" />
+                ))}
+            </div>
+            <TableSkeleton
+                columns={withActions ? [...INVENTORY_SKELETON_COLUMNS, { label: "Acciones", width: 96 }] : INVENTORY_SKELETON_COLUMNS}
+            />
+        </div>
+    </div>
+);
+
 // ── Component ──────────────────────────────────────────────
 const Inventory = () => {
     const { token, user, initializing, can } = useAuth();
@@ -167,7 +226,6 @@ const Inventory = () => {
     const [sortCol, setSortCol] = useState("name");
     const [sortDir, setSortDir] = useState("asc");
     const [viewMode, setViewMode] = useState("table");
-    const [alertDismissed, setAlertDismissed] = useState(false);
 
     // Wizard state (create / edit product)
     const [wizardOpen, setWizardOpen] = useState(false);
@@ -309,19 +367,13 @@ const Inventory = () => {
         return {
             total: active.length,
             medications: active.filter(p => p.category === "medication").length,
-            lowStock: active.filter(p => p.presentation?.is_low_stock).length,
-            outOfStock: active.filter(p => parseFloat(p.stock_quantity ?? (p.presentation || {}).stock ?? 0) <= 0).length,
+            // Misma regla que el filtro de la tabla: el número coincide con las filas.
+            lowStock: active.filter(p => matchesStockFilter(p, "low")).length,
+            outOfStock: active.filter(p => matchesStockFilter(p, "crit")).length,
             totalVal: active.reduce((acc, p) => acc + productStockValue(p), 0),
+            inactive: products.length - active.length,
+            withRx: active.filter(p => p.category === "medication" && p.requires_prescription).length,
         };
-    }, [products]);
-
-    const alertProducts = useMemo(() => {
-        const low = products.filter(p => p.is_active !== false && p.presentation?.is_low_stock);
-        return [...low].sort((a, b) => {
-            const aOut = parseFloat(a.presentation?.stock ?? 1) <= 0 ? 0 : 1;
-            const bOut = parseFloat(b.presentation?.stock ?? 1) <= 0 ? 0 : 1;
-            return aOut - bOut;
-        });
     }, [products]);
 
     useEffect(() => {
@@ -398,13 +450,37 @@ const Inventory = () => {
         };
     }, [metrics.totalVal]);
 
-    const insights = useMemo(() => ([
-        { label: "Total", value: metrics.total },
-        { label: "Medicamentos", value: metrics.medications },
-        { label: "Bajo stock", value: metrics.lowStock, tone: metrics.lowStock > 0 ? "warning" : "default" },
-        { label: "Sin stock", value: metrics.outOfStock, tone: metrics.outOfStock > 0 ? "danger" : "default" },
-        { label: "Valor stock", value: `$${fmtCur(animatedTotalVal)}`, tone: "value" },
-    ]), [animatedTotalVal, metrics]);
+    // Cada indicador: tono de fondo, icono y una línea de pie con un dato real
+    // (no hay histórico, así que no se muestran deltas "vs mes anterior").
+    const insights = useMemo(() => {
+        const medsPct = metrics.total > 0 ? Math.round((metrics.medications / metrics.total) * 100) : null;
+        return [
+            {
+                label: "Productos activos", value: metrics.total, icon: Icon.Package, tone: "ink",
+                foot: <>Desactivados: <strong>{metrics.inactive}</strong></>,
+            },
+            {
+                label: "Medicamentos", value: metrics.medications, icon: Icon.Pill, tone: "primary",
+                badge: medsPct != null ? `${medsPct}%` : null,
+                foot: <>Con receta: <strong>{metrics.withRx}</strong></>,
+            },
+            {
+                label: "Bajo stock", value: metrics.lowStock, icon: Icon.AlertTriangle,
+                tone: metrics.lowStock > 0 ? "attention" : "calm", stockFilter: "low",
+                foot: "Ninguno bajo el mínimo",
+            },
+            {
+                label: "Sin stock", value: metrics.outOfStock, icon: Icon.AlertOctagon,
+                tone: metrics.outOfStock > 0 ? "danger" : "calm", stockFilter: "crit",
+                foot: "Ninguno agotado",
+            },
+            {
+                label: "Valor del stock", value: `$${fmtCur(animatedTotalVal)}`, icon: Icon.Wallet,
+                tone: "forest", wide: true, counting: isTotalValAnimating,
+                foot: "A precio de venta",
+            },
+        ];
+    }, [animatedTotalVal, isTotalValAnimating, metrics]);
 
     // ── Multi mode: auto-init 2nd salesPres + auto-sync name/cf ──
     useEffect(() => {
@@ -449,23 +525,46 @@ const Inventory = () => {
     };
 
     // ── Filtered + sorted list ────────────────────────────
-    const filteredProducts = useMemo(() => {
-        let list = products.filter(p => {
-            if (filterCategory && p.category !== filterCategory) return false;
-            if (searchText) {
-                const q = searchText.toLowerCase();
-                if (!p.name.toLowerCase().includes(q) && !(p.description || "").toLowerCase().includes(q)) return false;
-            }
-            const st = stockStatus(p).state;
-            if (stockFilter === "ok" && st !== "ok") return false;
-            if (stockFilter === "low" && st !== "low") return false;
-            if (stockFilter === "crit" && st !== "crit") return false;
-            return true;
-        });
+    // Categoría + búsqueda; el estado de stock se aplica después para poder contar
+    // cuántos productos de este contexto requieren atención.
+    const contextProducts = useMemo(() => products.filter(p => {
+        if (filterCategory && p.category !== filterCategory) return false;
+        if (searchText) {
+            const q = searchText.toLowerCase();
+            if (!p.name.toLowerCase().includes(q) && !(p.description || "").toLowerCase().includes(q)) return false;
+        }
+        return true;
+    }), [products, filterCategory, searchText]);
 
+    const filteredProducts = useMemo(() => {
+        const list = contextProducts.filter(p => matchesStockFilter(p, stockFilter));
         list.sort((a, b) => compareInventoryProducts(a, b, sortCol, sortDir));
         return list;
-    }, [products, filterCategory, searchText, stockFilter, sortCol, sortDir]);
+    }, [contextProducts, stockFilter, sortCol, sortDir]);
+
+    const attentionCount = useMemo(
+        () => contextProducts.filter(p => matchesStockFilter(p, "attention")).length,
+        [contextProducts],
+    );
+
+    const hasFilters = Boolean(filterCategory || searchText || stockFilter);
+    const clearFilters = () => {
+        setFilterCategory("");
+        setSearchText("");
+        setStockFilter("");
+    };
+
+    // Los indicadores cuentan TODO el inventario activo: al pulsarlos se quitan
+    // categoría y búsqueda para que aparezcan exactamente esos productos.
+    const toggleStockIndicator = (state) => {
+        if (stockFilter === state) {
+            setStockFilter("");
+            return;
+        }
+        setFilterCategory("");
+        setSearchText("");
+        setStockFilter(state);
+    };
 
     const filteredTotalVal = useMemo(() =>
         filteredProducts.reduce((acc, p) => acc + productStockValue(p), 0),
@@ -862,11 +961,7 @@ const Inventory = () => {
         setAdjustForm(EMPTY_ADJUST);
     };
 
-    if (initializing || loading) return (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-            <p style={{ color: "var(--c-text-3)", fontSize: "13px" }}>Cargando...</p>
-        </div>
-    );
+    if (initializing || loading) return <InventorySkeleton withActions={canManage} />;
 
     // ── Render ────────────────────────────────────────────
     return (
@@ -949,37 +1044,33 @@ const Inventory = () => {
                 </div>
             )}
 
-            {/* ── Linear insights ── */}
-            <section className={s.stats} aria-label="Resumen de inventario">
-                <div className={s.statsIntro}>
-                    <span className={s.statsEyebrow}>Linear Insights</span>
-                </div>
-                <div className={s.statsStrip}>
-                    {insights.map((item, index) => (
-                        <div key={item.label} className={`${s.statBlock} ${index === insights.length - 1 ? s.statBlockLast : ""}`}>
-                            <div className={`${s.statValue} ${item.tone ? s[`statValue${item.tone.charAt(0).toUpperCase()}${item.tone.slice(1)}`] : ""} ${item.tone === "value" && isTotalValAnimating ? s.statValueCounting : ""}`}>
-                                {item.value}
-                            </div>
-                            <div className={s.statLabel}>{item.label}</div>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* ── Alert bar ── */}
-            {!alertDismissed && alertProducts.length > 0 && (
-                <div className={s.alertBar}>
-                    <Icon.AlertTriangle s={14} />
-                    <span>
-                        <strong>{alertProducts.length} producto{alertProducts.length !== 1 ? "s" : ""}</strong> requieren atención:{" "}
-                        {alertProducts.slice(0, 3).map(p => p.name.split(" ").slice(0, 2).join(" ")).join(", ")}
-                        {alertProducts.length > 3 ? "…" : ""}.
-                    </span>
-                    <button onClick={() => setAlertDismissed(true)} style={{ display: "flex", alignItems: "center" }}>
-                        <Icon.X s={14} />
-                    </button>
-                </div>
-            )}
+            {/* ── Indicadores ── */}
+            <StatSection label="Resumen de inventario" gridClassName={s.statsGrid}>
+                {insights.map((item) => {
+                    const active = Boolean(item.stockFilter) && stockFilter === item.stockFilter;
+                    // Solo es accionable si hay algo que ver (o si ya está filtrando, para poder quitarlo).
+                    const actionable = Boolean(item.stockFilter) && (item.value > 0 || active);
+                    return (
+                        <StatTile
+                            key={item.label}
+                            label={item.label}
+                            value={item.value}
+                            icon={item.icon}
+                            tone={item.tone}
+                            badge={item.badge}
+                            counting={item.counting}
+                            className={item.wide ? s.statWide : undefined}
+                            onClick={actionable ? () => toggleStockIndicator(item.stockFilter) : undefined}
+                            pressed={active}
+                            foot={actionable
+                                ? (active
+                                    ? <>Quitar filtro <Icon.X s={11} c="currentColor" /></>
+                                    : <>Ver productos <Icon.ChevronRight s={11} c="currentColor" /></>)
+                                : item.foot}
+                        />
+                    );
+                })}
+            </StatSection>
 
             {/* ── Toolbar ── */}
             <div className={s.toolbar}>
@@ -999,6 +1090,7 @@ const Inventory = () => {
                         <option value="ok">Normal</option>
                         <option value="low">Stock bajo</option>
                         <option value="crit">Sin stock</option>
+                        <option value="attention">Requieren atención</option>
                     </select>
                 </div>
                 <div className={s.viewTog}>
@@ -1029,6 +1121,17 @@ const Inventory = () => {
                         {cat.label}
                     </button>
                 ))}
+                {(attentionCount > 0 || stockFilter === "attention") && (
+                    <button
+                        type="button"
+                        className={`${s.chip} ${s.chipAttention} ${stockFilter === "attention" ? s.chipAttentionOn : ""}`}
+                        aria-pressed={stockFilter === "attention"}
+                        onClick={() => setStockFilter(f => f === "attention" ? "" : "attention")}
+                    >
+                        <Icon.AlertTriangle s={12} />
+                        Requieren atención ({attentionCount})
+                    </button>
+                )}
             </div>
 
             {/* ── Alertas de caducidad (B2c) ── */}
@@ -1063,6 +1166,13 @@ const Inventory = () => {
                         icon={Icon.Frown}
                         title={`Sin resultados para "${searchText}"`}
                         body="Prueba con otro nombre o código."
+                    />
+                ) : hasFilters && products.length > 0 ? (
+                    <EmptyState
+                        icon={Icon.Filter}
+                        title="Ningún producto coincide con los filtros"
+                        body="Cambia la categoría o el estado de stock para ver más productos."
+                        actions={[{ label: "Quitar filtros", onClick: clearFilters, variant: "secondary" }]}
                     />
                 ) : (
                     <EmptyState

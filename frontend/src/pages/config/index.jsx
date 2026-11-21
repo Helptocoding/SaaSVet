@@ -5,6 +5,7 @@ import { getConfiguration } from "../../api/organizations";
 import { apiError } from "../../utils/apiError";
 import { toList } from "../../utils/toList";
 import { Icon } from "../../components/icons";
+import Skeleton from "react-loading-skeleton";
 import styles from "./config.module.css";
 
 const ClinicSection = lazy(() => import("./ClinicSection"));
@@ -21,8 +22,23 @@ const SECTIONS = [
   { id: "account", label: "Cuenta", icon: Icon.Lock },
 ];
 
-const LoadingFallback = () => (
-  <div className={styles.loading}>Cargando sección…</div>
+// Esqueleto de un apartado: misma forma que SettingsPanel (título, descripción y
+// filas de campos). Sirve para la carga inicial y para el lazy de cada sección.
+const SectionSkeleton = () => (
+  <section className={styles.section} role="status" aria-label="Cargando sección">
+    <header className={styles.sectionHead} aria-hidden="true">
+      <Skeleton width={160} height={22} />
+      <Skeleton width="70%" height={13} />
+    </header>
+    <div className={styles.skelFields} aria-hidden="true">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <div key={i} className={styles.skelField}>
+          <Skeleton width={110} height={11} />
+          <Skeleton height={38} borderRadius="var(--r-lg)" />
+        </div>
+      ))}
+    </div>
+  </section>
 );
 
 const SettingsLayout = ({ user, token }) => {
@@ -91,9 +107,9 @@ const SettingsLayout = ({ user, token }) => {
     );
   }
 
-  if (loading || !org) {
-    return <div className={styles.page}><div className={styles.loading}>Cargando...</div></div>;
-  }
+  // Encabezado y menú lateral son estáticos: se muestran reales mientras carga y
+  // solo el contenido del apartado va como esqueleto.
+  const ready = !loading && org;
 
   return (
     <div className={styles.page}>
@@ -118,7 +134,8 @@ const SettingsLayout = ({ user, token }) => {
         </nav>
       </aside>
       <main className={styles.content}>
-        <Suspense fallback={<LoadingFallback />}>
+        {!ready ? <SectionSkeleton /> : (
+        <Suspense fallback={<SectionSkeleton />}>
           {activeSection === "clinic" && (
             <ClinicSection
               org={org}
@@ -154,6 +171,7 @@ const SettingsLayout = ({ user, token }) => {
             <AccountSection />
           )}
         </Suspense>
+        )}
       </main>
       </div>
     </div>

@@ -4,6 +4,7 @@ import {
   productStockValue,
   compareInventoryProducts,
   stockStatus,
+  matchesStockFilter,
   computeInitialStock,
   fmt,
   fmtCur,
@@ -196,5 +197,35 @@ describe("fmtCur — moneda sin decimales", () => {
 
   it("negativos se formatean", () => {
     expect(fmtCur(-50, "en-US")).toBe("-50");
+  });
+});
+
+describe("matchesStockFilter — misma regla para filtros e indicadores", () => {
+  const agotado = { stock_quantity: 0, min_stock: 5 };
+  const bajo = { stock_quantity: 2, min_stock: 5 };
+  const enMinimo = { stock_quantity: 10, min_stock: 10 };
+  const inactivoAgotado = { stock_quantity: 0, min_stock: 5, is_active: false };
+
+  it("sin filtro deja pasar todo, incluidos los inactivos", () => {
+    expect([agotado, bajo, enMinimo, inactivoAgotado].every(p => matchesStockFilter(p, ""))).toBe(true);
+  });
+
+  it("bajo stock y agotado son disjuntos: el agotado no cuenta como bajo", () => {
+    expect(matchesStockFilter(agotado, "low")).toBe(false);
+    expect(matchesStockFilter(agotado, "crit")).toBe(true);
+    expect(matchesStockFilter(bajo, "low")).toBe(true);
+    expect(matchesStockFilter(bajo, "crit")).toBe(false);
+  });
+
+  it("'requieren atención' = bajo + agotado; en el mínimo exacto no requiere atención", () => {
+    expect(matchesStockFilter(agotado, "attention")).toBe(true);
+    expect(matchesStockFilter(bajo, "attention")).toBe(true);
+    expect(matchesStockFilter(enMinimo, "attention")).toBe(false);
+    expect(matchesStockFilter(enMinimo, "ok")).toBe(true);
+  });
+
+  it("un producto desactivado no genera alertas de stock", () => {
+    expect(matchesStockFilter(inactivoAgotado, "crit")).toBe(false);
+    expect(matchesStockFilter(inactivoAgotado, "attention")).toBe(false);
   });
 });

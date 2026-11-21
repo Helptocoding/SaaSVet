@@ -16,6 +16,7 @@
 - Gráficas: `recharts`
 - Date picker: `react-day-picker` 9
 - Animaciones: Framer Motion
+- Esqueletos de carga: `react-loading-skeleton` 3.5 (ver § Esqueletos de carga)
 - Testing: Vitest 4 + React Testing Library + jsdom (`pnpm test`, **gate CI bloqueante**) — ver § Testing
 
 ### Tipografía y favicon
@@ -828,7 +829,8 @@ export const updateMedicalRecord = async (token, id, data) => {
 - Interceptor request: inyecta `X-Request-ID` (uuid por request vía `utils/requestId.js`) si el caller no lo seteó — correlación end-to-end P1-5 A1 (el backend lo reusa en logs/Sentry/respuesta). No pisar un id ya provisto.
 - Interceptor response 401:
   - **Bypassa redirect** si el request fallido es el endpoint de login (`url` termina en `token/`). Sin esto, credenciales malas disparaban full page reload antes de que el toast del login se renderizara. Helper local `isLoginAttempt(config)`. Ver ADR p22.
-  - Para 401 en cualquier otro endpoint: `clearTokens()` (vía `tokenStorage`) + `window.location.href = "/login"` (sesión expirada legítima).
+  - **Reintento único (ADR p65, D14):** si la petición viajó con un access token distinto del que hoy está almacenado (se renovó mientras viajaba, p. ej. al cambiar la propia contraseña o por el refresh periódico), se repite **una vez** con el vigente. Condiciones: URL que no sea `token/`, `token/refresh/` ni `token/logout/`; petición no reintentada antes (marca `_sessionRetried`); llevaba `Authorization: Bearer`; hay token almacenado y es distinto; no hay cierre de sesión en curso. Nunca llama al refresh ni comparte estado entre peticiones. Reintentar un POST es seguro: DRF rechaza la autenticación antes de ejecutar la vista. Pruebas en `api/client.test.js` (incluye concurrencia).
+  - Para 401 en cualquier otro caso: `clearTokens()` (vía `tokenStorage`) + `window.location.href = "/login"` (sesión expirada o revocada). Un `session_revoked` (ADR p65) llega por aquí: el token es anterior a una desactivación, reactivación, restablecimiento o cambio de contraseña.
 - Interceptor response 500+: alert global "Error del servidor".
 
 ### Observabilidad de errores (P1-5 Fase A)
@@ -959,7 +961,7 @@ FETCH_USER         /me/ fail                         → LOGIN
 - El callback del timer usa `fetch()` nativo (no axios) para evitar el interceptor 401.
 - Chequea `isLoggingOut()` antes de aplicar tokens — previene revival de sesión recién terminada (race logout/refresh). Ver ADR p22.
 
-**Cierre de sesión:** `useAuth().logout` envía el refresh a `POST /api/token/logout/` (blacklist) antes de limpiar el almacenamiento, sin esperar respuesta: si falla, la sesión local se cierra igual. Las rutas internas (refresh fallido, `/me/` rechazado) cierran sin llamar al endpoint. **El access token sigue siendo válido hasta expirar (15 min)**: revoca el refresh, no la sesión entera.
+**Cierre de sesión:** `useAuth().logout` envía el refresh a `POST /api/token/logout/` (blacklist) antes de limpiar el almacenamiento, sin esperar respuesta: si falla, la sesión local se cierra igual. Las rutas internas (refresh fallido, `/me/` rechazado) cierran sin llamar al endpoint. **El access token sigue siendo válido hasta expirar (15 min)**: revoca el refresh, no la sesión entera. En cambio, **cambiar la contraseña** cierra al instante las sesiones de esa persona en otros navegadores y dispositivos, y en pestañas sin «Recordarme» (ADR p65); las pestañas del mismo navegador con «Recordarme» comparten el almacenamiento y toman el token nuevo.
 
 **Control de acceso:**
 - `permissions` como `Set` (desde el array retornado por `/api/me/`).
@@ -1029,6 +1031,65 @@ Cirugía (retiro de puntos), General (próxima revisión), Urgencia (revaloraci�
 Fuera de alcance (siguen nativos por ahora): fecha de cita (agenda), caducidad de
 lote (Entrada de stock), DOB de QuickPatientForm, y el date-range de Cobros
 (`DateRangePicker`, impl vanilla aparte).
+
+### Esqueletos de carga (`react-loading-skeleton`)
+
+Mientras una página carga se muestra un esqueleto con la **misma estructura** que la
+página, no un «Cargando...» centrado. `SkeletonTheme` vive una sola vez en `App.jsx`
+(`baseColor` `--c-subtle`, `highlightColor` `--c-surface-2`) y el CSS de la librería se
+importa en `main.jsx` antes de `index.css`. La librería ya apaga la animación con
+`prefers-reduced-motion`: no añadir reglas propias.
+
+- Usar `<Skeleton width height borderRadius count />`; `containerClassName` para que el
+  wrapper sea ítem flex/grid. Colores y radios siempre con tokens.
+- El texto estático (título, subtítulo, encabezados de tabla) se muestra real; solo los
+  datos van como esqueleto.
+- El contenedor lleva `role="status"` + `aria-label="Cargando …"` y las piezas
+  visuales `aria-hidden="true"`: sin el texto «Cargando», es lo único que anuncia la carga.
+- Tablas: `components/TableSkeleton.jsx` — encabezados reales + filas de esqueleto
+  con la clase de tabla de la página. `columns: [{label, align?, width?, cell?(row)}]`;
+  `cell` para celdas compuestas (avatar + nombre, pastillas). Es presentacional: el
+  caller pone el `role="status"`. **No** volver a escribir `<table>` de esqueleto a mano.
+- El resto del esqueleto es local: en el archivo de la página o, si la página inyecta
+  sus estilos en el render (Citas) o es muy grande, en `features/<módulo>/*Skeleton.jsx`
+  con su CSS module. **No** crear clases `skeleton-*` globales ni animaciones
+  `shimmer` propias.
+- Si solo una parte espera datos, solo esa parte es esqueleto: Configuración muestra
+  el menú real y esqueleto en el apartado; Caja, la tabla de turnos; Historial
+  clínico deja cargar la barra de mascotas y solo bloquea el área principal (la
+  consulta necesita el catálogo de productos).
+
+Aplicado en: Inventario, Dashboard (página, agenda del día, citas por resolver y
+las 3 gráficas), Citas (y su historial de estados), Cobros, Caja y `CajaBar`
+(antes devolvía `null` y la barra aparecía de golpe), Mascotas (tarjetas/tabla y
+panel lateral), Ficha de mascota, Equipo, Recetas, Historial clínico (área
+principal, lista de mascotas y resumen clínico), Configuración (carga y lazy de
+cada apartado), aceptación de documentos legales, acciones rápidas de cita,
+lotes y notificaciones.
+
+Fuera, a propósito: el splash de sesión (`App`, `Layout`, login), los `initializing`
+de POS/Importación/`config.jsx` (no se alcanzan: `Layout` espera la sesión antes
+de montar la página), el Inbox (`InboxLoadState`, contrato propio con pruebas) y
+Analítica (excluida del piloto).
+
+### StatTiles (indicadores «Linear Insights»)
+
+`components/StatTiles.jsx` — **fuente única** de tarjetas de métrica. Presentacional:
+el caller arma título, valor, tono y pie; el componente no conoce permisos ni API.
+Contrato visual (tonos, rejilla, estados) en `design-system.md` §5.
+
+- `StatSection({ label, eyebrow = "Linear Insights", gridClassName, children })` —
+  `<section aria-label>` + rejilla. `eyebrow={null}` la oculta.
+- `StatTile({ label, value, icon, tone, badge, foot, live, counting, className, onClick, pressed })`
+  — `onClick` la vuelve `<button aria-pressed>` con nombre «título: valor» (así lo
+  encuentran las pruebas); sin él es un `<div>`.
+- `StatSectionSkeleton({ count, gridClassName, tileClassName })` — misma rejilla en carga;
+  el caller pone el `role="status"`.
+
+Consumidores: **Inventario** (filtran la tabla), **Dashboard** (indicadores de hoy de
+`/dashboard/summary/`; reemplaza al retirado `KpiStrip`) y **Mascotas** (conteos de
+`/pets/stats/` y citas de la semana). Pies: un dato real o qué cuenta el número —
+**nunca** deltas o comparativos que el backend no calcula.
 
 ### EmptyState (estado vacío accionable)
 
@@ -1608,7 +1669,7 @@ hooks/usePOSCart.js      — estado del carrito (solo UI)
 | `/pos`              | Punto de Venta      | Privada      |
 | `/cash`             | Caja (turnos + Z)   | Privada      |
 | `/prescriptions`    | Recetas             | Privada      |
-| `/staff`            | Equipo              | Solo ADMIN   |
+| `/staff`            | Equipo              | Por capacidad (`staff.*`; plan Equipo) |
 | `/config`           | Configuracion       | Solo ADMIN   |
 
 ## Testing (Vitest + Testing Library) — P1-4
@@ -1677,8 +1738,18 @@ Fase A): `.github/workflows/ci.yml`. Un test rojo tumba el merge. `lint` bloquea
   Es el contrato: el usuario no puede borrar el único método de pago.
 - Inventario: el **valor en stock** se calcula `sale_price / conversion_factor × qty`
   (`productStockValue`); el `/cf` normaliza el precio de la presentación a unidad base.
-  Conviven **dos** definiciones de "bajo stock": `stockStatus.low` (frontend, `min>0 &&
-  stock<min`) y `metrics.lowStock` (flag backend `is_low_stock`). No unificar sin ADR.
+  Conviven **tres** definiciones de "bajo stock": `stockStatus.low` (frontend, `min>0 &&
+  stock<min`, excluye agotados), el flag backend `is_low_stock` (`stock<=min`, **incluye**
+  agotados) y el dashboard (`min>0 && stock<=min`). La página de Inventario usa **solo**
+  `stockStatus` vía `matchesStockFilter` para badges, filtros, indicadores y el chip
+  «Requieren atención» (bajo + agotado, solo activos): el número que se pulsa es el número
+  de filas que aparecen. Antes el indicador «Bajo stock» usaba el flag backend y contaba al
+  agotado dos veces. La frontera `stock == min` sigue sin unificar (Inventario: Normal;
+  dashboard: crítico) — no unificar sin decisión de producto.
+- Inventario: los indicadores «Bajo stock»/«Sin stock» son botones (`aria-pressed`) que
+  filtran la tabla y **quitan categoría y búsqueda** (cuentan todo el inventario activo).
+  El chip «Requieren atención (N)» es un filtro más: su N respeta categoría y búsqueda.
+  No reintroducir un banner persistente de stock: el aviso vive en los indicadores.
 
 ### Pendiente (siguientes fases)
 

@@ -62,6 +62,15 @@ class User(AbstractUser):
     # AGENT del subsistema conversacional es el primer service account.
     is_service_account = models.BooleanField(default=False)
 
+    # ADR p65: versión de sesión. Viaja en cada token como claim `sv` y la
+    # autenticación rechaza cualquier token con otra versión. Solo la escribe
+    # `services.bump_session_version` (UPDATE con F(), atómico); `save()` nunca
+    # la escribe en una fila existente, para que una instancia leída antes de un
+    # incremento no la haga retroceder. Un gate estático lo vigila.
+    session_version = models.PositiveIntegerField(
+        default=0, db_default=0, editable=False,
+    )
+
     class Meta(AbstractUser.Meta):
         indexes = [
             models.Index(fields=["organization", "role", "is_active"]),
@@ -86,3 +95,34 @@ class User(AbstractUser):
                 name='user_license_number_digits',
             ),
         ]
+
+    def save(self, *, force_insert=False, force_update=False, using=None, update_fields=None):
+        """Guarda sin escribir nunca `session_version` en una fila existente (ADR p65).
+
+        - `update_fields` con `session_version`: error de programación; la única
+          escritura legítima es `services.bump_session_version`.
+        - Guardado completo de una fila existente: los mismos campos que Django
+          guardaría (concretos, sin la PK ni los diferidos) menos la versión.
+        - Inserción: sin cambios; la versión nace en 0.
+        """
+        if update_fields is not None:
+            if 'session_version' in update_fields:
+                raise ValueError(
+                    'session_version solo se modifica con '
+                    'apps.users.services.bump_session_version (ADR p65).'
+                )
+        elif not self._state.adding and not force_insert and self.pk is not None:
+            deferred = self.get_deferred_fields()
+            update_fields = [
+                field.attname
+                for field in self._meta.concrete_fields
+                if not field.primary_key
+                and field.attname not in deferred
+                and field.name != 'session_version'
+            ]
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )

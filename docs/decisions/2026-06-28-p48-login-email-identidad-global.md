@@ -360,3 +360,14 @@ mismo previene. La Fase 1 garantiza que el `AddConstraint` aplica limpio.
 
 Aprobado. Implementación en curso siguiendo el plan por fases (§5), con
 verificación de regresiones por etapa antes de avanzar.
+
+
+## Addendum 2026-11-19 — El ADMIN puede editar el correo (plan Equipo A1, D10)
+
+- `PATCH /api/staff/<public_id>/` acepta `email`. Se mantiene la unicidad global sin distinguir
+  mayúsculas (incluidos inactivos) y el mensaje genérico «Este correo no está disponible.» (T-2). La
+  carrera entre dos guardados la resuelve el índice `user_email_ci_unique`: quien pierde recibe `400` en el
+  campo. Cambiar el correo no cierra sesiones (el JWT no lo contiene).
+- **Condición para el futuro:** si algún día se agrega recuperación de contraseña por correo, que un ADMIN
+  pueda cambiar el correo de otra persona se convierte en una vía de robo de cuentas. Debe revisarse antes
+  de habilitar esa recuperación.

@@ -9,8 +9,9 @@
  *  - `stock_quantity` tiene prioridad sobre `presentation.stock`.
  *  - valor = sale_price / conversion_factor × qty (el /cf normaliza a unidad base).
  *  - "bajo stock" de `stockStatus` = regla frontend (min>0 && stock<min). NO es la misma
- *    que `presentation.is_low_stock` (flag del backend) usada en otras métricas: son dos
- *    definiciones distintas que conviven por diseño.
+ *    que `presentation.is_low_stock` (flag del backend, stock<=min, incluye agotados) ni
+ *    que la del dashboard (min>0 && stock<=min). La página de Inventario usa SOLO
+ *    `stockStatus` para badges, filtros e indicadores.
  */
 
 // Cantidad de stock del producto en unidades base. stock_quantity > presentation.stock > 0.
@@ -38,6 +39,22 @@ export const stockStatus = (product) => {
     if (min > 0 && stock < min) return { pct: Math.min((stock / min) * 100, 100), state: "low", label: "Stock bajo" };
     const top = min > 0 ? min * 3 : 100;
     return { pct: Math.max(Math.min((stock / top) * 100, 100), 15), state: "ok", label: "Normal" };
+};
+
+// Bajo stock y agotado son alertas de reposición: un producto desactivado ya no se
+// repone, así que no cuenta (mismo criterio que el dashboard, `is_active=True`).
+const isActiveProduct = (product) => product.is_active !== false;
+
+// Filtro de estado de stock de la página de Inventario. Es la MISMA regla con la que
+// se cuentan los indicadores "Bajo stock"/"Sin stock": el número que se pulsa coincide
+// con las filas que aparecen. `attention` = bajo stock + agotado (conjuntos disjuntos).
+export const matchesStockFilter = (product, filter) => {
+    if (!filter) return true;
+    const state = stockStatus(product).state;
+    if (filter === "ok") return state === "ok";
+    if (!isActiveProduct(product)) return false;
+    if (filter === "attention") return state === "low" || state === "crit";
+    return state === filter;
 };
 
 // La tabla ordena con las mismas cantidades que muestra; los empates conservan

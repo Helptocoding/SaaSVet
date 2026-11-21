@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import { useDashboardSeries } from "../../hooks/useDashboardSeries";
 import { Icon } from "../icons";
+import Skeleton from "react-loading-skeleton";
 
 /* ── CSS var resolver — SVG attrs can't use var() natively ─── */
 const readCssVar = (name, fallback) => {
@@ -110,7 +111,11 @@ function ActivityAreaChart({ rangeDays = 7 }) {
   }, [chartData]);
 
   if (loading && points.length === 0) {
-    return <div className="chart-area"><div className="skeleton-block sk-chart" /></div>;
+    return (
+      <div className="chart-area" role="status" aria-label="Cargando gráfica">
+        <Skeleton height={300} borderRadius="var(--r-lg)" />
+      </div>
+    );
   }
 
   if (!hasData) {

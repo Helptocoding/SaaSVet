@@ -343,3 +343,10 @@ Decisiones aprobadas, pruebas A, B, C y D y escenarios de rollback en verde, pre
 ## Addendum — orden 7 (12-11-2026)
 
 Se añade `staff.update` (sensible): editar especialidad y cédula profesional de un miembro de Equipo. Entra en la lista literal del ADMIN; ningún otro rol lo recibe. Motivo y alcance en [ADR p64](2026-11-12-p64-cedula-profesional-firmante.md).
+
+
+## Nota 2026-11-19 — `staff.reactivate` (plan Equipo, D1)
+
+Código nuevo `staff.reactivate`: en el catálogo, en `SENSITIVE_CODES` y en la lista literal del ADMIN.
+VET, ASSISTANT y AGENT no lo reciben. `seed_permissions` lo concede a los roles ADMIN existentes en el
+despliegue.

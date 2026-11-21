@@ -3,6 +3,8 @@ import { Icon } from "../components/icons";
 import CajaBar from "../components/CajaBar";
 import { useAuth } from "../auth/authContext";
 import { listSessions } from "../api/cash";
+import Skeleton from "react-loading-skeleton";
+import TableSkeleton from "../components/TableSkeleton";
 
 const money = (v) => (v == null || v === "") ? "—" : `$${Number(v).toFixed(2)}`;
 const fmtDate = (d) => d ? new Date(d).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" }) : "—";
@@ -39,10 +41,6 @@ const Cash = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount idiomático
     useEffect(() => { load(); }, [load]);
 
-    if (initializing || loading) {
-        return <div style={{ display: "flex", justifyContent: "center", padding: "100px", color: "var(--c-text-3)", fontSize: "13px" }}>Cargando...</div>;
-    }
-
     return (
         <div style={{ padding: "24px", maxWidth: "1040px", margin: "0 auto" }}>
             <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--c-text)", marginBottom: "16px" }}>Caja</h1>
@@ -53,7 +51,9 @@ const Cash = () => {
                 Historial de turnos
             </p>
 
-            {sessions.length === 0 ? (
+            {(initializing || loading) ? (
+                <CashHistorySkeleton />
+            ) : sessions.length === 0 ? (
                 <div className="empty-state"><p className="empty-state-title">No hay turnos registrados</p></div>
             ) : (
                 <table className="table-compact" style={{ width: "100%", border: "1px solid var(--c-border)", borderRadius: "8px", overflow: "hidden" }}>
@@ -113,6 +113,29 @@ const Cash = () => {
         </div>
     );
 };
+
+// Historial de turnos cargando: mismas columnas que la tabla real.
+const CASH_SKELETON_COLUMNS = [
+    { label: "Apertura", width: 130 },
+    { label: "Abrió", width: 90 },
+    { label: "Estado", width: 70 },
+    { label: "Esperado", width: 64, align: "right" },
+    { label: "Contado", width: 64, align: "right" },
+    { label: "Diferencia", width: 56, align: "right" },
+    { label: "", align: "right", cell: () => <Skeleton width={62} height={22} borderRadius="var(--r-md)" /> },
+];
+
+const CashHistorySkeleton = () => (
+    <div role="status" aria-label="Cargando historial de turnos">
+        <TableSkeleton
+            rows={5}
+            columns={CASH_SKELETON_COLUMNS}
+            wrap={false}
+            tableClassName="table-compact"
+            tableStyle={{ width: "100%", border: "1px solid var(--c-border)", borderRadius: "8px", overflow: "hidden" }}
+        />
+    </div>
+);
 
 const Row = ({ label, value, strong, color }) => (
     <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: "13px" }}>

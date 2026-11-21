@@ -206,6 +206,8 @@ Authorization: Bearer <token ADMIN>
 
 Validaciones de password: minimo 8 caracteres, al menos una mayuscula, al menos un numero.
 
+`first_name` es **obligatorio** también en el backend (plan Equipo, D4). Nombre y apellido siguen la regla de nombres de abajo (§ Editar integrante).
+
 `license_number` es la cédula profesional (M01, orden 7; ADR p64): solo dígitos, de 5 a 10, sin verificar contra la SEP. Es **obligatoria para `VET`** y opcional para los demás roles. Hay además un CHECK en base de datos (`user_license_number_digits`). Este endpoint devuelve `serializer.errors` sin el sobre `{code, errors}`.
 
 La contraseña es **temporal de un solo uso**: el usuario creado entra con `password_must_change=True` y el sistema lo obliga a cambiarla en el primer login (`MustChangePasswordGate`). Sin `password_temp_issued_at` → no caduca (a diferencia del reset admin de 24h). El flag se setea en `CreateEmployeeSerializer.create` (ruta de alta por endpoint), nunca en `User.create_user` ni en signals. Ver ADR p21 (addendum 2026-06-24).
@@ -215,31 +217,116 @@ La asignacion de `UserRole` RBAC ocurre automaticamente al crear el usuario (req
 ### Listar staff
 
 ```
-GET /api/staff/
+GET /api/staff/                  # activos (lo consume Citas)
+GET /api/staff/?archived=true    # inactivos (plan Equipo, D6)
 Authorization: Bearer <token ADMIN>
 ```
+
+Sin parámetros devuelve solo activos, como siempre. `?archived=true` devuelve solo los
+inactivos de la clínica, sin `ADMIN_SAAS` ni cuentas de servicio, y exige además
+`staff.reactivate` (sin él, `403`): son datos de ex empleados. Cada fila trae
+`demo_protected` (ver § Demo); solo sirve a la interfaz y no autoriza nada.
 
 ### Desactivar usuario
 
 ```
-DELETE /api/staff/<id>/
+DELETE /api/staff/<public_id>/
 Authorization: Bearer <token ADMIN>
 ```
 
-No elimina el usuario, marca `is_active = False`.
+No elimina el usuario: marca `is_active = False`, revoca todos sus refresh tokens e
+incrementa su versión de sesión (ADR p65), así que sus access tokens dejan de servir
+aunque después se le reactive.
 
-### Editar especialidad y cédula (M01, orden 7)
+**Una clínica nunca queda sin un ADMIN activo** (plan Equipo, II.3.1). El servicio
+bloquea en una sola consulta ordenada por `pk` al actor, al objetivo y, si el objetivo es
+ADMIN, a todos los ADMIN activos de la clínica, y vuelve a comprobar con el bloqueo tomado:
+
+| Respuesta | Cuándo |
+|---|---|
+| `400` | Desactivarse a sí mismo (sin cambios). |
+| `403 actor_inactive` | El actor quedó desactivado mientras la operación esperaba (dos ADMIN que se desactivan entre sí: gana uno). |
+| `409 last_active_admin` | El objetivo es el último ADMIN activo. Aplica aunque otro rol tenga `staff.destroy` concedido en la base. |
+| `403 demo_seed_account` | Cuenta semilla de la demo. |
+
+Recuperación si el único ADMIN olvida su contraseña: restablecimiento de plataforma
+(ADR p45). El admin de Django y la shell quedan fuera de esta garantía (vía de operadores).
+
+### Editar integrante (plan Equipo A1; especialidad y cédula desde M01, orden 7)
 
 ```
 PATCH /api/staff/<public_id>/
 Authorization: Bearer <token ADMIN>
 
-{ "specialty": "Cirugia", "license_number": "1234567" }
+{ "first_name": "Laura", "last_name": "de la Cruz", "email": "laura@clinica.com",
+  "specialty": "Cirugia", "license_number": "1234567" }
 ```
 
-Permiso `staff.update` (sensible, solo ADMIN; ADR p63 y p64). Solo acepta esas dos claves: cualquier otra es `400`, para no aparentar que se guardó un cambio de rol, correo o contraseña. Un `VET` no puede quedar sin cédula. Alcance: la misma organización, usuarios activos, sin `ADMIN_SAAS` ni cuentas de servicio (fuera de eso, `404`). El ADMIN puede editar también la suya. Registra `STAFF_PROFILE_UPDATED` con los nombres de los campos, nunca sus valores.
+Permiso `staff.update` (sensible, solo ADMIN; ADR p63 y p64). Acepta solo esas cinco claves:
+cualquier otra (rol, username, contraseña, estado) es `400` con «Solo se pueden editar nombre,
+apellido, correo, especialidad y cédula profesional.». Solo se guarda lo que cambia; un valor
+igual al actual (el mismo correo con otras mayúsculas) no se guarda ni se registra. Un `VET`
+no puede quedar sin cédula. Alcance: la misma organización, usuarios activos, sin `ADMIN_SAAS`
+ni cuentas de servicio (fuera de eso, `404`). El ADMIN puede editar también los suyos.
+Registra `STAFF_PROFILE_UPDATED` con los nombres de los campos, nunca sus valores.
+
+- **Correo** (ADR p48): se guarda en minúsculas y es único global, incluidos inactivos. Si
+  está ocupado, «Este correo no está disponible.» (no revela en qué clínica). Dos ADMIN que
+  guardan el mismo correo a la vez: decide el índice `user_email_ci_unique` y quien pierde
+  recibe `400` en el campo, nunca `500`. Cambiar el correo **no** cierra sesiones (D2): el
+  correo anterior deja de servir para entrar y el username sigue funcionando.
+- **Nombres** (D4): se normalizan a Unicode NFC y se recortan los extremos; nada más (sin
+  mayúsculas forzadas ni colapso de espacios). Se aceptan letras latinas por rangos
+  explícitos (`A-Z`, `À-Ö`, `Ø-ö`, `ø-ÿ`, `Ā-ž`), espacio, guion y los apóstrofos ' y ’. El
+  nombre es obligatorio; el apellido puede quedar vacío. El backend es la autoridad; el
+  frontend replica la regla solo para avisar. Tabla de ejemplos (contrato compartido por
+  `apps/users/tests/test_staff_profile_edit.py` y `frontend/src/pages/staff.test.jsx`):
+
+  | Entrada | Resultado |
+  |---|---|
+  | `María José`, `Argüelles`, `María-José`, `O'Brien`, `D’Angelo`, `de la Cruz`, `Zoë`, `Łukasz` | Se acepta tal cual |
+  | `José` en NFD | Se guarda en NFC |
+  | `  Ana  ` | Se guarda `Ana` |
+  | `Ana  Luz` | Se guarda igual, sin colapsar |
+  | `Juan2`, `Ana 😀`, `Аna` (A cirílica), `Ana_Luz`, `Ma. José` | Se rechaza |
+
+- **Documentos clínicos:** las consultas y recetas cerradas conservan el nombre, la
+  especialidad y la cédula congelados al cierre; las abiertas muestran los datos vivos.
 
 La misma ruta con `DELETE` sigue desactivando (`staff.destroy`): `StaffDetailView` deriva el permiso del método.
+
+### Reactivar integrante (plan Equipo A2)
+
+```
+POST /api/staff/<public_id>/reactivate/
+Authorization: Bearer <token ADMIN>
+```
+
+Permiso `staff.reactivate` (sensible, solo ADMIN; D1). Throttle propio `staff_reactivate`,
+10 por hora (D7). Reactiva **la misma cuenta** (mismo PK, `public_id`, rol, cédula,
+`UserRole` y relaciones), emite una contraseña temporal de 24 h con cambio obligatorio y
+revoca todas las sesiones anteriores (refresh tokens y versión de sesión, ADR p65). La
+contraseña anterior deja de servir.
+
+Responde `201` con la misma forma que el restablecimiento (`temp_password`,
+`expires_in_seconds`, `must_change_on_first_login`, `request_id`, `duration_ms`) más
+`member`, y `Cache-Control: no-store`. Si ya está activo, `409 already_active` (también tras
+una respuesta perdida: usar Restablecer contraseña). Otra clínica, cuenta de servicio o
+`ADMIN_SAAS`: `404`. Un VET sin cédula se puede reactivar; no podrá firmar hasta capturarla (D9).
+
+**Restricción de `durable=True`:** `apps.users.services.reactivate_staff` debe ser la
+transacción más externa. Llamado dentro de otra transacción lanza `RuntimeError` antes de
+escribir nada, porque si no el commit ocurriría después de devolver la contraseña. Hoy solo lo
+llama `StaffReactivateView` (lo vigila un gate de pruebas); una reactivación masiva, un comando
+o una acción de admin futuros tendrán que llamarlo fuera de cualquier transacción. El evento
+`STAFF_REACTIVATED` se emite con `on_commit(robust=True)`: no hay evento de una reactivación
+revertida y un fallo del aviso no convierte en error una reactivación ya confirmada.
+
+### Restablecer contraseña (ADR p21)
+
+`POST /api/staff/<public_id>/reset-password/` responde con `Cache-Control: no-store` (plan
+Equipo, D11): el cuerpo lleva una contraseña temporal. Además de revocar los refresh tokens,
+incrementa la versión de sesión (ADR p65). Cuentas semilla de la demo: `403 demo_seed_account`.
 
 ## Endpoints de Organization (PR-4B / ADR p16, p18)
 
@@ -457,6 +544,19 @@ endpoints RBAC, que pisan el `DEFAULT_PERMISSION_CLASSES`) y también registrado
 Los usuarios demo (credenciales compartidas) **no** pueden cambiar contraseña ni
 importar datos (`core.permissions.NotDemoAccount` → 403); el resto de la operación
 es normal. `/api/me/` expone `is_demo` para que el frontend oculte esas opciones.
+
+**Equipo en la demo (plan Equipo, D5):**
+
+- Las tres cuentas semilla (`apps.core.demo_reset.DEMO_SEED_USERNAMES`) no se editan,
+  restablecen ni desactivan por la API: `403 demo_seed_account`. Se identifican por
+  `organization.is_demo` **y** el username semilla, la misma clave que usa el seed. El
+  username no se puede cambiar por la API, y los semilla llevan `@`, que el alta no admite.
+- Alta y edición en la demo solo aceptan correos de dominios reservados (`example.com`,
+  `example.net`, `example.org`, `*.test`, `*.example`): «En la demo usa un correo de
+  ejemplo, como nombre@example.com.». Así ningún visitante inutiliza un correo real.
+- **Restricción operativa (riesgo R7):** las cuentas semilla **no** deben renombrarse ni
+  modificarse manualmente desde el admin de Django. Renombrarlas les quita la protección y
+  el reset de la demo deja de reconocerlas.
 
 ## RBAC — como funciona
 

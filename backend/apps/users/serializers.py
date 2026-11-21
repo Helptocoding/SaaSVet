@@ -1,4 +1,5 @@
 import re
+import unicodedata
 import logging
 
 from rest_framework import serializers
@@ -41,6 +42,12 @@ class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
                 attrs[self.username_field] = user.get_username()
         return super().validate(attrs)
 
+    @classmethod
+    def get_token(cls, user):
+        """ADR p65: el refresh lleva la versión de sesión; el access la hereda."""
+        from apps.core.authentication import stamp_session_version
+        return stamp_session_version(super().get_token(user), user)
+
 
 # Min length para self-change (ADR p20). Distinto del floor=12 de
 # ``apps/platform/serializers.py:ProvisionOrgSerializer.admin_password``,
@@ -48,11 +55,76 @@ class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
 SELF_CHANGE_MIN_PASSWORD_LENGTH = 8
 
 USERNAME_REGEX = re.compile(r"^[A-Za-z0-9_.\-]+$")
-NAME_REGEX = re.compile(r"^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$")
+
+# D4 (plan Equipo, A1): nombres de personas tal como se escriben. Letras latinas
+# por rangos explícitos (A-Z, À-Ö, Ø-ö, ø-ÿ, Ā-ž), espacio, guion y los
+# apóstrofos ' (U+0027) y ’ (U+2019, el que inserta iOS). Rangos explícitos y no
+# `\w`: deja fuera números, emojis y letras de otros alfabetos que imitan a las
+# latinas (una «А» cirílica) sin agregar dependencias. El frontend replica la
+# misma regla solo para avisar; la autoridad es esta.
+PERSON_NAME_REGEX = re.compile(
+    r"^[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\u0100-\u017E '\u2019-]+$"
+)
+PERSON_NAME_MAX_LENGTH = 150  # AbstractUser.first_name / last_name
+EMAIL_UNAVAILABLE_MESSAGE = "Este correo no está disponible."
+
+
+def normalize_person_name(value, *, label, required):
+    """NFC + recorte de extremos; nada más (sin `.title()`, sin colapsar espacios).
+
+    `label` es «El nombre» o «El apellido». Vacío: error si `required`, si no ''.
+    """
+    value = unicodedata.normalize('NFC', value or '').strip()
+    if not value:
+        if required:
+            raise serializers.ValidationError(f"{label} es obligatorio.")
+        return ''
+    if not PERSON_NAME_REGEX.fullmatch(value):
+        raise serializers.ValidationError(
+            f"{label} solo puede contener letras, espacios, guiones y apóstrofos."
+        )
+    return value
+
+
+# D5 (plan Equipo): en la demo solo se aceptan dominios reservados que no son de
+# nadie (RFC 2606 y 6761). Así un visitante no inutiliza un correo real: el
+# correo es único global y la demo no borra las cuentas que crean los visitantes.
+DEMO_RESERVED_EMAIL_DOMAINS = frozenset({'example.com', 'example.net', 'example.org'})
+DEMO_RESERVED_EMAIL_SUFFIXES = ('.test', '.example')
+DEMO_EMAIL_MESSAGE = "En la demo usa un correo de ejemplo, como nombre@example.com."
+
+
+def _is_reserved_email_domain(email):
+    domain = email.rsplit('@', 1)[-1]
+    return (
+        domain in DEMO_RESERVED_EMAIL_DOMAINS
+        or any(domain.endswith(suffix) for suffix in DEMO_RESERVED_EMAIL_SUFFIXES)
+    )
+
+
+def normalize_staff_email(value, *, exclude_pk=None, organization=None):
+    """ADR p48: obligatorio, en minúsculas y único global (sin distinguir
+    mayúsculas, incluidos inactivos). El mensaje es genérico (T-2): no confirma
+    en qué organización existe el correo. En la organización demo exige un
+    dominio reservado (D5)."""
+    value = (value or '').strip().lower()
+    if not value:
+        raise serializers.ValidationError("El correo electrónico es obligatorio.")
+    if organization is not None and organization.is_demo and not _is_reserved_email_domain(value):
+        raise serializers.ValidationError(DEMO_EMAIL_MESSAGE)
+    taken = User.objects.filter(email__iexact=value)
+    if exclude_pk is not None:
+        taken = taken.exclude(pk=exclude_pk)
+    if taken.exists():
+        raise serializers.ValidationError(EMAIL_UNAVAILABLE_MESSAGE)
+    return value
 
 
 class UserSerializer(serializers.ModelSerializer):
     organization_name = serializers.CharField(source='organization.name', read_only=True)
+    # D5 (plan Equipo): solo para que la interfaz oculte acciones sobre las
+    # cuentas semilla de la demo. NO autoriza nada: lo aplican los servicios.
+    demo_protected = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -60,16 +132,26 @@ class UserSerializer(serializers.ModelSerializer):
         # URLs /staff/<uuid>/. id se conserva pre-beta.
         fields = ['id', 'public_id', 'username', 'email', 'first_name', 'last_name',
                   'role', 'specialty', 'license_number', 'is_active', 'organization',
-                  'organization_name']
+                  'organization_name', 'demo_protected']
         read_only_fields = ['id', 'public_id']
+
+    def get_demo_protected(self, obj):
+        from apps.users.services import is_demo_seed_account
+        return is_demo_seed_account(obj)
 
 
 class CreateEmployeeSerializer(serializers.ModelSerializer):
     username = serializers.CharField()
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=8)
-    first_name = serializers.CharField(required=False, allow_blank=True, default='')
-    last_name = serializers.CharField(required=False, allow_blank=True, default='')
+    # D4: el nombre es obligatorio también aquí (antes solo lo exigía el frontend).
+    first_name = serializers.CharField(
+        allow_blank=True, max_length=PERSON_NAME_MAX_LENGTH,
+        error_messages={'required': 'El nombre es obligatorio.'},
+    )
+    last_name = serializers.CharField(
+        required=False, allow_blank=True, default='', max_length=PERSON_NAME_MAX_LENGTH,
+    )
     role = serializers.ChoiceField(
         choices=['ADMIN', 'VET', 'ASSISTANT'],
         default='ASSISTANT'
@@ -98,32 +180,15 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         # ADR p48: correo obligatorio, normalizado a minúsculas y único global.
         # Ningún flujo normal de negocio crea usuarios sin correo.
-        value = (value or '').strip().lower()
-        if not value:
-            raise serializers.ValidationError("El correo electrónico es obligatorio.")
-        if User.objects.filter(email__iexact=value).exists():
-            # Mensaje genérico (ADR p48 T-2): no confirma en qué organización
-            # existe el correo (no amplía el leak de existencia cross-tenant).
-            raise serializers.ValidationError("Este correo no está disponible.")
-        return value
+        request = self.context.get('request')
+        organization = getattr(getattr(request, 'user', None), 'organization', None)
+        return normalize_staff_email(value, organization=organization)
 
     def validate_first_name(self, value):
-        if not value:
-            return value
-        if not NAME_REGEX.match(value.strip()):
-            raise serializers.ValidationError(
-                "El nombre solo puede contener letras y espacios."
-            )
-        return value.strip().title()
+        return normalize_person_name(value, label="El nombre", required=True)
 
     def validate_last_name(self, value):
-        if not value:
-            return value
-        if not NAME_REGEX.match(value.strip()):
-            raise serializers.ValidationError(
-                "El apellido solo puede contener letras y espacios."
-            )
-        return value.strip().title()
+        return normalize_person_name(value, label="El apellido", required=False)
 
     def validate_password(self, value):
         if len(value) < 8:
@@ -196,22 +261,56 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
 
 
 class UpdateEmployeeSerializer(serializers.Serializer):
-    """PATCH /api/staff/<uuid>/ (M01, orden 7): solo especialidad y cédula.
+    """PATCH /api/staff/<uuid>/: identidad (A1, plan Equipo), especialidad y
+    cédula (M01, orden 7).
 
-    Cualquier otra clave es 400: rol, correo o contraseña tienen sus propios
-    caminos, y descartarla en silencio haría creer que se guardó.
+    Cualquier otra clave es 400: rol, username, contraseña o estado tienen sus
+    propios caminos, y descartarla en silencio haría creer que se guardó.
+
+    ``validated_data`` contiene solo lo que de verdad cambia: un valor igual al
+    actual (el mismo correo con otras mayúsculas, por ejemplo) no se guarda ni se
+    registra.
     """
-    EDITABLE_FIELDS = frozenset({'specialty', 'license_number'})
+    EDITABLE_FIELDS = frozenset({
+        'first_name', 'last_name', 'email', 'specialty', 'license_number',
+    })
 
+    first_name = serializers.CharField(
+        required=False, allow_blank=True, max_length=PERSON_NAME_MAX_LENGTH,
+    )
+    last_name = serializers.CharField(
+        required=False, allow_blank=True, max_length=PERSON_NAME_MAX_LENGTH,
+    )
+    email = serializers.EmailField(required=False)
     specialty = serializers.CharField(required=False, allow_blank=True, max_length=100)
     license_number = serializers.CharField(required=False, allow_blank=True)
+
+    def _target(self):
+        target = self.context.get('target')
+        assert target is not None, 'UpdateEmployeeSerializer requiere context["target"]'
+        return target
 
     def to_internal_value(self, data):
         unknown = sorted(set(data) - self.EDITABLE_FIELDS) if hasattr(data, 'keys') else []
         if unknown:
             raise serializers.ValidationError({'non_field_errors': [
-                'Solo se pueden editar la especialidad y la cédula profesional.']})
+                'Solo se pueden editar nombre, apellido, correo, especialidad '
+                'y cédula profesional.']})
         return super().to_internal_value(data)
+
+    def validate_first_name(self, value):
+        return normalize_person_name(value, label="El nombre", required=True)
+
+    def validate_last_name(self, value):
+        return normalize_person_name(value, label="El apellido", required=False)
+
+    def validate_email(self, value):
+        target = self._target()
+        if (value or '').strip().lower() == (target.email or '').lower():
+            return target.email
+        return normalize_staff_email(
+            value, exclude_pk=target.pk, organization=target.organization,
+        )
 
     def validate_license_number(self, value):
         return normalize_license_number(value)
@@ -219,13 +318,15 @@ class UpdateEmployeeSerializer(serializers.Serializer):
     def validate(self, attrs):
         if not attrs:
             raise serializers.ValidationError({'non_field_errors': [
-                'Indica la especialidad o la cédula profesional.']})
-        target = self.context.get('target')
-        assert target is not None, 'UpdateEmployeeSerializer requiere context["target"]'
+                'Indica al menos un dato para editar.']})
+        target = self._target()
         license_number = attrs.get('license_number', target.license_number)
         if target.role in LICENSE_REQUIRED_ROLES and not license_number:
             raise serializers.ValidationError({'license_number': LICENSE_REQUIRED_MESSAGE})
-        return attrs
+        return {
+            field: value for field, value in attrs.items()
+            if getattr(target, field) != value
+        }
 
 
 class ChangePasswordSerializer(serializers.Serializer):

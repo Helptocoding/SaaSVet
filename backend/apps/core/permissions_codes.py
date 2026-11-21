@@ -114,6 +114,8 @@ PERMISSION_CODES = [
     "staff.destroy",
     # ADR p21: admin reset de password de staff. Solo ADMIN de la org.
     "staff.reset_password",
+    # Plan Equipo (A2, D1): reactivar a un integrante desactivado. Solo ADMIN.
+    "staff.reactivate",
 
     # Organización. `list` lo exigen los GET de me, schedule, settings y configuration.
     "organization.list",
@@ -208,6 +210,7 @@ SENSITIVE_CODES = frozenset({
     "billing.clinical_charge.reprice", "billing.refund",
     "checkout.dispute.resolve", "collection.resolve",
     "staff.create", "staff.update", "staff.destroy", "staff.reset_password",
+    "staff.reactivate",
     "organization.update", "import.commit", "dashboard.financial.view",
     "agentinbox.config", "agentinbox.identity_verify",
     "inventory.destroy", "medicalrecord.destroy",
@@ -252,7 +255,7 @@ PERMISSIONS = {
         "prescription.list", "prescription.retrieve", "prescription.create",
         "prescription.update", "prescription.destroy",
         "staff.list", "staff.create", "staff.update", "staff.destroy",
-        "staff.reset_password",
+        "staff.reset_password", "staff.reactivate",
         "organization.list", "organization.retrieve", "organization.update",
         "dashboard.view", "dashboard.financial.view", "dashboard.summary",
         "cashsession.list", "cashsession.retrieve", "cashsession.open", "cashsession.close",

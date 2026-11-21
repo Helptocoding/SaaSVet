@@ -30,201 +30,24 @@
 .psub   { font-size: 13px; color: var(--c-text-3); margin-top: 4px; }
 .pacts  { display: flex; align-items: center; gap: 8px; }
 
-/* ── Stats ───────────────────────────────────────────────── */
-.stats {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px 0 24px;
-  border-top: 1px solid rgba(26, 26, 26, 0.08);
-  border-bottom: 1px solid rgba(26, 26, 26, 0.08);
-  margin-bottom: 22px;
-}
-
-.statsIntro {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.statsEyebrow {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.3em;
-  text-transform: none;
-  color: var(--c-text-2);
-  padding-right: 14px;
-  position: relative;
-}
-
-.statsEyebrow::after {
-  content: '';
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  width: 42px;
-  height: 1px;
-  background: rgba(26, 26, 26, 0.14);
-}
-
-.statsStrip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(220px, 1.45fr);
-  align-items: stretch;
-  column-gap: 0;
-}
-
-.statBlock {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 6px;
-  min-width: 0;
-  min-height: 90px;
-  padding: 10px 18px 8px;
-  text-align: left;
-  align-items: flex-start;
-}
-
-.statBlock::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 18px;
-  bottom: 8px;
-  width: 1px;
-  background: rgba(26, 26, 26, 0.06);
-}
-
-.statBlockLast::after {
-  display: none;
-}
-
-.statBlockLast {
-  align-items: flex-start;
-  text-align: left;
-}
-
-.statValue {
-  font-family: var(--font-display);
-  font-size: clamp(30px, 2.5vw, 40px);
-  font-weight: 500;
-  line-height: 0.9;
-  letter-spacing: -0.04em;
-  color: var(--c-text);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  margin-top: auto;
-}
-
-.statValueWarning { color: var(--c-warning-text); }
-.statValueDanger { color: var(--c-danger-text); }
-.statValueValue {
-  font-size: clamp(22px, 1.95vw, 32px);
-  color: var(--c-primary-dark);
-  letter-spacing: -0.03em;
-  max-width: 100%;
-}
-
-.statValueCounting {
-  opacity: 0.78;
-  transform: translateY(1px);
-}
-
-.statLabel {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: none;
-  color: var(--c-text-3);
-  white-space: nowrap;
-  min-height: 12px;
-}
+/* ── Indicadores ─────────────────────────────────────────────
+   La tarjeta vive en components/StatTiles. Aquí solo la rejilla propia de
+   Inventario: 4 indicadores + «Valor del stock» más ancho. Se fija con
+   --stat-grid-cols para no competir con la regla del componente. */
+.statsGrid { --stat-grid-cols: repeat(4, minmax(0, 1fr)) minmax(0, 1.35fr); }
 
 @media (max-width: 1120px) {
-  .stats {
-    gap: 18px;
-  }
-
-  .statsEyebrow::after {
-    width: 32px;
-  }
-
-  .statsStrip {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    row-gap: 18px;
-  }
-
-  .statBlock:nth-child(3)::after {
-    display: none;
-  }
-
-  .statBlockLast {
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .statBlockLast::after {
-    display: none;
-  }
+  .statsGrid { --stat-grid-cols: repeat(3, minmax(0, 1fr)); }
+  .statWide { grid-column: span 2; }
 }
 
 @media (max-width: 720px) {
-  .stats {
-    padding: 18px 0 20px;
-  }
-
-  .statsStrip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .statBlock {
-    padding: 6px 16px;
-  }
-
-  .statBlockLast {
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .statBlock:nth-child(2)::after,
-  .statBlock:nth-child(4)::after {
-    display: none;
-  }
-
-  .statValue,
-  .statValueValue {
-    white-space: normal;
-  }
+  .statsGrid { --stat-grid-cols: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 520px) {
-  .statsStrip {
-    grid-template-columns: 1fr;
-  }
-
-  .statBlock {
-    padding: 8px 0;
-  }
-
-  .statBlockLast {
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .statBlock::after {
-    right: auto;
-    left: 0;
-    top: auto;
-    bottom: 0;
-    width: 64px;
-    height: 1px;
-  }
-
-  .statBlockLast::after {
-    display: none;
-  }
+  .statsGrid { --stat-grid-cols: 1fr; }
+  .statWide { grid-column: auto; }
 }
 
 /* ── Alert bar ───────────────────────────────────────────── */
@@ -284,6 +107,13 @@
 }
 .chip:hover { border-color: var(--c-border-2); color: var(--c-text); }
 .chipOn { background: var(--c-primary-light); border-color: rgba(26,68,52,.35); color: var(--c-primary-dark); }
+/* Filtro de estado, no de categoría: se separa del grupo y usa el tono de aviso. */
+.chipAttention {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-left: 6px; color: var(--c-warning-text); border-color: var(--c-warning-border);
+}
+.chipAttention:hover { color: var(--c-warning-text); border-color: var(--c-warning-text); }
+.chipAttentionOn { background: var(--c-warning-bg); border-color: var(--c-warning-text); }
 
 /* ══════════════════════════════════════════════════════════
    TABLA DE INVENTARIO

@@ -19,6 +19,38 @@
   min-width: 0;
 }
 .dash-side { position: sticky; top: 24px; }
+/* Indicadores de hoy (components/StatTiles): el gap de la columna ya los
+   separa. Son 3, 4 o 5 según el rol: en una fila mientras cada tarjeta mida
+   ~185px; si no, filas parejas (3 + 2, 2 + 2), nunca una tarjeta huérfana.
+   Se mide el ancho de la sección (@container), no el de la ventana. */
+.dash-main { --stat-section-gap: 0; }
+.dash-kpis   { --stat-grid-cols: repeat(var(--dash-kpi-cols), minmax(0, 1fr)); }
+.dash-kpis-3 { --dash-kpi-cols: 3; }
+.dash-kpis-4 { --dash-kpi-cols: 4; }
+.dash-kpis-5 { --dash-kpi-cols: 5; }
+@container (max-width: 999px) {
+  .dash-kpis-5 { --dash-kpi-cols: 6; }
+  .dash-kpis-5 > :nth-child(-n + 3) { grid-column: span 2; }
+  .dash-kpis-5 > :nth-child(n + 4) { grid-column: span 3; }
+}
+@container (max-width: 799px) {
+  .dash-kpis-4 { --dash-kpi-cols: 2; }
+}
+@container (max-width: 599px) {
+  .dash-kpis-3, .dash-kpis-5 { --dash-kpi-cols: 2; }
+  .dash-kpis-5 > :nth-child(n) { grid-column: auto; } /* misma especificidad que los span de arriba */
+  .dash-kpis-3 > :last-child,
+  .dash-kpis-5 > :last-child { grid-column: span 2; }
+}
+@container (max-width: 339px) {
+  .dash-kpis-3, .dash-kpis-4, .dash-kpis-5 { --dash-kpi-cols: 1; }
+  .dash-kpis-3 > :last-child,
+  .dash-kpis-5 > :last-child { grid-column: auto; }
+}
+
+/* ── Esqueleto de carga (react-loading-skeleton) ─────────── */
+.dash-skel-row  { margin-top: 10px; }
+.dash-skel-fill { flex: 1; min-width: 0; }
 
 /* Error banner */
 .dash-error-banner {

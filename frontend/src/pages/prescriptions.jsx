@@ -19,6 +19,7 @@ import {
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
 import { isCanino, isFelino, getAgeGroup } from "../utils/petFilters";
 import { toList } from "../utils/toList";
+import PrescriptionsSkeleton from "../features/prescriptions/PrescriptionsSkeleton";
 
 const formatDate = (ds) =>
     new Date(ds).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
@@ -377,13 +378,7 @@ const Prescriptions = () => {
 
     const hasActiveFilters = search || selectedPet || filterSpecies !== "all" || filterSex !== "all" || filterAge !== "all";
 
-    if (initializing || loading) {
-        return (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
-                <p style={{ color: "var(--c-text-3)", fontSize: "13px" }}>Cargando recetas…</p>
-            </div>
-        );
-    }
+    if (initializing || loading) return <PrescriptionsSkeleton view={view} />;
 
     return (
         <div>

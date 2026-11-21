@@ -31,6 +31,7 @@ class StaffEmailEnforcementTests(APITestCase):
         payload = {
             "username": "newvet", "email": "new@a.test",
             "password": "VetPass1234", "role": "VET",
+            "first_name": "Nueva",  # D4 (plan Equipo): obligatorio en el alta
             "license_number": "1234567",  # M01: obligatoria para VET
         }
         payload.update(over)
@@ -68,7 +69,9 @@ class StaffEmailEnforcementTests(APITestCase):
     def test_rejects_missing_email(self):
         resp = self.client.post(
             "/api/staff/create/",
-            {"username": "noemail", "password": "VetPass1234", "role": "VET"},
+            # first_name presente (D4) para que el 400 se deba solo al correo.
+            {"username": "noemail", "password": "VetPass1234", "role": "VET",
+             "first_name": "Nueva"},
             format="json",
         )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST, resp.content)

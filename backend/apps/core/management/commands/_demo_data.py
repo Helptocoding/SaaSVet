@@ -32,11 +32,19 @@ DEMO_ORG_CONTACT = {
 }
 
 # --- Usuarios demo (3, P1-8 ajustado) ------------------------------------
+# Los usernames viven en `apps.core.demo_reset` (lista única que también usa la
+# protección de cuentas semilla de Equipo, plan Equipo D5).
+from apps.core.demo_reset import (  # noqa: E402
+    DEMO_ADMIN_USERNAME,
+    DEMO_RECEPTION_USERNAME,
+    DEMO_VET_USERNAME,
+)
+
 # password único para beta privada (cumple validators: ≥8, mayúscula, número).
 DEMO_PASSWORD = "DemoSaaSlyVet2026"
 DEMO_USERS = [
     {
-        "username": "demo-admin@saaslyvet.com",
+        "username": DEMO_ADMIN_USERNAME,
         "email": "demo-admin@saaslyvet.com",
         "first_name": "Laura",
         "last_name": "Hernández",
@@ -45,7 +53,7 @@ DEMO_USERS = [
         "license_number": "00000001",
     },
     {
-        "username": "demo-vet@saaslyvet.com",
+        "username": DEMO_VET_USERNAME,
         "email": "demo-vet@saaslyvet.com",
         "first_name": "Diego",
         "last_name": "Ramírez",
@@ -54,7 +62,7 @@ DEMO_USERS = [
         "license_number": "00000002",
     },
     {
-        "username": "demo-recepcion@saaslyvet.com",
+        "username": DEMO_RECEPTION_USERNAME,
         "email": "demo-recepcion@saaslyvet.com",
         "first_name": "Sofía",
         "last_name": "Torres",
