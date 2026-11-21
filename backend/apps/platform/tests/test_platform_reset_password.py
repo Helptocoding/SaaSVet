@@ -181,6 +181,19 @@ class PlatformResetBehaviorTests(_BaseFixtures):
         self.assertEqual(res.data['expires_in_seconds'], 24 * 3600)
         self.assertTrue(res.data['must_change_on_first_login'])
 
+    def test_response_is_no_store(self):
+        # Lleva una contraseña temporal: ninguna caché intermedia debe guardarla
+        # (plan Equipo, D11; igual que el restablecimiento de clínica).
+        res = self._reset()
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED, res.data)
+        self.assertEqual(res['Cache-Control'], 'no-store')
+
+    def test_rejections_are_no_store_too(self):
+        self.client.force_authenticate(user=self.admin_saas)
+        res = self.client.post(_reset_url(self.admin_saas.public_id), format='json')
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(res['Cache-Control'], 'no-store')
+
     def test_cross_tenant_reset_works(self):
         """ADMIN_SAAS resets ADMIN in a different org — core ADR p45 invariant."""
         res = self._reset(target=self.admin_b)

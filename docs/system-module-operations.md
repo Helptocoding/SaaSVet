@@ -54,16 +54,16 @@ negocio dentro del SaaS** para cada dominio.
 
 **Requiere**
 - Un usuario `ADMIN_SAAS` autenticado (Bearer JWT).
-- `public_id` del usuario target: debe estar activo y **no** ser `ADMIN_SAAS`.
+- `public_id` del usuario target: debe estar activo y **no** ser `ADMIN_SAAS` ni cuenta de servicio (404, ADR p65 D13).
 - Throttle: 20 peticiones por hora por actor.
 
 **Resultado** (atómico, dentro de `transaction.atomic`)
 - Se genera una contraseña temporal (`secrets.token_urlsafe`, ~22 chars).
 - `target.set_password(temp_password)` + `password_must_change=True` + `password_temp_issued_at=now()`.
-- Todos los `OutstandingToken` del target quedan blacklisted (sesiones activas invalidadas).
+- Todos los `OutstandingToken` del target quedan blacklisted y su versión de sesión se incrementa (ADR p65): dejan de servir también sus access tokens.
 - Se emite log `PLATFORM_PASSWORD_RESET_ISSUED` en `platform.events` con `target_organization_id`
   y `target_organization_name` (campos extra vs reset de clínica — trazabilidad cross-tenant).
-- `temp_password` se devuelve **una sola vez** en el response 201 y **nunca se loguea**.
+- `temp_password` se devuelve **una sola vez** en el response 201, con `Cache-Control: no-store`, y **nunca se loguea**.
 
 **Desbloquea**
 - El target puede loguearse con `temp_password`.
