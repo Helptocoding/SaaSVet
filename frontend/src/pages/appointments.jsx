@@ -23,6 +23,8 @@ import SpotlightTour from "../components/SpotlightTour";
 import StatusBadge from "../components/StatusBadge";
 import { useAgendaTour } from "../features/appointments/tour/useAgendaTour";
 import { AGENDA_TOUR_KEY } from "../features/appointments/tour/agendaSteps";
+import AppointmentsSkeleton from "../features/appointments/AppointmentsSkeleton";
+import Skeleton from "react-loading-skeleton";
 import api from "../api/client";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -306,7 +308,14 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                             {historyOpen && (
                                 <div style={{marginTop:"8px",borderLeft:"2px solid var(--c-border)",paddingLeft:"12px"}}>
                                     {loadingHist ? (
-                                        <p style={{fontSize:"12px",color:"var(--c-text-3)"}}>Cargando...</p>
+                                        <div role="status" aria-label="Cargando historial de estados">
+                                            {[0, 1, 2].map(i => (
+                                                <div key={i} aria-hidden="true" style={{marginBottom:"8px"}}>
+                                                    <Skeleton width={150} height={16} borderRadius="var(--r-full)" />
+                                                    <Skeleton width={120} height={10} />
+                                                </div>
+                                            ))}
+                                        </div>
                                     ) : history.length === 0 ? (
                                         <p style={{fontSize:"12px",color:"var(--c-text-3)"}}>Sin cambios registrados.</p>
                                     ) : history.map(h => (
@@ -1157,7 +1166,7 @@ function EventManagerAppointments() {
         });
     };
     const navigateCalendar = (method) => calendarRef.current?.getApi()[method]();
-    if (initializing || loading) return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}><p style={{ color: "var(--c-text-3)", fontSize: "13px" }}>Cargando...</p></div>;
+    if (initializing || loading) return <AppointmentsSkeleton />;
 
     return <div className={`appointments-event-manager${canCreate ? " can-create" : ""} view-${calendarView}`}>
         <style>{`

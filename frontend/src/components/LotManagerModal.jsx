@@ -4,6 +4,16 @@ import { Icon } from "./icons";
 import { apiError } from "../utils/apiError";
 import { useConfirm } from "./useConfirm";
 import { getProductLots, discardLot, setLotStatus } from "../api/inventory";
+import Skeleton from "react-loading-skeleton";
+import TableSkeleton from "./TableSkeleton";
+
+const LOT_SKELETON_COLUMNS = [
+    { label: "Lote", width: 90 },
+    { label: "Caduca", width: 80 },
+    { label: "Saldo", width: 40, align: "right" },
+    { label: "Estado", cell: () => <Skeleton width={70} height={20} borderRadius="var(--r-full)" /> },
+    { label: "Acciones", width: 110, align: "right" },
+];
 
 /**
  * Gestión de lotes de un producto con tracks_lots (B2c): lista los lotes con su
@@ -99,7 +109,9 @@ const LotManagerModal = ({ product, onClose, onChanged }) => {
 
                 <div className="modal-body">
                     {loading ? (
-                        <p style={{ color: "var(--c-text-3)", fontSize: 13 }}>Cargando lotes…</p>
+                        <div role="status" aria-label="Cargando lotes">
+                            <TableSkeleton rows={3} columns={LOT_SKELETON_COLUMNS} />
+                        </div>
                     ) : lots.length === 0 ? (
                         <p style={{ color: "var(--c-text-3)", fontSize: 13 }}>
                             Este producto aún no tiene lotes. Regístralos con "Entrada de stock".

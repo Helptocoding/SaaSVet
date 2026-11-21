@@ -4,6 +4,7 @@ import AgendaDateStrip from "./AgendaDateStrip";
 import StatusBadge from "../StatusBadge";
 import { Icon } from "../icons";
 import { useDayAppointments } from "../../hooks/useDayAppointments";
+import Skeleton from "react-loading-skeleton";
 
 /**
  * Agenda del dashboard — mini agenda operativa con navegación por día.
@@ -84,7 +85,14 @@ export default function TodayAgendaList() {
       <div className="tagenda-count">{countLabel}</div>
 
       {loading && !appts.length ? (
-        <p className="dsp-empty">Cargando…</p>
+        <div className="tagenda-list" role="status" aria-label="Cargando citas del día">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="appointment-row" aria-hidden="true">
+              <div className="appointment-time"><Skeleton width={38} height={12} /></div>
+              <Skeleton height={54} borderRadius="var(--r-lg)" containerClassName="dash-skel-fill" />
+            </div>
+          ))}
+        </div>
       ) : !appts.length ? (
         <div className="empty-state">
           <p className="empty-state-title">No hay citas para este día</p>

@@ -154,6 +154,26 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 - altura 20px, padding `0 8px`, font 11px/600, radio `--r-full`.
 - Colores: `.badge-success/danger/warning/info/purple/default/primary`.
 
+### Indicador (tarjeta de métrica) — `components/StatTiles` («Linear Insights»)
+- **Fuente única**: `StatSection` + `StatTile` (+ `StatSectionSkeleton`). La usan
+  Inventario, Dashboard y Mascotas. 🚫 No crear tarjetas de métrica por página ni
+  volver a `.stat-card` con `borderTop` y colores inline.
+- Estructura adaptada de ReUI `statistic-card-2` (MIT): título + icono, valor 28px/700
+  `tabular-nums` + insignia opcional, y pie separado por una línea con un dato real o
+  qué cuenta el número (no se muestran deltas sin histórico). Sin formas decorativas.
+  El valor baja hasta 22px en tarjetas angostas (`clamp` con `cqi`), sin desbordar.
+- **Tono sutil** (`tone`): fondo claro + borde + texto del mismo trío semántico, que
+  fija `--stat-bg` / `--stat-border` / `--stat-fg` (solo tokens): `ink` y `forest`
+  (neutro; `forest` con el número en verde), `primary` (`--c-primary-light`),
+  `attention` (`--c-warning-*`), `danger` (`--c-danger-*`) y `calm` (indicador de
+  alerta en cero: neutro, sin color de alarma).
+- Rejilla por defecto `auto-fit` (mín. 150px). Una página la cambia fijando
+  `--stat-grid-cols` en `gridClassName` (Inventario: 4 + «Valor del stock» más ancho);
+  un contenedor que ya separa con `gap` fija `--stat-section-gap: 0` (Dashboard).
+- Accionable (`onClick`) → `<button>` con `aria-pressed` y `aria-label` «título: valor»;
+  activo = borde del color del texto. `live` antepone al pie un punto que late (dato en
+  vivo; se apaga con movimiento reducido). 🚫 No usar fondos sólidos oscuros.
+
 ### Modal — `.modal-overlay` + `.modal`
 - Tamaños: `.modal-sm 400` · `.modal-md 520` · `.modal-lg 640`.
 - radio `--r-xl`, `--shadow-modal`. Header `h3` 16px/700. `.modal-body` padding `20px 24px`. `.modal-footer` gap 8px.

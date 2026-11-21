@@ -551,15 +551,9 @@
 }
 .accountDesc { font-size: 13px; color: var(--p-text-2); margin: 0; }
 
-/* ─── Carga ────────────────────────────────────────────────────── */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 50vh;
-  color: var(--p-text-3);
-  font-size: 13px;
-}
+/* ─── Carga (esqueleto de un apartado) ─────────────────────────── */
+.skelFields { display: flex; flex-direction: column; gap: 18px; padding-top: 4px; }
+.skelField  { display: flex; flex-direction: column; gap: 8px; }
 
 /* ─── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 880px) {

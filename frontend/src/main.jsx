@@ -1,6 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import * as Sentry from "@sentry/react";
+// Antes de index.css: la librería define los valores base y nuestros tokens
+// (SkeletonTheme en App.jsx) los sobrescriben.
+import "react-loading-skeleton/dist/skeleton.css";
 import "./index.css";
 import App from "./App";
 import { scrubEvent } from "./utils/sentryScrub";

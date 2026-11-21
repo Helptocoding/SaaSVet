@@ -1122,3 +1122,8 @@
   padding: 2px 7px;
   border-radius: var(--r-sm);
 }
+
+/* ── Esqueleto del área principal (carga del catálogo) ── */
+.skelPatient { display: flex; align-items: center; gap: 16px; }
+.skelPatient > div { display: flex; flex-direction: column; gap: 8px; }
+.skelTimeline { display: flex; flex-direction: column; gap: 14px; padding: 24px 32px; }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppointmentsByStatus } from "../../hooks/useAppointmentsByStatus";
 import AppointmentQuickModal from "./AppointmentQuickModal";
 import { Icon } from "../icons";
+import Skeleton from "react-loading-skeleton";
 
 /**
  * Citas por resolver — citas con fecha pasada que quedaron en
@@ -71,7 +72,9 @@ export default function PendingFollowUp() {
         <div className="dsp-head">
           <h3 className="dsp-title">Citas por resolver</h3>
         </div>
-        <p className="dsp-empty">Cargando…</p>
+        <div role="status" aria-label="Cargando citas por resolver">
+          <Skeleton count={3} height={36} borderRadius="var(--r-md)" className="dash-skel-row" />
+        </div>
       </div>
     );
   }

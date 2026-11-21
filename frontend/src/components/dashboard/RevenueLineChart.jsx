@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { useFinancialSeries } from "../../hooks/useFinancialSeries";
+import Skeleton from "react-loading-skeleton";
 
 /* ── CSS var resolver — SVG attrs can't use var() natively ─── */
 const readCssVar = (name, fallback) => {
@@ -71,7 +72,11 @@ function RevenueLineChart({ rangeDays = 30 }) {
   const chartData = useMemo(() => transformRevenueData(points ?? []), [points]);
 
   if (loading && points.length === 0) {
-    return <div className="chart-area"><div className="skeleton-block sk-chart" /></div>;
+    return (
+      <div className="chart-area" role="status" aria-label="Cargando gráfica">
+        <Skeleton height={300} borderRadius="var(--r-lg)" />
+      </div>
+    );
   }
 
   return (

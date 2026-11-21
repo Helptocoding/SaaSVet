@@ -5,13 +5,15 @@ import { useFinancialSeries } from "../../hooks/useFinancialSeries";
 import { useActivationContext } from "../../hooks/activationContext";
 import DashboardTopBar from "../../components/dashboard/DashboardTopBar";
 import FirstRunAssistant from "../../components/dashboard/FirstRunAssistant";
-import KpiStrip from "../../components/dashboard/KpiStrip";
+import { StatSection, StatSectionSkeleton, StatTile } from "../../components/StatTiles";
+import { Icon } from "../../components/icons";
 import TodayAgendaList from "../../components/dashboard/TodayAgendaList";
 import NowPanel from "../../components/dashboard/NowPanel";
 import PendingFollowUp from "../../components/dashboard/PendingFollowUp";
 import ClinicalBacklog from "../../components/dashboard/ClinicalBacklog";
 import StockAlerts from "../../components/dashboard/StockAlerts";
 import DashboardAnalytics from "../../components/dashboard/DashboardAnalytics";
+import Skeleton from "react-loading-skeleton";
 import "./dashboard.css";
 
 function revenueDeltaVsYesterday(finSeries, finToday) {
@@ -35,6 +37,10 @@ function buildRevenueSpark(finSeries, finToday) {
   return fin.map((p) => ({ v: Number(p.metrics.revenuePaid ?? 0) }));
 }
 
+const fmtMoney = (v) => `$${Number(v).toLocaleString("es-MX")}`;
+
+// Indicadores de HOY (point-in-time, /dashboard/summary/). Los pies describen
+// qué cuenta cada número; no hay comparativos que el endpoint no calcule.
 function buildKpiItems(kpis, role) {
   const isAdmin   = role === "ADMIN" || role === "ADMIN_SAAS";
   const showStock = isAdmin || role === "VET";
@@ -43,27 +49,33 @@ function buildKpiItems(kpis, role) {
     ? Number(kpis.ar_outstanding)
     : 0;
 
+  const inProgress = kpis?.in_progress_now ?? 0;
   const stockCount = kpis?.low_stock_count ?? 0;
 
-  const items = [
+  return [
     {
       label: "En consulta",
-      value: kpis?.in_progress_now ?? 0,
-      tone: "default",
+      value: inProgress,
+      icon: Icon.Stethoscope,
+      tone: inProgress > 0 ? "primary" : "ink",
       live: true,
+      foot: "En vivo",
     },
     {
       label: "Citas hoy",
       value: kpis?.pending_today ?? 0,
-      tone: "default",
+      icon: Icon.Calendar,
+      tone: "ink",
+      foot: "Por atender",
     },
     ...(isAdmin
       ? [
           {
             label: "Pendiente cobro",
-            value: arValue,
-            tone: arValue > 0 ? "warning" : "default",
-            format: "currency",
+            value: fmtMoney(arValue),
+            icon: Icon.Wallet,
+            tone: arValue > 0 ? "attention" : "calm",
+            foot: "Emitidos sin pagar",
           },
         ]
       : []),
@@ -72,18 +84,20 @@ function buildKpiItems(kpis, role) {
           {
             label: "Stock bajo",
             value: stockCount,
-            tone: stockCount > 0 ? "danger" : "default",
+            icon: Icon.AlertTriangle,
+            tone: stockCount > 0 ? "danger" : "calm",
+            foot: stockCount > 0 ? "En o bajo el mínimo" : "Nada bajo el mínimo",
           },
         ]
       : []),
     {
       label: "Pacientes hoy",
       value: kpis?.patients_today ?? 0,
-      tone: "default",
+      icon: Icon.Paw,
+      tone: "forest",
+      foot: "Mascotas con cita",
     },
   ];
-
-  return items;
 }
 
 const Dashboard = () => {
@@ -121,34 +135,36 @@ const Dashboard = () => {
     [data?.kpis, user?.role]
   );
 
+  const kpiGridClass = `dash-kpis dash-kpis-${kpiItems.length}`;
+
+  // Antes usaba clases `skeleton-block`/`sk-*` que no existían en ningún CSS:
+  // los bloques no tenían alto ni color y la carga se veía en blanco.
   const renderSkeleton = () => (
-    <div className="dash-page">
-      <div className="dtop-wrap">
-        <div className="skeleton-block sk-hero" />
-      </div>
-      <div className="dash-grid">
-        <div className="dash-main">
-          <div style={{
-            display: "flex", flexWrap: "wrap",
-            padding: "28px 0", gap: "8px",
-          }}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="skeleton-block"
-                style={{
-                  flex: "1 1 140px", minHeight: 72,
-                  borderRadius: "var(--r-md)",
-                }}
-              />
-            ))}
+    <div className="dash-page" role="status" aria-label="Cargando dashboard">
+      <div className="dtop-wrap" aria-hidden="true">
+        <div className="phead dtop-phead">
+          <div>
+            <Skeleton width={280} height={26} />
+            <Skeleton width={240} height={13} />
           </div>
-          <div className="skeleton-block sk-timeline" />
-          <div className="skeleton-block sk-chart" />
+          <Skeleton width={120} height={36} borderRadius="var(--r-lg)" />
+        </div>
+      </div>
+      <div className="dash-grid" aria-hidden="true">
+        <div className="dash-main">
+          <StatSectionSkeleton count={kpiItems.length} gridClassName={kpiGridClass} />
+          <section className="card dash-timeline-card">
+            <Skeleton width={160} height={16} />
+            <Skeleton count={4} height={52} borderRadius="var(--r-md)" className="dash-skel-row" />
+          </section>
+          <Skeleton height={340} borderRadius="var(--r-lg)" />
         </div>
         <div className="dash-side">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="skeleton-block sk-side" />
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="card">
+              <Skeleton width="45%" height={14} />
+              <Skeleton count={3} height={12} className="dash-skel-row" />
+            </div>
           ))}
         </div>
       </div>
@@ -180,7 +196,11 @@ const Dashboard = () => {
 
       <div className="dash-grid">
         <main className="dash-main">
-          <KpiStrip items={kpiItems} />
+          <StatSection label="Indicadores de hoy" gridClassName={kpiGridClass}>
+            {kpiItems.map((item) => (
+              <StatTile key={item.label} {...item} />
+            ))}
+          </StatSection>
 
           <section className="card dash-timeline-card">
             <TodayAgendaList />

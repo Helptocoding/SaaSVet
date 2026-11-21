@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "../../components/icons";
 import { getSummary } from "../../api/vitals";
 import { toast } from "sonner";
+import Skeleton from "react-loading-skeleton";
 import styles from "./panel.module.css";
 
 const CONSULTATION_TYPE_LABELS = {
@@ -77,14 +78,14 @@ const getConsultationTypeStyle = (type) => {
   }
 };
 
-const Skeleton = () => (
-  <div className={styles.panelLoading}>
-    <div style={{ height: 14, background: "var(--c-subtle)", borderRadius: 4, marginBottom: 10, width: "60%" }} />
-    <div style={{ height: 12, background: "var(--c-subtle)", borderRadius: 4, marginBottom: 12, width: "80%" }} />
-    <div style={{ height: 12, background: "var(--c-subtle)", borderRadius: 4, marginBottom: 6, width: "40%" }} />
-    <div style={{ height: 12, background: "var(--c-subtle)", borderRadius: 4, marginBottom: 6, width: "50%" }} />
-    <div style={{ height: 12, background: "var(--c-subtle)", borderRadius: 4, marginBottom: 12, width: "70%" }} />
-    <div style={{ height: 10, background: "var(--c-subtle)", borderRadius: 4, width: "90%" }} />
+// Resumen clínico cargando: líneas con el ancho aproximado de cada dato.
+const SKELETON_LINE_WIDTHS = ["60%", "80%", "40%", "50%", "70%", "90%"];
+
+const PanelSkeleton = () => (
+  <div className={styles.panelSkeleton} role="status" aria-label="Cargando resumen clínico">
+    {SKELETON_LINE_WIDTHS.map((width, i) => (
+      <Skeleton key={i} width={width} height={i === 0 ? 14 : 12} />
+    ))}
   </div>
 );
 
@@ -156,7 +157,7 @@ const SidePanel = ({ recordId, pet, refreshKey = 0, compact = false }) => {
         <div className={styles.panelSection}>
           <div className={styles.panelSectionTitle}>Resumen clínico</div>
         </div>
-        <Skeleton />
+        <PanelSkeleton />
       </aside>
     );
   }

@@ -65,3 +65,6 @@
 @media (max-width: 560px) {
   .popover { position: fixed; top: 64px; right: 12px; left: 12px; width: auto; max-height: calc(100dvh - 80px); }
 }
+
+/* Lista cargando: tres avisos de esqueleto con el mismo aire que un aviso real. */
+.skeleton { display: flex; flex-direction: column; gap: 14px; padding: 12px 14px; }

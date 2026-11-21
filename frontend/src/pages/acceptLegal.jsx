@@ -7,6 +7,7 @@ import { getMe } from "../auth/login";
 import { useAuth } from "../auth/authContext";
 import { getItem } from "../auth/tokenStorage";
 import { apiError } from "../utils/apiError";
+import Skeleton from "react-loading-skeleton";
 
 // Pantalla dedicada /aceptar-terminos (ADR p46, decisión 4). Bloquea ANTES del
 // Layout/Dashboard. El backend es el gate autoritativo; esto es la UX de captura.
@@ -73,7 +74,15 @@ export default function AcceptLegal() {
                 </p>
 
                 {loading ? (
-                    <p>Cargando…</p>
+                    // Una fila por documento (casilla + texto), como la lista real.
+                    <div role="status" aria-label="Cargando documentos" style={{ display: "flex", flexDirection: "column", gap: "12px", margin: "18px 0" }}>
+                        {[0, 1].map((i) => (
+                            <div key={i} aria-hidden="true" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                                <Skeleton width={16} height={16} borderRadius="var(--r-sm)" />
+                                <Skeleton width={i === 0 ? 300 : 260} height={14} />
+                            </div>
+                        ))}
+                    </div>
                 ) : docs.length === 0 ? (
                     <p>No hay documentos pendientes.</p>
                 ) : (

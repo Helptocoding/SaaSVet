@@ -1,0 +1,7 @@
+/* Esqueleto de Recetas: aviso, fila de filtros y rejilla de tarjetas. */
+.notice { display: block; margin-bottom: 20px; }
+.filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+.pushRight { margin-left: auto; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.card { display: flex; flex-direction: column; gap: 8px; }
+.line { margin-top: 6px; }

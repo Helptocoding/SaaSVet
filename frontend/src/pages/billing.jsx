@@ -27,6 +27,8 @@ import Pagination from "../components/Pagination";
 import RefundModal from "../components/billing/RefundModal";
 import PrescriptionDispensePanel from "../components/billing/PrescriptionDispensePanel";
 import { REASON_LABELS } from "../components/billing/refundReasons";
+import Skeleton from "react-loading-skeleton";
+import TableSkeleton from "../components/TableSkeleton";
 import s from "./billing.module.css";
 
 const FILTER_KEYS = ["status", "invoice_type", "created_from", "created_to", "paid_from", "paid_to"];
@@ -38,6 +40,39 @@ const DOT_COLOR = {
     paid: "var(--c-success-text)",
     voided: "var(--c-danger-text)",
 };
+
+// Carga inicial: encabezado real, filtros y tabla de cobros como esqueleto.
+const BILLING_SKELETON_COLUMNS = [
+    { label: "ID", width: 36 },
+    {
+        label: "Mascota / Cliente",
+        cell: (row) => (<>
+            <Skeleton width={110 + (row % 3) * 24} height={13} />
+            <Skeleton width={90} height={10} />
+        </>),
+    },
+    { label: "Tipo", width: 84 },
+    { label: "Estado", width: 72 },
+    { label: "Fecha", width: 96 },
+    { label: "Total", width: 64, align: "right" },
+    { label: "", align: "right", cell: () => <Skeleton circle width={24} height={24} /> },
+];
+const BillingSkeleton = () => (
+    <div className={s.billingContainer}>
+        <div className="page-header">
+            <h1 className="page-title">Cobros</h1>
+            <Skeleton width={150} height={24} borderRadius="var(--r-full)" />
+        </div>
+        <div role="status" aria-label="Cargando cobros">
+            <div className={s.filterBar} aria-hidden="true">
+                <Skeleton width={160} height={36} borderRadius="var(--r-lg)" />
+                <Skeleton width={150} height={36} borderRadius="var(--r-lg)" />
+                <Skeleton width={180} height={36} borderRadius="var(--r-lg)" />
+            </div>
+            <TableSkeleton rows={8} columns={BILLING_SKELETON_COLUMNS} />
+        </div>
+    </div>
+);
 
 const Billing = () => {
     const { token, user, initializing, can } = useAuth();
@@ -537,7 +572,7 @@ const Billing = () => {
 
     const formatCurrency = (amount) => Number(amount || 0).toFixed(2);
 
-    if (initializing || loading) return <div style={{ display: "flex", justifyContent: "center", padding: "100px", color: "var(--c-text-3)", fontSize: "13px" }}>Cargando...</div>;
+    if (initializing || loading) return <BillingSkeleton />;
 
     const isCheckout = !!selectedInvoice?._isCheckout;
     const payTarget = selectedInvoice

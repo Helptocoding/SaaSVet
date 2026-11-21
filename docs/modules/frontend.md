@@ -16,6 +16,7 @@
 - Gráficas: `recharts`
 - Date picker: `react-day-picker` 9
 - Animaciones: Framer Motion
+- Esqueletos de carga: `react-loading-skeleton` 3.5 (ver § Esqueletos de carga)
 - Testing: Vitest 4 + React Testing Library + jsdom (`pnpm test`, **gate CI bloqueante**) — ver § Testing
 
 ### Tipografía y favicon
@@ -1030,6 +1031,65 @@ Fuera de alcance (siguen nativos por ahora): fecha de cita (agenda), caducidad d
 lote (Entrada de stock), DOB de QuickPatientForm, y el date-range de Cobros
 (`DateRangePicker`, impl vanilla aparte).
 
+### Esqueletos de carga (`react-loading-skeleton`)
+
+Mientras una página carga se muestra un esqueleto con la **misma estructura** que la
+página, no un «Cargando...» centrado. `SkeletonTheme` vive una sola vez en `App.jsx`
+(`baseColor` `--c-subtle`, `highlightColor` `--c-surface-2`) y el CSS de la librería se
+importa en `main.jsx` antes de `index.css`. La librería ya apaga la animación con
+`prefers-reduced-motion`: no añadir reglas propias.
+
+- Usar `<Skeleton width height borderRadius count />`; `containerClassName` para que el
+  wrapper sea ítem flex/grid. Colores y radios siempre con tokens.
+- El texto estático (título, subtítulo, encabezados de tabla) se muestra real; solo los
+  datos van como esqueleto.
+- El contenedor lleva `role="status"` + `aria-label="Cargando …"` y las piezas
+  visuales `aria-hidden="true"`: sin el texto «Cargando», es lo único que anuncia la carga.
+- Tablas: `components/TableSkeleton.jsx` — encabezados reales + filas de esqueleto
+  con la clase de tabla de la página. `columns: [{label, align?, width?, cell?(row)}]`;
+  `cell` para celdas compuestas (avatar + nombre, pastillas). Es presentacional: el
+  caller pone el `role="status"`. **No** volver a escribir `<table>` de esqueleto a mano.
+- El resto del esqueleto es local: en el archivo de la página o, si la página inyecta
+  sus estilos en el render (Citas) o es muy grande, en `features/<módulo>/*Skeleton.jsx`
+  con su CSS module. **No** crear clases `skeleton-*` globales ni animaciones
+  `shimmer` propias.
+- Si solo una parte espera datos, solo esa parte es esqueleto: Configuración muestra
+  el menú real y esqueleto en el apartado; Caja, la tabla de turnos; Historial
+  clínico deja cargar la barra de mascotas y solo bloquea el área principal (la
+  consulta necesita el catálogo de productos).
+
+Aplicado en: Inventario, Dashboard (página, agenda del día, citas por resolver y
+las 3 gráficas), Citas (y su historial de estados), Cobros, Caja y `CajaBar`
+(antes devolvía `null` y la barra aparecía de golpe), Mascotas (tarjetas/tabla y
+panel lateral), Ficha de mascota, Equipo, Recetas, Historial clínico (área
+principal, lista de mascotas y resumen clínico), Configuración (carga y lazy de
+cada apartado), aceptación de documentos legales, acciones rápidas de cita,
+lotes y notificaciones.
+
+Fuera, a propósito: el splash de sesión (`App`, `Layout`, login), los `initializing`
+de POS/Importación/`config.jsx` (no se alcanzan: `Layout` espera la sesión antes
+de montar la página), el Inbox (`InboxLoadState`, contrato propio con pruebas) y
+Analítica (excluida del piloto).
+
+### StatTiles (indicadores «Linear Insights»)
+
+`components/StatTiles.jsx` — **fuente única** de tarjetas de métrica. Presentacional:
+el caller arma título, valor, tono y pie; el componente no conoce permisos ni API.
+Contrato visual (tonos, rejilla, estados) en `design-system.md` §5.
+
+- `StatSection({ label, eyebrow = "Linear Insights", gridClassName, children })` —
+  `<section aria-label>` + rejilla. `eyebrow={null}` la oculta.
+- `StatTile({ label, value, icon, tone, badge, foot, live, counting, className, onClick, pressed })`
+  — `onClick` la vuelve `<button aria-pressed>` con nombre «título: valor» (así lo
+  encuentran las pruebas); sin él es un `<div>`.
+- `StatSectionSkeleton({ count, gridClassName, tileClassName })` — misma rejilla en carga;
+  el caller pone el `role="status"`.
+
+Consumidores: **Inventario** (filtran la tabla), **Dashboard** (indicadores de hoy de
+`/dashboard/summary/`; reemplaza al retirado `KpiStrip`) y **Mascotas** (conteos de
+`/pets/stats/` y citas de la semana). Pies: un dato real o qué cuenta el número —
+**nunca** deltas o comparativos que el backend no calcula.
+
 ### EmptyState (estado vacío accionable)
 
 `components/EmptyState.jsx` — **fuente única** de estados vacíos guiados. Reemplaza
@@ -1677,8 +1737,18 @@ Fase A): `.github/workflows/ci.yml`. Un test rojo tumba el merge. `lint` bloquea
   Es el contrato: el usuario no puede borrar el único método de pago.
 - Inventario: el **valor en stock** se calcula `sale_price / conversion_factor × qty`
   (`productStockValue`); el `/cf` normaliza el precio de la presentación a unidad base.
-  Conviven **dos** definiciones de "bajo stock": `stockStatus.low` (frontend, `min>0 &&
-  stock<min`) y `metrics.lowStock` (flag backend `is_low_stock`). No unificar sin ADR.
+  Conviven **tres** definiciones de "bajo stock": `stockStatus.low` (frontend, `min>0 &&
+  stock<min`, excluye agotados), el flag backend `is_low_stock` (`stock<=min`, **incluye**
+  agotados) y el dashboard (`min>0 && stock<=min`). La página de Inventario usa **solo**
+  `stockStatus` vía `matchesStockFilter` para badges, filtros, indicadores y el chip
+  «Requieren atención» (bajo + agotado, solo activos): el número que se pulsa es el número
+  de filas que aparecen. Antes el indicador «Bajo stock» usaba el flag backend y contaba al
+  agotado dos veces. La frontera `stock == min` sigue sin unificar (Inventario: Normal;
+  dashboard: crítico) — no unificar sin decisión de producto.
+- Inventario: los indicadores «Bajo stock»/«Sin stock» son botones (`aria-pressed`) que
+  filtran la tabla y **quitan categoría y búsqueda** (cuentan todo el inventario activo).
+  El chip «Requieren atención (N)» es un filtro más: su N respeta categoría y búsqueda.
+  No reintroducir un banner persistente de stock: el aviso vive en los indicadores.
 
 ### Pendiente (siguientes fases)
 
