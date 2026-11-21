@@ -10,12 +10,15 @@ Authorization contract (defence in depth — IsPlatformOperator runs first):
   - actor.role == 'ADMIN_SAAS' AND is_superuser AND is_staff
   - target.role != 'ADMIN_SAAS'  — operators cannot reset peers
   - target != actor               — self-reset uses change-password
+  - target is not a service account — 404, same as the clinic reset (ADR p51,
+    D13 of ADR p65): the agent's tokens carry no session version
 
 Side effects (inside transaction.atomic):
   1. Generate cryptographically random temp password.
   2. set_password on target.
   3. password_must_change=True, password_temp_issued_at=now().
-  4. Blacklist ALL existing tokens of target (revoke every active session).
+  4. Blacklist ALL existing tokens of target and bump its session version
+     (ADR p65): access tokens stop working too, not only refresh tokens.
   5. Emit PLATFORM_PASSWORD_RESET_ISSUED audit log (temp_password NEVER logged).
   6. Return temp_password ONCE.
 """
@@ -36,6 +39,8 @@ from rest_framework_simplejwt.token_blacklist.models import (
     BlacklistedToken,
     OutstandingToken,
 )
+
+from apps.users.services import bump_session_version
 
 logger = logging.getLogger('platform.events')
 
@@ -84,6 +89,13 @@ def platform_reset_password(
     if getattr(target_user, 'role', None) == 'ADMIN_SAAS':
         raise PermissionDenied("No puedes resetear la contraseña de otros operadores de plataforma.")
 
+    if getattr(target_user, 'is_service_account', False):
+        # ADR p51 / p65 (D13) — 404-as-403, igual que el reset de clínica: un
+        # reset dejaría al agente bloqueado por el cambio obligatorio y con una
+        # versión de sesión que sus tokens (sin claim) ya no cumplirían.
+        from django.http import Http404
+        raise Http404("Usuario no encontrado.")
+
     # --- 1. Generate temp password ---------------------------------------------
     temp_password = secrets.token_urlsafe(TEMP_PASSWORD_ENTROPY_BYTES)
 
@@ -104,6 +116,7 @@ def platform_reset_password(
         _, created = BlacklistedToken.objects.get_or_create(token=ot)
         if created:
             revoked_count += 1
+    bump_session_version(target_user)
 
     # --- 5. Audit log ----------------------------------------------------------
     # NOTE: temp_password is NEVER logged — not even hashed.

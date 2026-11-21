@@ -117,6 +117,30 @@ Accion requerida: ninguna si una persona lanzo la poda en una ventana de manteni
 
 ---
 
+## Eventos de sesion (`apps.core.authentication`)
+
+### `AUTH_SESSION_REVOKED` · INFO
+
+Llego una peticion (o un refresh) con un token emitido antes del ultimo cambio de credenciales o de acceso de esa persona: desactivacion, reactivacion, restablecimiento o cambio de contraseña (ADR p65). El sistema la rechazo con 401 `session_revoked` y la persona vuelve a iniciar sesion. Es el comportamiento esperado despues de esas operaciones.
+
+Campos: `user_id`, `token_session_version` (`null` si el claim venia malformado), `current_session_version`. Nunca el token.
+
+Accion requerida: ninguna en volumen normal. Muchos eventos del mismo `user_id` justo despues de un despliegue pueden indicar que quedan instancias antiguas recibiendo trafico (ver `docs/runbooks/deploy.md`).
+
+---
+
+## Eventos de personal (`users.events`)
+
+### `STAFF_REACTIVATED` · INFO
+
+Un ADMIN reactivo a un integrante desactivado (plan Equipo A2): misma cuenta, contraseña temporal de 24 h y todas las sesiones anteriores revocadas. Se emite despues del commit (`on_commit(robust=True)`): no hay evento de una reactivacion revertida.
+
+Campos: `request_id`, `actor_id`, `actor_username`, `actor_role`, `organization_id`, `target_user_id`, `target_username`, `target_public_id`, `target_role`, `revoked_refresh_count`, `client_ip`, `user_agent`, `duration_ms`. Nunca la contraseña temporal.
+
+Accion requerida: ninguna. Reactivaciones inesperadas de ex empleados se auditan por `actor_id`.
+
+---
+
 ## Eventos de validacion tenant en serializers (`apps.tenant_validation`)
 
 ### `TENANT_VALIDATION_REJECTED` · WARNING

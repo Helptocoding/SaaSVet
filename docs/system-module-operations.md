@@ -108,6 +108,51 @@ negocio dentro del SaaS** para cada dominio.
 
 ---
 
+### Acción: Editar integrante (plan Equipo A1)
+
+**Requiere**
+- Permiso `staff.update` (sensible, solo ADMIN). El integrante es de la misma organización, está activo y no es `ADMIN_SAAS`, cuenta de servicio ni cuenta semilla de la demo.
+- Solo `first_name`, `last_name`, `email`, `specialty` y `license_number`. Nombres por la regla D4 (NFC + recorte; letras latinas, espacio, guion y apóstrofos). Correo único global.
+
+**Resultado**
+- Se guardan solo los campos que cambian; `STAFF_PROFILE_UPDATED` con los nombres de los campos.
+- Cambiar el correo no cierra sesiones: el correo nuevo sirve para entrar desde ya y el anterior deja de servir.
+
+**Bloquea**
+- Cualquier otra clave → 400. Correo ocupado → 400 genérico. Los documentos clínicos cerrados conservan su snapshot.
+
+---
+
+### Acción: Desactivar integrante
+
+**Requiere**
+- Permiso `staff.destroy`. No es uno mismo (400) y el actor sigue activo con el bloqueo tomado (`403 actor_inactive`).
+- Si el objetivo es ADMIN, debe quedar otro ADMIN activo en la clínica (`409 last_active_admin`), aunque otro rol tenga `staff.destroy` concedido en la base.
+
+**Resultado**
+- `is_active=False`; se revocan sus refresh tokens y se incrementa su versión de sesión (ADR p65): ningún token anterior vuelve a servir, ni tras reactivarlo.
+- Se conservan PK, `public_id`, rol, `UserRole` e historial.
+
+**Desbloquea**
+- Reactivarlo desde Inactivos (`staff.reactivate`).
+
+---
+
+### Acción: Reactivar integrante (plan Equipo A2)
+
+**Requiere**
+- Permiso `staff.reactivate` (sensible, solo ADMIN); actor ADMIN activo y organización activa. Integrante inactivo de la misma organización (si ya está activo, `409 already_active`).
+- `reactivate_staff` es `durable`: debe ser la transacción más externa.
+
+**Resultado** (atómico)
+- `is_active=True`, contraseña temporal de 24 h con cambio obligatorio, todos los refresh tokens revocados y versión de sesión incrementada.
+- La contraseña temporal se devuelve una sola vez, después del commit, con `Cache-Control: no-store`. `STAFF_REACTIVATED` sale con `on_commit(robust=True)`.
+
+**Bloquea**
+- La contraseña anterior y cualquier token emitido antes.
+
+---
+
 ### Acción: Configurar toggles operativos
 
 **Requiere**

@@ -13,16 +13,17 @@ export const createStaff = async (data) => {
 };
 
 /**
- * Edita especialidad y cédula profesional de un miembro (M01, orden 7).
- * El backend rechaza cualquier otra clave.
+ * Edita nombre, apellido, correo (plan Equipo A1), especialidad y cédula
+ * profesional (M01, orden 7). Enviar solo lo que cambió: el backend rechaza
+ * cualquier otra clave.
  */
 export const updateStaff = async (publicId, data) => {
     const res = await api.patch(`staff/${publicId}/`, data);
     return res.data;
 };
 
-export const deactivateStaff = async (id) => {
-    const res = await api.delete(`staff/${id}/`);
+export const deactivateStaff = async (publicId) => {
+    const res = await api.delete(`staff/${publicId}/`);
     return res.data;
 };
 
@@ -34,15 +35,30 @@ export const deactivateStaff = async (id) => {
  * must be surfaced to the admin in a modal that does not persist —
  * losing it requires another reset.
  */
+const newRequestId = () =>
+    typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2);
+
 export const resetStaffPassword = async (publicId) => {
-    const requestId =
-        typeof crypto !== "undefined" && crypto.randomUUID
-            ? crypto.randomUUID()
-            : Math.random().toString(36).slice(2);
     const res = await api.post(
         `staff/${publicId}/reset-password/`,
         {},
-        { headers: { "X-Request-ID": requestId } },
+        { headers: { "X-Request-ID": newRequestId() } },
+    );
+    return res.data;
+};
+
+/**
+ * Reactiva a un integrante desactivado (plan Equipo A2). Misma forma que el
+ * restablecimiento más `member`; 409 `already_active` si ya está activo. La
+ * contraseña temporal se muestra una sola vez.
+ */
+export const reactivateStaff = async (publicId) => {
+    const res = await api.post(
+        `staff/${publicId}/reactivate/`,
+        {},
+        { headers: { "X-Request-ID": newRequestId() } },
     );
     return res.data;
 };

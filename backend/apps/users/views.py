@@ -5,13 +5,14 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from django.contrib.auth import get_user_model
 
 from apps.core.network import get_client_ip, get_user_agent
 from apps.core.mixins import NoStoreResponseMixin
 from apps.core.permissions import (
     HybridPermission, NotDemoAccount, build_permissions_list, make_permission,
+    user_has_permission,
 )
 from apps.core.views import resolve_public_id
 from apps.users.serializers import (
@@ -23,6 +24,7 @@ from apps.users.serializers import (
 from apps.users.services import (
     change_password,
     deactivate_staff,
+    reactivate_staff,
     reset_password_for_staff,
     update_staff_profile,
 )
@@ -80,15 +82,21 @@ class MeView(APIView):
 
 
 class StaffListView(APIView):
+    """GET /api/staff/ — activos (por defecto, lo consume Citas) o, con
+    ``?archived=true``, los inactivos (plan Equipo A2, D6). Ver inactivos exige
+    además ``staff.reactivate``: son datos de ex empleados."""
     permission_classes = [make_permission("staff.list")]
 
     def get(self, request):
+        archived = request.query_params.get('archived') == 'true'
+        if archived and not user_has_permission(request.user, 'staff.reactivate'):
+            raise PermissionDenied("No tienes permiso para ver el personal inactivo.")
         # ADR p51: los service accounts (agente virtual) no son Equipo — se
         # excluyen por flag, nunca por nombre de rol.
         qs = User.objects.filter(
             organization=request.user.organization,
-            is_active=True
-        ).exclude(role='ADMIN_SAAS').exclude(is_service_account=True)
+            is_active=not archived,
+        ).exclude(role='ADMIN_SAAS').exclude(is_service_account=True).select_related('organization')
 
         role = request.query_params.get('role')
         if role:
@@ -118,8 +126,9 @@ class StaffCreateView(APIView):
 
 
 class StaffDetailView(APIView):
-    """DELETE desactiva (`staff.destroy`); PATCH edita especialidad y cédula
-    (`staff.update`, M01 orden 7). HybridPermission deriva el código del método."""
+    """DELETE desactiva (`staff.destroy`); PATCH edita nombre, apellido, correo
+    (A1, plan Equipo), especialidad y cédula (`staff.update`, M01 orden 7).
+    HybridPermission deriva el código del método."""
     permission_classes = [HybridPermission]
     resource_name = "staff"
     http_method_names = ['patch', 'delete', 'options']
@@ -224,10 +233,11 @@ class ChangeMyPasswordView(NoStoreResponseMixin, APIView):
         }, status=status.HTTP_200_OK)
 
 
-class StaffResetPasswordView(APIView):
+class StaffResetPasswordView(NoStoreResponseMixin, APIView):
     """
     Admin-initiated password reset for a staff member of the same
-    organization (ADR p21).
+    organization (ADR p21). The response carries a temporary password, so it
+    is ``Cache-Control: no-store`` (plan Equipo, D11).
 
     POST /api/staff/<public_id>/reset-password/
 
@@ -282,4 +292,46 @@ class StaffResetPasswordView(APIView):
             "temp_password": result.temp_password,
             "expires_in_seconds": result.expires_in_seconds,
             "must_change_on_first_login": True,
+        }, status=status.HTTP_201_CREATED)
+
+
+class StaffReactivateView(NoStoreResponseMixin, APIView):
+    """POST /api/staff/<public_id>/reactivate/ (plan Equipo A2).
+
+    Reactivates the same account with a temporary password that must be changed
+    on first login, revoking every earlier session (ADR p65). 201 with the same
+    shape as the reset plus ``member``; 409 ``already_active`` if it is already
+    active. ``no-store``: the body carries a temporary password.
+
+    The view opens no transaction: ``reactivate_staff`` is durable and must be
+    the outermost one. The response is built only from what the service
+    returned, i.e. after the commit.
+    """
+
+    permission_classes = [make_permission('staff.reactivate')]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'staff_reactivate'
+
+    def post(self, request, pk):
+        target = resolve_public_id(
+            User.objects.filter(
+                organization=request.user.organization,
+            ).exclude(role='ADMIN_SAAS').exclude(is_service_account=True),
+            pk,
+        )
+        result = reactivate_staff(
+            admin=request.user,
+            target_user=target,
+            request_id=request.META.get('HTTP_X_REQUEST_ID') or str(uuid.uuid4()),
+            client_ip=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+        return Response({
+            "detail": "Acceso reactivado.",
+            "request_id": result.request_id,
+            "duration_ms": result.duration_ms,
+            "temp_password": result.temp_password,
+            "expires_in_seconds": result.expires_in_seconds,
+            "must_change_on_first_login": True,
+            "member": UserSerializer(result.user).data,
         }, status=status.HTTP_201_CREATED)

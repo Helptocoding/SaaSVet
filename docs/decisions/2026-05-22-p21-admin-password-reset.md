@@ -334,3 +334,15 @@ Ref: `docs/fix-provision-must-change-password-2026-06-24.md`.
 - CLAUDE.md ADR-18
 - `docs/runbooks/password-change.md` (sección admin reset)
 - ADR p20 (self-change, dependencia): `2026-05-22-p20-credential-lifecycle-self-change.md`
+
+
+## Addendum 2026-11-19 — Reactivación y `no-store` (plan Equipo, D10/D11)
+
+- **La reactivación forma parte del ciclo de credenciales.** `POST /api/staff/<public_id>/reactivate/`
+  (`staff.reactivate`, solo ADMIN) reactiva la misma cuenta con una contraseña temporal de las mismas
+  características que el reset de esta ADR (24 h, cambio obligatorio, nunca en logs) y revoca todas las
+  sesiones. Comparte con el reset las funciones `_issue_temporary_password` y `_revoke_all_sessions`.
+- **Toda respuesta con contraseña temporal lleva `Cache-Control: no-store`**: el restablecimiento de esta
+  ADR (antes no lo tenía) y la reactivación.
+- Desde ADR p65, restablecer y reactivar también invalidan los access tokens emitidos antes (versión de
+  sesión), no solo los refresh tokens.

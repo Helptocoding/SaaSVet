@@ -368,6 +368,10 @@ REST_FRAMEWORK = {
         # ADR p21: admin reset de password de staff. Limitar abuse
         # interno — un ADMIN comprometido no puede resetear masivamente.
         'staff_password_reset': '5/hour',
+        # Plan Equipo (A2, D7): reactivar personal. Cupo propio, más holgado que
+        # el de restablecer, para reactivar a varios pasantes al inicio de
+        # semestre sin agotar los restablecimientos.
+        'staff_reactivate': '10/hour',
         # Importador (migración de clínicas): operaciones caras (parseo + escritura
         # masiva). Scoped por actor ADMIN. Upload más holgado que commit.
         'import_upload': '30/hour',
@@ -397,6 +401,10 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
+    # ADR p65 (2026-11-19): desactivar, reactivar, restablecer y cambiar la
+    # contraseña invalidan también los access tokens al instante, mediante la
+    # versión de sesión (claim `sv`, apps.core.authentication). La ventana de
+    # 15 min descrita abajo queda solo para cerrar sesión (es por dispositivo).
     # ADR p20 (2026-05-22): TTL reducido de 30 → 15 min. Justificación:
     # - Password change invalida refresh tokens al instante, pero los access
     #   tokens existentes son stateless y siguen válidos hasta su exp natural.

@@ -28,7 +28,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 
 from rest_framework_simplejwt.token_blacklist.models import (
     BlacklistedToken,
@@ -38,6 +38,35 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 
 logger = logging.getLogger('users.events')
+
+
+def bump_session_version(user) -> int:
+    """Invalida todos los tokens emitidos hasta ahora para ``user`` (ADR p65).
+
+    Única escritura legítima de ``User.session_version``: un ``UPDATE`` con
+    ``F()``, atómico en la base, dentro de la transacción del llamador. Si esa
+    transacción se revierte, el incremento también. Después relee el valor en la
+    instancia y lo devuelve.
+
+    Rechaza las cuentas de servicio: sus tokens no llevan versión y ninguna vía
+    debe incrementarla (todos los llamadores las excluyen antes). Llegar aquí con
+    una es un error de programación.
+    """
+    if getattr(user, 'is_service_account', False):
+        raise ValueError(
+            'bump_session_version no aplica a cuentas de servicio (ADR p65).'
+        )
+    from django.contrib.auth import get_user_model
+    from django.db.models import F
+    User = get_user_model()
+
+    # Filtra por la PK de un usuario que el llamador ya resolvió dentro de su
+    # organización (o, en plataforma, por operador verificado).
+    User.objects.filter(pk=user.pk).update(
+        session_version=F('session_version') + 1,
+    )
+    user.refresh_from_db(fields=['session_version'])
+    return user.session_version
 
 
 @dataclass
@@ -156,8 +185,13 @@ def change_password(
     # DEFAULT_AUTHENTICATION_CLASSES).
     update_session_auth_hash(request, actor)
 
-    # --- 7. Mint new refresh + access pair -------------------------------
-    new_refresh = RefreshToken.for_user(actor)
+    # --- 7. Invalidate every token issued so far, then mint the new pair --
+    # ADR p65: other sessions (and the access token of this very request) stop
+    # working at once; the new pair carries the new version.
+    from apps.core.authentication import stamp_session_version
+
+    bump_session_version(actor)
+    new_refresh = stamp_session_version(RefreshToken.for_user(actor), actor)
     new_access = str(new_refresh.access_token)
 
     # --- 8. Blacklist the snapshotted tokens -----------------------------
@@ -217,6 +251,133 @@ class ResetPasswordResult:
     request_id: str
 
 
+# ---------------------------------------------------------------------------
+# Shared building blocks of the staff credential/lifecycle services
+# ---------------------------------------------------------------------------
+
+class ActorInactive(PermissionDenied):
+    """403: the acting ADMIN was deactivated while the operation waited for its
+    locks (plan Equipo F1)."""
+    default_detail = 'Tu cuenta ya no está activa.'
+    default_code = 'actor_inactive'
+
+
+class LastActiveAdmin(APIException):
+    """409: the operation would leave the clinic without an active ADMIN."""
+    status_code = 409
+    default_detail = (
+        'No puedes desactivar al último administrador activo de la clínica.'
+    )
+    default_code = 'last_active_admin'
+
+
+class DemoSeedAccount(PermissionDenied):
+    """403: shared demo seed accounts are not managed through Equipo (D5)."""
+    default_detail = 'Las cuentas de demostración no se pueden modificar.'
+    default_code = 'demo_seed_account'
+
+
+def is_demo_seed_account(user) -> bool:
+    """True for the three shared seed accounts of the demo organization (D5).
+
+    Identified by BOTH the demo organization and the seed username — the same
+    key `seed_demo_clinic._ensure_users` uses. Usernames are immutable through
+    the API and the seed ones contain '@', which `USERNAME_REGEX` rejects, so no
+    visitor can create a look-alike. `UserSerializer.demo_protected` only mirrors
+    this for the UI; the services enforce it.
+    """
+    from apps.core.demo_reset import DEMO_SEED_USERNAMES
+
+    organization = getattr(user, 'organization', None)
+    return bool(
+        organization is not None
+        and organization.is_demo
+        and user.username in DEMO_SEED_USERNAMES
+    )
+
+
+def _assert_not_demo_seed_account(target_user):
+    if is_demo_seed_account(target_user):
+        raise DemoSeedAccount()
+
+
+def _assert_manageable_target(admin, target_user):
+    """The 404-as-403 gates every staff operation shares.
+
+    Platform operators, service accounts (ADR p51) and users of another clinic
+    are never confirmed to exist. Each operation keeps its own extra rules
+    (acting on oneself, the reset's 403 for ``ADMIN_SAAS``) before calling this.
+    """
+    from django.http import Http404
+
+    if (
+        getattr(target_user, 'role', None) == 'ADMIN_SAAS'
+        or getattr(target_user, 'is_service_account', False)
+        or target_user.organization_id is None
+        or admin.organization_id is None
+        or target_user.organization_id != admin.organization_id
+    ):
+        raise Http404("Usuario no encontrado.")
+
+
+def _revoke_all_sessions(user) -> int:
+    """Revoke every session of ``user``: blacklist all its refresh tokens and
+    bump its session version, so access tokens die too (ADR p65).
+
+    Returns how many refresh tokens were newly blacklisted.
+    """
+    revoked = 0
+    for ot in OutstandingToken.objects.filter(user=user):
+        _, created = BlacklistedToken.objects.get_or_create(token=ot)
+        if created:
+            revoked += 1
+    bump_session_version(user)
+    return revoked
+
+
+def _issue_temporary_password(user) -> tuple[str, int]:
+    """Replace the password with a temporary one (ADR p21) and revoke every
+    session. Returns ``(temp_password, revoked_refresh_count)``.
+
+    The temporary password is valid for ``TEMP_PASSWORD_VALIDITY`` and must be
+    changed on first login. It is never logged.
+    """
+    temp_password = secrets.token_urlsafe(TEMP_PASSWORD_ENTROPY_BYTES)
+    user.set_password(temp_password)
+    user.password_must_change = True
+    user.password_temp_issued_at = timezone.now()
+    user.save(update_fields=[
+        'password',
+        'password_must_change',
+        'password_temp_issued_at',
+    ])
+    return temp_password, _revoke_all_sessions(user)
+
+
+def _lock_users(*, pks, active_admins_of=None):
+    """Lock ``User`` rows in ONE query ordered by pk and return them by pk.
+
+    PostgreSQL applies the lock after ordering, so two transactions always
+    lock in the same order and cannot deadlock each other. With
+    ``active_admins_of`` it also locks every active (human) ADMIN of that
+    organization: the last-ADMIN rule reads that set under the lock.
+    """
+    from django.contrib.auth import get_user_model
+    from django.db.models import Q
+    User = get_user_model()
+
+    condition = Q(pk__in=list(pks))
+    if active_admins_of is not None:
+        condition |= Q(
+            organization_id=active_admins_of,
+            role='ADMIN',
+            is_active=True,
+            is_service_account=False,
+        )
+    rows = User.objects.select_for_update().filter(condition).order_by('pk')
+    return {row.pk: row for row in rows}
+
+
 @transaction.atomic
 def reset_password_for_staff(
     *,
@@ -268,44 +429,16 @@ def reset_password_for_staff(
         raise PermissionDenied(
             "No puedes resetear la contraseña de operadores de plataforma."
         )
-    if getattr(target_user, 'is_service_account', False):
-        # ADR p51 — 404-as-403: un reset pondría password_must_change=True y
-        # el gate embebido en HybridPermission inutilizaría al agente virtual.
-        from django.http import Http404
-        raise Http404("Usuario no encontrado.")
-    if (
-        target_user.organization_id is None
-        or admin.organization_id is None
-        or target_user.organization_id != admin.organization_id
-    ):
-        # Use the standard 404-as-403 convention — never confirm that
-        # the target exists in another tenant.
-        from django.http import Http404
-        raise Http404("Usuario no encontrado.")
+    # ADR p51 — 404-as-403 for service accounts (a reset would set
+    # password_must_change=True and lock the agent out) and for other clinics.
+    _assert_manageable_target(admin, target_user)
+    _assert_not_demo_seed_account(target_user)
 
-    # --- 1. Generate temp password ------------------------------------------
-    temp_password = secrets.token_urlsafe(TEMP_PASSWORD_ENTROPY_BYTES)
-
-    # --- 2-3. Persist credential change + lifecycle flags -------------------
-    target_user.set_password(temp_password)
-    target_user.password_must_change = True
-    target_user.password_temp_issued_at = timezone.now()
-    target_user.save(update_fields=[
-        'password',
-        'password_must_change',
-        'password_temp_issued_at',
-    ])
-
-    # --- 4. Revoke every existing session of the target ---------------------
+    # --- 1-4. Temp password + lifecycle flags + revoke every session --------
     # Unlike ``change_password`` (which preserves the caller's session),
     # an admin reset has no current session of the target to spare — the
-    # target was not in the loop. Blacklist everything.
-    old_outstanding = OutstandingToken.objects.filter(user=target_user)
-    revoked_count = 0
-    for ot in old_outstanding:
-        _, created = BlacklistedToken.objects.get_or_create(token=ot)
-        if created:
-            revoked_count += 1
+    # target was not in the loop. Refresh AND access tokens die (ADR p65).
+    temp_password, revoked_count = _issue_temporary_password(target_user)
 
     # --- 5. Audit log -------------------------------------------------------
     duration_ms = int((time.monotonic() - started_at) * 1000)
@@ -392,35 +525,51 @@ def deactivate_staff(
     # --- Authorisation gates -------------------------------------------------
     if target_user.pk == admin.pk:
         raise ValidationError("No puedes desactivar tu propia cuenta.")
-    if getattr(target_user, 'role', None) == 'ADMIN_SAAS':
-        from django.http import Http404
+    # ADR p51 — 404-as-403: platform operators, other clinics and service
+    # accounts (the agent's kill switch is AgentSettings.enabled /
+    # ensure_agent_users, not this API).
+    _assert_manageable_target(admin, target_user)
+    _assert_not_demo_seed_account(target_user)
+
+    # --- Lock + re-check (last-ADMIN invariant) -----------------------------
+    # One query ordered by pk: actor + target and, when the target is an
+    # ADMIN, every active ADMIN of the clinic. Under READ COMMITTED,
+    # PostgreSQL re-evaluates rows another transaction just committed, so two
+    # ADMINs deactivating each other serialize and the second one finds its
+    # own actor inactive.
+    from django.http import Http404
+
+    locked = _lock_users(
+        pks=[admin.pk, target_user.pk],
+        active_admins_of=(
+            target_user.organization_id if target_user.role == 'ADMIN' else None
+        ),
+    )
+    actor = locked.get(admin.pk)
+    target = locked.get(target_user.pk)
+    if actor is None or not actor.is_active:
+        raise ActorInactive()
+    if target is None or not target.is_active:
         raise Http404("Usuario no encontrado.")
-    if getattr(target_user, 'is_service_account', False):
-        # ADR p51 — 404-as-403: el kill switch del agente virtual es
-        # AgentSettings.enabled (É-F0) / ensure_agent_users, no esta API.
-        from django.http import Http404
-        raise Http404("Usuario no encontrado.")
-    if (
-        target_user.organization_id is None
-        or admin.organization_id is None
-        or target_user.organization_id != admin.organization_id
-    ):
-        from django.http import Http404
-        raise Http404("Usuario no encontrado.")
+    if target.role == 'ADMIN':
+        others = [
+            row for row in locked.values()
+            if row.pk != target.pk
+            and row.role == 'ADMIN'
+            and row.is_active
+            and not row.is_service_account
+            and row.organization_id == target.organization_id
+        ]
+        if not others:
+            raise LastActiveAdmin()
 
     # --- 1. Deactivate -------------------------------------------------------
+    target.is_active = False
+    target.save(update_fields=['is_active'])
     target_user.is_active = False
-    target_user.save(update_fields=['is_active'])
 
-    # --- 2. Revoke every existing session ------------------------------------
-    # Same blacklist-everything pattern as the admin password reset: the
-    # deactivated user has no session worth sparing.
-    old_outstanding = OutstandingToken.objects.filter(user=target_user)
-    revoked_count = 0
-    for ot in old_outstanding:
-        _, created = BlacklistedToken.objects.get_or_create(token=ot)
-        if created:
-            revoked_count += 1
+    # --- 2. Revoke every existing session (refresh + access, ADR p65) -------
+    revoked_count = _revoke_all_sessions(target)
 
     # --- 3. Audit log --------------------------------------------------------
     duration_ms = int((time.monotonic() - started_at) * 1000)
@@ -449,30 +598,170 @@ def deactivate_staff(
 
 
 # ---------------------------------------------------------------------------
+# Staff reactivation (plan Equipo, A2)
+# ---------------------------------------------------------------------------
+
+
+class AlreadyActive(APIException):
+    """409: the member is already active (e.g. a retry after a lost response)."""
+    status_code = 409
+    default_detail = (
+        'Ya está activo. Si no recibiste la contraseña temporal, usa '
+        'Restablecer contraseña.'
+    )
+    default_code = 'already_active'
+
+
+@dataclass
+class ReactivateStaffResult:
+    """Return shape of ``reactivate_staff``."""
+    user: object
+    temp_password: str
+    expires_in_seconds: int
+    duration_ms: int
+    request_id: str
+
+
+def _log_staff_reactivated(fields):
+    logger.info("STAFF_REACTIVATED", extra=fields)
+
+
+@transaction.atomic(durable=True)
+def reactivate_staff(
+    *,
+    admin,
+    target_user,
+    request_id: str | None = None,
+    client_ip: str = '',
+    user_agent: str = '',
+) -> ReactivateStaffResult:
+    """Reactivate a deactivated member with a temporary password (A2).
+
+    Same account — same PK, ``public_id``, role, cédula, ``UserRole`` and every
+    relation (deactivation never removed them). The old password stops working
+    and every session issued before is revoked (refresh tokens blacklisted and
+    session version bumped, ADR p65).
+
+    **Must be the outermost transaction** (``durable=True``): called inside
+    another atomic block it raises ``RuntimeError`` before writing anything.
+    Otherwise the commit would happen later, after the temporary password was
+    already handed back. Only ``StaffReactivateView`` calls it; any future
+    caller (bulk reactivation, command, admin action) must call it outside of a
+    transaction.
+
+    The temporary password is returned once, only after the commit, and never
+    logged. ``STAFF_REACTIVATED`` is emitted with ``on_commit(robust=True)``:
+    no event for a rolled-back reactivation, and a failing notification never
+    turns a committed reactivation into an HTTP error.
+    """
+    request_id = request_id or str(uuid.uuid4())
+    started_at = time.monotonic()
+
+    _assert_manageable_target(admin, target_user)
+
+    locked = _lock_users(pks=[admin.pk, target_user.pk])
+    actor = locked.get(admin.pk)
+    target = locked.get(target_user.pk)
+    if actor is None or not actor.is_active:
+        raise ActorInactive()
+    if actor.role != 'ADMIN':
+        raise PermissionDenied(
+            "Solo administradores de la clínica pueden reactivar personal."
+        )
+    if actor.organization_id and not actor.organization.is_active:
+        raise PermissionDenied("Organización desactivada.")
+    if target is None:
+        from django.http import Http404
+        raise Http404("Usuario no encontrado.")
+    if target.is_active:
+        raise AlreadyActive()
+
+    target.is_active = True
+    target.save(update_fields=['is_active'])
+    temp_password, revoked_count = _issue_temporary_password(target)
+
+    duration_ms = int((time.monotonic() - started_at) * 1000)
+    event = {
+        "event": "STAFF_REACTIVATED",
+        "request_id": request_id,
+        "actor_id": admin.pk,
+        "actor_username": admin.username,
+        "actor_role": admin.role,
+        "organization_id": admin.organization_id,
+        "target_user_id": target.pk,
+        "target_username": target.username,
+        "target_public_id": str(target.public_id),
+        "target_role": target.role,
+        "revoked_refresh_count": revoked_count,
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "duration_ms": duration_ms,
+        # Note — temp_password is NEVER logged.
+    }
+    transaction.on_commit(lambda: _log_staff_reactivated(event), robust=True)
+
+    return ReactivateStaffResult(
+        user=target,
+        temp_password=temp_password,
+        expires_in_seconds=int(TEMP_PASSWORD_VALIDITY.total_seconds()),
+        duration_ms=duration_ms,
+        request_id=request_id,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Service account del agente virtual (ADR p51)
 # ---------------------------------------------------------------------------
 
 AGENT_USERNAME_TEMPLATE = 'agent.whatsapp.{org_public_id}'
 
 
+EMAIL_UNIQUE_CONSTRAINT = 'user_email_ci_unique'
+
+
+def _is_email_unique_violation(exc):
+    """True solo si la IntegrityError es del índice único del correo (ADR p48).
+
+    Se compara el nombre de la restricción, nunca «cualquier IntegrityError»:
+    convertir otro fallo en un error de correo ocultaría un bug (misma regla que
+    `slot_taken`).
+    """
+    diag = getattr(getattr(exc, '__cause__', None), 'diag', None)
+    constraint = getattr(diag, 'constraint_name', None)
+    if constraint:
+        return constraint == EMAIL_UNIQUE_CONSTRAINT
+    return EMAIL_UNIQUE_CONSTRAINT in str(exc)
+
+
+@transaction.atomic
 def update_staff_profile(*, admin, target_user, changes):
-    """Edita especialidad y cédula de un miembro de Equipo (M01, orden 7).
+    """Edita nombre, apellido, correo (A1, plan Equipo), especialidad y cédula
+    (M01, orden 7) de un miembro de Equipo.
 
     La view ya limita el target a la organización del ADMIN; aquí se repite como
-    defensa en profundidad (404-as-403). El log lleva nombres de campo, no valores.
+    defensa en profundidad (404-as-403). ``changes`` trae solo lo que cambia: sin
+    cambios no se guarda ni se registra nada. Dos ADMIN que guardan el mismo
+    correo a la vez: la restricción de base de datos decide y quien pierde
+    recibe 400 en el campo. No toca los snapshots de documentos clínicos
+    cerrados. El log lleva nombres de campo, no valores (el correo es dato
+    personal).
     """
-    if (
-        target_user.organization_id is None
-        or target_user.organization_id != admin.organization_id
-        or getattr(target_user, 'role', None) == 'ADMIN_SAAS'
-        or getattr(target_user, 'is_service_account', False)
-    ):
-        from django.http import Http404
-        raise Http404("Usuario no encontrado.")
+    from django.db import IntegrityError
+
+    _assert_manageable_target(admin, target_user)
+    _assert_not_demo_seed_account(target_user)
     fields = sorted(changes)
+    if not fields:
+        return target_user
     for field in fields:
         setattr(target_user, field, changes[field])
-    target_user.save(update_fields=fields)
+    try:
+        with transaction.atomic():
+            target_user.save(update_fields=fields)
+    except IntegrityError as exc:
+        if _is_email_unique_violation(exc):
+            raise ValidationError({'email': ['Este correo no está disponible.']}) from exc
+        raise
     logger.info(
         "STAFF_PROFILE_UPDATED",
         extra={

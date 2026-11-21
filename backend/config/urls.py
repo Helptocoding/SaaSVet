@@ -29,6 +29,7 @@ from apps.users.views import (
     StaffCreateView,
     StaffDetailView,
     StaffResetPasswordView,
+    StaffReactivateView,
     ChangeMyPasswordView,
 )
 from rest_framework.routers import DefaultRouter
@@ -154,14 +155,20 @@ class PublicTokenRefreshView(NoStoreResponseMixin, TokenRefreshView):
         from rest_framework_simplejwt.tokens import RefreshToken
         from rest_framework_simplejwt.exceptions import TokenError
         from rest_framework.response import Response
+        from apps.core.authentication import SessionRevoked, session_version_matches
         try:
-            uid = RefreshToken(request.data.get('refresh', ''))['user_id']
+            refresh = RefreshToken(request.data.get('refresh', ''))
+            uid = refresh['user_id']
             user = get_user_model().objects.select_related('organization').get(pk=uid)
         except (TokenError, KeyError, get_user_model().DoesNotExist):
             return super().post(request, *args, **kwargs)
         if user.organization_id and not user.organization.is_active:
             return Response({'code': 'organization_inactive',
                              'detail': 'Organización desactivada.'}, status=403)
+        # ADR p65: un refresh emitido antes del último cambio de credenciales o
+        # de acceso no se rota (ni crea un OutstandingToken nuevo).
+        if not session_version_matches(refresh, user):
+            raise SessionRevoked()
         return super().post(request, *args, **kwargs)
 
 class PublicTokenLogoutView(NoStoreResponseMixin, TokenBlacklistView):
@@ -222,6 +229,9 @@ urlpatterns = [
     # ADR p21: admin-initiated password reset for staff member.
     path('api/staff/<str:pk>/reset-password/', StaffResetPasswordView.as_view(),
          name='staff-reset-password'),
+    # Plan Equipo (A2): reactivar a un integrante desactivado.
+    path('api/staff/<str:pk>/reactivate/', StaffReactivateView.as_view(),
+         name='staff-reactivate'),
     # ADR p20: credential self-change. Explicit action endpoint — NOT a
     # field PATCH on /staff/<id>/, which would bypass token invalidation,
     # validate_password, and audit logging.

@@ -37,6 +37,7 @@ class StaffCreateMustChangeTests(APITestCase):
             '/api/staff/create/',
             {
                 'username': 'newvet',
+                'first_name': 'Nueva',  # D4 (plan Equipo): obligatorio en el alta
                 'email': 'vet@clinic.test',
                 'password': 'VetPass1234',
                 'role': 'VET',

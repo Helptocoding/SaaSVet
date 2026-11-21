@@ -829,7 +829,8 @@ export const updateMedicalRecord = async (token, id, data) => {
 - Interceptor request: inyecta `X-Request-ID` (uuid por request vía `utils/requestId.js`) si el caller no lo seteó — correlación end-to-end P1-5 A1 (el backend lo reusa en logs/Sentry/respuesta). No pisar un id ya provisto.
 - Interceptor response 401:
   - **Bypassa redirect** si el request fallido es el endpoint de login (`url` termina en `token/`). Sin esto, credenciales malas disparaban full page reload antes de que el toast del login se renderizara. Helper local `isLoginAttempt(config)`. Ver ADR p22.
-  - Para 401 en cualquier otro endpoint: `clearTokens()` (vía `tokenStorage`) + `window.location.href = "/login"` (sesión expirada legítima).
+  - **Reintento único (ADR p65, D14):** si la petición viajó con un access token distinto del que hoy está almacenado (se renovó mientras viajaba, p. ej. al cambiar la propia contraseña o por el refresh periódico), se repite **una vez** con el vigente. Condiciones: URL que no sea `token/`, `token/refresh/` ni `token/logout/`; petición no reintentada antes (marca `_sessionRetried`); llevaba `Authorization: Bearer`; hay token almacenado y es distinto; no hay cierre de sesión en curso. Nunca llama al refresh ni comparte estado entre peticiones. Reintentar un POST es seguro: DRF rechaza la autenticación antes de ejecutar la vista. Pruebas en `api/client.test.js` (incluye concurrencia).
+  - Para 401 en cualquier otro caso: `clearTokens()` (vía `tokenStorage`) + `window.location.href = "/login"` (sesión expirada o revocada). Un `session_revoked` (ADR p65) llega por aquí: el token es anterior a una desactivación, reactivación, restablecimiento o cambio de contraseña.
 - Interceptor response 500+: alert global "Error del servidor".
 
 ### Observabilidad de errores (P1-5 Fase A)
@@ -960,7 +961,7 @@ FETCH_USER         /me/ fail                         → LOGIN
 - El callback del timer usa `fetch()` nativo (no axios) para evitar el interceptor 401.
 - Chequea `isLoggingOut()` antes de aplicar tokens — previene revival de sesión recién terminada (race logout/refresh). Ver ADR p22.
 
-**Cierre de sesión:** `useAuth().logout` envía el refresh a `POST /api/token/logout/` (blacklist) antes de limpiar el almacenamiento, sin esperar respuesta: si falla, la sesión local se cierra igual. Las rutas internas (refresh fallido, `/me/` rechazado) cierran sin llamar al endpoint. **El access token sigue siendo válido hasta expirar (15 min)**: revoca el refresh, no la sesión entera.
+**Cierre de sesión:** `useAuth().logout` envía el refresh a `POST /api/token/logout/` (blacklist) antes de limpiar el almacenamiento, sin esperar respuesta: si falla, la sesión local se cierra igual. Las rutas internas (refresh fallido, `/me/` rechazado) cierran sin llamar al endpoint. **El access token sigue siendo válido hasta expirar (15 min)**: revoca el refresh, no la sesión entera. En cambio, **cambiar la contraseña** cierra al instante las sesiones de esa persona en otros navegadores y dispositivos, y en pestañas sin «Recordarme» (ADR p65); las pestañas del mismo navegador con «Recordarme» comparten el almacenamiento y toman el token nuevo.
 
 **Control de acceso:**
 - `permissions` como `Set` (desde el array retornado por `/api/me/`).
@@ -1668,7 +1669,7 @@ hooks/usePOSCart.js      — estado del carrito (solo UI)
 | `/pos`              | Punto de Venta      | Privada      |
 | `/cash`             | Caja (turnos + Z)   | Privada      |
 | `/prescriptions`    | Recetas             | Privada      |
-| `/staff`            | Equipo              | Solo ADMIN   |
+| `/staff`            | Equipo              | Por capacidad (`staff.*`; plan Equipo) |
 | `/config`           | Configuracion       | Solo ADMIN   |
 
 ## Testing (Vitest + Testing Library) — P1-4

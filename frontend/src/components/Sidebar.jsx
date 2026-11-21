@@ -18,10 +18,13 @@ const NAV_ITEMS = [
     { path: "/cash", label: "Caja", icon: Icon.Wallet },
 ];
 
-const ADMIN_ITEMS = [
-    { path: "/staff", label: "Equipo", icon: Icon.Users },
-    { path: "/config", label: "Configuración", icon: Icon.Settings },
+// Equipo se gatea por capacidad (plan Equipo, F4), no por rol: quien pueda
+// gestionar personal lo ve. Configuración sigue por rol (fuera de alcance).
+const STAFF_ITEM = { path: "/staff", label: "Equipo", icon: Icon.Users };
+const STAFF_MANAGEMENT_PERMS = [
+    "staff.create", "staff.update", "staff.destroy", "staff.reset_password", "staff.reactivate",
 ];
+const CONFIG_ITEM = { path: "/config", label: "Configuración", icon: Icon.Settings };
 
 // Items de admin gated por capability (no por nombre de rol): el importador
 // requiere `import.create`. Ver authContext.can().
@@ -42,12 +45,13 @@ const ROLE_LABELS = {
 
 const Sidebar = ({ onLogout }) => {
     const location = useLocation();
-    const { user, initializing, can } = useAuth();
+    const { user, initializing, can, canAny } = useAuth();
 
     if (initializing) return null;
 
     const isAdmin = user?.role === "ADMIN" || user?.role === "ADMIN_SAAS";
     const isPlatformOperator = user?.role === "ADMIN_SAAS";
+    const canManageStaff = Boolean(canAny?.(STAFF_MANAGEMENT_PERMS));
 
     const isActive = (path) =>
         path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
@@ -92,12 +96,14 @@ const Sidebar = ({ onLogout }) => {
                     .map(item => <NavLink key={item.path} item={item} />)}
 
                 {/* Admin items */}
-                {isAdmin && (
+                {(isAdmin || canManageStaff) && (
                     <>
                         <div className={styles.navSection}>
                             Admin
                         </div>
-                        {ADMIN_ITEMS.map(item => <NavLink key={item.path} item={item} />)}
+                        {[canManageStaff && STAFF_ITEM, isAdmin && CONFIG_ITEM]
+                            .filter(Boolean)
+                            .map(item => <NavLink key={item.path} item={item} />)}
                         {CAPABILITY_ITEMS
                             .filter(item => can?.(item.perm) && !user?.is_demo)
                             .map(item => <NavLink key={item.path} item={item} />)}

@@ -319,6 +319,22 @@ apps/users/
 Sin imports nuevos hacia apps de dominio (`medical_records`, `billing`,
 etc.) — el cambio queda contenido en `apps/users/` + `apps/core/`.
 
+## Addendum 2026-11-19 — ADR p65 (versión de sesión)
+
+La sección «⚠ Comportamiento del access token actual» queda **superada** para
+el cambio de contraseña propio, el restablecimiento (de clínica y de
+plataforma), la desactivación y la reactivación:
+[ADR p65](2026-11-19-p65-version-de-sesion.md) agrega una versión de sesión por
+usuario que viaja en cada token (claim `sv`). Esas operaciones la incrementan y
+la autenticación rechaza al instante, con 401 `session_revoked`, cualquier
+access o refresh token emitido antes. Es una variante del camino 1 de esta
+sección sin consultas adicionales, porque la autenticación ya relee al usuario.
+
+`change_password` incrementa la versión antes de emitir el par nuevo: las
+sesiones de esa persona en otros navegadores y dispositivos (y en pestañas sin
+«Recordarme») dejan de servir al instante. El cierre de sesión sigue siendo por
+dispositivo y conserva la ventana de 15 min.
+
 ## Refs
 
 - CLAUDE.md ADR-17

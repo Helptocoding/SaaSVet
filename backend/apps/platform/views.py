@@ -236,7 +236,10 @@ class PlatformStaffResetPasswordView(APIView):
 
     def post(self, request, pk):
         target = resolve_public_id(
-            User.objects.filter(is_active=True).exclude(role='ADMIN_SAAS'),
+            # ADR p65 (D13): las cuentas de servicio no se restablecen.
+            User.objects.filter(is_active=True)
+            .exclude(role='ADMIN_SAAS')
+            .exclude(is_service_account=True),
             pk,
         )
 
