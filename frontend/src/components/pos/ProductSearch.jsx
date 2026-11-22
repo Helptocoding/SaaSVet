@@ -67,12 +67,16 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
         if (debounceRef.current) clearTimeout(debounceRef.current);
         const lower = q.trim().toLowerCase();
         if (!lower) {
-            setProducts([...cacheRef.current.products].sort(byProductName));
-            setServices([...cacheRef.current.services].sort(byServiceName));
+            const cached = cacheRef.current;
+            setProducts([...cached.products].sort(byProductName));
+            setServices([...cached.services].sort(byServiceName));
             setProductLimit(INITIAL_PRODUCTS);
             setServiceLimit(INITIAL_SERVICES);
             setLoading(false);
-            setOpen(true);
+            // Sin texto la lista es un catálogo para hojear. Si todavía no hay
+            // catálogo (o está vacío) no se abre: un «Sin resultados» antes de
+            // escribir nada responde una pregunta que nadie hizo (plan UX F1.6).
+            setOpen(cached.products.length + cached.services.length > 0);
             setHighlight(-1);
             return;
         }

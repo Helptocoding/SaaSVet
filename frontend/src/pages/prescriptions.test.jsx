@@ -88,3 +88,20 @@ describe("Recetas — sin carga completa de mascotas", () => {
         expect(getPrescriptions).toHaveBeenCalledTimes(1);
     });
 });
+
+// Plan UX F1.7 (ley de Hick): sin recetas no hay nada que filtrar.
+describe("Recetas — filtros solo cuando hay recetas", () => {
+    it("sin recetas muestra el estado vacío y ningún filtro", async () => {
+        getPrescriptions.mockResolvedValue([]);
+        render(<Prescriptions />);
+        expect(await screen.findByText("Aún no hay recetas registradas")).toBeInTheDocument();
+        expect(screen.queryByPlaceholderText("Mascota, medicamento, vet…")).toBeNull();
+        expect(screen.queryByRole("button", { name: /Caninos/i })).toBeNull();
+    });
+
+    it("con recetas los filtros aparecen", async () => {
+        render(<Prescriptions />);
+        await screen.findByRole("table");
+        expect(screen.getByPlaceholderText("Mascota, medicamento, vet…")).toBeInTheDocument();
+    });
+});

@@ -1,9 +1,11 @@
 import Skeleton from "react-loading-skeleton";
 import s from "./StatTiles.module.css";
 
-// Indicadores «Linear Insights»: estructura adaptada de ReUI `statistic-card-2`
-// (MIT, keenthemes/reui). Fuente única para Inventario, Dashboard y Mascotas —
-// ver design-system.md §5. Presentacional: el caller decide tono, pie y acción.
+// Indicadores: estructura adaptada de ReUI `statistic-card-2` (MIT,
+// keenthemes/reui). Fuente única para Inventario, Dashboard y Mascotas — ver
+// design-system.md §5. Presentacional: el caller decide tono, pie y acción.
+// Sin rótulo sobre la rejilla salvo que el caller pase `eyebrow` (plan UX D2:
+// el antiguo «Linear Insights» era un nombre interno en inglés).
 
 const TONE_CLASS = {
     ink: s.toneInk,
@@ -25,7 +27,7 @@ const Intro = ({ eyebrow }) => (
 
 // `gridClassName` solo debe fijar `--stat-grid-cols` (y sus media queries):
 // así la rejilla de una página no compite en especificidad con la de aquí.
-export function StatSection({ label, eyebrow = "Linear Insights", gridClassName, children }) {
+export function StatSection({ label, eyebrow = null, gridClassName, children }) {
     return (
         <section className={s.section} aria-label={label}>
             {eyebrow && <Intro eyebrow={eyebrow} />}
@@ -82,7 +84,7 @@ export function StatTile({
 }
 
 // Esqueleto con la misma rejilla. Presentacional: el caller pone el `role="status"`.
-export function StatSectionSkeleton({ count, eyebrow = "Linear Insights", gridClassName, tileClassName }) {
+export function StatSectionSkeleton({ count, eyebrow = null, gridClassName, tileClassName }) {
     return (
         <section className={s.section} aria-hidden="true">
             {eyebrow && <Intro eyebrow={eyebrow} />}

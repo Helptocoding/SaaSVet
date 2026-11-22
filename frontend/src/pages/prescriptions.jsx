@@ -405,7 +405,8 @@ const Prescriptions = () => {
                 {" "}de cada consulta. Aquí puedes consultarlas y descargar el PDF.
             </div>
 
-            {/* Filtros */}
+            {/* Filtros: solo si hay algo que filtrar (plan UX F1.7, ley de Hick). */}
+            {prescriptions.length > 0 && (
             <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
                 <div style={{ position: "relative", flex: "1 1 220px", maxWidth: "280px" }}>
                     <div style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
@@ -520,6 +521,7 @@ const Prescriptions = () => {
                     ))}
                 </div>
             </div>
+            )}
 
             {/* Lista */}
             {filtered.length === 0 ? (

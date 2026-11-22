@@ -2,6 +2,7 @@ import { useAuth } from "../auth/authContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import NotificationBell from "./notifications/NotificationBell";
+import FeedbackButton from "./FeedbackButton";
 import { Icon } from "./icons";
 import styles from "./AppShell.module.css";
 
@@ -69,6 +70,7 @@ const Layout = ({ children }) => {
                             </span>
                         )}
                         <div className={styles.topbarActions}>
+                            <FeedbackButton />
                             {can?.("notification.list") && <NotificationBell />}
                             {location.pathname === "/config" && !user?.is_demo && (
                                 <button

@@ -4,6 +4,7 @@ import { useAuth } from "../../auth/authContext";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../icons";
 import NotificationBell from "../notifications/NotificationBell";
+import FeedbackButton from "../FeedbackButton";
 import "./DashboardTopBar.css";
 
 const readCssVar = (name, fallback) => {
@@ -85,6 +86,7 @@ export default function DashboardTopBar({ summary, revenueToday, revenueSpark, r
         </div>
 
         <div className="pacts dtop-pacts">
+          <FeedbackButton />
           {can?.("notification.list") && <NotificationBell />}
           {criticos > 0 && (
             <span className="badge badge-danger dtop-alert-badge">

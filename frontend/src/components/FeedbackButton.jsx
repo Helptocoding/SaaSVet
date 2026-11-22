@@ -1,22 +1,39 @@
-import { useState, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { sendSupportMessage } from "../api/support";
 import { apiError } from "../utils/apiError";
+import { Icon } from "./icons";
+import s from "./FeedbackButton.module.css";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB — espejo del límite del backend
 
+// «Reportar un problema». Vive en la barra superior junto a la campana (plan UX
+// D3): antes era un botón flotante con «?» que tapaba la última columna de
+// acciones de las tablas y prometía ayuda en vez de un reporte.
 const FeedbackButton = () => {
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState("");
     const [image, setImage] = useState(null);
     const [sending, setSending] = useState(false);
     const fileInputRef = useRef(null);
+    const titleId = useId();
+    const messageId = useId();
+
+    const close = () => { if (!sending) setOpen(false); };
+
+    useEffect(() => {
+        if (!open) return undefined;
+        const onKey = (e) => { if (e.key === "Escape" && !sending) setOpen(false); };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [open, sending]);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > MAX_IMAGE_BYTES) {
-                toast.error("La imagen es demasiado grande (max 5MB)");
+                toast.error("La imagen es demasiado grande (máx. 5 MB)");
                 return;
             }
             setImage(file);
@@ -25,7 +42,7 @@ const FeedbackButton = () => {
 
     const handleSend = async () => {
         if (!message.trim()) {
-            toast.error("Por favor, describe el problema.");
+            toast.error("Describe el problema.");
             return;
         }
 
@@ -37,12 +54,12 @@ const FeedbackButton = () => {
                 timestamp: new Date().toISOString(),
                 image: image,
             });
-            toast.success("Reporte enviado correctamente. Gracias!");
+            toast.success("Reporte enviado. ¡Gracias!");
             setOpen(false);
             setMessage("");
             setImage(null);
         } catch (err) {
-            toast.error(apiError(err, "No se pudo enviar el reporte. Intenta mas tarde."));
+            toast.error(apiError(err, "No se pudo enviar el reporte. Intenta más tarde."));
         } finally {
             setSending(false);
         }
@@ -51,108 +68,74 @@ const FeedbackButton = () => {
     return (
         <>
             <button
+                type="button"
+                className={s.trigger}
                 onClick={() => setOpen(true)}
+                aria-label="Reportar un problema"
                 title="Reportar un problema"
-                style={{
-                    position: "fixed", bottom: "24px", right: "24px", zIndex: 1000,
-                    width: "44px", height: "44px", borderRadius: "50%",
-                    background: "var(--accent, #047857)", border: "none", cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)", color: "#fff", fontSize: "20px",
-                }}
             >
-                ?
+                <Icon.ReportProblem s={20} />
             </button>
 
-            {open && (
-                <div
-                    onClick={(e) => e.target === e.currentTarget && setOpen(false)}
-                    style={{
-                        position: "fixed", inset: 0, zIndex: 1001,
-                        backgroundColor: "rgba(0,0,0,0.4)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        backdropFilter: "blur(4px)",
-                    }}
-                >
-                    <div style={{
-                        background: "#fff", borderRadius: "16px", padding: "32px",
-                        width: "400px", maxWidth: "90vw", boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
-                    }}>
-                        <h3 style={{ margin: "0 0 8px", fontSize: "18px", fontWeight: "700", color: "#111" }}>
-                            ¿Algo no va bien?
-                        </h3>
-                        <p style={{ margin: "0 0 12px", fontSize: "14px", color: "#666", lineHeight: "1.4" }}>
-                            Describe el problema y adjunta una captura si es necesario.
-                        </p>
-                        <p style={{ margin: "0 0 20px", fontSize: "12px", color: "#b45309", lineHeight: "1.4" }}>
-                            ⚠️ No incluyas datos sensibles de pacientes (nombres, historiales, cobros) en el texto ni en la captura.
-                        </p>
-                        
-                        <textarea
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Ej: No puedo ver el botón de imprimir en facturas..."
-                            rows={4}
-                            style={{
-                                width: "100%", padding: "14px", borderRadius: "10px",
-                                border: "1.5px solid #eee", background: "#fafafa",
-                                fontSize: "14px", color: "#111", resize: "none",
-                                boxSizing: "border-box", fontFamily: "inherit", outline: "none",
-                                transition: "border-color 0.2s"
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = "var(--accent)"}
-                            onBlur={(e) => e.target.style.borderColor = "#eee"}
-                        />
-
-                        <div style={{ marginTop: "16px" }}>
-                            <input 
-                                type="file" 
-                                accept="image/*" 
-                                onChange={handleFileChange} 
-                                ref={fileInputRef} 
-                                style={{ display: "none" }} 
-                            />
-                            <button
-                                onClick={() => fileInputRef.current.click()}
-                                style={{
-                                    display: "flex", alignItems: "center", gap: "8px",
-                                    padding: "8px 12px", borderRadius: "8px", border: "1px dashed #ccc",
-                                    background: image ? "#f0fdf4" : "transparent",
-                                    fontSize: "13px", cursor: "pointer", width: "100%",
-                                    color: image ? "#166534" : "#666"
-                                }}
-                            >
-                                {image ? "📸 Imagen adjunta: " + image.name : "📎 Adjuntar captura de pantalla"}
+            {/* Portal: la barra superior es sticky con desenfoque, y eso encierra
+                un `position: fixed` dentro de ella (el modal salía cortado). */}
+            {open && createPortal(
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && close()}>
+                    <div className="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+                        <div className="modal-header">
+                            <h3 id={titleId}>Reportar un problema</h3>
+                            <button type="button" className="modal-close" onClick={close} disabled={sending} aria-label="Cerrar">
+                                <Icon.X s={14} />
                             </button>
                         </div>
+                        <div className="modal-body">
+                            <p className={s.lead}>Describe qué pasó y, si ayuda, adjunta una captura.</p>
+                            <p className={s.warning}>
+                                <Icon.AlertTriangle s={14} />
+                                <span>No incluyas datos de pacientes (nombres, historiales, cobros) en el texto ni en la captura.</span>
+                            </p>
 
-                        <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
+                            <div className="form-group">
+                                <label className="form-label" htmlFor={messageId}>Qué pasó</label>
+                                <textarea
+                                    id={messageId}
+                                    className="textarea-input"
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    placeholder="Ej.: no aparece el botón de imprimir en Cobros"
+                                    rows={4}
+                                    disabled={sending}
+                                />
+                            </div>
+
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                ref={fileInputRef}
+                                hidden
+                            />
                             <button
-                                onClick={() => setOpen(false)}
-                                style={{
-                                    flex: 1, padding: "12px", background: "#f5f5f5",
-                                    border: "none", borderRadius: "10px", fontSize: "14px",
-                                    fontWeight: "600", cursor: "pointer", color: "#666"
-                                }}
+                                type="button"
+                                className={`btn btn-secondary btn-sm ${s.attach}`}
+                                onClick={() => fileInputRef.current.click()}
+                                disabled={sending}
                             >
+                                <Icon.Paperclip s={14} />
+                                {image ? `Captura adjunta: ${image.name}` : "Adjuntar captura de pantalla"}
+                            </button>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary btn-md" onClick={close} disabled={sending}>
                                 Cancelar
                             </button>
-                            <button
-                                onClick={handleSend}
-                                disabled={sending}
-                                style={{
-                                    flex: 2, padding: "12px", background: "#5865F2",
-                                    border: "none", borderRadius: "10px", fontSize: "14px",
-                                    fontWeight: "600", cursor: "pointer", color: "#fff",
-                                    opacity: sending ? 0.7 : 1, display: "flex",
-                                    alignItems: "center", justifyContent: "center", gap: "8px"
-                                }}
-                            >
-                                {sending ? "Enviando..." : "Enviar a Soporte"}
+                            <button type="button" className="btn btn-primary btn-md" onClick={handleSend} disabled={sending}>
+                                {sending ? "Enviando…" : "Enviar reporte"}
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body,
             )}
         </>
     );

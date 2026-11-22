@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLoginForm } from "../hooks/useLoginForm";
 import { Field } from "./Field";
 import { PasswordField } from "./PasswordField";
@@ -17,6 +18,11 @@ export function LoginForm() {
     loading,
     handleSubmit
   } = useLoginForm();
+
+  // No hay recuperación por correo: la contraseña la restablece un ADMIN de la
+  // clínica desde Equipo (ADR p21). El enlace explica eso en vez de no hacer
+  // nada (plan UX D4).
+  const [showRecovery, setShowRecovery] = useState(false);
 
   const disabled = loading || !username || !password;
 
@@ -43,16 +49,24 @@ export function LoginForm() {
           disabled={loading}
           leadingIcon={<LockIcon size={18} />}
           labelAside={
-            <a
-              href="#"
+            <button
+              type="button"
               className="forgot-password"
-              onClick={(e) => e.preventDefault()}
+              onClick={() => setShowRecovery((v) => !v)}
+              aria-expanded={showRecovery}
+              aria-controls="password-recovery-help"
               data-testid="forgot-password-link"
             >
               ¿Olvidaste tu contraseña?
-            </a>
+            </button>
           }
         />
+        {showRecovery && (
+          <p id="password-recovery-help" className="login-recovery-hint" role="status">
+            Pide al administrador de tu clínica que la restablezca desde <strong>Equipo</strong>.
+            Te dará una contraseña temporal que cambiarás al entrar.
+          </p>
+        )}
       </div>
 
       <div className="form-meta">

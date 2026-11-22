@@ -47,7 +47,8 @@ const calcAge = (bd) => {
 const getWeekRange = () => {
     const now = new Date();
     const start = new Date(now);
-    start.setDate(now.getDate() - now.getDay());
+    // La semana empieza en lunes (plan UX D1), como la agenda.
+    start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
@@ -916,7 +917,7 @@ const Pets = () => {
                     value={weekApptCount}
                     icon={Icon.Calendar}
                     tone="forest"
-                    foot="De domingo a sábado"
+                    foot="De lunes a domingo"
                 />
             </StatSection>
 

@@ -18,8 +18,10 @@ const NAV_ITEMS = [
     { path: "/cash", label: "Caja", icon: Icon.Wallet },
 ];
 
-// Equipo se gatea por capacidad (plan Equipo, F4), no por rol: quien pueda
-// gestionar personal lo ve. Configuración sigue por rol (fuera de alcance).
+// Equipo y Configuración se gatean por capacidad, no por rol: quien pueda
+// gestionar personal ve Equipo (plan Equipo, F4); quien pueda editar la
+// clínica (`organization.update`, sensible: ADMIN y ADMIN_SAAS) ve
+// Configuración (plan UX F1.10).
 const STAFF_ITEM = { path: "/staff", label: "Equipo", icon: Icon.Users };
 const STAFF_MANAGEMENT_PERMS = [
     "staff.create", "staff.update", "staff.destroy", "staff.reset_password", "staff.reactivate",
@@ -49,7 +51,9 @@ const Sidebar = ({ onLogout }) => {
 
     if (initializing) return null;
 
-    const isAdmin = user?.role === "ADMIN" || user?.role === "ADMIN_SAAS";
+    const canConfigure = Boolean(can?.("organization.update"));
+    // El operador de plataforma tiene `*.*`: ninguna capacidad lo distingue de
+    // un ADMIN, así que su sección se decide por rol.
     const isPlatformOperator = user?.role === "ADMIN_SAAS";
     const canManageStaff = Boolean(canAny?.(STAFF_MANAGEMENT_PERMS));
 
@@ -96,12 +100,12 @@ const Sidebar = ({ onLogout }) => {
                     .map(item => <NavLink key={item.path} item={item} />)}
 
                 {/* Admin items */}
-                {(isAdmin || canManageStaff) && (
+                {(canConfigure || canManageStaff) && (
                     <>
                         <div className={styles.navSection}>
                             Admin
                         </div>
-                        {[canManageStaff && STAFF_ITEM, isAdmin && CONFIG_ITEM]
+                        {[canManageStaff && STAFF_ITEM, canConfigure && CONFIG_ITEM]
                             .filter(Boolean)
                             .map(item => <NavLink key={item.path} item={item} />)}
                         {CAPABILITY_ITEMS

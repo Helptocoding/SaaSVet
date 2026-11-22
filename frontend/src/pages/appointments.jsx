@@ -30,12 +30,17 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import esLocale from "@fullcalendar/core/locales/es";
 
 import { apiError } from "../utils/apiError";
 import handleFormError from "../utils/handleFormError";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-const DAYS_ES  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const DAYS_ES  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]; // indexado por Date.getDay()
+// La semana empieza en lunes (plan UX D1), igual que la agenda del Dashboard.
+const WEEK_HEADERS_ES = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const mondayIndex = (date) => (date.getDay() + 6) % 7; // 0 = lunes
+const TIME_24H = { hour: "2-digit", minute: "2-digit", hour12: false };
 const MONTHS_S = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 const MONTHS_F = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const HOURS    = Array.from({ length: 13 }, (_, i) => i + 7); // 7 – 19
@@ -67,7 +72,7 @@ const pad = n => String(n).padStart(2,"0");
 
 function getWeekStart(base, offset = 0) {
     const d = new Date(base);
-    d.setDate(d.getDate() - d.getDay() + offset * 7);
+    d.setDate(d.getDate() - mondayIndex(d) + offset * 7);
     d.setHours(0, 0, 0, 0);
     return d;
 }
@@ -109,7 +114,7 @@ const calNavBtn = {
 // ── MiniCalendar ───────────────────────────────────────────────────────────────
 function MiniCalendar({ today, selectedDate, onSelect }) {
     const [view, setView] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
-    const firstDow     = view.getDay();
+    const firstDow     = mondayIndex(view);
     const daysInMonth  = new Date(view.getFullYear(), view.getMonth()+1, 0).getDate();
     const cells = [];
     for (let i = 0; i < firstDow; i++) cells.push(null);
@@ -127,7 +132,7 @@ function MiniCalendar({ today, selectedDate, onSelect }) {
                     onClick={()=>setView(v=>new Date(v.getFullYear(),v.getMonth()+1,1))}>›</button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:"1px"}}>
-                {DAYS_ES.map(d => (
+                {WEEK_HEADERS_ES.map(d => (
                     <div key={d} style={{fontSize:"10px",color:"var(--c-text-3)",textAlign:"center",
                         paddingBottom:"4px",textTransform:"uppercase",fontWeight:"600"}}>
                         {d[0]}
@@ -951,7 +956,6 @@ function CalendarControls({ search, onSearchChange, staff, filterVetId, onVetCha
                 <option value="">Todas las categorías</option>
                 {APPOINTMENT_CATEGORIES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
-            <span className="agenda-past-note" data-tour="agenda-past-dates" role="note">No se permiten fechas pasadas</span>
         </div>
     );
 }
@@ -1108,7 +1112,7 @@ function EventManagerAppointments() {
             toast.error("No puedes agendar citas en fechas pasadas.");
             return;
         }
-        const label = `${DAYS_ES[date.getDay()]} ${date.getDate()} ${MONTHS_S[date.getMonth()]} · ${pad(hour)}:${pad(date.getMinutes())} hs`;
+        const label = `${DAYS_ES[date.getDay()]} ${date.getDate()} ${MONTHS_S[date.getMonth()]} · ${pad(hour)}:${pad(date.getMinutes())}`;
         setSelectedSlot({ date, hour, label });
         setCreateModalOpen(true);
     };
@@ -1185,7 +1189,7 @@ function EventManagerAppointments() {
             .appointments-event-manager .agenda-search { background:#fff; border-color:#d9e0e5; border-radius:6px; font-size:13px; padding:8px 10px; width:250px; }
             .appointments-event-manager .agenda-control-select { background:#fff; border:1px solid #d9e0e5; border-radius:6px; color:var(--c-text); font:inherit; font-size:12.5px; min-height:35px; padding:0 28px 0 9px; }
             .appointments-event-manager .agenda-category-select { max-width:180px; }
-            .appointments-event-manager .agenda-past-note { color:#74818a; font-size:11.5px; margin-left:auto; white-space:nowrap; }
+            .appointments-event-manager .agenda-past-note { align-self:center; color:var(--c-text-3); font-size:11.5px; margin-left:8px; white-space:nowrap; }
             .appointments-event-manager .agenda-view-switcher { background:#f4f6f7; border:1px solid #e1e6e8; border-radius:7px; gap:0; overflow:hidden; padding:2px; }
             .appointments-event-manager .agenda-view-button { border:0; border-radius:5px; font-size:12px; padding:6px 10px; }
             .appointments-event-manager .agenda-view-button.is-active { background:#fff; box-shadow:0 1px 2px rgba(22,42,49,.14); color:var(--monday-teal); }
@@ -1316,7 +1320,7 @@ function EventManagerAppointments() {
         <div className="agenda-global-view-switcher"><ViewModeButtonGroup value={calendarView} onChange={changeView} /></div>
         {calendarView === "day" && <DayPlanner selectedDate={dayAnchor} appointments={visibleAppointments} today={today} canCreate={canCreate} onSelectSlot={selectSlot} onViewAppointment={setViewAppt} onNavigate={navigateDay} calendarView={calendarView} onChangeView={changeView} />}
         {calendarView === "list" && <AppointmentList key={`${search}|${filterVetId}|${statusFilter}|${categoryFilter}`} appointments={visibleAppointments} onViewAppointment={setViewAppt} />}
-        <div className="agenda-grid"><div className="agenda-shell" data-tour="agenda-calendar"><div className="agenda-toolbar"><div><div style={{ color:"var(--c-text)", fontSize:"16px", fontWeight:750 }}>{calendarView === "list" ? "Lista de citas" : calendarTitle}</div>{calendarView !== "list" && <div style={{ display:"flex", gap:"6px", marginTop:"8px" }}><button style={calNavBtn} onClick={() => navigateCalendar("prev")}>‹</button><button style={{ ...calNavBtn, fontSize:"12px" }} onClick={() => navigateCalendar("today")}>Hoy</button><button style={calNavBtn} onClick={() => navigateCalendar("next")}>›</button></div>}</div><ViewModeButtonGroup value={calendarView} onChange={changeView} dataTour="agenda-view-switcher" /></div>{calendarView === "list" ? <div className="agenda-list">{visibleAppointments.length === 0 ? <p style={{ color:"var(--c-text-3)", padding:"18px", textAlign:"center" }}>No hay citas que coincidan con los filtros.</p> : [...visibleAppointments].sort((a,b) => `${a.date}${a.start_time}`.localeCompare(`${b.date}${b.start_time}`)).map((appointment) => { const palette = vetPalette.get(appointment.veterinarian) || PAL.teal; return <button key={appointment.id} className="agenda-list-item" style={{ borderLeftColor:palette.border }} onClick={() => setViewAppt(appointment)}><strong>{appointment.pet_name || "Paciente"} · {appointment.reason || "Cita"}</strong><span className="agenda-list-meta">{appointment.date} · {String(appointment.start_time).slice(0,5)} · {appointment.owner_name || "Sin propietario"}</span><StatusBadge status={appointment.status} /></button>; })}</div> : <div className="agenda-calendar"><FullCalendar ref={calendarRef} plugins={[dayGridPlugin,timeGridPlugin,interactionPlugin]} initialView={EVENT_VIEWS.week} initialDate={today} headerToolbar={false} allDaySlot={false} slotMinTime="07:00:00" slotMaxTime="20:00:00" slotDuration="00:30:00" nowIndicator height="auto" weekends events={calendarEvents} selectable={canCreate} selectMirror editable={canEdit} eventStartEditable={canEdit} eventDurationEditable={canEdit} dateClick={(info) => selectSlot(info.date, info.allDay ? 9 : info.date.getHours())} select={handleCalendarSelect} eventClick={(info) => setViewAppt(info.event.extendedProps.appointment)} eventDrop={saveCalendarMutation} eventResize={saveCalendarMutation} eventAllow={(dropInfo, draggedEvent) => canEdit && ["scheduled","confirmed"].includes(draggedEvent.extendedProps.appointment.status)} eventDidMount={(info) => { if (info.event.extendedProps.appointment.public_id === "__demo__") info.el.dataset.tour = "agenda-appt-demo"; }} datesSet={(info) => setCalendarTitle(calendarRangeLabel(info.view))} /></div>}</div>
+        <div className="agenda-grid"><div className="agenda-shell" data-tour="agenda-calendar"><div className="agenda-toolbar"><div><div style={{ color:"var(--c-text)", fontSize:"16px", fontWeight:750 }}>{calendarView === "list" ? "Lista de citas" : calendarTitle}</div>{calendarView !== "list" && <div style={{ display:"flex", gap:"6px", marginTop:"8px" }}><button style={calNavBtn} onClick={() => navigateCalendar("prev")}>‹</button><button style={{ ...calNavBtn, fontSize:"12px" }} onClick={() => navigateCalendar("today")}>Hoy</button><button style={calNavBtn} onClick={() => navigateCalendar("next")}>›</button><span className="agenda-past-note" data-tour="agenda-past-dates" role="note">No se permiten fechas pasadas</span></div>}</div><ViewModeButtonGroup value={calendarView} onChange={changeView} dataTour="agenda-view-switcher" /></div>{calendarView === "list" ? <div className="agenda-list">{visibleAppointments.length === 0 ? <p style={{ color:"var(--c-text-3)", padding:"18px", textAlign:"center" }}>No hay citas que coincidan con los filtros.</p> : [...visibleAppointments].sort((a,b) => `${a.date}${a.start_time}`.localeCompare(`${b.date}${b.start_time}`)).map((appointment) => { const palette = vetPalette.get(appointment.veterinarian) || PAL.teal; return <button key={appointment.id} className="agenda-list-item" style={{ borderLeftColor:palette.border }} onClick={() => setViewAppt(appointment)}><strong>{appointment.pet_name || "Paciente"} · {appointment.reason || "Cita"}</strong><span className="agenda-list-meta">{appointment.date} · {String(appointment.start_time).slice(0,5)} · {appointment.owner_name || "Sin propietario"}</span><StatusBadge status={appointment.status} /></button>; })}</div> : <div className="agenda-calendar"><FullCalendar ref={calendarRef} plugins={[dayGridPlugin,timeGridPlugin,interactionPlugin]} locale={esLocale} firstDay={1} eventTimeFormat={TIME_24H} slotLabelFormat={TIME_24H} initialView={EVENT_VIEWS.week} initialDate={today} headerToolbar={false} allDaySlot={false} slotMinTime="07:00:00" slotMaxTime="20:00:00" slotDuration="00:30:00" nowIndicator height="auto" weekends events={calendarEvents} selectable={canCreate} selectMirror editable={canEdit} eventStartEditable={canEdit} eventDurationEditable={canEdit} dateClick={(info) => selectSlot(info.date, info.allDay ? 9 : info.date.getHours())} select={handleCalendarSelect} eventClick={(info) => setViewAppt(info.event.extendedProps.appointment)} eventDrop={saveCalendarMutation} eventResize={saveCalendarMutation} eventAllow={(dropInfo, draggedEvent) => canEdit && ["scheduled","confirmed"].includes(draggedEvent.extendedProps.appointment.status)} eventDidMount={(info) => { if (info.event.extendedProps.appointment.public_id === "__demo__") info.el.dataset.tour = "agenda-appt-demo"; }} datesSet={(info) => setCalendarTitle(calendarRangeLabel(info.view))} /></div>}</div>
         <aside className="agenda-sidebar"><div className="agenda-sidebar-card"><input className="agenda-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar mascota, cliente o motivo…" aria-label="Buscar citas" /><div style={{ borderTop:"1px solid var(--c-border)", marginTop:"14px", paddingTop:"14px" }}><p className="agenda-section-label">Estado</p><div className="agenda-filters">{STATUS_FILTERS.map(([value,label]) => <button key={value || "all"} className={`agenda-filter${statusFilter === value ? " is-active" : ""}`} onClick={() => setStatusFilter(value)}>{label}</button>)}</div></div><div style={{ borderTop:"1px solid var(--c-border)", marginTop:"14px", paddingTop:"14px" }}><p className="agenda-section-label">Veterinarios</p><div className="agenda-staff"><button className={`agenda-staff-button${filterVetId === "" ? " is-active" : ""}`} onClick={() => setFilterVetId("")}>Todos</button>{staff.map((member) => { const palette = vetPalette.get(member.id) || PAL.teal; const active = filterVetId === String(member.id); return <button key={member.id} className="agenda-staff-button" onClick={() => setFilterVetId((current) => current === String(member.id) ? "" : String(member.id))} style={{ background:active ? palette.border : palette.bg, borderColor:palette.border, color:active ? "#fff" : palette.text }}>{member.first_name} {member.last_name}</button>; })}</div></div></div><div className="agenda-sidebar-card"><MiniCalendar today={today} selectedDate={selectedSlot?.date} onSelect={(date) => { setWeekOffset(0); calendarRef.current?.getApi().gotoDate(date); }} /></div><div className="agenda-sidebar-card" data-tour="agenda-form">{canCreate ? <SidebarForm slot={selectedSlot} onSave={handleFormSave} onSaveWithPatient={handleSaveWithPatient} onClear={() => setSelectedSlot(null)} staff={staff} user={user} formRef={formRef} /> : <p style={{ color:"var(--c-text-3)", fontSize:"12.5px", fontStyle:"italic", textAlign:"center" }}>Modo lectura — sin permiso para crear citas</p>}</div><div className="agenda-stats">{[["Hoy",todayCount],["Esta semana",weekCount]].map(([label,count]) => <div key={label}><div style={{ color:"var(--c-primary-dark)", fontSize:"11px" }}>{label}</div><div style={{ color:"var(--c-primary-dark)", fontSize:"26px", fontWeight:750, lineHeight:1.15 }}>{count}</div><div style={{ color:"var(--c-primary-dark)", fontSize:"11px", opacity:.7 }}>cita{count !== 1 ? "s" : ""}</div></div>)}</div></aside></div>
         {viewAppt && <DetailModal appt={viewAppt} petName={viewAppt.pet_name || "—"} vetName={getVetName(viewAppt.veterinarian) || viewAppt.veterinarian_name} petId={viewAppt.pet_public_id} onClose={() => setViewAppt(null)} onStatusChange={handleStatusChange} onAttendNow={handleAttendNow} onEdit={(appointment) => { setEditingAppt(appointment); setViewAppt(null); }} onNewFromAppt={(appointment) => { setViewAppt(null); selectSlot(new Date(`${appointment.date}T${appointment.start_time}`), parseInt(appointment.start_time,10)); }} navigate={navigate} canEdit={canEdit} showHistory={!!orgSettings?.show_status_change_history} onRefresh={(updated) => { setAppointments((previous) => previous.map((item) => item.id === updated.id ? updated : item)); setViewAppt(updated); }} />}
         {createModalOpen && <AppointmentCreateModal slot={selectedSlot} onClose={() => { setCreateModalOpen(false); setSelectedSlot(null); }} onSave={handleFormSave} onSaveWithPatient={handleSaveWithPatient} staff={staff} user={user} formRef={formRef} />}

@@ -1072,14 +1072,15 @@ de POS/Importación/`config.jsx` (no se alcanzan: `Layout` espera la sesión ant
 de montar la página), el Inbox (`InboxLoadState`, contrato propio con pruebas) y
 Analítica (excluida del piloto).
 
-### StatTiles (indicadores «Linear Insights»)
+### StatTiles (indicadores)
 
 `components/StatTiles.jsx` — **fuente única** de tarjetas de métrica. Presentacional:
 el caller arma título, valor, tono y pie; el componente no conoce permisos ni API.
 Contrato visual (tonos, rejilla, estados) en `design-system.md` §5.
 
-- `StatSection({ label, eyebrow = "Linear Insights", gridClassName, children })` —
-  `<section aria-label>` + rejilla. `eyebrow={null}` la oculta.
+- `StatSection({ label, eyebrow = null, gridClassName, children })` —
+  `<section aria-label>` + rejilla. Sin rótulo visible salvo que se pase `eyebrow`
+  (el antiguo «Linear Insights» era un nombre interno en inglés; plan UX D2).
 - `StatTile({ label, value, icon, tone, badge, foot, live, counting, className, onClick, pressed })`
   — `onClick` la vuelve `<button aria-pressed>` con nombre «título: valor» (así lo
   encuentran las pruebas); sin él es un `<div>`.

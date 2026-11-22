@@ -345,11 +345,35 @@
 }
 
 .login-page .forgot-password {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
   font-size: 12.5px;
   font-weight: 500;
   color: var(--lp-text-soft);
   text-decoration: none;
+  cursor: pointer;
   transition: color 150ms ease;
+}
+
+.login-page .forgot-password:focus-visible {
+  outline: 2px solid var(--lp-green);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Instrucción de recuperación (plan UX D4): no hay autoservicio, la contraseña
+   la restablece un ADMIN desde Equipo (ADR p21). */
+.login-page .login-recovery-hint {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-radius-md);
+  background: var(--lp-input-bg);
+  color: var(--lp-text-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 
 .login-page .forgot-password:hover {

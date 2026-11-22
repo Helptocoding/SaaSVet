@@ -25,7 +25,6 @@ import ChangePassword from "./pages/changePassword";
 import AcceptLegal from "./pages/acceptLegal";
 import NotFound from "./pages/notFound";
 import ErrorBoundary from "./components/ErrorBoundary";
-import FeedbackButton from "./components/FeedbackButton";
 import { ConfirmProvider } from "./components/ConfirmDialog";
 import { Toaster } from "sonner";
 import { SkeletonTheme } from "react-loading-skeleton";
@@ -94,16 +93,12 @@ const wrapNoGate = (Component) => (
 // Gate de inicialización + salida de las rutas hijas. Vive dentro de AuthProvider
 // para acceder a `initializing`/`user`, y renderiza <Outlet/> del data router.
 function AuthGate() {
-  const { initializing, user } = useAuth();
+  const { initializing } = useAuth();
   if (initializing) {
     return <LoadingScreen />;
   }
-  return (
-    <>
-      <Outlet />
-      {user && <FeedbackButton />}
-    </>
-  );
+  // «Reportar un problema» vive en la barra superior (Layout y DashboardTopBar).
+  return <Outlet />;
 }
 
 // Root layout route: providers dentro del data router (createBrowserRouter), de

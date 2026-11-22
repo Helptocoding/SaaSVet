@@ -31,11 +31,13 @@ Si vas a desviarte de un contrato, primero edita este documento explicando la ex
 - Mono (datos clínicos, valores numéricos): `var(--font-mono)` = `'IBM Plex Mono', 'Courier New', monospace`
 - Login display: `Space Grotesk` (solo en login.css)
 
-**Pesos permitidos:** `400` · `500` · `600` · `700`. (No usar 450, 800.)
+**Pesos permitidos:** `400` · `500` · `600` · `700`. Nada de 300, 450, 550, 650, 750, 800…
+(los vigila `src/test/designTokensRatchet.test.js`, §8).
 
-**Pesos permitidos:** `400` · `500` · `600` · `700`. (No usar 450, 800.)
+**Tamaño mínimo:** 11px. Nada de 9, 9.5, 10 ni 10.5px: no se leen en una pantalla de recepción.
 
-**Escala (única):**
+**Escala (única):** 11 · 11.5 · 12 · 12.5 · 13 · 13.5 · 14 · 16 · 20 · 28 px. Un tamaño fuera de
+la escala se redondea al escalón más cercano.
 
 | Rol | Token/clase | font-size | weight | Notas |
 |---|---|---|---|---|
@@ -57,28 +59,45 @@ Si vas a desviarte de un contrato, primero edita este documento explicando la ex
 
 ## 2. Color (tokens de `tokens.css`)
 
+Valores vigentes (2026-11-22). La paleta crema anterior (`#f5f1e8`, primario `#1a4434`) ya no existe.
+
 **Marca (verde bosque):**
-`--c-primary #1a4434` · `--c-primary-hover #16382a` · `--c-primary-dark #0f2a1f` · `--c-primary-light #c6d9c0` · `--c-primary-ring rgba(26,68,52,.14)`
+`--c-primary #0f624b` · `--c-primary-hover #0d4d3b` · `--c-primary-dark #0b3d30` · `--c-primary-light #e4efeb` · `--c-primary-ring rgba(15,98,75,.18)`
 
 **Accent (coral):** `--c-accent #d67b5c` · `--c-accent-hover #c4674a` · `--c-accent-light #fdf0eb`
 
-**Texto:** `--c-text #1a1a1a` · `--c-text-2 #3a3a3a` · `--c-text-3 #8a8a7f` · `--c-text-4 #b0aba0`
+**Texto:** `--c-text #171817` · `--c-text-2 #454744` · `--c-text-3 #737570` · `--c-text-4 #9a9c97`
 
-**Superficies:** `--c-bg #f5f1e8` · `--c-surface #fbf8f1` · `--c-subtle #ede7d7` · `--c-hover #e8e2d4`
+**Superficies:** `--c-bg #f5f5f3` · `--c-surface #ffffff` · `--c-surface-2 #f8f8f6` · `--c-subtle #ecece8` · `--c-hover #e7e7e3`
 
-**Bordes:** `--c-border #d9d2be` · `--c-border-2 #c8bfa8`
+**Bordes:** `--c-border #deded9` · `--c-border-2 #c5c6c0`
 
 **Semánticos** (text/bg/border): `success` · `danger` · `warning` · `info` · `purple` — usar siempre el trío del token, nunca hex sueltos.
 
-**Header de tabla:** `--ink #1a1a1a`.
+**Header de tabla:** `--ink #171817`.
 
-🚫 **Prohibidos:** `rgba(45,212,191,*)`, `#99f6e4` (teal legacy). Cualquier `#xxxxxx` fuera de `tokens.css`.
+**Regla de uso (D6, plan UX 2026-11-21): el color marca lo que pide una acción.**
+- Con color: lo que alguien tiene que atender (agotado, bajo stock, pendiente de cobro, urgencia,
+  error) y el CTA primario.
+- Sin color (neutro, `badge-default`, texto `--c-text-2`/`-3`): lo normal ("Normal", "Activo"),
+  las categorías y los indicadores que solo cuentan.
+- Una vista no debería mostrar más de un acento semántico por bloque. Si todo tiene color, nada
+  destaca.
+- El color nunca es la única señal: va con texto o ícono.
+
+**Set del login:** las variables `--accent`, `--border`, `--text-*`, `--space-*`, `--radius-*` del
+bloque «LOGIN REDESIGN» de `tokens.css` son del login. 🚫 No usarlas fuera de `login.css` (deuda
+existente: plan UX F4.3).
+
+🚫 **Prohibidos:** teal en cualquier forma (`rgba(45,212,191,*)`, `#99f6e4`, `#087f83`, `#1D9E75`).
+Cualquier `#xxxxxx` fuera de `tokens.css`. Paletas propias por página (`const PAL = {…}`).
 
 ---
 
 ## 3. Espaciado
 
-Escala base-4 (`--space-*`): **4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 56**.
+**Escala:** 2 · 4 · 6 · 8 · 10 · 12 · 14 · 16 · 20 · 24 · 32 · 40 · 48 · 56 · 64 px
+(de 2 en 2 hasta 16, después saltos de 4 y 8). `1px` solo para filetes.
 
 | Uso | Valor |
 |---|---|
@@ -87,14 +106,19 @@ Escala base-4 (`--space-*`): **4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 56*
 | Gap entre inputs (form) | 16px |
 | Separación entre secciones | 32px |
 | Gap interno de botón | 6–8px |
+| Gap entre botones contiguos | 8px (16px si uno es destructivo) |
 
-No usar `7 · 9 · 11 · 13 · 18 · 22 · 26` (arbitrarios). Redondear al escalón más cercano.
+No usar `3 · 5 · 7 · 9 · 11 · 13 · 15 · 18 · 22 · 26 · 28 · 30 · 36…`. Redondear al escalón más cercano.
+
+**El espacio agrupa (ley de proximidad).** Lo que va junto se separa poco (4–12px); lo que es otra
+cosa, mucho (24–32px). Una etiqueta o aviso va pegado a lo que explica, nunca al otro lado de la
+pantalla.
 
 ---
 
 ## 4. Radios y sombras
 
-**Radios:** `--r-sm 4` · `--r-md 6` · `--r-lg 8` · `--r-xl 12` · `--r-full 9999`.
+**Radios:** `--r-sm 4` · `--r-md 6` · `--r-lg 8` · `--r-xl 10` · `--r-full 9999`.
 
 | Elemento | Radio |
 |---|---|
@@ -105,7 +129,8 @@ No usar `7 · 9 · 11 · 13 · 18 · 22 · 26` (arbitrarios). Redondear al escal
 
 No usar `3 · 7 · 9 · 10 · 20px` crudos.
 
-**Sombras (verde-tinte, ya tokenizadas):** `--shadow-xs` · `--shadow-sm` · `--shadow-md` · `--shadow-modal`.
+**Sombras:** `--shadow-xs` y `--shadow-sm` valen `none` (las superficies se separan con borde);
+`--shadow-md` (hover, popovers) y `--shadow-modal`.
 Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 🚫 No usar `rgba(0,0,0,*)` en sombras.
 
@@ -119,6 +144,13 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 - **Tamaños:** `.btn-xs` 26px · `.btn-sm` 30px · `.btn-md` 36px · `.btn-lg` 40px. weight 600, radio `--r-md`, gap 6px.
 - **Variantes:** `.btn-primary` (verde, texto #fff) · `.btn-secondary` (surface + `--c-border-2` + shadow-xs) · `.btn-ghost` · `.btn-danger` · `.btn-warning` · `.btn-info` · `.btn-purple` · `.btn-success` (confirmar/factura) · `.btn-attention` (iniciar o continuar atención).
 - **CTA primario de página = siempre `.btn.btn-primary`.** No crear botones primarios propios (`.btnPrime` = deuda legacy, no replicar).
+- **Rótulos en minúscula de oración** con ícono, no con «+»: «Nueva cita», «Nueva mascota», «Nuevo producto». No «+ Nueva Mascota».
+- **Tamaño de objetivo (ley de Fitts):** 36px mínimo para la acción principal de una fila o
+  tarjeta en escritorio; 44px en pantallas ≤560px (táctil). `btn-xs` (26px) solo para acciones
+  secundarias dentro de densidad alta, nunca como única vía para abrir un registro: en ese caso
+  la fila o tarjeta entera es clicable.
+- **Destructivas separadas:** archivar, borrar o cancelar nunca van pegadas a la acción frecuente
+  con el mismo peso. Se separan al menos 16px (o con un divisor) y usan `btn-ghost` / `btn-danger`.
 - **Icon-button canónico:** 30×30px, radio `--r-md`, `.btn.btn-icon.btn-ghost` o `.btn.btn-icon.btn-secondary`. Los iconos sin texto deben llevar `aria-label`.
 - **CTA de avance:** añade `.btn-arrow` y envuelve el icono final en `.btn-trailing-icon`; al hover se desplaza 3px. Reserva la flecha para navegar, continuar o enviar a otro paso; no para guardar, eliminar o cancelar.
 - Acción "éxito" (Cobrar/Pagar): hoy se logra con override inline a `--c-success-text`. Deuda conocida; centralizar en `.btn-success` cuando se aborde.
@@ -154,10 +186,12 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 - altura 20px, padding `0 8px`, font 11px/600, radio `--r-full`.
 - Colores: `.badge-success/danger/warning/info/purple/default/primary`.
 
-### Indicador (tarjeta de métrica) — `components/StatTiles` («Linear Insights»)
+### Indicador (tarjeta de métrica) — `components/StatTiles`
 - **Fuente única**: `StatSection` + `StatTile` (+ `StatSectionSkeleton`). La usan
   Inventario, Dashboard y Mascotas. 🚫 No crear tarjetas de métrica por página ni
   volver a `.stat-card` con `borderTop` y colores inline.
+- Sin rótulo sobre la rejilla: el `eyebrow` es opcional y por defecto no se muestra (el antiguo
+  «Linear Insights» era un nombre interno en inglés, D2). La sección conserva su `aria-label`.
 - Estructura adaptada de ReUI `statistic-card-2` (MIT): título + icono, valor 28px/700
   `tabular-nums` + insignia opcional, y pie separado por una línea con un dato real o
   qué cuenta el número (no se muestran deltas sin histórico). Sin formas decorativas.
@@ -185,6 +219,18 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 
 ### Header de página — `.page-header`
 - `.page-title` (20/700) + `.page-subtitle` (13). Acciones a la derecha con `.btn`.
+- **Orden de acciones (D7, ley de Jakob):** de izquierda a derecha, ayuda (`btn-ghost`: «Cómo
+  funciona», «Ver ejemplo») → secundarias (`btn-secondary`) → **primaria al final**
+  (`btn-primary`). El CTA principal vive siempre en el header, nunca en la fila de filtros.
+- **Un solo H1 por página con `.page-title`.** Nada de `.ptitle`, `styles.pageTitle` ni tamaños
+  inline. La barra superior del shell no repite el H1 (D8): en páginas de primer nivel no lleva
+  título; en rutas anidadas lleva la miga («Mascotas › Bella»).
+
+### Navegación — `Sidebar`
+- Agrupada (D9): Inicio · Atención (Citas, Mascotas, Historial clínico, Recetas) · Ventas
+  (Punto de venta, Cobros, Caja) · Operación (Inventario, WhatsApp) · Admin.
+- Permisos con `can()`, nunca por `user.role`.
+- ≤560px: menú desplegable con texto desde la barra superior (D11); 560–900px: riel de íconos.
 
 ---
 
@@ -209,8 +255,28 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 - **Dashboard landing** usa hero title 28px/700 (`.ptitle`) — contexto de portada, no página de lista.
 - **Analytics** (`analytics.module.css`) usa un lenguaje editorial aislado (serif, brutalist, paleta propia). Decisión pendiente de ADR: alinear vs. mantener aislado. Mientras tanto, **sus tokens locales no salen de esa página**.
 
+- **Login** (`styles/login.css`) usa su propio set de variables y Space Grotesk. El botón
+  principal del login es verde de marca, como el resto de la app (D12).
+- **Ilustraciones SVG** del tutorial de inventario (`features/inventory/tutorial/`) llevan sus
+  colores dentro del dibujo.
+
 Cualquier nueva excepción se documenta aquí antes de implementarla.
 
 ---
 
-_Última actualización: 2026-05-30. Cambiar valores aquí ANTES de cambiarlos en el código._
+## 8. Trinquete (gate de regresión)
+
+`src/test/designTokensRatchet.test.js` cuenta en `src`, sin las excepciones del §7:
+
+- hex fuera de `tokens.css`;
+- `font-weight` fuera de 400/500/600/700;
+- `font-size` menor a 11px;
+- espaciados (`padding`, `margin`, `gap`) fuera de la escala del §3.
+
+Cada conteo tiene una línea base en el propio test. **Si sube, falla. Si baja, también falla
+hasta que se baje la línea base en el mismo cambio**: así lo ganado no se pierde. La meta es 0
+(plan UX 2026-11-21, F4.5).
+
+---
+
+_Última actualización: 2026-11-22 (plan UX 2026-11-21: D1–D13). Cambiar valores aquí ANTES de cambiarlos en el código._

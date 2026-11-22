@@ -30,8 +30,15 @@ describe("StatTiles (indicadores compartidos)", () => {
         expect(onClick).toHaveBeenCalledTimes(1);
     });
 
-    it("el eyebrow es opcional", () => {
-        render(<StatSection label="Resumen" eyebrow={null}><StatTile label="X" value={1} /></StatSection>);
+    it("por defecto no pinta rótulo sobre la rejilla (plan UX D2)", () => {
+        const { container } = render(<StatSection label="Resumen"><StatTile label="X" value={1} /></StatSection>);
         expect(screen.queryByText("Linear Insights")).toBeNull();
+        expect(container.textContent).toBe("X1");
+        expect(screen.getByRole("region", { name: "Resumen" })).toBeInTheDocument();
+    });
+
+    it("el rótulo se pinta solo si el caller lo pide", () => {
+        render(<StatSection label="Resumen" eyebrow="Hoy"><StatTile label="X" value={1} /></StatSection>);
+        expect(screen.getByText("Hoy")).toBeInTheDocument();
     });
 });
