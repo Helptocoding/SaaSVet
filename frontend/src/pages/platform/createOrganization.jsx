@@ -249,7 +249,7 @@ const CreateOrganization = () => {
 
 const Section = ({ title, subtitle, children }) => (
     <div style={{ marginBottom: "20px" }}>
-        <h3 style={{ fontSize: "14px", fontWeight: "600", color: "var(--c-text-1)", marginBottom: "2px" }}>
+        <h3 style={{ fontSize: "14px", fontWeight: "600", color: "var(--c-text)", marginBottom: "2px" }}>
             {title}
         </h3>
         {subtitle && (
@@ -264,7 +264,7 @@ const Section = ({ title, subtitle, children }) => (
 const Field = ({ label, required, error, hint, children }) => (
     <div className="form-group">
         <label className="form-label">
-            {label.toUpperCase()} {required && <span style={{ color: "var(--c-danger)" }}>*</span>}
+            {label.toUpperCase()} {required && <span style={{ color: "var(--c-danger-text)" }}>*</span>}
         </label>
         {children}
         {hint && !error && (
@@ -273,7 +273,7 @@ const Field = ({ label, required, error, hint, children }) => (
             </div>
         )}
         {error && (
-            <div style={{ fontSize: "11px", color: "var(--c-danger)", marginTop: "4px" }}>
+            <div style={{ fontSize: "11px", color: "var(--c-danger-text)", marginTop: "4px" }}>
                 {error}
             </div>
         )}
@@ -314,7 +314,7 @@ const SuccessCard = ({ result, onCreateAnother }) => {
         }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
                 <Icon.CheckCircle s={20} c="var(--c-primary)" />
-                <h3 style={{ fontSize: "16px", fontWeight: "600", color: "var(--c-text-1)", margin: 0 }}>
+                <h3 style={{ fontSize: "16px", fontWeight: "600", color: "var(--c-text)", margin: 0 }}>
                     Clínica creada exitosamente
                 </h3>
             </div>
@@ -326,7 +326,7 @@ const SuccessCard = ({ result, onCreateAnother }) => {
                 padding: "10px 12px",
                 marginBottom: "14px",
                 fontSize: "12.5px",
-                color: "#fbbf24",
+                color: "var(--c-warning-text)",
             }}>
                 <strong>⚠ Anota o copia la contraseña ahora.</strong> Por seguridad no se vuelve a mostrar.
                 Envíasela al administrador de la clínica por canal seguro (no Slack/WhatsApp/SMS).
@@ -371,7 +371,7 @@ const Row = ({ label, value, mono, small, highlight }) => (
         <dd style={{
             margin: 0,
             fontSize: small ? "11.5px" : "13px",
-            color: highlight ? "#fbbf24" : "var(--c-text-1)",
+            color: highlight ? "var(--c-warning-border)" : "var(--c-text)",
             fontFamily: mono ? "var(--font-mono)" : "inherit",
             wordBreak: "break-all",
             fontWeight: highlight ? "600" : "400",

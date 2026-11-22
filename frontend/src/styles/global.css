@@ -59,7 +59,7 @@ button, input, select, textarea { font-family: inherit; }
 .btn-arrow .btn-trailing-icon { flex: 0 0 auto; opacity: 0.78; transition: transform var(--t); }
 .btn-arrow:hover:not(:disabled) .btn-trailing-icon { transform: translateX(3px); }
 
-.btn-primary   { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
+.btn-primary   { background: var(--c-primary); color: var(--c-on-primary); border-color: var(--c-primary); }
 .btn-primary:hover:not(:disabled) { background: var(--c-primary-hover); border-color: var(--c-primary-hover); }
 .btn-primary:focus-visible { box-shadow: 0 0 0 3px var(--c-primary-ring); }
 
@@ -77,9 +77,9 @@ button, input, select, textarea { font-family: inherit; }
 
 .btn-info   { background: var(--c-info-bg);   color: var(--c-info-text);   border-color: var(--c-info-border); }
 .btn-purple { background: var(--c-purple-bg); color: var(--c-purple-text); border-color: var(--c-purple-border); }
-.btn-success { background: var(--c-success-solid); color: #fff; border-color: var(--c-success-solid); }
+.btn-success { background: var(--c-success-solid); color: var(--c-on-primary); border-color: var(--c-success-solid); }
 .btn-success:hover:not(:disabled) { filter: brightness(0.92); }
-.btn-attention { background: var(--c-attention-solid); color: #fff; border-color: var(--c-attention-solid); }
+.btn-attention { background: var(--c-attention-solid); color: var(--c-on-primary); border-color: var(--c-attention-solid); }
 .btn-attention:hover:not(:disabled) { filter: brightness(0.92); }
 .btn-row-action { height: 30px; min-height: 30px; padding: 0 10px; font-size: 12px; }
 
@@ -464,4 +464,11 @@ button, input, select, textarea { font-family: inherit; }
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ── Objetivos táctiles (plan UX F4.2, ley de Fitts) ───────────
+   En pantallas ≤560px ningún botón baja de 44px. */
+@media (max-width: 560px) {
+  .btn-xs, .btn-sm, .btn-md { min-height: 44px; }
+  .btn-icon { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
 }

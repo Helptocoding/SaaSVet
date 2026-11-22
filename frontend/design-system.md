@@ -87,9 +87,13 @@ Valores vigentes (2026-11-22). La paleta crema anterior (`#f5f1e8`, primario `#1
   destaca.
 - El color nunca es la única señal: va con texto o ícono.
 
-**Set del login:** las variables `--accent`, `--border`, `--text-*`, `--space-*`, `--radius-*` del
-bloque «LOGIN REDESIGN» de `tokens.css` son del login. 🚫 No usarlas fuera de `login.css` (deuda
-existente: plan UX F4.3).
+**Login:** usa sus propias variables `--lp-*`, definidas en `login.css`. El antiguo bloque «LOGIN
+REDESIGN» de `tokens.css` (`--accent`, `--text-*`, `--border`…) se retiró en el plan UX F4.3; de
+él quedan la escala `--space-*` y el alias `--font-dm-serif` (Analítica).
+
+**Variables definidas:** toda `var(--x)` tiene que estar definida en algún CSS o estilo en línea
+(lo vigila `designTokensRatchet.test.js`). Una variable sin definir no falla: la propiedad cae a
+su valor inicial en silencio. No usar respaldos `var(--x, #hex)`: esconden ese error.
 
 🚫 **Prohibidos:** teal en cualquier forma (`rgba(45,212,191,*)`, `#99f6e4`, `#087f83`, `#1D9E75`).
 Cualquier `#xxxxxx` fuera de `tokens.css`. Paletas propias por página (`const PAL = {…}`).
@@ -266,6 +270,9 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
   principal del login es verde de marca, como el resto de la app (D12).
 - **Ilustraciones SVG** del tutorial de inventario (`features/inventory/tutorial/`) llevan sus
   colores dentro del dibujo.
+- **Gráficas (recharts)** del Dashboard: necesitan colores ya resueltos; los leen de los tokens en
+  tiempo de ejecución (`readCssVar`) con un respaldo literal.
+- **Logos de terceros** (`components/icons/GoogleIcon.jsx`): colores de marca ajenos.
 
 Cualquier nueva excepción se documenta aquí antes de implementarla.
 

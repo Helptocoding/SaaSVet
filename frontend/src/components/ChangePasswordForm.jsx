@@ -180,7 +180,7 @@ const PasswordField = ({ label, value, onChange, error, hint, autoComplete }) =>
                 </div>
             )}
             {error && (
-                <div style={{ fontSize: "11px", color: "var(--c-danger)", marginTop: "4px" }}>
+                <div style={{ fontSize: "11px", color: "var(--c-danger-text)", marginTop: "4px" }}>
                     {error}
                 </div>
             )}

@@ -48,7 +48,7 @@ const PaymentPanel = ({
                     )}
                     <button
                         className={`btn btn-primary btn-lg ${s.chargeBtn}`}
-                        style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }}
+                        style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "var(--c-on-primary)" }}
                         onClick={onConfirmCharge}
                         disabled={processing || cashBlocked || payBlocked || !paymentLinesValid(lines, Number(invoice.total), true)}
                         title={cashBlocked ? "Abre una caja para cobrar" : payBlockedTitle}

@@ -1,6 +1,6 @@
 // Plan UX F1.10: el menú decide por capacidad (`can()`), nunca por `user.role`
 // (regla del frontend). Configuración depende de `organization.update`.
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -74,5 +74,45 @@ describe("Sidebar — grupos", () => {
         const operacion = screen.getByRole("group", { name: "Operación" });
         expect(within(operacion).queryByRole("link", { name: /WhatsApp/ })).toBeNull();
         expect(within(operacion).getByRole("link", { name: /Inventario/ })).toBeInTheDocument();
+    });
+});
+
+// Plan UX D11: en móvil el menú es un panel; abierto, toma el foco, se cierra con
+// Escape y al navegar.
+describe("Sidebar — panel móvil", () => {
+    const renderOpen = (props) => render(
+        <MemoryRouter initialEntries={["/"]}>
+            <Sidebar onLogout={() => {}} mobileOpen {...props} />
+        </MemoryRouter>
+    );
+
+    it("abierto, pone el foco dentro del panel", () => {
+        withPerms("ADMIN", []);
+        renderOpen({ onClose: vi.fn(), onNavigate: vi.fn() });
+        expect(document.getElementById("app-sidebar").contains(document.activeElement)).toBe(true);
+    });
+
+    it("Escape lo cierra", () => {
+        withPerms("ADMIN", []);
+        const onClose = vi.fn();
+        renderOpen({ onClose, onNavigate: vi.fn() });
+        fireEvent.keyDown(document, { key: "Escape" });
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("navegar desde el panel lo cierra", () => {
+        withPerms("ADMIN", []);
+        const onNavigate = vi.fn();
+        renderOpen({ onClose: vi.fn(), onNavigate });
+        fireEvent.click(screen.getByRole("link", { name: /Citas/ }));
+        expect(onNavigate).toHaveBeenCalledTimes(1);
+    });
+
+    it("cerrado no reacciona a Escape", () => {
+        withPerms("ADMIN", []);
+        const onClose = vi.fn();
+        render(<MemoryRouter><Sidebar onLogout={() => {}} onClose={onClose} /></MemoryRouter>);
+        fireEvent.keyDown(document, { key: "Escape" });
+        expect(onClose).not.toHaveBeenCalled();
     });
 });

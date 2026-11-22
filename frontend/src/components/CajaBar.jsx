@@ -166,7 +166,7 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
                 </button>
             )}
             {open && canClose && (
-                <button className={`btn ${compact ? "btn-xs" : "btn-sm"}`} style={{ background: "var(--c-danger-text)", color: "#fff", borderColor: "var(--c-danger-text)" }} onClick={() => setShowClose(true)}>
+                <button className={`btn ${compact ? "btn-xs" : "btn-sm"}`} style={{ background: "var(--c-danger-text)", color: "var(--c-on-primary)", borderColor: "var(--c-danger-text)" }} onClick={() => setShowClose(true)}>
                     {compact ? "Cerrar (Z)" : "Cerrar caja (Z)"}
                 </button>
             )}
@@ -276,7 +276,7 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
                         </div>
                         <div className="modal-footer">
                             <button className="btn btn-secondary btn-sm" onClick={() => setShowClose(false)} disabled={busy}>Cancelar</button>
-                            <button className="btn btn-sm" style={{ background: "var(--c-danger-text)", color: "#fff", borderColor: "var(--c-danger-text)" }} onClick={doClose} disabled={busy}>
+                            <button className="btn btn-sm" style={{ background: "var(--c-danger-text)", color: "var(--c-on-primary)", borderColor: "var(--c-danger-text)" }} onClick={doClose} disabled={busy}>
                                 {busy ? <Icon.Loader s={14} /> : "Cerrar y cortar"}
                             </button>
                         </div>

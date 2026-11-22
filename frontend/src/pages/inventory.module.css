@@ -25,8 +25,8 @@
 }
 
 @media (max-width: 520px) {
-  .statsGrid { --stat-grid-cols: 1fr; }
-  .statWide { grid-column: auto; }
+  .statsGrid { --stat-grid-cols: repeat(2, minmax(0, 1fr)); }
+  .statWide { grid-column: span 2; }
 }
 
 /* ── Alert bar ───────────────────────────────────────────── */
@@ -138,8 +138,8 @@
 }
 .miniBarFill { height: 100%; border-radius: 2px; transition: width .4s; }
 .barOk   { background: var(--c-border-2); }
-.barLow  { background: #f59e0b; }
-.barCrit { background: #ef4444; }
+.barLow  { background: var(--c-attention-solid); }
+.barCrit { background: var(--c-danger-text); }
 
 /* ─ Columna: Estado como pill ─ */
 .pill {
@@ -174,6 +174,7 @@
 .abAj:hover { background: rgba(26,68,52,.2); }
 .abEd { background: var(--c-subtle); color: var(--c-text-2); border-color: var(--c-border); }
 .abEd:hover { border-color: var(--c-border-2); color: var(--c-text); }
+@media (max-width: 560px) { .ab { width: 44px; height: 44px; } }
 /* Ley de Fitts: eliminar queda separado (12 px + gap) del lápiz, que es la acción frecuente. */
 .abDl { margin-left: 12px; background: none; color: var(--c-text-3); border-color: transparent; }
 .abDl:hover { background: var(--c-danger-bg); color: var(--c-danger-text); border-color: var(--c-danger-border); }
@@ -239,7 +240,7 @@
   font-size: 11px; font-weight: 700; color: var(--c-text-3);
   flex-shrink: 0; transition: all .15s;
 }
-.wizDotOn { background: var(--c-primary); border-color: var(--c-primary); color: #fff; }
+.wizDotOn { background: var(--c-primary); border-color: var(--c-primary); color: var(--c-on-primary); }
 .wizLine { flex: 1; height: 2px; background: var(--c-border); margin: 0 8px; }
 
 /* ── Sell mode toggle ─────────────────────────────────────── */
@@ -358,7 +359,7 @@
   display: grid; grid-template-columns: 2fr 1.5fr 1.2fr 1.2fr;
   padding: 8px 14px; background: var(--ink);
   font-size: 11px; font-weight: 700; text-transform: none;
-  letter-spacing: .07em; color: #fff; gap: 8px;
+  letter-spacing: .07em; color: var(--c-on-primary); gap: 8px;
 }
 .summaryTableRow {
   display: grid; grid-template-columns: 2fr 1.5fr 1.2fr 1.2fr;
@@ -452,7 +453,7 @@
 }
 .tutNavBtn:hover { border-color: var(--c-primary); background: rgba(26,68,52,.06); }
 .tutNavBtnPrime {
-  background: var(--c-primary); border-color: var(--c-primary); color: #fff;
+  background: var(--c-primary); border-color: var(--c-primary); color: var(--c-on-primary);
 }
 .tutNavBtnPrime:hover { background: var(--c-primary-dark); border-color: var(--c-primary-dark); }
 

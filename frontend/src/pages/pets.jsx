@@ -66,11 +66,10 @@ const SpeciesIcon = ({ pet, size = 20, color }) => {
     return <Icon.Paw s={size} c={color} />;
 };
 
-const speciesAccent = (pet) => isCanino(pet)
-    ? { bg: "#dbeafe", icon: "#3b82f6", border: "#bfdbfe", text: "#1d4ed8" }
-    : isFelino(pet)
-    ? { bg: "#fce7f3", icon: "#ec4899", border: "#fbcfe8", text: "#be185d" }
-    : { bg: "var(--c-primary-light)", icon: "var(--c-primary-dark)", border: "var(--sage-400)", text: "var(--c-primary-dark)" };
+// La especie la dice el ícono (perro, gato, huella); el color queda para lo que
+// pide acción (plan UX D6). Antes: azul, rosa y verde por especie.
+const SPECIES_ACCENT = { bg: "var(--c-subtle)", icon: "var(--c-text-2)", border: "var(--c-border)", text: "var(--c-text-2)" };
+const speciesAccent = () => SPECIES_ACCENT;
 
 // ─── Birth Date Picker ────────────────────────────────────────────────────────
 function BirthDatePicker({ value, onChange }) {

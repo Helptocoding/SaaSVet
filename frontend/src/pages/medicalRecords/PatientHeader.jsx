@@ -4,12 +4,8 @@ import styles from "./medicalRecords.module.css";
 const SPECIES_DOG = /perro|can[ei]|dog/i;
 const SPECIES_CAT = /gato|fel[iy]|cat/i;
 
-const getSpeciesBg = (species) => {
-  if (!species) return "#f5f5f5";
-  if (SPECIES_DOG.test(species)) return "#e8f5e9";
-  if (SPECIES_CAT.test(species)) return "#fce4ec";
-  return "#f5f5f5";
-};
+// La especie la dice el ícono; el fondo es neutro (plan UX D6).
+const getSpeciesBg = () => "var(--c-subtle)";
 
 const getSpeciesIcon = (species, size = 24) => {
   if (!species) return <Icon.Paw s={size} />;

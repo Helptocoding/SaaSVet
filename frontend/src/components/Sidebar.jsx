@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "./icons";
@@ -55,9 +56,31 @@ const ROLE_LABELS = {
     ADMIN_SAAS: "Super Admin",
 };
 
-const Sidebar = ({ onLogout }) => {
+// `mobileOpen`: en pantallas ≤560px el menú es un panel que se abre desde la
+// barra superior (plan UX D11). Abierto, atrapa el foco y se cierra con Escape.
+const Sidebar = ({ onLogout, mobileOpen = false, onClose, onNavigate }) => {
     const location = useLocation();
     const { user, initializing, can, canAny } = useAuth();
+    const asideRef = useRef(null);
+
+    useEffect(() => {
+        if (!mobileOpen || !asideRef.current) return undefined;
+        const aside = asideRef.current;
+        const focusables = () => [...aside.querySelectorAll("a[href], button:not([disabled])")];
+        focusables()[0]?.focus();
+        const onKey = (e) => {
+            if (e.key === "Escape") { e.preventDefault(); onClose?.(); return; }
+            if (e.key !== "Tab") return;
+            const items = focusables();
+            if (items.length === 0) return;
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        };
+        document.addEventListener("keydown", onKey);
+        return () => document.removeEventListener("keydown", onKey);
+    }, [mobileOpen, onClose]);
 
     if (initializing) return null;
 
@@ -79,6 +102,7 @@ const Sidebar = ({ onLogout }) => {
                 className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
                 aria-current={active ? "page" : undefined}
                 title={item.label}
+                onClick={() => { if (mobileOpen) onNavigate?.(); }}
             >
                 <IconComp s={17} c="currentColor" />
                 <span className={styles.navLabel}>{item.label}</span>
@@ -87,7 +111,12 @@ const Sidebar = ({ onLogout }) => {
     };
 
     return (
-        <aside className={styles.sidebar} aria-label="Navegación principal">
+        <aside
+            id="app-sidebar"
+            ref={asideRef}
+            className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""}`}
+            aria-label="Navegación principal"
+        >
             {/* Brand */}
             <div className={styles.brand}>
                 <div className={styles.brandRow}>
@@ -100,6 +129,14 @@ const Sidebar = ({ onLogout }) => {
                             {user?.organization_name || "Sistema"}
                         </div>
                     </div>
+                    <button
+                        type="button"
+                        className={styles.closeNav}
+                        onClick={() => onClose?.()}
+                        aria-label="Cerrar menú"
+                    >
+                        <Icon.X s={18} />
+                    </button>
                 </div>
             </div>
 

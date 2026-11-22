@@ -11,9 +11,11 @@ import s from "./EntitySearch.module.css";
 
 const speciesVisual = (species) => {
     const probe = { species };
-    if (isCanino(probe)) return { bg: "#dbeafe", color: "#3b82f6", I: Icon.Dog };
-    if (isFelino(probe)) return { bg: "#fce7f3", color: "#ec4899", I: Icon.Cat };
-    return { bg: "var(--c-subtle)", color: "var(--c-text-2)", I: Icon.Paw };
+    // Especie por el ícono, no por color (plan UX D6).
+    const tone = { bg: "var(--c-subtle)", color: "var(--c-text-2)" };
+    if (isCanino(probe)) return { ...tone, I: Icon.Dog };
+    if (isFelino(probe)) return { ...tone, I: Icon.Cat };
+    return { ...tone, I: Icon.Paw };
 };
 
 // minúsculas a propósito: se invocan como función (renderItem(item)), no como

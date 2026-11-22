@@ -212,7 +212,7 @@
   height: 54px;
   border-radius: 15px;
   background: var(--p-accent);
-  color: #fff;
+  color: var(--c-on-primary);
   font-size: 24px;
   font-weight: 700;
   flex-shrink: 0;
@@ -320,7 +320,7 @@
   padding: 16px 24px;
 }
 
-.ruleRow:hover { background: #fbfcfb; }
+.ruleRow:hover { background: var(--c-surface-2); }
 
 .ruleRow + .ruleRow { border-top: 1px solid var(--p-border); }
 
@@ -355,7 +355,7 @@
 }
 
 .toggleOn { background: var(--p-accent); }
-.toggleOff { background: #d3d5cf; }
+.toggleOff { background: var(--c-border-2); }
 .toggleDisabled { opacity: 0.45; cursor: not-allowed; }
 
 .toggleKnob {
@@ -364,7 +364,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--c-surface);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
   transition: left 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
@@ -409,7 +409,7 @@
   height: 18px;
   border-radius: 5px;
   border: 1.5px solid var(--p-border-strong);
-  background: #fff;
+  background: var(--c-surface);
   cursor: pointer;
   position: relative;
   transition: background 0.15s, border-color 0.15s;
@@ -423,7 +423,7 @@
   position: absolute;
   left: 5px; top: 2px;
   width: 4px; height: 8px;
-  border: solid #fff;
+  border: solid var(--c-surface);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
@@ -543,7 +543,7 @@
     padding-bottom: 4px;
   }
   .sidebarItem { white-space: nowrap; }
-  .sidebarItemActive, .sidebarItemActive:hover { background: var(--p-accent); color: #fff; }
+  .sidebarItemActive, .sidebarItemActive:hover { background: var(--p-accent); color: var(--c-on-primary); }
   .content { max-width: 100%; }
   .fieldGrid { grid-template-columns: 1fr; }
   .scheduleTh:nth-child(n+5), .scheduleTd:nth-child(n+5) { display: none; }

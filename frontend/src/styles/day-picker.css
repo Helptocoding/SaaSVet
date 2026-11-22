@@ -78,7 +78,7 @@
 /* Selected day — círculo lleno */
 .rdp-root .rdp-selected .rdp-day_button {
   background: var(--c-primary);
-  color: #fff;
+  color: var(--c-on-primary);
   border: none;
 }
 .rdp-root .rdp-selected .rdp-day_button:hover:not([disabled]) {

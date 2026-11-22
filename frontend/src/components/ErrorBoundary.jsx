@@ -32,27 +32,27 @@ class ErrorBoundary extends Component {
                 alignItems: "center",
                 justifyContent: "center",
                 minHeight: "100vh",
-                backgroundColor: "var(--c-bg, #f5f5f3)",
+                backgroundColor: "var(--c-bg)",
                 padding: "40px",
                 textAlign: "center",
             }}>
                 <div style={{
-                    backgroundColor: "var(--c-surface, #ffffff)",
-                    border: "1px solid var(--c-border, #e5e0d8)",
+                    backgroundColor: "var(--c-surface)",
+                    border: "1px solid var(--c-border)",
                     borderRadius: "12px",
                     padding: "40px",
                     maxWidth: "480px",
                     width: "100%",
                 }}>
                     <p style={{ fontSize: "28px", margin: "0 0 12px" }}>⚠️</p>
-                    <h2 style={{ fontSize: "16px", fontWeight: "700", color: "var(--c-text, #1a1a1a)", margin: "0 0 8px" }}>
+                    <h2 style={{ fontSize: "16px", fontWeight: "700", color: "var(--c-text)", margin: "0 0 8px" }}>
                         Algo salió mal
                     </h2>
-                    <p style={{ fontSize: "13px", color: "var(--c-text-3, #8a8a7f)", margin: "0 0 16px" }}>
+                    <p style={{ fontSize: "13px", color: "var(--c-text-3)", margin: "0 0 16px" }}>
                         Ocurrió un error inesperado. Recarga la página o reporta el problema.
                     </p>
                     {this.state.eventId && (
-                        <p style={{ fontSize: "12px", color: "var(--c-text-3, #8a8a7f)", margin: "0 0 24px" }}>
+                        <p style={{ fontSize: "12px", color: "var(--c-text-3)", margin: "0 0 24px" }}>
                             Código de error:{" "}
                             <code style={{ fontFamily: "monospace", fontWeight: "600" }}>
                                 {this.state.eventId}
@@ -66,8 +66,8 @@ class ErrorBoundary extends Component {
                             onClick={() => window.location.reload()}
                             style={{
                                 padding: "8px 20px",
-                                background: "var(--c-primary, #1a4434)",
-                                color: "#fff",
+                                background: "var(--c-primary)",
+                                color: "var(--c-on-primary)",
                                 border: "none",
                                 borderRadius: "8px",
                                 fontSize: "13px",
@@ -82,8 +82,8 @@ class ErrorBoundary extends Component {
                             style={{
                                 padding: "8px 20px",
                                 background: "transparent",
-                                color: "var(--c-text-2, #3a3a3a)",
-                                border: "1px solid var(--c-border, #e5e0d8)",
+                                color: "var(--c-text-2)",
+                                border: "1px solid var(--c-border)",
                                 borderRadius: "8px",
                                 fontSize: "13px",
                                 fontWeight: "600",

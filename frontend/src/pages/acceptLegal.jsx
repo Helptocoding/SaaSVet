@@ -61,11 +61,11 @@ export default function AcceptLegal() {
     return (
         <div style={{
             minHeight: "100vh", display: "flex", alignItems: "center",
-            justifyContent: "center", padding: "24px", background: "var(--c-bg, #f5f5f5)",
+            justifyContent: "center", padding: "24px", background: "var(--c-bg)",
         }}>
             <div style={{
-                width: "100%", maxWidth: "560px", background: "#fff",
-                border: "1px solid var(--c-line, #e5e7eb)", borderRadius: "12px", padding: "24px",
+                width: "100%", maxWidth: "560px", background: "var(--c-surface)",
+                border: "1px solid var(--c-border)", borderRadius: "12px", padding: "24px",
             }}>
                 <h1 className="page-title" style={{ marginTop: 0 }}>Antes de continuar</h1>
                 <p className="page-subtitle">

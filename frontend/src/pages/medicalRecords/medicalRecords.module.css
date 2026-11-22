@@ -9,7 +9,7 @@
 }
 
 .pageTitle {
-  font-family: var(--font-dm-serif);
+  font-family: var(--font-body);
   font-size: 28px;
   font-weight: 600;
   color: var(--c-text);
@@ -48,7 +48,7 @@
 .petSidebar {
   width: 280px;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--c-surface);
   border-right: 1px solid var(--c-border);
   display: flex;
   flex-direction: column;
@@ -119,7 +119,7 @@
 
 .sidebarToggleBtn:hover {
   background: var(--c-primary);
-  color: #fff;
+  color: var(--c-on-primary);
   border-color: var(--c-primary);
 }
 
@@ -174,7 +174,7 @@
   left: 26px;
   top: 50%;
   transform: translateY(-50%);
-  color: #ccc;
+  color: var(--c-text-4);
   display: flex;
   align-items: center;
   pointer-events: none;
@@ -185,18 +185,18 @@
   height: 36px;
   padding: 0 12px 0 32px;
   font-size: 13px;
-  border: 1px solid #eee;
+  border: 1px solid var(--c-border);
   border-radius: 8px;
-  background: #f9f9f9;
-  color: #1a1a1a;
+  background: var(--c-surface-2);
+  color: var(--c-text);
   outline: none;
   transition: all 0.2s;
   box-sizing: border-box;
 }
 
 .sidebarSearchInput:focus {
-  border-color: #1a4434;
-  background: #fff;
+  border-color: var(--c-primary);
+  background: var(--c-surface);
 }
 
 .petList {
@@ -207,7 +207,7 @@
 
 .sidebarEmpty {
   text-align: center;
-  color: #999;
+  color: var(--c-text-3);
   font-size: 12px;
   padding: 20px 0;
 }
@@ -227,11 +227,11 @@
 }
 
 .petListItem:hover {
-  background: #f5f5f5;
+  background: var(--c-bg);
 }
 
 .petListItemActive {
-  background: #e8f5e9 !important;
+  background: var(--c-primary-light) !important;
 }
 
 .petListIcon {
@@ -252,7 +252,7 @@
 .petListName {
   font-size: 13px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--c-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -260,7 +260,7 @@
 
 .petListSub {
   font-size: 11px;
-  color: #888;
+  color: var(--c-text-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -270,8 +270,8 @@
   flex-shrink: 0;
   font-size: 11px;
   font-weight: 700;
-  color: #1a4434;
-  background: #d1e7dd;
+  color: var(--c-primary);
+  background: var(--c-primary-light);
   border-radius: 10px;
   padding: 2px 8px;
   min-width: 20px;
@@ -304,8 +304,8 @@
 /* ══ PATIENT HEADER ══════════════════════════════════════════════ */
 .patientHeader {
   padding: 24px 32px 20px;
-  background: #f7f7f4;
-  border-bottom: 1px solid #e8e4da;
+  background: var(--c-surface-2);
+  border-bottom: 1px solid var(--c-border);
 }
 
 .patientInfo {
@@ -328,13 +328,13 @@
 .patientName {
   font-size: 24px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--c-text);
   margin: 0;
 }
 
 .patientMeta {
   font-size: 13px;
-  color: #888;
+  color: var(--c-text-3);
 }
 
 /* ══ VITALS BAR ══════════════════════════════════════════════════ */
@@ -378,7 +378,7 @@
 }
 
 .vitalNullValue {
-  color: #ddd;
+  color: var(--c-text-4);
   font-style: italic;
   font-size: 14px;
 }
@@ -390,8 +390,8 @@
   gap: 12px;
   margin-bottom: 0;
   padding: 16px 32px;
-  background: #f7f7f4;
-  border-bottom: 1px solid #e8e4da;
+  background: var(--c-surface-2);
+  border-bottom: 1px solid var(--c-border);
   flex-wrap: wrap;
 }
 
@@ -438,7 +438,7 @@
 
 /* ══ TIMELINE ════════════════════════════════════════════════════ */
 .timeline {
-  background: #fff;
+  background: var(--c-surface);
   flex: 1;
   overflow-y: auto;
 }
@@ -455,7 +455,7 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  border: 2px solid #fff;
+  border: 2px solid var(--c-surface);
   z-index: 1;
   flex-shrink: 0;
 }
@@ -467,12 +467,12 @@
 .yearLabel {
   font-size: 11px;
   font-weight: 700;
-  color: #aaa;
+  color: var(--c-text-4);
   text-transform: none;
   letter-spacing: 0.08em;
   margin-bottom: 12px;
   padding: 4px 12px;
-  background: #f7f7f4;
+  background: var(--c-surface-2);
   border-radius: var(--r-sm);
   display: inline-block;
 }
@@ -485,14 +485,14 @@
 .monthLabel {
   font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: var(--c-text-2);
   margin-bottom: 10px;
 }
 
 /* ══ TIMELINE CARD ═══════════════════════════════════════════════ */
 .timelineCard {
-  background: #fff;
-  border: 1px solid #e8e8e4;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
   border-left-width: 4px;
   border-radius: 12px;
   padding: 0;
@@ -504,7 +504,7 @@
 
 .timelineCard:hover {
   box-shadow: 0 4px 20px rgba(0,0,0,0.10);
-  border-color: #a8c4a2;
+  border-color: var(--c-success-border);
 }
 
 /* Zona meta: tipo + fecha + vet + badges */
@@ -513,8 +513,8 @@
   align-items: center;
   gap: 8px;
   padding: 12px 16px 12px;
-  background: #fafaf7;
-  border-bottom: 1px solid #f0f0ec;
+  background: var(--c-surface-2);
+  border-bottom: 1px solid var(--c-border);
   flex-wrap: wrap;
 }
 
@@ -541,12 +541,12 @@
 .cardDate {
   font-size: 12px;
   font-weight: 600;
-  color: #444;
+  color: var(--c-text-2);
 }
 
 .cardVet {
   font-size: 12px;
-  color: #bbb;
+  color: var(--c-text-4);
 }
 
 .cardBadges {
@@ -559,7 +559,7 @@
 /* Zona contenido: diagnosis */
 .diagnosisSnippet {
   font-size: 14px;
-  color: #1a1a1a;
+  color: var(--c-text);
   line-height: 1.65;
   padding: 14px 16px 4px;
   font-weight: 400;
@@ -572,7 +572,7 @@
   flex-wrap: wrap;
   padding: 6px 16px 12px;
   font-size: 12px;
-  color: #888;
+  color: var(--c-text-3);
   font-weight: 500;
 }
 
@@ -599,10 +599,10 @@
   padding: 0 12px;
   font-size: 12px;
   font-weight: 600;
-  border: 1.5px solid #eee;
+  border: 1.5px solid var(--c-border);
   border-radius: 8px;
-  background: #fff;
-  color: #666;
+  background: var(--c-surface);
+  color: var(--c-text-2);
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
@@ -610,9 +610,9 @@
 
 .detailBtn:hover,
 .detailBtnOpen {
-  border-color: #1a4434;
-  color: #1a4434;
-  background: #f0f9f4;
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+  background: var(--c-primary-light);
 }
 
 .detailBtn:disabled {
@@ -628,8 +628,8 @@
 
 /* ══ EXPANDED PANEL ══════════════════════════════════════════════ */
 .expandedPanel {
-  background: #fafaf7;
-  border-top: 1px solid #efefeb;
+  background: var(--c-surface-2);
+  border-top: 1px solid var(--c-border);
   padding: 16px 16px 20px;
   display: flex;
   flex-direction: column;
@@ -647,7 +647,7 @@
   gap: 8px;
   font-size: 11px;
   font-weight: 700;
-  color: #999;
+  color: var(--c-text-3);
   text-transform: none;
   letter-spacing: 0.09em;
   margin-bottom: 6px;
@@ -657,14 +657,14 @@
   content: '';
   width: 3px;
   height: 11px;
-  background: #1a4434;
+  background: var(--c-primary);
   border-radius: 2px;
   flex-shrink: 0;
 }
 
 .expandedText {
   font-size: 14px;
-  color: #222;
+  color: var(--c-text);
   line-height: 1.65;
   white-space: pre-wrap;
 }
@@ -694,11 +694,11 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #f5f5f5;
+  background: var(--c-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--c-text-3);
   position: relative;
   z-index: 1;
 }
@@ -706,14 +706,14 @@
 .emptyTitle {
   font-size: 16px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--c-text);
   position: relative;
   z-index: 1;
 }
 
 .emptySub {
   font-size: 13px;
-  color: #888;
+  color: var(--c-text-3);
   max-width: 340px;
   line-height: 1.55;
   position: relative;
@@ -732,7 +732,7 @@
 
 .paginationLabel {
   font-size: 13px;
-  color: #666;
+  color: var(--c-text-2);
 }
 
 /* ══ HX TIMELINE — diario clínico editorial ═════════════════════ */
@@ -913,7 +913,7 @@
 .txToggle:hover {
   border-color: var(--c-primary);
   color: var(--c-primary);
-  background: #edf7f0;
+  background: var(--c-primary-light);
 }
 
 /* ── Contenido: diagnóstico · tratamiento · vitales ── */

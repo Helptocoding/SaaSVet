@@ -165,7 +165,7 @@
   color: var(--c-accent);
   text-transform: none;
   letter-spacing: 0.1em;
-  background: var(--bg-card, var(--c-surface));
+  background: var(--c-surface);
   padding: 4px 10px;
   border-radius: var(--r-sm);
   border: 1px solid var(--c-accent-light);
@@ -189,7 +189,7 @@
   height: 16px;
   border-radius: 50%;
   background: var(--c-text-3);
-  border: 3px solid var(--bg-card, var(--c-surface));
+  border: 3px solid var(--c-surface);
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   transition: all 300ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -199,8 +199,8 @@
   box-shadow: 0 8px 16px rgba(0,0,0,0.25);
 }
 
-.dtl-dot-scheduled .dtl-dot-pin { background: #3b82f6; }
-.dtl-dot-confirmed .dtl-dot-pin { background: #7c3aed; }
+.dtl-dot-scheduled .dtl-dot-pin { background: var(--c-info-text); }
+.dtl-dot-confirmed .dtl-dot-pin { background: var(--c-purple-text); }
 .dtl-dot-active    .dtl-dot-pin {
   background: var(--c-warning-text);
   box-shadow: 0 0 0 5px rgba(245,158,11,0.25), 0 4px 10px rgba(0,0,0,0.2);
@@ -222,7 +222,7 @@
   padding: 14px;
   background: rgba(15, 23, 42, 0.98);
   backdrop-filter: blur(12px);
-  color: #fff;
+  color: var(--c-on-primary);
   border-radius: var(--r-xl);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
   z-index: 40;
@@ -234,7 +234,7 @@
 .dtl-dot:hover .dtl-dot-tip { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 .dtl-dot-tip-time { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: none; letter-spacing: 0.05em; }
-.dtl-dot-tip-pet  { font-size: 16px; font-weight: 700; color: #fff; }
+.dtl-dot-tip-pet  { font-size: 16px; font-weight: 700; color: var(--c-on-primary); }
 .dtl-dot-tip-vet  { font-size: 12px; color: rgba(255,255,255,0.8); }
 
 .dtl-legend {
@@ -260,11 +260,11 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  border: 2.5px solid var(--bg-card, var(--c-surface));
+  border: 2.5px solid var(--c-surface);
   box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
-.dtl-leg.dtl-dot-scheduled { background: #3b82f6; }
-.dtl-leg.dtl-dot-confirmed { background: #7c3aed; }
+.dtl-leg.dtl-dot-scheduled { background: var(--c-info-text); }
+.dtl-leg.dtl-dot-confirmed { background: var(--c-purple-text); }
 .dtl-leg.dtl-dot-active    { background: var(--c-warning-text); }
 .dtl-leg.dtl-dot-done      { background: var(--c-success-text); }
 .dtl-leg.dtl-dot-canceled  { background: var(--c-danger-text); }
@@ -402,7 +402,7 @@
   display: flex; 
   align-items: center; 
   gap: 10px; 
-  color: #fff; 
+  color: var(--c-on-primary); 
   font-size: 13px; 
   margin-top: 4px; 
 }
@@ -741,9 +741,9 @@
 }
 .agenda-day-sel:hover { background: var(--c-primary-hover); }
 .agenda-day-sel .agenda-day-dow,
-.agenda-day-sel .agenda-day-num { color: #fff; }
-.agenda-day-sel.agenda-day-today .agenda-day-num { color: #fff; }
-.agenda-day-sel.agenda-day-today::after { background: #fff; }
+.agenda-day-sel .agenda-day-num { color: var(--c-on-primary); }
+.agenda-day-sel.agenda-day-today .agenda-day-num { color: var(--c-on-primary); }
+.agenda-day-sel.agenda-day-today::after { background: var(--c-surface); }
 
 .tagenda-count {
   font-size: 12px;

@@ -786,7 +786,7 @@ const Billing = () => {
                                             <td>
                                                 {item.description}
                                                 {item.dispensed && (
-                                                    <span style={{ marginLeft: "6px", fontSize: "11px", fontWeight: 600, color: "var(--c-accent-text, var(--c-text-3))", border: "1px solid var(--c-border)", borderRadius: "4px", padding: "1px 4px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                                    <span style={{ marginLeft: "6px", fontSize: "11px", fontWeight: 600, color: "var(--c-text-3)", border: "1px solid var(--c-border)", borderRadius: "4px", padding: "1px 4px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                                                         Para llevar
                                                     </span>
                                                 )}
@@ -842,7 +842,7 @@ const Billing = () => {
                         <div className="modal-footer">
                             <div style={{ display: "flex", gap: "8px", width: "100%" }}>
                                 {isCheckout && Number(selectedInvoice.total) > 0 && !selectedInvoice.operational_hold && (
-                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal} disabled={cashBlocked || checkoutActionBlocked("pay")} title={cashBlocked ? "Abre una caja para cobrar" : checkoutActionTitle("pay")}>
+                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "var(--c-on-primary)" }} onClick={openPayModal} disabled={cashBlocked || checkoutActionBlocked("pay")} title={cashBlocked ? "Abre una caja para cobrar" : checkoutActionTitle("pay")}>
                                         Cobrar
                                     </button>
                                 )}
@@ -853,7 +853,7 @@ const Billing = () => {
                                     <button className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={handleNoCharge} disabled={checkoutActionBlocked("complete_no_charge")} title={checkoutActionTitle("complete_no_charge")}>Completar sin cargo</button>
                                 )}
                                 {!isCheckout && selectedInvoice.status === "posted" && (
-                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal} disabled={cashBlocked} title={cashBlocked ? "Abre una caja para cobrar" : undefined}>Registrar Pago</button>
+                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "var(--c-on-primary)" }} onClick={openPayModal} disabled={cashBlocked} title={cashBlocked ? "Abre una caja para cobrar" : undefined}>Registrar Pago</button>
                                 )}
                                 {selectedInvoice.status === "paid" && can("billing.refund") && (
                                     <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => setShowRefundModal(true)}>Devolver</button>
@@ -910,7 +910,7 @@ const Billing = () => {
                                     <button className="btn btn-secondary btn-sm" onClick={() => setShowPayModal(false)} disabled={paying}>Cancelar</button>
                                     <button
                                         className="btn btn-primary btn-sm"
-                                        style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }}
+                                        style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "var(--c-on-primary)" }}
                                         onClick={submitPayment}
                                         disabled={paying || !paymentLinesValid(payLines, payTarget, true)}
                                     >

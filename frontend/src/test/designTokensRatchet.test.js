@@ -44,6 +44,14 @@ const EXCLUDED = [
     "/styles/login.css",           // set propio del login
     "/pages/analytics/",           // lenguaje editorial aislado, fuera del piloto
     "/features/inventory/tutorial/", // ilustraciones SVG con color propio
+    // Gráficas recharts: necesitan colores ya resueltos; leen los tokens en
+    // tiempo de ejecución (readCssVar) con un respaldo literal.
+    "/components/dashboard/StatusPieChart.jsx",
+    "/components/dashboard/DashboardChart.jsx",
+    "/components/dashboard/ActivityAreaChart.jsx",
+    "/components/dashboard/RevenueLineChart.jsx",
+    "/components/dashboard/ConversionFunnel.jsx",
+    "/components/icons/GoogleIcon.jsx", // colores de marca de un tercero
     "/test/",
 ];
 const isExcluded = (path) =>
@@ -56,7 +64,7 @@ const FONT_SCALE = new Set([11, 11.5, 12, 12.5, 13, 13.5, 14, 16, 20, 24, 28]);
 
 // Línea base del 2026-11-22. Solo puede bajar.
 const BASELINE = {
-    hex: 362,
+    hex: 0,
     fontWeight: 0,
     tinyFont: 0,
     fontScale: 2, // título del asistente de primer uso (40px) y «404» (56px): §7
@@ -164,5 +172,27 @@ describe("trinquete del design system (design-system.md §8)", () => {
             }
         }
         expect(problems).toEqual([]);
+    });
+});
+
+// Una variable CSS sin definir no falla: la propiedad cae a su valor inicial
+// (un borde que desaparece, un texto que hereda otro color). En el plan UX F4.3
+// aparecieron nueve (--c-line, --c-danger, --c-warning…); algunas solo
+// funcionaban por su respaldo `var(--x, #hex)`. Esta prueba exige que toda
+// `var(--x)` usada en src/ esté definida en algún CSS o estilo en línea.
+describe("variables CSS definidas", () => {
+    it("toda var(--x) usada en src/ está definida", () => {
+        const used = new Set();
+        const defined = new Set();
+        for (const [path, raw] of Object.entries(modules)) {
+            if (/\.test\.[jt]sx?$/.test(path) || path.includes("/test/")) continue;
+            const src = stripComments(raw);
+            // Unicode: hay variables con «ñ» (--guante-puño).
+            for (const m of src.matchAll(/var\((--[\p{L}\p{N}_-]+)/gu)) used.add(m[1]);
+            for (const m of src.matchAll(/(--[\p{L}\p{N}_-]+)\s*:/gu)) defined.add(m[1]);
+            for (const m of src.matchAll(/["'](--[\p{L}\p{N}_-]+)["']\s*[:,]/gu)) defined.add(m[1]);
+        }
+        const missing = [...used].filter((name) => !defined.has(name)).sort();
+        expect(missing).toEqual([]);
     });
 });

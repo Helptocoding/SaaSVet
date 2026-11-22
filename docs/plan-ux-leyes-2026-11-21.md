@@ -3,7 +3,7 @@
 **Fecha:** 2026-11-21
 **Revisión:** 2
 **Estado:** D1–D13 APROBADAS por el usuario (2026-11-22, todas según la recomendación).
-F0, F1, F2 y F3 IMPLEMENTADAS (rama feat/ux-leyes). Siguiente: F4. Registro en §7.
+F0–F4 IMPLEMENTADAS (rama feat/ux-leyes; F4 sin commit). Registro en §7.
 **Origen:** auditoría UX del 2026-11-21, hecha sobre la app local con la cuenta demo-admin:
 13 pantallas capturadas a 1440 px y 390 px, mediciones del DOM con Playwright y búsqueda en
 `frontend/src`. Capturas y métricas fuera del repositorio (scratchpad de la sesión).
@@ -325,3 +325,31 @@ de escala (excepciones documentadas) · 4 espaciados** (valores > 64 px de layou
   esas cifras a 20 o 28 movía demasiado los totales. Trinquete con métrica nueva `fontScale`.
 - F3.5: espaciados con el mismo método: escalón más cercano, en empate el múltiplo de 4
   (307 líneas en 41 archivos, casi todas de 1–2 px). Valores > 64 px sin tocar (4).
+
+### 2026-11-22 — F4
+
+Verificación: `vitest` 931/931 (87 archivos), `eslint` 0 errores, `vite build` correcto,
+capturas a 1440 y 390 px (menú móvil abierto y cerrado, navegación desde el panel, Mascotas e
+Inventario en móvil, formulario de consulta, Dashboard, login en reposo y con el cursor encima).
+Trinquete en su meta: **0 hex · 0 pesos · 0 letras < 11 px · 2 tamaños de display documentados
+· 4 espaciados > 64 px**.
+
+- F4.1: en ≤560 px el riel desaparece y el menú es un panel con texto que se abre desde la barra
+  superior (botón «Abrir menú», `aria-expanded`/`aria-controls`), sobre un fondo oscurecido;
+  toma el foco, lo atrapa, se cierra con Escape, con el fondo, con ✕ y al navegar. En el
+  Dashboard hay una barra móvil solo con el botón. 560–900 px conserva el riel. Pruebas en
+  `components/Sidebar.test.jsx`.
+- F4.2: indicadores a dos por fila y más compactos en móvil (Inventario pasa de 1 a 2
+  columnas); botones de 44 px en ≤560 px (`btn-xs/sm/md`, `btn-icon`, acciones de Inventario).
+- F4.3: hex sueltos → tokens con un script reproducible (325 líneas): respaldos
+  `var(--x, #hex)` retirados, cada hex mapeado según la propiedad (texto, fondo, borde) y
+  colores por especie/categoría a neutro (D6). **Se encontraron 9 variables usadas y nunca
+  definidas** (`--c-line`, `--c-danger`, `--c-warning`, `--c-success`, `--c-text-1`,
+  `--c-primary-contrast`, `--c-border-light`, `--c-accent-text`, `--bg-card`): algunas solo
+  funcionaban por su respaldo, otras ya estaban rotas (p. ej. el texto del chip activo de
+  WhatsApp). Prueba nueva: toda `var(--x)` usada debe estar definida. Bloque «LOGIN REDESIGN»
+  retirado de `tokens.css`; `--space-8` corregido a 32 px. Excepciones documentadas: gráficas
+  recharts y logo de Google.
+- F4.4: el botón del login ya era verde en reposo; se corrige el cursor encima (pasaba a casi
+  negro) y el deshabilitado, igual que `.btn-primary` de la app.
+- F4.5: trinquete en su meta (ver arriba).

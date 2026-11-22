@@ -185,3 +185,10 @@
 @media (max-width: 720px) {
   .grid { gap: 12px; }
 }
+
+/* Móvil (plan UX F4.2): dos indicadores por fila y tarjetas más compactas,
+   para que no llenen la primera pantalla. */
+@media (max-width: 560px) {
+  .grid { gap: 8px; }
+  .tile { gap: 8px; padding: 12px 14px; }
+}

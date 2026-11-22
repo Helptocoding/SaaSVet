@@ -37,7 +37,7 @@
 .stepActive .stepNum {
   border-color: var(--c-primary);
   background: var(--c-primary);
-  color: #fff;
+  color: var(--c-on-primary);
 }
 .stepDone .stepNum {
   border-color: var(--c-success-border);
@@ -339,7 +339,7 @@
 }
 
 .incompleteList li strong {
-  color: var(--c-warning-text, #92400e);
+  color: var(--c-warning-text);
 }
 
 /* ── Barra de estado horizontal (tipo GitHub checks) ─────────── */
@@ -394,8 +394,8 @@
   color: var(--c-danger-text);
 }
 .pillInfo {
-  background: var(--c-info-bg, #e0f2fe);
-  color: var(--c-info-text, #0369a1);
+  background: var(--c-info-bg);
+  color: var(--c-info-text);
 }
 
 /* ── Secciones colapsables comunes ─────────── */
@@ -440,8 +440,8 @@
   color: var(--c-danger-text);
 }
 .iconInfo {
-  background: var(--c-info-bg, #e0f2fe);
-  color: var(--c-info-text, #0369a1);
+  background: var(--c-info-bg);
+  color: var(--c-info-text);
 }
 .sectionLabel { flex: 1; text-align: left; }
 .sectionChevron {
@@ -653,7 +653,7 @@
   margin-top: 1px;
 }
 .iconDanger { background: var(--c-danger-bg); color: var(--c-danger-text); }
-.iconInfo { background: var(--c-info-bg, #e0f2fe); color: var(--c-info-text, #0369a1); }
+.iconInfo { background: var(--c-info-bg); color: var(--c-info-text); }
 .reviewDetailTitle { font-size: 16px; font-weight: 600; color: var(--c-text); }
 .reviewDetailSub { font-size: 12px; color: var(--c-text-3); margin-top: 2px; }
 .reviewDetailDivider {
@@ -758,7 +758,7 @@
 .previewTable tbody td {
   padding: 10px 12px;
   color: var(--c-text);
-  border-bottom: 1px solid var(--c-border-light, var(--c-border));
+  border-bottom: 1px solid var(--c-border);
   white-space: nowrap;
 }
 .previewTable tbody tr:last-child td {
@@ -829,7 +829,7 @@
   text-align: left;
 }
 .warningNoticeToggle:hover {
-  background: var(--c-warning-border, #fde68a);
+  background: var(--c-warning-border);
 }
 .warningNoticeIcon {
   flex-shrink: 0;

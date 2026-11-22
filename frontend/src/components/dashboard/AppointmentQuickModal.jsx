@@ -272,11 +272,11 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
             <div
               style={{
                 padding: "10px 12px",
-                background: "#fffbeb",
-                border: "1px solid #fbbf24",
+                background: "var(--c-warning-bg)",
+                border: "1px solid var(--c-warning-border)",
                 borderRadius: "var(--r-md)",
                 fontSize: "12.5px",
-                color: "#92400e",
+                color: "var(--c-warning-text)",
                 marginBottom: "12px",
                 textAlign: "center",
               }}
@@ -304,9 +304,9 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
                 className="btn btn-primary btn-lg"
                 style={{
                   width: "100%",
-                  background: "#f59e0b",
-                  borderColor: "#f59e0b",
-                  color: "#fff",
+                  background: "var(--c-attention-solid)",
+                  borderColor: "var(--c-warning-border)",
+                  color: "var(--c-on-primary)",
                   fontWeight: 700,
                   fontSize: "14px",
                 }}

@@ -27,7 +27,7 @@
 .panelCompact .panelSection {
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--c-border);
 }
 
 .panelCompact .panelSection:last-child {
@@ -46,7 +46,7 @@
 .panelCompact .panelSectionTitle {
   font-size: 11px;
   font-weight: 700;
-  color: #aaa;
+  color: var(--c-text-4);
   margin-bottom: 8px;
 }
 
@@ -58,7 +58,7 @@
 
 .panelCompact .panelText {
   font-size: 12px;
-  color: #666;
+  color: var(--c-text-2);
 }
 
 .panelEmpty {
@@ -69,7 +69,7 @@
 
 .panelCompact .panelEmpty {
   font-size: 11px;
-  color: #999;
+  color: var(--c-text-3);
 }
 
 /* Resumen cargando (react-loading-skeleton anima; aquí solo el ritmo vertical). */
@@ -92,7 +92,7 @@
 }
 
 .panelCompact .panelVitalLabel {
-  color: #999;
+  color: var(--c-text-3);
 }
 
 .panelVitalValue {
@@ -102,7 +102,7 @@
 
 .panelCompact .panelVitalValue {
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--c-text);
 }
 
 .panelBadge {
@@ -130,7 +130,7 @@
 .panelSection {
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--c-border);
 }
 
 .panelSection:last-child {
@@ -142,19 +142,19 @@
   font-weight: 700;
   text-transform: none;
   letter-spacing: 0.08em;
-  color: #aaa;
+  color: var(--c-text-4);
   margin-bottom: 8px;
 }
 
 .panelText {
   font-size: 12px;
-  color: #666;
+  color: var(--c-text-2);
   line-height: 1.5;
 }
 
 .panelEmpty {
   font-size: 11px;
-  color: #999;
+  color: var(--c-text-3);
   font-style: italic;
 }
 
@@ -167,12 +167,12 @@
 }
 
 .panelVitalLabel {
-  color: #999;
+  color: var(--c-text-3);
 }
 
 .panelVitalValue {
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--c-text);
 }
 
 .panelBadge {

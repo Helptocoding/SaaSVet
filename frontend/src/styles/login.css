@@ -545,8 +545,10 @@
   letter-spacing: 0;
 }
 
+/* Plan UX D12: verde de marca también al pasar el cursor, como `.btn-primary`
+   de la app (antes se volvía casi negro). */
 .login-page .btn-primary:hover:not(:disabled) {
-  background: var(--lp-bg-dark-2);
+  background: var(--c-primary-hover);
   transform: translateY(-1px);
   box-shadow: 0 10px 24px rgba(15, 42, 31, 0.28);
 }
@@ -562,10 +564,10 @@
 }
 
 .login-page .btn-primary:disabled {
-  background: #4a5f53;
-  color: #d5ddd6;
+  background: var(--lp-green);
+  color: #ffffff;
   cursor: not-allowed;
-  opacity: 0.75;
+  opacity: 0.45;
 }
 
 /* ── Secure note (footer) ──────────────────────────────── */

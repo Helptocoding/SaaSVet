@@ -1143,11 +1143,11 @@ const Inventory = () => {
                     style={{
                         display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
                         padding: "10px 14px", marginBottom: 14, borderRadius: 10,
-                        border: "1px solid var(--c-warning, #e0b34a)",
-                        background: "var(--c-warning-bg, #fdf6ec)", fontSize: 13,
+                        border: "1px solid var(--c-warning-border)",
+                        background: "var(--c-warning-bg)", fontSize: 13,
                     }}
                 >
-                    <Icon.AlertTriangle s={16} c="var(--c-warning-text, #b7791f)" />
+                    <Icon.AlertTriangle s={16} c="var(--c-warning-text)" />
                     {lotAlerts.expired_with_stock?.length > 0 && (
                         <span><strong>{lotAlerts.expired_with_stock.length}</strong> lote(s) vencido(s) con saldo</span>
                     )}

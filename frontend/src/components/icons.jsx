@@ -21,7 +21,7 @@ import {
     Link, Heart, Activity,
     Building2, Wallet, Lock,
     MessageCircle, Send, Bell,
-    MessageSquareWarning, Paperclip,
+    MessageSquareWarning, Paperclip, Menu,
 } from "lucide-react";
 
 export const Icon = {
@@ -98,4 +98,5 @@ export const Icon = {
     Bell: ({ s = 20, c = "currentColor" }) => <Bell size={s} color={c} strokeWidth={2} />,
     ReportProblem: ({ s = 20, c = "currentColor" }) => <MessageSquareWarning size={s} color={c} strokeWidth={2} />,
     Paperclip: ({ s = 20, c = "currentColor" }) => <Paperclip size={s} color={c} strokeWidth={2} />,
+    Menu: ({ s = 20, c = "currentColor" }) => <Menu size={s} color={c} strokeWidth={2} />,
 };
