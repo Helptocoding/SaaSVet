@@ -44,8 +44,8 @@ class ErrorBoundary extends Component {
                     maxWidth: "480px",
                     width: "100%",
                 }}>
-                    <p style={{ fontSize: "32px", margin: "0 0 12px" }}>⚠️</p>
-                    <h2 style={{ fontSize: "18px", fontWeight: "700", color: "var(--c-text, #1a1a1a)", margin: "0 0 8px" }}>
+                    <p style={{ fontSize: "28px", margin: "0 0 12px" }}>⚠️</p>
+                    <h2 style={{ fontSize: "16px", fontWeight: "700", color: "var(--c-text, #1a1a1a)", margin: "0 0 8px" }}>
                         Algo salió mal
                     </h2>
                     <p style={{ fontSize: "13px", color: "var(--c-text-3, #8a8a7f)", margin: "0 0 16px" }}>
@@ -65,7 +65,7 @@ class ErrorBoundary extends Component {
                         <button
                             onClick={() => window.location.reload()}
                             style={{
-                                padding: "9px 20px",
+                                padding: "8px 20px",
                                 background: "var(--c-primary, #1a4434)",
                                 color: "#fff",
                                 border: "none",
@@ -80,7 +80,7 @@ class ErrorBoundary extends Component {
                         <button
                             onClick={() => this.setState({ hasError: false, error: null, eventId: null })}
                             style={{
-                                padding: "9px 20px",
+                                padding: "8px 20px",
                                 background: "transparent",
                                 color: "var(--c-text-2, #3a3a3a)",
                                 border: "1px solid var(--c-border, #e5e0d8)",

@@ -415,7 +415,7 @@
 
 /* ── Modal de nueva cita ─────────────────────────────────────── */
 .appointment-create-modal .modal { max-width: 720px; }
-.appointment-create-modal .modal-body { padding: 24px 28px; }
+.appointment-create-modal .modal-body { padding: 24px 24px; }
 .appointment-create-modal .modal-body > div > p:first-child { display: none; }
 .appointment-create-modal .modal-body .btn-primary { margin-top: 8px; }
 
@@ -471,7 +471,8 @@
   .appointments-event-manager .agenda-controls { padding-left: 14px; padding-right: 14px; }
   .appointments-event-manager .agenda-search-bar { width: 100%; }
   .appointments-event-manager .agenda-control-select { flex: 1; min-width: 0; }
-  .appointments-event-manager .agenda-past-note { margin-left: 0; }
+  .agenda-nav { flex-wrap: wrap; }
+  .appointments-event-manager .agenda-past-note { margin-left: 0; white-space: normal; }
   .agenda-calendar .fc-timegrid-slot { height: 3.2em; }
   .appointment-create-modal .appt-form-row { grid-template-columns: 1fr; gap: 0; }
 }

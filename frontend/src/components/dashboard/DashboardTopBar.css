@@ -54,7 +54,7 @@
   font-size: 14px;
   color: var(--c-text-3);
   margin-top: 6px;
-  font-weight: 450;
+  font-weight: 500;
 }
 
 .dtop-phead { 
@@ -78,66 +78,6 @@
   font-size: 12px;
 }
 
-/* Revenue card — admin only */
-.dtop-revenue-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px 24px 16px;
-  background: var(--c-surface);
-  border-color: var(--c-border);
-  box-shadow: none;
-}
-
-.dtop-revenue-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.dtop-revenue-lbl {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--c-text-3);
-  text-transform: none;
-  letter-spacing: 0.07em;
-}
-
-.dtop-revenue-body {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.dtop-revenue-val {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--c-text);
-  line-height: 1;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-}
-.dtop-revenue-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12.5px;
-  color: var(--c-text-2);
-}
-.dtop-revenue-meta strong {
-  font-weight: 700;
-  color: var(--c-text);
-}
-.dtop-sep { color: var(--c-text-4); }
-
-.dtop-spark {
-  height: 36px;
-  margin-top: 2px;
-  pointer-events: none;
-  opacity: 0.85;
-}
-
 @media (max-width: 720px) {
-  .dtop-wrap { padding: 18px 16px 0; }
-  .dtop-revenue-val { font-size: 24px; }
+  .dtop-wrap { padding: 16px 16px 0; }
 }

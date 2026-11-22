@@ -35,7 +35,7 @@ const DetailModal = ({ prescription: rx, downloadingId, onDownload, onClose }) =
                     <h3 style={{ fontSize: "16px", fontWeight: "700" }}>
                         Receta de {rx.pet_name}
                     </h3>
-                    <p style={{ fontSize: "12px", color: "var(--c-text-3)", marginTop: "3px" }}>
+                    <p style={{ fontSize: "12px", color: "var(--c-text-3)", marginTop: "4px" }}>
                         {formatDate(rx.created_at)}
                     </p>
                 </div>
@@ -56,7 +56,7 @@ const DetailModal = ({ prescription: rx, downloadingId, onDownload, onClose }) =
                         { label: "Fecha",        value: formatDate(rx.created_at) },
                     ].map(({ label, value }) => (
                         <div key={label}>
-                            <p style={{ fontSize: "10px", fontWeight: "700", color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "3px" }}>{label}</p>
+                            <p style={{ fontSize: "11px", fontWeight: "700", color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>{label}</p>
                             <p style={{ fontSize: "13px", fontWeight: "600", color: "var(--c-text)" }}>{value}</p>
                         </div>
                     ))}
@@ -108,7 +108,7 @@ const DetailModal = ({ prescription: rx, downloadingId, onDownload, onClose }) =
                         border: "1px solid var(--c-warning-border)", borderRadius: "var(--r-md)",
                         marginBottom: "4px",
                     }}>
-                        <p style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--c-warning-text)", marginBottom: "4px" }}>Notas</p>
+                        <p style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--c-warning-text)", marginBottom: "4px" }}>Notas</p>
                         <p style={{ fontSize: "13px", color: "var(--c-warning-text)", lineHeight: "1.6" }}>{rx.notes}</p>
                     </div>
                 )}
@@ -150,15 +150,15 @@ const PrescriptionCard = ({ rx, downloadingId, canCreate, onView, onDownload, on
                     background: "var(--c-surface)", border: "1px solid var(--c-border)",
                     borderRadius: "var(--r-md)", padding: "6px 0",
                 }}>
-                    <p style={{ fontSize: "18px", fontWeight: "700", color: "var(--c-text)", lineHeight: "1" }}>{d.getDate()}</p>
-                    <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--c-text-3)", marginTop: "2px" }}>
+                    <p style={{ fontSize: "16px", fontWeight: "700", color: "var(--c-text)", lineHeight: "1" }}>{d.getDate()}</p>
+                    <p style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--c-text-3)", marginTop: "2px" }}>
                         {MONTHS_SHORT[d.getMonth()]}
                     </p>
                 </div>
 
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: "15px", fontWeight: "700", color: "var(--c-text)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <p style={{ fontSize: "16px", fontWeight: "700", color: "var(--c-text)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {rx.pet_name}
                     </p>
                     <p style={{ fontSize: "12px", color: "var(--c-text-3)" }}>
@@ -179,7 +179,7 @@ const PrescriptionCard = ({ rx, downloadingId, canCreate, onView, onDownload, on
                     {rx.items.map((item, i) => (
                         <span key={i} style={{
                             fontSize: "11.5px", fontWeight: "500",
-                            padding: "3px 9px", borderRadius: "var(--r-full)",
+                            padding: "4px 8px", borderRadius: "var(--r-full)",
                             background: "var(--c-surface)", border: "1px solid var(--c-border)",
                             color: "var(--c-text-2)",
                         }}>
@@ -432,7 +432,7 @@ const Prescriptions = () => {
                 </select>
 
                 {/* Especie (reutilizado de Mascotas) */}
-                <div style={{ display: "flex", gap: "3px", background: "var(--c-subtle)", padding: "3px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
+                <div style={{ display: "flex", gap: "4px", background: "var(--c-subtle)", padding: "4px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
                     {[
                         { key: "all", label: "Todos" },
                         { key: "caninos", label: "Caninos", icon: <Icon.Dog s={13} /> },
@@ -442,7 +442,7 @@ const Prescriptions = () => {
                             key={key}
                             onClick={() => setFilterSpecies(key)}
                             style={{
-                                display: "inline-flex", alignItems: "center", gap: "5px",
+                                display: "inline-flex", alignItems: "center", gap: "4px",
                                 height: "28px", padding: "0 10px",
                                 borderRadius: "var(--r-sm)", border: "none", cursor: "pointer",
                                 fontSize: "12.5px", fontWeight: "600", fontFamily: "inherit",
@@ -501,7 +501,7 @@ const Prescriptions = () => {
                 )}
 
                 {/* View toggle */}
-                <div style={{ display: "flex", gap: "3px", background: "var(--c-subtle)", padding: "3px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
+                <div style={{ display: "flex", gap: "4px", background: "var(--c-subtle)", padding: "4px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
                     {[{ key: "table", I: Icon.Rows }, { key: "cards", I: Icon.Grid }].map(({ key, I }) => (
                         <button
                             key={key}

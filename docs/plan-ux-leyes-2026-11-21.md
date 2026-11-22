@@ -3,7 +3,7 @@
 **Fecha:** 2026-11-21
 **Revisión:** 2
 **Estado:** D1–D13 APROBADAS por el usuario (2026-11-22, todas según la recomendación).
-F0, F1 (commits 9bbeec9, ff98d4d) y F2 (sin commit) IMPLEMENTADAS. Siguiente: F3. Registro en §7.
+F0, F1, F2 y F3 IMPLEMENTADAS (rama feat/ux-leyes). Siguiente: F4. Registro en §7.
 **Origen:** auditoría UX del 2026-11-21, hecha sobre la app local con la cuenta demo-admin:
 13 pantallas capturadas a 1440 px y 390 px, mediciones del DOM con Playwright y búsqueda en
 `frontend/src`. Capturas y métricas fuera del repositorio (scratchpad de la sesión).
@@ -302,3 +302,26 @@ Mascotas, ficha, Historial clínico, Caja y Configuración. Trinquete: **364 · 
   de 36 px.
 - F2.10: signos vitales legibles («Últimos», 11,5–12 px, tokens); tipo de consulta con el
   mismo criterio de color que la agenda; «Nueva consulta» sin el verde viejo `#1a4434`.
+
+### 2026-11-22 — F3
+
+Verificación: `vitest` 926/926 (87 archivos), `eslint` 0 errores, `vite build` correcto,
+capturas a 1440 y 390 px. Trinquete: **362 hex · 0 pesos · 0 letras <11 px · 2 tamaños fuera
+de escala (excepciones documentadas) · 4 espaciados** (valores > 64 px de layout grande).
+
+- F3.1: la barra superior ya no lleva título. **Desvío del plan:** sin miga en rutas
+  anidadas: la ficha de mascota ya tiene su «‹ Volver a mascotas» junto al H1 y una miga en la
+  barra lo repetiría. `PAGE_TITLES` y `.topbarTitle` eliminados.
+- F3.2: menú en grupos Atención · Ventas · Operación · Admin (`role="group"` con nombre; en el
+  riel de íconos se separan con un filete). Rótulos en minúscula de oración («Historial
+  clínico», «Punto de venta»). Pruebas en `components/Sidebar.test.jsx`.
+- F3.3: Dashboard con la agenda del día primero, después los indicadores; «Ingresos del día»
+  es un indicador con su variación contra ayer; sale «En consulta» (lo muestra «Ahora»).
+  `DashboardTopBar` sin la tarjeta ancha ni la mini gráfica. `frontend.md` §Dashboard
+  actualizado.
+- F3.4: pesos y tamaños con un script reproducible (mismas exclusiones que el trinquete):
+  300/450/550/650/680/740/750/760/800 → 400–700; < 11 px → 11; 14.5→14, 15/17/18→16,
+  19→20, 22/23/26→24, 30/32→28. **Escala ampliada con 24 px** («número en panel»): convertir
+  esas cifras a 20 o 28 movía demasiado los totales. Trinquete con métrica nueva `fontScale`.
+- F3.5: espaciados con el mismo método: escalón más cercano, en empate el múltiplo de 4
+  (307 líneas en 41 archivos, casi todas de 1–2 px). Valores > 64 px sin tocar (4).

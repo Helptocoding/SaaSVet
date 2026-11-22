@@ -18,7 +18,7 @@ const NotFound = () => {
             <h1 style={{ fontSize: "20px", fontWeight: "700", color: "var(--c-text, #1a1a1a)", margin: "0 0 8px" }}>
                 Página no encontrada
             </h1>
-            <p style={{ fontSize: "13px", color: "var(--c-text-3, #8a8a7f)", margin: "0 0 28px" }}>
+            <p style={{ fontSize: "13px", color: "var(--c-text-3, #8a8a7f)", margin: "0 0 24px" }}>
                 La ruta que buscas no existe o fue movida.
             </p>
             <button

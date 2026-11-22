@@ -414,7 +414,7 @@ const MedicalRecords = () => {
                         <div className={styles.emptyIconWrap}>
                           <Icon.Paw size={32} />
                         </div>
-                        <p className={styles.emptyTitle} style={{ fontSize: "15px" }}>
+                        <p className={styles.emptyTitle} style={{ fontSize: "16px" }}>
                           {historySearch || typeFilter !== "all"
                             ? "No hay consultas con ese filtro"
                             : "Esta mascota no tiene historial clínico aún"}

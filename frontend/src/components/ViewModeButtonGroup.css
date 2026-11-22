@@ -20,7 +20,7 @@
     display:inline-flex;
     font:inherit;
     font-size:12px;
-    font-weight:680;
+    font-weight:700;
     gap:6px;
     justify-content:center;
     line-height:1;
@@ -64,6 +64,6 @@
 }
 
 @media (max-width:560px) {
-    .view-mode-button { gap:0; padding:0 9px; }
+    .view-mode-button { gap:0; padding:0 8px; }
     .view-mode-button span { display:none; }
 }

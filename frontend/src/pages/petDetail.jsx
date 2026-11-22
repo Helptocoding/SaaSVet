@@ -117,7 +117,7 @@ const PetDetail = () => {
 
     if (!pet) {
         return (
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+            <div style={{ textAlign: "center", padding: "56px 20px" }}>
                 <p style={{ color: "var(--c-text-2)", marginBottom: "16px" }}>Mascota no encontrada.</p>
                 <button className="btn btn-secondary btn-md" onClick={() => navigate("/pets")}>
                     Volver a mascotas
@@ -383,7 +383,7 @@ const PetDetail = () => {
                                     className="btn btn-purple btn-md"
                                     onClick={() => { setShowRecordDetail(false); navigate(`/medical-records?pet=${pet.public_id}`); }}
                                 >
-                                    Abrir en Historial Clínico
+                                    Abrir en Historial clínico
                                 </button>
                             ) : !viewingRecord.prescription_id && viewingRecord.status === "closed" ? (
                                 <span style={{ color: "var(--c-text-3)", fontSize: "13px" }}>

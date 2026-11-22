@@ -88,7 +88,7 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
         <div className="modal-overlay" style={{ zIndex: 1001 }} onClick={submitting ? undefined : onClose}>
             <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
                 <div className="modal-header">
-                    <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>
+                    <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>
                         Devolución — Cobro #{invoice.id}
                     </h3>
                     <button className="modal-close" onClick={onClose} disabled={submitting}><Icon.X s={14} /></button>

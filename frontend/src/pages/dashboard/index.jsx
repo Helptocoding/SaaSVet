@@ -29,19 +29,17 @@ function revenueDeltaVsYesterday(finSeries, finToday) {
   return ((today - prev) / prev) * 100;
 }
 
-function buildRevenueSpark(finSeries, finToday) {
-  const fin = [...(finSeries || []), ...(finToday ? [finToday] : [])]
-    .filter((p) => p && p.metrics)
-    .sort((a, b) => (a.bucketDate > b.bucketDate ? 1 : -1))
-    .slice(-7);
-  return fin.map((p) => ({ v: Number(p.metrics.revenuePaid ?? 0) }));
-}
-
 const fmtMoney = (v) => `$${Number(v).toLocaleString("es-MX")}`;
 
+const fmtDelta = (delta) =>
+  delta == null ? null : `${delta >= 0 ? "▲" : "▼"} ${Math.abs(Math.round(delta))}% vs ayer`;
+
 // Indicadores de HOY (point-in-time, /dashboard/summary/). Los pies describen
-// qué cuenta cada número; no hay comparativos que el endpoint no calcule.
-function buildKpiItems(kpis, role) {
+// qué cuenta cada número; no hay comparativos que el endpoint no calcule (la
+// variación de ingresos sale de la serie financiera, no del summary).
+// Plan UX D10: sin «En consulta» (lo dice el panel «Ahora») y con los ingresos
+// como un indicador más, en vez de una tarjeta ancha encima de todo.
+function buildKpiItems(kpis, role, revenue) {
   const isAdmin   = role === "ADMIN" || role === "ADMIN_SAAS";
   const showStock = isAdmin || role === "VET";
 
@@ -49,18 +47,9 @@ function buildKpiItems(kpis, role) {
     ? Number(kpis.ar_outstanding)
     : 0;
 
-  const inProgress = kpis?.in_progress_now ?? 0;
   const stockCount = kpis?.low_stock_count ?? 0;
 
   return [
-    {
-      label: "En consulta",
-      value: inProgress,
-      icon: Icon.Stethoscope,
-      tone: inProgress > 0 ? "primary" : "ink",
-      live: true,
-      foot: "En vivo",
-    },
     {
       label: "Citas hoy",
       value: kpis?.pending_today ?? 0,
@@ -68,8 +57,23 @@ function buildKpiItems(kpis, role) {
       tone: "ink",
       foot: "Por atender",
     },
+    {
+      label: "Pacientes hoy",
+      value: kpis?.patients_today ?? 0,
+      icon: Icon.Paw,
+      tone: "ink",
+      foot: "Mascotas con cita",
+    },
     ...(isAdmin
       ? [
+          {
+            label: "Ingresos del día",
+            value: revenue.today == null ? "—" : fmtMoney(Math.round(Number(revenue.today))),
+            icon: Icon.TrendUp,
+            tone: "ink",
+            badge: fmtDelta(revenue.delta),
+            foot: "Cobrado hoy",
+          },
           {
             label: "Pendiente cobro",
             value: fmtMoney(arValue),
@@ -90,13 +94,6 @@ function buildKpiItems(kpis, role) {
           },
         ]
       : []),
-    {
-      label: "Pacientes hoy",
-      value: kpis?.patients_today ?? 0,
-      icon: Icon.Paw,
-      tone: "ink",
-      foot: "Mascotas con cita",
-    },
   ];
 }
 
@@ -125,14 +122,9 @@ const Dashboard = () => {
     () => revenueDeltaVsYesterday(finSeries, finToday),
     [finSeries, finToday]
   );
-  const revenueSpark = useMemo(
-    () => buildRevenueSpark(finSeries, finToday),
-    [finSeries, finToday]
-  );
-
   const kpiItems = useMemo(
-    () => buildKpiItems(data?.kpis, user?.role),
-    [data?.kpis, user?.role]
+    () => buildKpiItems(data?.kpis, user?.role, { today: revenueToday, delta: revenueDelta }),
+    [data?.kpis, user?.role, revenueToday, revenueDelta]
   );
 
   const kpiGridClass = `dash-kpis dash-kpis-${kpiItems.length}`;
@@ -152,11 +144,11 @@ const Dashboard = () => {
       </div>
       <div className="dash-grid" aria-hidden="true">
         <div className="dash-main">
-          <StatSectionSkeleton count={kpiItems.length} gridClassName={kpiGridClass} />
           <section className="card dash-timeline-card">
             <Skeleton width={160} height={16} />
             <Skeleton count={4} height={52} borderRadius="var(--r-md)" className="dash-skel-row" />
           </section>
+          <StatSectionSkeleton count={kpiItems.length} gridClassName={kpiGridClass} />
           <Skeleton height={340} borderRadius="var(--r-lg)" />
         </div>
         <div className="dash-side">
@@ -180,12 +172,7 @@ const Dashboard = () => {
       <FirstRunAssistant onComplete={handleFirstRunComplete} />
 
       <div className={`dash-page${revealing ? " dash-reveal" : ""}`}>
-        <DashboardTopBar
-          summary={data}
-          revenueToday={revenueToday}
-          revenueSpark={revenueSpark}
-          revenueDelta={revenueDelta}
-        />
+        <DashboardTopBar summary={data} />
 
       {error && (
         <div className="dash-error-banner">
@@ -196,15 +183,16 @@ const Dashboard = () => {
 
       <div className="dash-grid">
         <main className="dash-main">
+          {/* Plan UX D10: la agenda del día es la tarea principal; va primero. */}
+          <section className="card dash-timeline-card">
+            <TodayAgendaList />
+          </section>
+
           <StatSection label="Indicadores de hoy" gridClassName={kpiGridClass}>
             {kpiItems.map((item) => (
               <StatTile key={item.label} {...item} />
             ))}
           </StatSection>
-
-          <section className="card dash-timeline-card">
-            <TodayAgendaList />
-          </section>
 
           <DashboardAnalytics />
         </main>

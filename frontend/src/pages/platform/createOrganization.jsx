@@ -232,7 +232,7 @@ const CreateOrganization = () => {
                         </Field>
                     </Section>
 
-                    <div style={{ display: "flex", gap: "10px", marginTop: "18px" }}>
+                    <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
                         <button
                             type="submit"
                             className="btn btn-primary btn-md"
@@ -248,7 +248,7 @@ const CreateOrganization = () => {
 };
 
 const Section = ({ title, subtitle, children }) => (
-    <div style={{ marginBottom: "22px" }}>
+    <div style={{ marginBottom: "20px" }}>
         <h3 style={{ fontSize: "14px", fontWeight: "600", color: "var(--c-text-1)", marginBottom: "2px" }}>
             {title}
         </h3>
@@ -308,13 +308,13 @@ const SuccessCard = ({ result, onCreateAnother }) => {
             border: "1px solid rgba(26,68,52,0.35)",
             background: "rgba(26,68,52,0.06)",
             borderRadius: "10px",
-            padding: "18px 20px",
+            padding: "16px 20px",
             marginBottom: "20px",
             maxWidth: "720px",
         }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
                 <Icon.CheckCircle s={20} c="var(--c-primary)" />
-                <h3 style={{ fontSize: "15px", fontWeight: "600", color: "var(--c-text-1)", margin: 0 }}>
+                <h3 style={{ fontSize: "16px", fontWeight: "600", color: "var(--c-text-1)", margin: 0 }}>
                     Clínica creada exitosamente
                 </h3>
             </div>

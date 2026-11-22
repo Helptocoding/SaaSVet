@@ -603,7 +603,7 @@ const Billing = () => {
                         <button
                             className="btn btn-primary btn-md"
                             onClick={() => navigate("/pos")}
-                            title="Atajo: F11 — abre el Punto de Venta"
+                            title="Atajo: F11 — abre el punto de venta"
                         >
                             <Icon.Plus s={14} />
                             Nuevo cobro
@@ -786,7 +786,7 @@ const Billing = () => {
                                             <td>
                                                 {item.description}
                                                 {item.dispensed && (
-                                                    <span style={{ marginLeft: "6px", fontSize: "10px", fontWeight: 600, color: "var(--c-accent-text, var(--c-text-3))", border: "1px solid var(--c-border)", borderRadius: "4px", padding: "1px 5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                                    <span style={{ marginLeft: "6px", fontSize: "11px", fontWeight: 600, color: "var(--c-accent-text, var(--c-text-3))", border: "1px solid var(--c-border)", borderRadius: "4px", padding: "1px 4px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                                                         Para llevar
                                                     </span>
                                                 )}
@@ -889,7 +889,7 @@ const Billing = () => {
                         <div className="modal-overlay" style={{ zIndex: 1001 }}>
                             <div className="modal" style={{ maxWidth: "360px" }}>
                                 <div className="modal-header">
-                                    <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>
+                                    <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>
                                         {isCheckout ? "Cobrar preparación" : "Registrar pago"}
                                     </h3>
                                     <button className="modal-close" onClick={() => setShowPayModal(false)} disabled={paying}><Icon.X s={14} /></button>
@@ -925,7 +925,7 @@ const Billing = () => {
                         <div className="modal-overlay" style={{ zIndex: 1001 }}>
                             <div className="modal" style={{ maxWidth: "520px" }}>
                                 <div className="modal-header">
-                                    <h3 style={{ fontSize: "15px", fontWeight: 600 }}>
+                                    <h3 style={{ fontSize: "16px", fontWeight: 600 }}>
                                         {replacementMode === "terminal" ? "Anular factura" : "Corregir factura emitida"}
                                     </h3>
                                     <button className="modal-close" onClick={() => setShowReplacementModal(false)} disabled={replacing}><Icon.X s={14} /></button>

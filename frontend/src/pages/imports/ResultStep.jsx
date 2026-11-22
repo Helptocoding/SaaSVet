@@ -41,7 +41,7 @@ const ResultStep = ({ result, job, fieldCatalog = [], onReset, entityType = "own
 
     return (
         <div>
-            <div className="card" style={{ marginBottom: 18 }}>
+            <div className="card" style={{ marginBottom: 16 }}>
                 <div className={s.resultHero}>
                     <span className={s.resultIcon}>
                         <Icon.CheckCircle s={26} c="var(--c-success-text)" />
@@ -73,7 +73,7 @@ const ResultStep = ({ result, job, fieldCatalog = [], onReset, entityType = "own
             </div>
 
             {incompleteRows.length > 0 && (
-                <div className="card" style={{ marginBottom: 18 }}>
+                <div className="card" style={{ marginBottom: 16 }}>
                     <p className={s.issuesTitle}>Datos opcionales pendientes</p>
                     <p className={s.resultSub} style={{ marginBottom: 12 }}>
                         Estos registros se importaron sin problema. No necesitas hacer nada ahora:

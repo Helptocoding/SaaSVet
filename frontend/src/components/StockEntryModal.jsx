@@ -332,7 +332,7 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew, onReceptionI
                                                 <label className="form-label">
                                                     LOTES RECIBIDOS ({currentPres.name.toUpperCase()}) *
                                                 </label>
-                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 62px 30px", gap: 6, fontSize: 10.5, fontWeight: 600, color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 3 }}>
+                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 62px 30px", gap: 6, fontSize: 11, fontWeight: 600, color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 4 }}>
                                                     <span>Lote</span>
                                                     <span>Caduca</span>
                                                     <span style={{ textAlign: "center" }}>Cant.</span>

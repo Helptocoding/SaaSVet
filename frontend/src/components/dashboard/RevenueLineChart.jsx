@@ -104,13 +104,13 @@ function RevenueLineChart({ rangeDays = 30 }) {
             </defs>
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 9 }}
+              tick={{ fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               interval="preserveStartEnd"
             />
             <YAxis
-              tick={{ fontSize: 10 }}
+              tick={{ fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={fmtMXN}

@@ -10,6 +10,7 @@ import process from "node:process";
 //   hex          colores escritos a mano fuera de styles/tokens.css
 //   fontWeight   pesos distintos de 400/500/600/700
 //   tinyFont     tamaños de letra menores a 11px
+//   fontScale    tamaños de letra fuera de la escala (design-system.md §1)
 //   spacing      padding/margin/gap fuera de la escala (design-system.md §3)
 //
 // No exige cero de golpe: hay deuda vieja. Exige que el número no suba, y que
@@ -51,13 +52,15 @@ const isExcluded = (path) =>
 const ALLOWED_WEIGHTS = new Set([400, 500, 600, 700]);
 const ALLOWED_SPACING = new Set([0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 32, 40, 48, 56, 64]);
 const MIN_FONT_PX = 11;
+const FONT_SCALE = new Set([11, 11.5, 12, 12.5, 13, 13.5, 14, 16, 20, 24, 28]);
 
 // Línea base del 2026-11-22. Solo puede bajar.
 const BASELINE = {
-    hex: 364,
-    fontWeight: 29,
-    tinyFont: 67,
-    spacing: 340,
+    hex: 362,
+    fontWeight: 0,
+    tinyFont: 0,
+    fontScale: 2, // título del asistente de primer uso (40px) y «404» (56px): §7
+    spacing: 4, // cuatro valores > 64px de layout grande (estados vacíos, cierre de página): §3
 };
 
 const stripComments = (src) =>
@@ -86,7 +89,9 @@ function countCss(css, add) {
         if (!ALLOWED_WEIGHTS.has(Number(m[1]))) add("fontWeight");
     }
     for (const m of css.matchAll(CSS_SIZE)) {
-        if (Number(m[1]) < MIN_FONT_PX) add("tinyFont");
+        const px = Number(m[1]);
+        if (px < MIN_FONT_PX) add("tinyFont");
+        else if (!FONT_SCALE.has(px)) add("fontScale");
     }
     for (const m of css.matchAll(CSS_SPACING)) {
         for (const px of m[1].matchAll(PX)) {
@@ -101,7 +106,9 @@ function countJsx(src, add) {
     }
     for (const re of [JSX_SIZE_STR, JSX_SIZE_NUM]) {
         for (const m of src.matchAll(re)) {
-            if (Number(m[1]) < MIN_FONT_PX) add("tinyFont");
+            const px = Number(m[1]);
+            if (px < MIN_FONT_PX) add("tinyFont");
+            else if (!FONT_SCALE.has(px)) add("fontScale");
         }
     }
     for (const m of src.matchAll(JSX_SPACING)) {
@@ -116,7 +123,7 @@ function countJsx(src, add) {
 }
 
 function measure() {
-    const totals = { hex: 0, fontWeight: 0, tinyFont: 0, spacing: 0 };
+    const totals = { hex: 0, fontWeight: 0, tinyFont: 0, fontScale: 0, spacing: 0 };
     const byFile = {};
     for (const [path, raw] of Object.entries(modules)) {
         if (isExcluded(path)) continue;

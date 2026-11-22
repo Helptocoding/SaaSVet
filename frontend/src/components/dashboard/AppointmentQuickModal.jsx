@@ -227,7 +227,7 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
       <div className="modal modal-sm" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <h3 style={{ marginBottom: "4px", fontSize: "15px" }}>
+            <h3 style={{ marginBottom: "4px", fontSize: "16px" }}>
               <Icon.Paw s={14} /> {appt.pet_name || "Paciente"}
             </h3>
             <StatusBadge status={appt.status} />

@@ -186,7 +186,7 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
                 <div className="modal-overlay" onClick={() => !busy && setShowOpen(false)}>
                     <div className="modal" style={{ maxWidth: "340px" }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>Abrir caja</h3>
+                            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>Abrir caja</h3>
                             <button className="modal-close" onClick={() => setShowOpen(false)} disabled={busy}><Icon.X s={14} /></button>
                         </div>
                         <div className="modal-body">
@@ -211,7 +211,7 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
                 <div className="modal-overlay" onClick={() => !busy && setShowMove(false)}>
                     <div className="modal" style={{ maxWidth: "360px" }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>Movimiento de caja</h3>
+                            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>Movimiento de caja</h3>
                             <button className="modal-close" onClick={() => setShowMove(false)} disabled={busy}><Icon.X s={14} /></button>
                         </div>
                         <div className="modal-body">
@@ -261,7 +261,7 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
                 <div className="modal-overlay" onClick={() => !busy && setShowClose(false)}>
                     <div className="modal" style={{ maxWidth: "360px" }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>Cerrar caja — corte Z</h3>
+                            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>Cerrar caja — corte Z</h3>
                             <button className="modal-close" onClick={() => setShowClose(false)} disabled={busy}><Icon.X s={14} /></button>
                         </div>
                         <div className="modal-body">

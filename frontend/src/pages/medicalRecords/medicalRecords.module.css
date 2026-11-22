@@ -21,7 +21,7 @@
   display: flex;
   gap: 0;
   align-items: flex-start;
-  margin: -28px; /* Offset Layout's padding */
+  margin: -24px; /* Offset Layout's padding */
   background: var(--c-bg);
   height: calc(100vh - 52px); /* Header is 52px */
   overflow: hidden;
@@ -71,7 +71,7 @@
 }
 
 .sidebarHeader {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--c-text-3);
   text-transform: none;
@@ -128,7 +128,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   padding: 8px 0;
   border-top: 1px solid var(--c-border);
   border-bottom: 1px solid var(--c-border);
@@ -145,7 +145,7 @@
 }
 
 .sidebarRailName {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--c-text-3);
   text-transform: none;
@@ -160,7 +160,7 @@
   gap: 2px;
   padding: 10px 0 0;
   color: var(--c-text-3);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -183,7 +183,7 @@
 .sidebarSearchInput {
   width: 100%;
   height: 36px;
-  padding: 0 12px 0 36px;
+  padding: 0 12px 0 32px;
   font-size: 13px;
   border: 1px solid #eee;
   border-radius: 8px;
@@ -268,12 +268,12 @@
 
 .petListBadge {
   flex-shrink: 0;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   color: #1a4434;
   background: #d1e7dd;
   border-radius: 10px;
-  padding: 2px 7px;
+  padding: 2px 8px;
   min-width: 20px;
   text-align: center;
 }
@@ -303,7 +303,7 @@
 
 /* ══ PATIENT HEADER ══════════════════════════════════════════════ */
 .patientHeader {
-  padding: 28px 32px 20px;
+  padding: 24px 32px 20px;
   background: #f7f7f4;
   border-bottom: 1px solid #e8e4da;
 }
@@ -419,7 +419,7 @@
 
 .historySearchInput {
   height: 38px;
-  padding: 0 12px 0 36px;
+  padding: 0 12px 0 32px;
   font-size: 13px;
   border: 1.5px solid var(--c-border);
   border-radius: var(--r-lg);
@@ -465,7 +465,7 @@
 }
 
 .yearLabel {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   color: #aaa;
   text-transform: none;
@@ -512,7 +512,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 18px 11px;
+  padding: 12px 16px 12px;
   background: #fafaf7;
   border-bottom: 1px solid #f0f0ec;
   flex-wrap: wrap;
@@ -528,9 +528,9 @@
 }
 
 .typeTag {
-  font-size: 10px;
-  font-weight: 800;
-  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
   border-radius: var(--r-sm);
   text-transform: none;
   letter-spacing: 0.07em;
@@ -551,7 +551,7 @@
 
 .cardBadges {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   flex-wrap: wrap;
   flex-shrink: 0;
 }
@@ -561,7 +561,7 @@
   font-size: 14px;
   color: #1a1a1a;
   line-height: 1.65;
-  padding: 14px 18px 4px;
+  padding: 14px 16px 4px;
   font-weight: 400;
 }
 
@@ -570,7 +570,7 @@
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 6px 18px 12px;
+  padding: 6px 16px 12px;
   font-size: 12px;
   color: #888;
   font-weight: 500;
@@ -579,7 +579,7 @@
 .cardVitals span {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 }
 
 /* ══ CARD ACTIONS ════════════════════════════════════════════════ */
@@ -588,7 +588,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 10px 18px 14px;
+  padding: 10px 16px 14px;
 }
 
 .detailBtn {
@@ -630,10 +630,10 @@
 .expandedPanel {
   background: #fafaf7;
   border-top: 1px solid #efefeb;
-  padding: 18px 18px 20px;
+  padding: 16px 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .expandedSection {
@@ -644,9 +644,9 @@
 .expandedLabel {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 10px;
-  font-weight: 800;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
   color: #999;
   text-transform: none;
   letter-spacing: 0.09em;
@@ -704,7 +704,7 @@
 }
 
 .emptyTitle {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: #1a1a1a;
   position: relative;
@@ -766,7 +766,7 @@
 
 .txYearLabel {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--c-text-2);
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -860,11 +860,11 @@
 }
 
 .txTypePill {
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: none;
   letter-spacing: 0.07em;
-  padding: 3px 9px;
+  padding: 4px 8px;
   border-radius: var(--r-sm);
 }
 
@@ -883,9 +883,9 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 4px 8px;
   border-radius: var(--r-sm);
   white-space: nowrap;
 }
@@ -929,11 +929,11 @@
   margin: 0 0 6px;
   display: flex;
   align-items: baseline;
-  gap: 7px;
+  gap: 8px;
 }
 
 .txMotivoLabel {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: none;
@@ -943,7 +943,7 @@
 
 /* Diagnóstico — contenido primario */
 .txDiagnosis {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--c-text);
   line-height: 1.5;
@@ -1009,7 +1009,7 @@
 .txExpandedInner {
   border-top: 1px solid var(--c-border);
   background: var(--c-subtle);
-  padding: 18px 16px 16px;
+  padding: 16px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1022,8 +1022,8 @@
 }
 
 .txLabel {
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: none;
   letter-spacing: 0.09em;
   color: var(--c-text-3);
@@ -1066,13 +1066,13 @@
 
 .txChipBadge {
   display: inline-block;
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: none;
-  padding: 1px 5px;
+  padding: 1px 4px;
   border-radius: var(--r-sm);
-  margin-left: 5px;
+  margin-left: 4px;
   vertical-align: middle;
 }
 
@@ -1120,7 +1120,7 @@
   font-size: 11px;
   color: var(--c-text-3);
   background: var(--c-subtle);
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: var(--r-sm);
 }
 

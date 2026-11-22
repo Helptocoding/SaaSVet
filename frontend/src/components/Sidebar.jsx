@@ -3,19 +3,29 @@ import { useAuth } from "../auth/authContext";
 import { Icon } from "./icons";
 import styles from "./AppShell.module.css";
 
-const NAV_ITEMS = [
-    { path: "/", label: "Dashboard", icon: Icon.LayoutDashboard },
-    { path: "/pets", label: "Mascotas", icon: Icon.PawPrint },
-    { path: "/appointments", label: "Citas", icon: Icon.CalendarClock },
-    // Bandeja del agente (É-F0): gated por capability, no por rol —
-    // ASSISTANT/ADMIN operan, VET solo ve (agentinbox.view).
-    { path: "/inbox", label: "WhatsApp", icon: Icon.MessageCircle, perm: "agentinbox.view" },
-    { path: "/medical-records", label: "Historial Clínico", icon: Icon.FileHeart },
-    { path: "/prescriptions", label: "Recetas", icon: Icon.Pill },
-    { path: "/inventory", label: "Inventario", icon: Icon.Package },
-    { path: "/pos", label: "Punto de Venta", icon: Icon.ShoppingBag },
-    { path: "/billing", label: "Cobros", icon: Icon.Receipt },
-    { path: "/cash", label: "Caja", icon: Icon.Wallet },
+// Menú agrupado (plan UX D9, ley de Hick): cuatro bloques con nombre en vez de
+// diez entradas sueltas. Inicio va sin rótulo, arriba de todo.
+const NAV_GROUPS = [
+    { label: null, items: [
+        { path: "/", label: "Dashboard", icon: Icon.LayoutDashboard },
+    ] },
+    { label: "Atención", items: [
+        { path: "/appointments", label: "Citas", icon: Icon.CalendarClock },
+        { path: "/pets", label: "Mascotas", icon: Icon.PawPrint },
+        { path: "/medical-records", label: "Historial clínico", icon: Icon.FileHeart },
+        { path: "/prescriptions", label: "Recetas", icon: Icon.Pill },
+    ] },
+    { label: "Ventas", items: [
+        { path: "/pos", label: "Punto de venta", icon: Icon.ShoppingBag },
+        { path: "/billing", label: "Cobros", icon: Icon.Receipt },
+        { path: "/cash", label: "Caja", icon: Icon.Wallet },
+    ] },
+    { label: "Operación", items: [
+        { path: "/inventory", label: "Inventario", icon: Icon.Package },
+        // Bandeja del agente (É-F0): gated por capability, no por rol —
+        // ASSISTANT/ADMIN operan, VET solo ve (agentinbox.view).
+        { path: "/inbox", label: "WhatsApp", icon: Icon.MessageCircle, perm: "agentinbox.view" },
+    ] },
 ];
 
 // Equipo y Configuración se gatean por capacidad, no por rol: quien pueda
@@ -82,7 +92,7 @@ const Sidebar = ({ onLogout }) => {
             <div className={styles.brand}>
                 <div className={styles.brandRow}>
                     <div className={styles.brandMark}>
-                        <Icon.Stethoscope s={17} c="#fff" />
+                        <Icon.Stethoscope s={17} c="var(--c-on-primary)" />
                     </div>
                     <div className={styles.brandText}>
                         <div className={styles.brandName}>SaaslyVet</div>
@@ -95,13 +105,21 @@ const Sidebar = ({ onLogout }) => {
 
             {/* Nav principal */}
             <nav className={styles.nav}>
-                {NAV_ITEMS
-                    .filter(item => !item.perm || can?.(item.perm))
-                    .map(item => <NavLink key={item.path} item={item} />)}
+                {NAV_GROUPS.map(group => {
+                    const items = group.items.filter(item => !item.perm || can?.(item.perm));
+                    if (items.length === 0) return null;
+                    return (
+                        <div className={styles.navGroup} key={group.label || "inicio"}
+                            role="group" aria-label={group.label || "Inicio"}>
+                            {group.label && <div className={styles.navSection}>{group.label}</div>}
+                            {items.map(item => <NavLink key={item.path} item={item} />)}
+                        </div>
+                    );
+                })}
 
                 {/* Admin items */}
                 {(canConfigure || canManageStaff) && (
-                    <>
+                    <div className={styles.navGroup} role="group" aria-label="Admin">
                         <div className={styles.navSection}>
                             Admin
                         </div>
@@ -111,17 +129,17 @@ const Sidebar = ({ onLogout }) => {
                         {CAPABILITY_ITEMS
                             .filter(item => can?.(item.perm) && !user?.is_demo)
                             .map(item => <NavLink key={item.path} item={item} />)}
-                    </>
+                    </div>
                 )}
 
                 {/* Platform items — sólo ADMIN_SAAS */}
                 {isPlatformOperator && (
-                    <>
+                    <div className={styles.navGroup} role="group" aria-label="Plataforma">
                         <div className={`${styles.navSection} ${styles.navSectionDanger}`}>
                             Plataforma
                         </div>
                         {PLATFORM_ITEMS.map(item => <NavLink key={item.path} item={item} />)}
-                    </>
+                    </div>
                 )}
             </nav>
 

@@ -6,21 +6,6 @@ import FeedbackButton from "./FeedbackButton";
 import { Icon } from "./icons";
 import styles from "./AppShell.module.css";
 
-const PAGE_TITLES = {
-    "/":               "Dashboard",
-    "/dashboard":      "Dashboard",
-    "/pets":           "Mascotas",
-    "/appointments":   "Citas",
-    "/medical-records":"Historial Clínico",
-    "/inventory":      "Inventario",
-    "/billing":        "Cobros",
-    "/pos":            "Punto de Venta",
-    "/staff":          "Equipo",
-    "/config":         "Configuración",
-    "/prescriptions":  "Recetas",
-    "/imports":        "Importar datos",
-};
-
 const Layout = ({ children }) => {
     const { logout, user, initializing, can } = useAuth();
     const navigate = useNavigate();
@@ -39,10 +24,6 @@ const Layout = ({ children }) => {
 
     const handleLogout = () => { logout(); navigate("/login"); };
 
-    // Get page title from exact match or prefix match
-    const pageTitle = PAGE_TITLES[location.pathname] ||
-        (location.pathname.startsWith("/pets/") ? "Ficha de Mascota" : "");
-
     const isDashboard = location.pathname === "/" || location.pathname === "/dashboard";
 
     // Se llegó a este módulo desde un CTA del onboarding (FirstRunAssistant): mostrar
@@ -57,17 +38,16 @@ const Layout = ({ children }) => {
             <main className={styles.main}>
                 {!isDashboard && (
                     <header className={styles.topbar}>
-                        {fromOnboarding ? (
+                        {/* Sin título: el H1 de cada página ya dice dónde estás (plan UX D8).
+                            Las rutas anidadas, como la ficha de mascota, tienen su propio
+                            «Volver a…» junto al H1; una miga aquí lo repetiría. */}
+                        {fromOnboarding && (
                             <button
                                 onClick={() => navigate("/")}
                                 className={styles.backAction}
                             >
                                 <Icon.ChevronLeft s={16} c="currentColor" /> Volver al Dashboard
                             </button>
-                        ) : (
-                            <span className={styles.topbarTitle}>
-                                {pageTitle}
-                            </span>
                         )}
                         <div className={styles.topbarActions}>
                             <FeedbackButton />

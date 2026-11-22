@@ -36,8 +36,9 @@ Si vas a desviarte de un contrato, primero edita este documento explicando la ex
 
 **Tamaño mínimo:** 11px. Nada de 9, 9.5, 10 ni 10.5px: no se leen en una pantalla de recepción.
 
-**Escala (única):** 11 · 11.5 · 12 · 12.5 · 13 · 13.5 · 14 · 16 · 20 · 28 px. Un tamaño fuera de
-la escala se redondea al escalón más cercano.
+**Escala (única):** 11 · 11.5 · 12 · 12.5 · 13 · 13.5 · 14 · 16 · 20 · 24 · 28 px. Un tamaño
+fuera de la escala se redondea al escalón más cercano. 24 px es el «número en panel» (totales,
+cifras en tarjetas compactas); 28 px, el número de indicador y el héroe del Dashboard.
 
 | Rol | Token/clase | font-size | weight | Notas |
 |---|---|---|---|---|
@@ -52,6 +53,7 @@ la escala se redondea al escalón más cercano.
 | Micro / eyebrow | — | 11px | 600 | UPPERCASE, letter-spacing 0.05em |
 | Badge | `.badge` | 11px | 600 | |
 | Número métrico | — | 28px | 700 | `font-variant-numeric: tabular-nums` |
+| Número en panel | — | 24px | 700 | totales y cifras de tarjetas compactas |
 
 **Letter-spacing:** títulos `-0.01em`; eyebrows/uppercase `0.05em`. No usar valores >0.1em (era el look editorial de Analytics).
 
@@ -225,8 +227,9 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
   funciona», «Ver ejemplo») → secundarias (`btn-secondary`) → **primaria al final**
   (`btn-primary`). El CTA principal vive siempre en el header, nunca en la fila de filtros.
 - **Un solo H1 por página con `.page-title`.** Nada de `.ptitle`, `styles.pageTitle` ni tamaños
-  inline. La barra superior del shell no repite el H1 (D8): en páginas de primer nivel no lleva
-  título; en rutas anidadas lleva la miga («Mascotas › Bella»).
+  inline. La barra superior del shell no repite el H1 (D8): no lleva título. Las rutas anidadas
+  (ficha de mascota) ponen su «‹ Volver a…» junto al H1, dentro de la página; una miga en la
+  barra lo repetiría.
 
 ### Navegación — `Sidebar`
 - Agrupada (D9): Inicio · Atención (Citas, Mascotas, Historial clínico, Recetas) · Ventas
@@ -255,6 +258,8 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 ## 7. Excepciones conscientes (no son bugs)
 
 - **Dashboard landing** usa hero title 28px/700 (`.ptitle`) — contexto de portada, no página de lista.
+- **Tamaños de display fuera de la escala:** el título del paso del asistente de primer uso
+  (40px, `FirstRunAssistant`) y el «404» de `notFound.jsx` (56px).
 - **Analytics** (`analytics.module.css`) usa un lenguaje editorial aislado (serif, brutalist, paleta propia). Decisión pendiente de ADR: alinear vs. mantener aislado. Mientras tanto, **sus tokens locales no salen de esa página**.
 
 - **Login** (`styles/login.css`) usa su propio set de variables y Space Grotesk. El botón
@@ -273,6 +278,7 @@ Cualquier nueva excepción se documenta aquí antes de implementarla.
 - hex fuera de `tokens.css`;
 - `font-weight` fuera de 400/500/600/700;
 - `font-size` menor a 11px;
+- `font-size` fuera de la escala del §1;
 - espaciados (`padding`, `margin`, `gap`) fuera de la escala del §3.
 
 Cada conteo tiene una línea base en el propio test. **Si sube, falla. Si baja, también falla

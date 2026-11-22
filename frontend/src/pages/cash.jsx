@@ -103,7 +103,7 @@ const Cash = () => {
                 <div className="modal-overlay" onClick={() => setDetail(null)}>
                     <div className="modal" style={{ maxWidth: "420px" }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>Corte de caja</h3>
+                            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>Corte de caja</h3>
                             <button className="modal-close" onClick={() => setDetail(null)}><Icon.X s={14} /></button>
                         </div>
                         <div className="modal-body">
@@ -140,7 +140,7 @@ const CashHistorySkeleton = () => (
 );
 
 const Row = ({ label, value, strong, color }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: "13px" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: "13px" }}>
         <span style={{ color: "var(--c-text-3)" }}>{label}</span>
         <span style={{ color: color || "var(--c-text)", fontWeight: strong ? 600 : 400 }}>{value}</span>
     </div>

@@ -3,7 +3,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 12px;
 }
@@ -34,7 +34,7 @@
   display: flex; align-items: center; gap: 10px;
   background: var(--c-warning-bg); border: 1px solid var(--c-warning-border);
   border-radius: var(--r-lg); padding: 10px 14px;
-  margin-bottom: 18px; font-size: 13px; color: var(--c-warning-text);
+  margin-bottom: 16px; font-size: 13px; color: var(--c-warning-text);
 }
 .alertBar button {
   margin-left: auto; background: none; border: none;
@@ -54,9 +54,9 @@
   margin-bottom: 12px; flex-wrap: wrap;
 }
 .tsel {
-  display: flex; align-items: center; gap: 7px;
+  display: flex; align-items: center; gap: 8px;
   background: var(--c-surface); border: 1.5px solid var(--c-border);
-  border-radius: var(--r-lg); padding: 0 13px; height: 38px;
+  border-radius: var(--r-lg); padding: 0 12px; height: 38px;
   box-shadow: var(--shadow-xs);
 }
 .tsel select {
@@ -69,7 +69,7 @@
   overflow: hidden; box-shadow: var(--shadow-xs);
 }
 .vt {
-  padding: 8px 11px; background: none; border: none;
+  padding: 8px 12px; background: none; border: none;
   color: var(--c-text-3); cursor: pointer;
   transition: all 150ms; display: flex; align-items: center;
 }
@@ -77,7 +77,7 @@
 .ctLbl { font-size: 12px; color: var(--c-text-3); white-space: nowrap; }
 
 /* ── Chips ───────────────────────────────────────────────── */
-.chipRow { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+.chipRow { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .chip {
   padding: 6px 12px; border-radius: var(--r-md); font-size: 12px; font-weight: 500;
   background: var(--c-surface); border: 1.5px solid var(--c-border);
@@ -119,7 +119,7 @@
 /* Badges en la celda de producto */
 .badge {
   display: inline-flex; align-items: center;
-  font-size: 10px; font-weight: 600;
+  font-size: 11px; font-weight: 600;
   padding: 2px 6px; border-radius: var(--r-sm); white-space: nowrap;
 }
 .badgePurple { background: var(--c-purple-bg);   color: var(--c-purple-text);  }
@@ -127,14 +127,14 @@
 
 /* ─ Columna: Stock con mini barra ─ */
 .stockCell { min-width: 110px; }
-.stockNum  { font-size: 15px; font-weight: 700; color: var(--c-text); line-height: 1; }
+.stockNum  { font-size: 16px; font-weight: 700; color: var(--c-text); line-height: 1; }
 .stockNumLow  { color: var(--c-warning-text); }
 .stockNumCrit { color: var(--c-danger-text);  }
-.stockUnit { font-size: 11px; color: var(--c-text-3); margin-left: 3px; }
+.stockUnit { font-size: 11px; color: var(--c-text-3); margin-left: 4px; }
 .miniBar {
   height: 4px; background: var(--c-border);
   border-radius: 2px; overflow: hidden;
-  margin-top: 5px; width: 100%;
+  margin-top: 4px; width: 100%;
 }
 .miniBarFill { height: 100%; border-radius: 2px; transition: width .4s; }
 .barOk   { background: var(--c-border-2); }
@@ -143,8 +143,8 @@
 
 /* ─ Columna: Estado como pill ─ */
 .pill {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 7px; border-radius: var(--r-sm);
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-radius: var(--r-sm);
   font-size: 11.5px; font-weight: 500; white-space: nowrap;
 }
 /* «Normal» no pide acción: neutro (plan UX D6). */
@@ -207,16 +207,16 @@
 .pg:hover { box-shadow: var(--shadow-md); border-color: var(--c-border-2); transform: translateY(-2px); }
 .pgTop { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
 .pgIco { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-.pgName { font-size: 13px; font-weight: 600; color: var(--c-text); margin-bottom: 3px; line-height: 1.3; }
+.pgName { font-size: 13px; font-weight: 600; color: var(--c-text); margin-bottom: 4px; line-height: 1.3; }
 .pgDesc { font-size: 11px; color: var(--c-text-3); margin-bottom: 12px; }
-.pgStk  { display: flex; align-items: baseline; gap: 4px; margin-bottom: 5px; }
-.pgStkV { font-size: 22px; font-weight: 700; color: var(--c-text); }
+.pgStk  { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
+.pgStkV { font-size: 24px; font-weight: 700; color: var(--c-text); }
 .pgStkU { font-size: 11px; color: var(--c-text-3); }
 .pgBar  { height: 4px; background: var(--c-border); border-radius: 2px; margin-bottom: 10px; overflow: hidden; }
 .pgBarF { height: 100%; border-radius: 2px; }
 .pgFoot { display: flex; align-items: center; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--c-border); }
 .pgAdj  {
-  padding: 5px 12px; border-radius: 7px; font-size: 11.5px; font-weight: 500;
+  padding: 4px 12px; border-radius: 7px; font-size: 11.5px; font-weight: 500;
   background: var(--c-primary-light); color: var(--c-primary-dark);
   border: 1px solid rgba(26,68,52,.3); cursor: pointer; font-family: inherit; transition: all .12s;
 }
@@ -229,7 +229,7 @@
 /* ── Wizard step indicator ───────────────────────────────── */
 .wizBar {
   display: flex; align-items: center;
-  margin-bottom: 22px; padding-bottom: 18px;
+  margin-bottom: 20px; padding-bottom: 16px;
   border-bottom: 1px solid var(--c-border);
 }
 .wizDot {
@@ -270,7 +270,7 @@
 .presRemoveBtn {
   font-size: 11px; color: var(--c-danger-text);
   background: none; border: none; cursor: pointer; font-family: inherit;
-  padding: 2px 7px; border-radius: 5px; transition: background .12s;
+  padding: 2px 8px; border-radius: 5px; transition: background .12s;
 }
 .presRemoveBtn:hover { background: var(--c-danger-bg); }
 .addPresBtn {
@@ -289,7 +289,7 @@
 /* ── Unit chips (step 2) ─────────────────────────────────── */
 .unitChips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
 .unitChip {
-  padding: 5px 12px; border-radius: var(--r-md); font-size: 12.5px; font-weight: 500;
+  padding: 4px 12px; border-radius: var(--r-md); font-size: 12.5px; font-weight: 500;
   background: var(--c-surface); border: 1.5px solid var(--c-border);
   color: var(--c-text-2); cursor: pointer; font-family: inherit; transition: all .12s;
 }
@@ -299,7 +299,7 @@
 /* ── Alert row (min stock natural language) ──────────────── */
 .alertRow {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--c-border);
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--c-border);
   font-size: 13px;
 }
 .alertRowLabel { color: var(--c-text-2); white-space: nowrap; }
@@ -342,7 +342,7 @@
 /* ── Summary modal ───────────────────────────────────────── */
 .summaryHead {
   display: flex; gap: 14px; align-items: flex-start;
-  padding-bottom: 18px; border-bottom: 1px solid var(--c-border);
+  padding-bottom: 16px; border-bottom: 1px solid var(--c-border);
 }
 .summaryProdName {
   font-size: 16px; font-weight: 700; color: var(--c-text); line-height: 1.3;
@@ -357,7 +357,7 @@
 .summaryTableHead {
   display: grid; grid-template-columns: 2fr 1.5fr 1.2fr 1.2fr;
   padding: 8px 14px; background: var(--ink);
-  font-size: 10px; font-weight: 700; text-transform: none;
+  font-size: 11px; font-weight: 700; text-transform: none;
   letter-spacing: .07em; color: #fff; gap: 8px;
 }
 .summaryTableRow {
@@ -382,11 +382,11 @@
   gap: 6px; margin-bottom: 2px;
 }
 .invModeBtn {
-  padding: 9px 12px; border-radius: var(--r-lg);
+  padding: 8px 12px; border-radius: var(--r-lg);
   border: 1.5px solid var(--c-border); background: var(--c-surface);
   font-size: 13px; font-weight: 500; color: var(--c-text-2);
   cursor: pointer; font-family: inherit; transition: all .12s;
-  display: flex; align-items: center; justify-content: center; gap: 7px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .invModeBtn:hover { border-color: var(--c-primary); color: var(--c-primary-dark); }
 .invModeBtnOn {
@@ -407,13 +407,13 @@
   background: var(--c-primary-light);
   border: 1.5px solid rgba(26,68,52,.28);
   border-radius: var(--r-lg); padding: 14px 16px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .tutHeader {
   display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;
 }
-.tutIconBig { font-size: 22px; line-height: 1; flex-shrink: 0; padding-top: 1px; }
+.tutIconBig { font-size: 24px; line-height: 1; flex-shrink: 0; padding-top: 1px; }
 .tutTitle {
   font-size: 14px; font-weight: 700; color: var(--c-primary-dark); line-height: 1.3;
 }
@@ -435,7 +435,7 @@
 .tutNav {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
-.tutDots { display: flex; align-items: center; gap: 5px; }
+.tutDots { display: flex; align-items: center; gap: 4px; }
 .tutDot {
   width: 7px; height: 7px; border-radius: 50%;
   background: rgba(26,68,52,.22); transition: all .15s;
@@ -471,7 +471,7 @@
   padding: 16px; border-radius: var(--r-xl);
   border: 2px solid var(--c-border); background: var(--c-surface);
   cursor: pointer; font-family: inherit; text-align: left;
-  transition: all .15s; gap: 5px; width: 100%;
+  transition: all .15s; gap: 4px; width: 100%;
 }
 .modeCard:hover {
   border-color: var(--c-primary); background: var(--c-primary-light);
@@ -502,7 +502,7 @@
 }
 
 .modeNote {
-  display: flex; align-items: flex-start; gap: 7px;
+  display: flex; align-items: flex-start; gap: 8px;
   padding: 10px 12px; border-radius: var(--r-lg);
   background: var(--c-subtle); border: 1px solid var(--c-border);
   font-size: 11.5px; color: var(--c-text-3); line-height: 1.5;
@@ -515,15 +515,15 @@
 }
 
 .modeChosenBadge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 8px; border-radius: var(--r-sm);
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-radius: var(--r-sm);
   background: var(--c-primary-light); border: 1px solid rgba(26,68,52,.2);
   font-size: 11.5px; font-weight: 600; color: var(--c-primary-dark);
 }
 
 .modeBackBtn {
   background: none; border: none; cursor: pointer; font-family: inherit;
-  font-size: 11.5px; color: var(--c-text-3); padding: 3px 8px;
+  font-size: 11.5px; color: var(--c-text-3); padding: 4px 8px;
   border-radius: 5px; transition: all .1s;
 }
 .modeBackBtn:hover { color: var(--c-primary-dark); background: var(--c-primary-light); }
@@ -553,7 +553,7 @@
 
 .seNotFound {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
-  text-align: center; padding: 18px 12px;
+  text-align: center; padding: 16px 12px;
   border: 1px dashed var(--c-border); border-radius: var(--r-lg);
   background: var(--c-subtle); color: var(--c-text-2); font-size: 13px;
 }
@@ -576,15 +576,15 @@
 }
 .seArrow { font-size: 20px; color: var(--c-text-3); flex-shrink: 0; }
 .seStockLbl {
-  font-size: 10px; font-weight: 600; text-transform: none; letter-spacing: .06em;
-  color: var(--c-text-3); margin-bottom: 3px;
+  font-size: 11px; font-weight: 600; text-transform: none; letter-spacing: .06em;
+  color: var(--c-text-3); margin-bottom: 4px;
 }
-.seStockVal { font-size: 22px; font-weight: 800; color: var(--c-text); line-height: 1; }
+.seStockVal { font-size: 24px; font-weight: 700; color: var(--c-text); line-height: 1; }
 .seStockVal span { font-size: 12px; font-weight: 500; color: var(--c-text-2); }
 .seStockValNew { color: var(--c-primary-dark); }
 .seStockEquiv { font-size: 11.5px; color: var(--c-text-3); margin-top: 4px; }
 
-.seStepper { display: flex; align-items: center; gap: 7px; }
+.seStepper { display: flex; align-items: center; gap: 8px; }
 
 /* ── Recepciones según el servidor ───────────────────────── */
 .recModal { max-width: 920px; width: 100%; }
@@ -598,7 +598,7 @@
 .recLayout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 14px; align-items: start; }
 .recList { display: flex; flex-direction: column; gap: 6px; max-height: 56vh; overflow-y: auto; }
 .recRow {
-  display: flex; flex-direction: column; gap: 3px; width: 100%; padding: 9px 11px; text-align: left;
+  display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 8px 12px; text-align: left;
   font: inherit; font-size: 12.5px; color: var(--c-text); cursor: pointer;
   background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-md);
 }
@@ -621,7 +621,7 @@
 .recActions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
 .recError { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12.5px; color: var(--c-danger-text); }
 .recReview { font-size: 12.5px; line-height: 1.45; }
-.recReview ol { margin: 6px 0 10px; padding-left: 18px; }
+.recReview ol { margin: 6px 0 10px; padding-left: 16px; }
 @media (max-width: 760px) {
   .recLayout { grid-template-columns: minmax(0, 1fr); }
   .recList, .recDetail { max-height: none; }

@@ -152,7 +152,7 @@ const PasswordField = ({ label, value, onChange, error, hint, autoComplete }) =>
                     value={value}
                     onChange={onChange}
                     autoComplete={autoComplete}
-                    style={{ paddingRight: "60px" }}
+                    style={{ paddingRight: "56px" }}
                 />
                 <button
                     type="button"

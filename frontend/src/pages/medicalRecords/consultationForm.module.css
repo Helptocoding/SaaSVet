@@ -40,7 +40,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 14px 28px;
+  padding: 14px 24px;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
 }
@@ -78,7 +78,7 @@
 }
 
 .topTitle {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: #15140f;
   line-height: 1.2;
@@ -127,7 +127,7 @@
 
 .banner {
   flex-shrink: 0;
-  padding: 22px 32px 20px;
+  padding: 20px 32px 20px;
   border-bottom: 1px solid #e4e1dc;
   background: #fff;
 }
@@ -136,7 +136,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 28px;
+  gap: 24px;
   max-width: 1260px;
   margin: 0 auto;
 }
@@ -148,7 +148,7 @@
 }
 
 .eyebrow {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: none;
@@ -163,7 +163,7 @@
 
 .whoName {
   font-size: clamp(1.6rem, 3.2vw, 2.4rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.04em;
   color: #000;
@@ -185,7 +185,7 @@
 
 .vitals {
   display: flex;
-  gap: 18px;
+  gap: 16px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
@@ -195,7 +195,7 @@
 }
 
 .vitalLabel {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: none;
@@ -240,7 +240,7 @@
 .scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 28px;
+  padding: 24px;
 }
 
 /* ── App shell + 2-column grid (rail | content) ── */
@@ -254,7 +254,7 @@
 .grid {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
-  gap: 28px;
+  gap: 24px;
   align-items: start;
 }
 
@@ -299,7 +299,7 @@
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
@@ -308,7 +308,7 @@
   align-items: center;
   align-self: flex-start;
   margin-top: 12px;
-  padding: 3px 9px;
+  padding: 4px 8px;
   border-radius: var(--r-sm);
   background: var(--c-warning-bg);
   color: var(--c-warning-text);
@@ -345,7 +345,7 @@
 }
 
 .railEyebrow {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: none;
@@ -423,7 +423,7 @@
 }
 
 .railVitalLabel {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: none;
@@ -431,7 +431,7 @@
 }
 
 .railVitalValue {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: #111;
   font-family: var(--font-mono);
@@ -443,7 +443,7 @@
 }
 
 .railVitalUnit {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 400;
   color: #b0aaa1;
   margin-left: 2px;
@@ -455,7 +455,7 @@
   outline: none;
   background: transparent;
   color: #111;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -476,7 +476,7 @@
   justify-content: space-between;
   gap: 8px;
   width: 100%;
-  padding: 8px 11px;
+  padding: 8px 12px;
   border: none;
   border-radius: 9px;
   background: transparent;
@@ -570,7 +570,7 @@
   border: none;
   border-bottom: 1px solid var(--line);
   border-radius: 0;
-  padding: 30px 0 32px;
+  padding: 32px 0 32px;
   display: flex;
   flex-direction: column;
 }
@@ -583,13 +583,13 @@
 .cardHead {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   margin-bottom: 20px;
 }
 
 .cardTitle {
   margin: 0;
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: #15140f;
@@ -610,9 +610,9 @@
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   margin-top: 4px;
-  padding: 13px 20px;
+  padding: 12px 20px;
   border-radius: 14px;
   background: #1a1a1a;
   color: #fff;
@@ -626,7 +626,7 @@
 }
 
 .totalsSubLabel {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.03em;
   text-transform: none;
   color: rgba(255, 255, 255, 0.55);
@@ -651,15 +651,15 @@
 }
 
 .totalsGrandLabel {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.05em;
   text-transform: none;
   color: rgba(255, 255, 255, 0.6);
 }
 
 .totalsGrandVal {
-  font-size: 23px;
-  font-weight: 800;
+  font-size: 24px;
+  font-weight: 700;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: #fff;
@@ -719,7 +719,7 @@
 
 .secTitle {
   margin: 0;
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #000;
@@ -734,13 +734,13 @@
   height: 1px;
   background: #e4e1dc;
   border: none;
-  margin: 36px 0;
+  margin: 32px 0;
 }
 
 /* ── Fields ── */
 
 .field {
-  margin-bottom: 26px;
+  margin-bottom: 24px;
 }
 
 .field:last-child {
@@ -765,7 +765,7 @@
 }
 
 .req {
-  margin-left: 3px;
+  margin-left: 4px;
   color: var(--c-danger-text);
   font-weight: 700;
   font-size: 16px;
@@ -787,7 +787,7 @@
 .grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 28px;
+  gap: 24px;
 }
 
 /* ── Notes / help text ── */
@@ -810,7 +810,7 @@
   background: #fff;
   color: #15140f;
   font-family: var(--font-sans);
-  font-size: 14.5px;
+  font-size: 14px;
   outline: none;
   transition: border-color var(--t), box-shadow var(--t);
 }
@@ -838,7 +838,7 @@ textarea.control {
   min-height: 100px;
   max-width: 66ch;
   padding: 14px 16px;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.7;
   border-color: #e5e5e5;
   background: #fff;
@@ -925,7 +925,7 @@ textarea.control {
 
 .adder {
   margin-top: 10px;
-  padding: 13px;
+  padding: 12px;
   border: 1px solid #e5e5e5;
   border-radius: var(--r-lg);
   background: transparent;
@@ -934,7 +934,7 @@ textarea.control {
 .adderLite {
   display: grid;
   gap: 12px;
-  margin: 14px 0 18px;
+  margin: 14px 0 16px;
 }
 
 .adderLabel {
@@ -948,7 +948,7 @@ textarea.control {
 .addGrid {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
+  gap: 8px;
   align-items: flex-end;
 }
 
@@ -975,7 +975,7 @@ textarea.control {
 
 .costToggleBtn {
   height: 36px;
-  padding: 0 13px;
+  padding: 0 12px;
   border: none;
   background: transparent;
   color: #888;
@@ -995,7 +995,7 @@ textarea.control {
 .tableModeMuted {
   display: inline-flex;
   align-items: center;
-  padding: 2px 9px;
+  padding: 2px 8px;
   border-radius: var(--r-sm);
   background: #f1f0ed;
   color: #8a8a86;
@@ -1006,7 +1006,7 @@ textarea.control {
 .tableModeStrong {
   display: inline-flex;
   align-items: center;
-  padding: 2px 9px;
+  padding: 2px 8px;
   border-radius: var(--r-sm);
   background: #e6f5ee;
   color: #1a7d55;
@@ -1019,7 +1019,7 @@ textarea.control {
 .badgeIncluido {
   display: inline-flex;
   align-items: center;
-  padding: 2px 9px;
+  padding: 2px 8px;
   border-radius: var(--r-sm);
   border: 1px solid #e5e5e5;
   background: transparent;
@@ -1069,7 +1069,7 @@ textarea.control {
 }
 
 .table th {
-  padding: 9px 14px;
+  padding: 8px 14px;
   background: #faf9f7;
   border-bottom: 1px solid var(--line);
   text-align: left;
@@ -1092,19 +1092,19 @@ textarea.control {
 }
 
 .cellName {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: #000;
 }
 
 .cellSub {
-  margin-top: 3px;
+  margin-top: 4px;
   font-size: 12.5px;
   color: #888;
 }
 
 .tableEmpty {
-  padding: 26px 14px;
+  padding: 24px 14px;
   text-align: center;
   font-size: 14px;
   color: #888;
@@ -1230,7 +1230,7 @@ textarea.control {
 
 .prescriptionPanel {
   padding: 24px 0 0;
-  margin-top: 28px;
+  margin-top: 24px;
   border-top: 1px solid #e4e1dc;
 }
 
@@ -1244,7 +1244,7 @@ textarea.control {
 
 .subSectionTitle {
   margin: 0 0 6px;
-  font-size: 18px;
+  font-size: 16px;
   letter-spacing: -0.02em;
   color: #000;
 }
@@ -1254,7 +1254,7 @@ textarea.control {
 .resumen {
   display: flex;
   justify-content: flex-end;
-  margin-top: 28px;
+  margin-top: 24px;
 }
 
 .resumenBox {
@@ -1264,8 +1264,8 @@ textarea.control {
 .resumenLine {
   display: flex;
   justify-content: space-between;
-  padding: 7px 0;
-  font-size: 14.5px;
+  padding: 8px 0;
+  font-size: 14px;
   color: #666;
 }
 
@@ -1365,7 +1365,7 @@ textarea.control {
 .protocolHint {
   display: inline-flex;
   align-items: center;
-  padding: 2px 9px;
+  padding: 2px 8px;
   border-radius: 0;
   background: transparent;
   color: var(--accent);
@@ -1378,9 +1378,9 @@ textarea.control {
 .vaccineHistory {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   margin-top: 8px;
-  padding: 8px 11px;
+  padding: 8px 12px;
   border: 1px solid #eee;
   border-radius: 12px;
   background: transparent;
@@ -1411,7 +1411,7 @@ textarea.control {
 .saveState {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   font-size: 13px;
   color: #999;
 }
@@ -1451,7 +1451,7 @@ textarea.control {
 
 .doneTitle {
   margin-bottom: 8px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #1a1a1a;
 }
@@ -1476,7 +1476,7 @@ textarea.control {
   padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 8px;
   text-align: left;
   border: 1px solid #eee;
   border-radius: 12px;
@@ -1524,7 +1524,7 @@ textarea.control {
   align-items: center;
   gap: 4px;
   margin-bottom: 6px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   color: #999;
 }
@@ -1541,7 +1541,7 @@ textarea.control {
   outline: none;
   background: transparent;
   color: #1a1a1a;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -1565,7 +1565,7 @@ textarea.control {
 }
 
 .fieldErrorMessage {
-  margin-top: 5px;
+  margin-top: 4px;
   font-size: 13px;
   font-weight: 500;
   color: var(--c-danger-text);
@@ -1639,11 +1639,11 @@ textarea.control {
 
 @media (max-width: 760px) {
   .scroll {
-    padding: 22px 18px 40px;
+    padding: 20px 16px 40px;
   }
 
   .banner {
-    padding: 12px 18px 10px;
+    padding: 12px 16px 10px;
   }
 
   .bannerRow {

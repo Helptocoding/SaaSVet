@@ -198,7 +198,7 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, canArchive }) => 
     return (
         <div
             className="card card-hover"
-            style={{ cursor: "pointer", padding: "18px 20px" }}
+            style={{ cursor: "pointer", padding: "16px 20px" }}
             onClick={pet.is_active ? onSelect : undefined}
         >
             {/* Header */}
@@ -211,7 +211,7 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, canArchive }) => 
                     <SpeciesIcon pet={pet} size={22} color={accent.icon} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontSize: "15px", fontWeight: "700", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {pet.name}
                     </h3>
                     <p style={{ fontSize: "12.5px", color: "var(--c-text-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -228,18 +228,18 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, canArchive }) => 
             {/* Data grid */}
             <div style={{ borderTop: "1px solid var(--c-subtle)", marginBottom: "14px", paddingTop: "12px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 <div>
-                    <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "3px" }}>Edad</p>
+                    <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Edad</p>
                     <p style={{ fontSize: "13.5px", color: "var(--c-text)", fontWeight: "500" }}>{age || "—"}</p>
                 </div>
                 <div>
-                    <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "3px" }}>Sexo</p>
+                    <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Sexo</p>
                     <p style={{ fontSize: "13.5px", color: "var(--c-text)", fontWeight: "500" }}>
                         {pet.sex && pet.sex !== "unknown" ? SEX_LABELS[pet.sex] : "—"}
                     </p>
                 </div>
                 {pet.color && (
                     <div style={{ gridColumn: "1 / -1" }}>
-                        <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "3px" }}>Color</p>
+                        <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Color</p>
                         <p style={{ fontSize: "13.5px", color: "var(--c-text)", fontWeight: "500" }}>{pet.color}</p>
                     </div>
                 )}
@@ -357,7 +357,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
 
                 {/* Header */}
                 <div style={{
-                    padding: "20px 22px 16px",
+                    padding: "20px 20px 16px",
                     borderBottom: "1px solid var(--c-border)",
                     display: "flex", alignItems: "flex-start", gap: "14px",
                     flexShrink: 0,
@@ -370,13 +370,13 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                         <SpeciesIcon pet={pet} size={26} color={accent.icon} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ fontSize: "17px", fontWeight: "700", marginBottom: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {pet.name}
                         </h3>
-                        <p style={{ fontSize: "12.5px", color: "var(--c-text-2)", marginBottom: "7px" }}>
+                        <p style={{ fontSize: "12.5px", color: "var(--c-text-2)", marginBottom: "8px" }}>
                             {speciesLabel(pet.species)}{pet.breed ? ` · ${pet.breed}` : ""}
                         </p>
-                        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
                             {age && <span className="badge badge-default">{age}</span>}
                             {pet.sex && pet.sex !== "unknown" && (
                                 <span className="badge badge-default">{SEX_LABELS[pet.sex]}</span>
@@ -398,13 +398,13 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                 </div>
 
                 {/* Body */}
-                <div style={{ flex: 1, overflowY: "auto", padding: "20px 22px" }}>
+                <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px" }}>
                     {loading ? (
                         <PetPanelSkeleton />
                     ) : (
                         <>
                             {/* Cliente */}
-                            <section style={{ marginBottom: "22px" }}>
+                            <section style={{ marginBottom: "20px" }}>
                                 <p style={sectionTitle}>Cliente</p>
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                     <div style={{
@@ -428,7 +428,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
 
                             {/* Datos físicos */}
                             {(pet.color || pet.birth_date) && (
-                                <section style={{ marginBottom: "22px" }}>
+                                <section style={{ marginBottom: "20px" }}>
                                     <p style={sectionTitle}>Datos físicos</p>
                                     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                                         {pet.birth_date && (
@@ -451,9 +451,9 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
 
                             {/* Próximas citas */}
                             {upcoming.length > 0 && (
-                                <section style={{ marginBottom: "22px" }}>
+                                <section style={{ marginBottom: "20px" }}>
                                     <p style={sectionTitle}>Próximas citas</p>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                                         {upcoming.map(appt => (
                                             <div key={appt.id} style={{
                                                 display: "flex", alignItems: "flex-start", gap: "10px",
@@ -477,7 +477,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                             )}
 
                             {/* Historial reciente */}
-                            <section style={{ marginBottom: "22px" }}>
+                            <section style={{ marginBottom: "20px" }}>
                                 <p style={sectionTitle}>Historial reciente</p>
                                 {sortedRecords.length === 0 ? (
                                     <p style={{ fontSize: "12.5px", color: "var(--c-text-3)", fontStyle: "italic" }}>Sin consultas registradas</p>
@@ -547,7 +547,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
 
                 {/* Footer */}
                 <div style={{
-                    padding: "14px 22px", borderTop: "1px solid var(--c-border)",
+                    padding: "14px 20px", borderTop: "1px solid var(--c-border)",
                     display: "flex", gap: "8px", flexShrink: 0,
                 }}>
                     <button
@@ -916,7 +916,7 @@ const Pets = () => {
                 </div>
 
                 {/* Species chips */}
-                <div style={{ display: "flex", gap: "3px", background: "var(--c-subtle)", padding: "3px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
+                <div style={{ display: "flex", gap: "4px", background: "var(--c-subtle)", padding: "4px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
                     {[
                         { key: "all", label: "Todos" },
                         { key: "caninos", label: "Caninos", icon: <Icon.Dog s={13} /> },
@@ -926,7 +926,7 @@ const Pets = () => {
                             key={key}
                             onClick={() => setFilter(setFilterSpecies, key)}
                             style={{
-                                display: "inline-flex", alignItems: "center", gap: "5px",
+                                display: "inline-flex", alignItems: "center", gap: "4px",
                                 height: "28px", padding: "0 10px",
                                 borderRadius: "var(--r-sm)", border: "none", cursor: "pointer",
                                 fontSize: "12.5px", fontWeight: "600", fontFamily: "inherit",
@@ -983,7 +983,7 @@ const Pets = () => {
                 <div style={{ flex: 1 }} />
 
                 {/* View toggle */}
-                <div style={{ display: "flex", gap: "3px", background: "var(--c-subtle)", padding: "3px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
+                <div style={{ display: "flex", gap: "4px", background: "var(--c-subtle)", padding: "4px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
                     {[{ key: "cards", I: Icon.Grid }, { key: "table", I: Icon.Rows }].map(({ key, I }) => (
                         <button
                             key={key}

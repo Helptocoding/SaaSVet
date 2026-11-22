@@ -37,7 +37,7 @@
   background: var(--c-surface);
   border: 1.5px solid var(--c-border);
   border-radius: var(--r-lg);
-  padding: 16px 18px;
+  padding: 16px 16px;
   width: 300px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
   pointer-events: auto;
@@ -69,16 +69,16 @@
   align-items: center;
   background: var(--c-primary-light);
   color: var(--c-primary-dark);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 2px 9px;
+  padding: 2px 8px;
   border-radius: var(--r-sm);
-  margin-bottom: 9px;
+  margin-bottom: 8px;
   letter-spacing: 0.04em;
 }
 
 .title {
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--c-text);
   line-height: 1.35;
@@ -97,7 +97,7 @@
   justify-content: space-between;
   gap: 8px;
 }
-.navBtns { display: flex; gap: 7px; }
+.navBtns { display: flex; gap: 8px; }
 
 .skipBtn {
   background: none;
