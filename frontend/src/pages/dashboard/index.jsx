@@ -94,7 +94,7 @@ function buildKpiItems(kpis, role) {
       label: "Pacientes hoy",
       value: kpis?.patients_today ?? 0,
       icon: Icon.Paw,
-      tone: "forest",
+      tone: "ink",
       foot: "Mascotas con cita",
     },
   ];

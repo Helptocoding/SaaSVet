@@ -222,10 +222,12 @@ const POS = () => {
             <div className="page-header">
                 <h1 className="page-title">Punto de Venta</h1>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", marginLeft: "auto" }}>
-                    <CajaBar variant="compact" onSession={setCashSession} />
+                    {/* Plan UX D7: la acción secundaria antes; «Abrir caja» (la que
+                        desbloquea cobrar) queda al final, dentro de CajaBar. */}
                     <button className="btn btn-secondary btn-sm" onClick={() => navigate("/billing")}>
                         Ver cobros
                     </button>
+                    <CajaBar variant="compact" onSession={setCashSession} />
                 </div>
             </div>
 

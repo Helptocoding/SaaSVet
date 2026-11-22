@@ -1,0 +1,477 @@
+/* ── Agenda (Citas) ───────────────────────────────────────────
+   Antes vivía en dos <style> inyectados por pages/appointments.jsx, con
+   una paleta propia («--monday-teal» y ~130 hex). Plan UX F2.1 (D5/D6):
+   solo tokens; el color de una cita lo da su categoría y solo cuando pide
+   atención (urgencia, cirugía, vacunación); el resto va en neutro.
+   Las clases son globales pero propias de la agenda (prefijos agenda-,
+   week-, day-, appointment-), así que no chocan con otras pantallas.
+──────────────────────────────────────────────────────────────── */
+
+/* ── Contenedor y header ─────────────────────────────────────── */
+.appointments-event-manager .page-header { align-items: center; margin-bottom: 12px; }
+.appointments-event-manager .page-subtitle { display: none; }
+.agenda-header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.agenda-shell {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  overflow: hidden;
+}
+.appointments-event-manager .agenda-grid { display: block; }
+.appointments-event-manager .agenda-sidebar { display: none; }
+
+/* ── Barra de filtros ────────────────────────────────────────── */
+.appointments-event-manager .agenda-controls {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: -1px;
+  padding: 10px 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-bottom: 0;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+/* Filtros con el aspecto común (plan UX F2.7, ley de Jakob): .searchBar y
+   .select-input globales; aquí solo el ancho. */
+.appointments-event-manager .agenda-search-bar { width: 250px; min-height: 38px; }
+.appointments-event-manager .agenda-control-select { width: auto; }
+.appointments-event-manager .agenda-category-select { max-width: 200px; }
+
+/* ── Barra del calendario: título, ‹ Hoy › y aviso ───────────── */
+.appointments-event-manager .agenda-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--c-border);
+}
+.agenda-toolbar-title { color: var(--c-text); font-size: 16px; font-weight: 700; }
+.agenda-nav { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+/* Ley de Fitts: 32 px mínimo (antes 26×30 con estilos inline). */
+.agenda-nav-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color var(--t), color var(--t);
+}
+.agenda-nav-btn:hover { border-color: var(--c-primary); color: var(--c-primary-dark); }
+.agenda-nav-btn:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+.agenda-nav-today { font-size: 12.5px; font-weight: 600; }
+.appointments-event-manager .agenda-past-note {
+  align-self: center;
+  margin-left: 8px;
+  color: var(--c-text-3);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+/* ── Selector de vista heredado (barra lateral oculta) ───────── */
+.agenda-view-switcher,
+.agenda-filters,
+.agenda-staff { display: flex; flex-wrap: wrap; gap: 6px; }
+.agenda-view-button,
+.agenda-filter,
+.agenda-staff-button {
+  padding: 6px 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  color: var(--c-text-2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--t), color var(--t), background var(--t);
+}
+.agenda-view-button:hover,
+.agenda-filter:hover,
+.agenda-staff-button:hover { border-color: var(--c-primary); color: var(--c-primary-dark); }
+.agenda-view-button.is-active,
+.agenda-filter.is-active,
+.agenda-staff-button.is-active {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: var(--c-on-primary);
+}
+.agenda-section-label {
+  margin: 0 0 8px;
+  color: var(--c-text-3);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.agenda-sidebar-card {
+  padding: 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+}
+.agenda-sidebar-divider { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--c-border); }
+
+/* ── FullCalendar ────────────────────────────────────────────── */
+.agenda-calendar .fc { font-size: 12px; }
+.agenda-calendar .fc-scrollgrid { border: 0; }
+.agenda-calendar .fc-theme-standard td,
+.agenda-calendar .fc-theme-standard th { border-color: var(--c-border); }
+.agenda-calendar .fc-col-header-cell {
+  padding: 8px 0;
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.agenda-calendar .fc-daygrid-day-frame {
+  position: relative;
+  min-height: 106px;
+  transition: background var(--t), box-shadow var(--t);
+}
+.agenda-calendar .fc-daygrid-day-number {
+  padding: 8px;
+  color: var(--c-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.agenda-calendar .fc-day-today { background: var(--c-surface-2) !important; }
+.agenda-calendar .fc-day-today .fc-daygrid-day-number { color: var(--c-primary); }
+.agenda-calendar .fc-highlight { background: var(--c-primary-light); }
+
+/* Cita: fondo de superficie, barra izquierda con el tono de su categoría. */
+.agenda-calendar .fc-event {
+  margin: 1px 4px;
+  padding: 2px 6px;
+  background: var(--c-surface) !important;
+  border-width: 0 0 0 3px;
+  border-radius: var(--r-sm);
+  box-shadow: 0 0 0 1px var(--c-border);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.agenda-calendar .fc-event:hover { box-shadow: var(--shadow-md); }
+.agenda-calendar .fc-event-title {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agenda-calendar .fc-daygrid-more-link { color: var(--c-primary); font-size: 11px; font-weight: 700; }
+.agenda-calendar .fc-timegrid-slot { height: 2.75em; }
+
+/* Días pasados: no se agenda en el pasado (paso del recorrido). */
+.agenda-calendar .fc-day-past,
+.agenda-calendar .fc-day-disabled { background: var(--c-surface); opacity: 1; }
+.agenda-calendar .fc-day-past .fc-daygrid-day-frame,
+.agenda-calendar .fc-day-disabled .fc-daygrid-day-frame { background: transparent; cursor: not-allowed; }
+.agenda-calendar .fc-day-past .fc-daygrid-day-number,
+.agenda-calendar .fc-day-disabled .fc-daygrid-day-number { color: var(--c-text); font-weight: 700; opacity: 1; }
+.agenda-calendar .fc-day-past:hover .fc-daygrid-day-frame,
+.agenda-calendar .fc-day-disabled:hover .fc-daygrid-day-frame {
+  background: var(--c-subtle);
+  box-shadow: inset 0 0 0 1px var(--c-border-2);
+}
+.appointments-event-manager.can-create .agenda-calendar .fc-daygrid-day:not(.fc-day-past):not(.fc-day-disabled) .fc-daygrid-day-frame { cursor: pointer; }
+.appointments-event-manager.can-create .agenda-calendar .fc-daygrid-day:not(.fc-day-past):not(.fc-day-disabled) .fc-daygrid-day-frame:hover {
+  background: var(--c-primary-light);
+  box-shadow: inset 0 0 0 1px var(--sage-400);
+}
+
+/* Mes */
+.appointments-event-manager.view-month .agenda-calendar .fc-daygrid-body table { border-collapse: separate; border-spacing: 4px; }
+.appointments-event-manager.view-month .agenda-calendar .fc-daygrid-day {
+  overflow: hidden;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border) !important;
+  border-radius: var(--r-lg);
+}
+.appointments-event-manager.view-month .agenda-calendar .fc-daygrid-day-frame { min-height: 60px; }
+.appointments-event-manager.view-month .agenda-calendar .fc-daygrid-day-top { min-height: 20px; }
+.appointments-event-manager.view-month .agenda-calendar .fc-daygrid-day-number { padding: 4px 6px; font-size: 11px; }
+.appointments-event-manager.view-month .agenda-calendar .fc-day-past { background: var(--c-surface); border-color: var(--c-border) !important; }
+.appointments-event-manager.view-month .agenda-calendar .fc-day-past .fc-daygrid-day-frame { background: transparent; }
+.appointments-event-manager.view-month .agenda-calendar .fc-day-today {
+  background: var(--c-surface) !important;
+  box-shadow: inset 0 0 0 1px var(--c-primary);
+}
+.appointments-event-manager.view-month .agenda-calendar .fc-event { padding: 2px 4px; font-size: 11px; line-height: 1.15; }
+
+/* Semana */
+.appointments-event-manager.view-week .agenda-calendar .fc-timegrid-axis { background: var(--c-surface-2); color: var(--c-text-2); font-size: 11px; }
+.appointments-event-manager.view-week .agenda-calendar .fc-timegrid-col,
+.appointments-event-manager.view-week .agenda-calendar .fc-timegrid-col.fc-day-past { background: var(--c-surface); }
+.appointments-event-manager.view-week .agenda-calendar .fc-timegrid-col.fc-day-past .fc-timegrid-col-frame { background: transparent; cursor: not-allowed; }
+.appointments-event-manager.view-week .agenda-calendar .fc-timegrid-col.fc-day-past:hover .fc-timegrid-col-frame {
+  background: var(--c-subtle);
+  box-shadow: inset 0 0 0 1px var(--c-border-2);
+}
+.appointments-event-manager.view-week .agenda-calendar .fc-col-header-cell { padding: 10px 0; background: var(--c-surface-2); }
+.appointments-event-manager.view-week .agenda-calendar .fc-col-header-cell-cushion { color: var(--c-text-2); font-size: 11px; font-weight: 700; }
+.appointments-event-manager.view-week .agenda-calendar .fc-timegrid-slot { height: 2.2em; }
+.appointments-event-manager.view-week .agenda-calendar .fc-timegrid-slot-minor { border-top-color: var(--c-border); border-top-style: dashed; }
+.appointments-event-manager.view-week .agenda-calendar .fc-timegrid-slot-lane { transition: background var(--t); }
+.appointments-event-manager.can-create.view-week .agenda-calendar .fc-timegrid-slot-lane { cursor: pointer; }
+.appointments-event-manager.can-create.view-week .agenda-calendar .fc-timegrid-col:not(.fc-day-past) .fc-timegrid-slot-lane:hover {
+  background: var(--c-primary-light);
+  box-shadow: inset 0 0 0 1px var(--sage-400);
+}
+.appointments-event-manager.view-week .agenda-calendar .fc-day-past .fc-timegrid-slot-lane { cursor: not-allowed; }
+.appointments-event-manager.view-week .agenda-calendar .fc-event { padding: 4px 6px; border-radius: var(--r-md); }
+
+/* ── Vista lista ─────────────────────────────────────────────── */
+.agenda-global-view-switcher { display: none; }
+.appointments-event-manager.view-list .agenda-global-view-switcher { display: flex; justify-content: flex-end; margin: 0 0 10px; }
+.appointments-event-manager.view-day .agenda-grid,
+.appointments-event-manager.view-list .agenda-grid { display: none; }
+
+.appointment-list-view {
+  padding: 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+}
+.appointment-date-group + .appointment-date-group { margin-top: 20px; }
+.appointment-date-group h3 {
+  margin: 0 0 8px;
+  color: var(--c-text-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+/* «Miércoles, 22 de abril de 2026»: solo la primera letra en mayúscula
+   (`capitalize` daba «22 De Abril De 2026»). */
+.appointment-date-group h3::first-letter { text-transform: uppercase; }
+.appointment-date-items { display: grid; gap: 8px; }
+.appointment-list-card {
+  display: grid;
+  grid-template-columns: 112px minmax(160px, 1fr) minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 62px;
+  padding: 8px 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-left: 4px solid var(--appointment-accent);
+  border-radius: var(--r-md);
+  color: var(--c-text);
+  text-align: left;
+  cursor: pointer;
+}
+.appointment-list-card:hover { background: var(--c-surface-2); border-color: var(--c-border-2); }
+.appointment-list-card time { color: var(--c-text-2); font-size: 11.5px; font-weight: 700; }
+.appointment-list-main { display: grid; gap: 2px; }
+.appointment-list-main strong { font-size: 13px; }
+.appointment-list-main small { color: var(--c-text-3); font-size: 11.5px; }
+.appointment-list-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.appointment-list-tags em {
+  padding: 4px 8px;
+  background: var(--c-subtle);
+  border-radius: var(--r-full);
+  color: var(--c-text-2);
+  font-size: 11px;
+  font-style: normal;
+}
+.appointment-list-empty { padding: 40px 12px; color: var(--c-text-3); text-align: center; }
+.appointment-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 16px; }
+.appointment-pagination button {
+  min-height: 32px;
+  padding: 0 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.appointment-pagination button:hover:not(:disabled),
+.appointment-pagination button.is-active {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: var(--c-on-primary);
+}
+.appointment-pagination button:disabled { cursor: not-allowed; opacity: 0.45; }
+
+/* ── Vista día ───────────────────────────────────────────────── */
+.week-planner {
+  overflow: hidden;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+}
+.week-planner-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+}
+.week-planner-kicker {
+  color: var(--c-text-3);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.week-planner-range { margin-top: 2px; color: var(--c-text); font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+.week-planner-actions,
+.week-planner-nav { display: flex; align-items: center; gap: 8px; }
+.week-planner-nav { gap: 4px; }
+.week-planner-nav button {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.week-planner-nav button:hover { border-color: var(--c-primary); color: var(--c-primary-dark); }
+
+.day-planner {
+  overflow: hidden;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+}
+.day-planner-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--c-border);
+}
+.day-planner-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--c-surface-2);
+  border-bottom: 1px solid var(--c-border);
+}
+.day-planner-stats > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: 0 16px;
+  border-right: 1px solid var(--c-border);
+}
+.day-planner-stats > div:last-child { border-right: 0; }
+.day-planner-stats span { color: var(--c-text-3); font-size: 12px; }
+.day-planner-stats strong { color: var(--c-text); font-size: 20px; letter-spacing: -0.01em; }
+.day-planner-list { display: grid; gap: 8px; padding: 12px; }
+.day-appointment-row {
+  display: grid;
+  grid-template-columns: 62px minmax(160px, 1.4fr) minmax(130px, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 58px;
+  padding: 8px 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-left: 4px solid var(--appointment-accent);
+  border-radius: var(--r-md);
+  color: var(--c-text);
+  text-align: left;
+  cursor: pointer;
+}
+.day-appointment-row:hover { background: var(--c-surface-2); border-color: var(--c-border-2); }
+.day-appointment-row time {
+  padding: 6px 8px;
+  background: var(--c-subtle);
+  border-radius: var(--r-sm);
+  color: var(--c-text-2);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.day-appointment-pet { display: grid; gap: 2px; }
+.day-appointment-pet strong { font-size: 13px; }
+.day-appointment-pet small,
+.day-appointment-reason { color: var(--c-text-3); font-size: 11.5px; }
+.day-planner-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 230px;
+  color: var(--c-text-3);
+}
+
+/* ── Modal de nueva cita ─────────────────────────────────────── */
+.appointment-create-modal .modal { max-width: 720px; }
+.appointment-create-modal .modal-body { padding: 24px 28px; }
+.appointment-create-modal .modal-body > div > p:first-child { display: none; }
+.appointment-create-modal .modal-body .btn-primary { margin-top: 8px; }
+
+/* Plan UX F2.9 (H24): campos cortos en dos columnas para que el formulario
+   no sea una columna larga. */
+.appointment-create-modal .appt-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.appt-quickadd { margin-top: 4px; padding-left: 0; }
+
+/* Ley de Fitts: botones de hora de 36 px (antes ~24 px). */
+.appt-hour-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+}
+.appt-hour-btn {
+  min-height: 36px;
+  padding: 0 4px;
+  background: var(--c-subtle);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: border-color var(--t), background var(--t), color var(--t);
+}
+.appt-hour-btn:hover { border-color: var(--c-primary); color: var(--c-primary-dark); }
+.appt-hour-btn.is-active {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: var(--c-on-primary);
+  font-weight: 600;
+}
+.appt-hour-btn:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .week-planner-toolbar,
+  .day-planner-toolbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .week-planner-actions { justify-content: space-between; width: 100%; }
+  .day-appointment-row { grid-template-columns: 54px 1fr auto; gap: 8px; }
+  .day-appointment-reason { display: none; }
+}
+@media (max-width: 640px) {
+  .appointments-event-manager .page-header,
+  .appointments-event-manager .agenda-toolbar { flex-direction: column; align-items: flex-start; }
+  .appointments-event-manager .agenda-toolbar,
+  .appointments-event-manager .agenda-controls { padding-left: 14px; padding-right: 14px; }
+  .appointments-event-manager .agenda-search-bar { width: 100%; }
+  .appointments-event-manager .agenda-control-select { flex: 1; min-width: 0; }
+  .appointments-event-manager .agenda-past-note { margin-left: 0; }
+  .agenda-calendar .fc-timegrid-slot { height: 3.2em; }
+  .appointment-create-modal .appt-form-row { grid-template-columns: 1fr; gap: 0; }
+}

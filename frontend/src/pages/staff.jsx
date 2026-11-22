@@ -408,7 +408,7 @@ const Staff = () => {
                 </div>
                 {canCreate && (
                     <button className="btn btn-primary btn-md" onClick={openCreate}>
-                        + Agregar miembro
+                        <Icon.Plus s={14} /> Agregar miembro
                     </button>
                 )}
             </div>

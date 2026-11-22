@@ -113,9 +113,11 @@ const SettingsLayout = ({ user, token }) => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.pageHead}>
-        <h1 className={styles.pageTitle}>Configuración</h1>
-        <p className={styles.pageSubtitle}>Información, horarios y reglas operativas de tu clínica</p>
+      <header className="page-header">
+        <div>
+          <h1 className="page-title">Configuración</h1>
+          <p className="page-subtitle">Información, horarios y reglas operativas de tu clínica</p>
+        </div>
       </header>
       <div className={styles.layout}>
       <aside className={styles.sidebar}>

@@ -4,49 +4,26 @@
    botones/inputs globales SOLO aquí. No toca el resto de la app.
 ═══════════════════════════════════════════════════════════════ */
 
+/* Alias locales hacia los tokens del sistema (plan UX F2.6). Antes era una
+   paleta propia con otros dos verdes y una superficie que sangraba sobre el
+   padding del layout (el título quedaba desalineado del resto de páginas). */
 .page {
-  --p-card: #ffffff;
-  --p-bg: #f4f5f4;
-  --p-border: #e7e8e4;
-  --p-border-strong: #d9dad4;
-  --p-text: #10151b;
-  --p-text-2: #5a636e;
-  --p-text-3: #8b929b;
-  --p-accent: #0b6b4f;
-  --p-accent-2: #0e8a63;
-  --p-accent-ring: rgba(11, 107, 79, 0.16);
-  --p-danger: #c0362c;
+  --p-card: var(--c-surface);
+  --p-bg: var(--c-bg);
+  --p-border: var(--c-border);
+  --p-border-strong: var(--c-border-2);
+  --p-text: var(--c-text);
+  --p-text-2: var(--c-text-2);
+  --p-text-3: var(--c-text-3);
+  --p-accent: var(--c-primary);
+  --p-accent-2: var(--c-primary-hover);
+  --p-accent-ring: var(--c-primary-ring);
+  --p-danger: var(--c-danger-text);
   --p-shadow-card: none;
   --p-shadow-btn: none;
 
   color: var(--p-text);
-  /* Superficie limpia propia: sangra sobre el padding (28px) del área de
-     contenido de la app para que TODA la config lea como fondo neutro
-     moderno, no el crema del resto del sistema. */
-  background: var(--p-bg);
-  margin: -28px;
-  padding: 32px 40px 80px;
-  min-height: calc(100vh - 56px);
-  box-sizing: border-box;
-}
-
-/* ─── Encabezado de página ─────────────────────────────────────── */
-.pageHead {
-  margin-bottom: 28px;
-}
-
-.pageTitle {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--p-text);
-  margin: 0 0 5px;
-}
-
-.pageSubtitle {
-  font-size: 14px;
-  color: var(--p-text-2);
-  margin: 0;
+  padding-bottom: 80px;
 }
 
 /* ─── Layout: rail + contenido ─────────────────────────────────── */

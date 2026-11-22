@@ -42,8 +42,11 @@ const Cash = () => {
     useEffect(() => { load(); }, [load]);
 
     return (
-        <div style={{ padding: "24px", maxWidth: "1040px", margin: "0 auto" }}>
-            <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--c-text)", marginBottom: "16px" }}>Caja</h1>
+        // Mismo contenedor, título y tabla que las demás páginas (plan UX F2.6/F2.8).
+        <div>
+            <div className="page-header">
+                <h1 className="page-title">Caja</h1>
+            </div>
 
             <CajaBar onChange={load} showManageLink={false} />
 
@@ -56,7 +59,8 @@ const Cash = () => {
             ) : sessions.length === 0 ? (
                 <div className="empty-state"><p className="empty-state-title">No hay turnos registrados</p></div>
             ) : (
-                <table className="table-compact" style={{ width: "100%", border: "1px solid var(--c-border)", borderRadius: "8px", overflow: "hidden" }}>
+                <div className="table-wrap">
+                <table className="table">
                     <thead>
                         <tr>
                             <th>Apertura</th>
@@ -91,6 +95,7 @@ const Cash = () => {
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
 
             {/* Detalle Z (snapshot congelado) */}
@@ -130,9 +135,6 @@ const CashHistorySkeleton = () => (
         <TableSkeleton
             rows={5}
             columns={CASH_SKELETON_COLUMNS}
-            wrap={false}
-            tableClassName="table-compact"
-            tableStyle={{ width: "100%", border: "1px solid var(--c-border)", borderRadius: "8px", overflow: "hidden" }}
         />
     </div>
 );

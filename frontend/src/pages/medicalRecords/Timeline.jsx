@@ -3,11 +3,13 @@ import { Icon } from "../../components/icons";
 import TimelineCard from "./TimelineCard";
 import styles from "./medicalRecords.module.css";
 
+// Mismo criterio que la agenda (plan UX D5/D6): la consulta general va en
+// neutro; vacunación, cirugía y urgencia con su trío semántico de tokens.
 const TYPE_META = {
-  general:   { color: "#2563eb", soft: "#eff6ff", label: "Consulta general" },
-  vaccine:   { color: "#16a34a", soft: "#f0fdf4", label: "Vacunación"        },
-  surgery:   { color: "#dc2626", soft: "#fef2f2", label: "Cirugía"           },
-  emergency: { color: "#ea580c", soft: "#fff7ed", label: "Urgencia"          },
+  general:   { color: "var(--c-text-2)",      soft: "var(--c-subtle)",    accent: "var(--c-border-2)",     label: "Consulta general" },
+  vaccine:   { color: "var(--c-info-text)",   soft: "var(--c-info-bg)",   accent: "var(--c-info-text)",    label: "Vacunación"        },
+  surgery:   { color: "var(--c-purple-text)", soft: "var(--c-purple-bg)", accent: "var(--c-purple-text)",  label: "Cirugía"           },
+  emergency: { color: "var(--c-danger-text)", soft: "var(--c-danger-bg)", accent: "var(--c-danger-text)",  label: "Urgencia"          },
 };
 
 const MONTHS = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];

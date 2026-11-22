@@ -143,17 +143,18 @@ const newSalesPres = (unitLabel = "Unidad") => ({
 const easeOutExpo = (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
 
 // ── Category icon ──────────────────────────────────────────
-const ICON_COLOR = { medication: "#3b82f6", food: "#0d9488", accessory: "#7c3aed", other: "#94a3b8" };
+// La categoría se distingue por la forma del ícono y su rótulo, no por color
+// (plan UX D6: el color queda para lo que pide acción — bajo stock, agotado,
+// receta). Antes cada categoría tenía su color, incluido un teal prohibido.
 const CATEGORY_ICON = { medication: Icon.Pill, food: Icon.ShoppingBag, accessory: Icon.Package, other: Icon.Box };
 
 const CategoryIcon = ({ category, size = 18 }) => {
-    const c = ICON_COLOR[category] || ICON_COLOR.other;
     const IconComp = CATEGORY_ICON[category] || CATEGORY_ICON.other;
-    return <IconComp s={size} c={c} />;
+    return <IconComp s={size} c="var(--c-text-2)" />;
 };
 
-const ICO_CLS = { medication: s.icoMed, food: s.icoFood, accessory: s.icoAcc, other: s.icoOther };
-const BADGE_CLS = { medication: s.badgeBlue, food: s.badgeGreen, accessory: s.badgePurple, other: s.badgeGray };
+const ICO_CLS = { medication: s.icoOther, food: s.icoOther, accessory: s.icoOther, other: s.icoOther };
+const BADGE_CLS = { medication: s.badgeGray, food: s.badgeGray, accessory: s.badgeGray, other: s.badgeGray };
 
 // ── Esqueleto de carga ─────────────────────────────────────
 // Misma estructura que la página (encabezado, indicadores, filtros, tabla) para que
@@ -183,9 +184,8 @@ const InventorySkeleton = ({ withActions }) => (
     <div>
         <div className={s.phead}>
             <div>
-                <div className={s.ptag}>Control de stock</div>
-                <h1 className={s.ptitle}>Inventario</h1>
-                <p className={s.psub}>Productos, medicamentos y suministros de la clínica</p>
+                <h1 className="page-title">Inventario</h1>
+                <p className="page-subtitle">Productos, medicamentos y suministros de la clínica</p>
             </div>
         </div>
         <div role="status" aria-label="Cargando inventario">
@@ -460,7 +460,7 @@ const Inventory = () => {
                 foot: <>Desactivados: <strong>{metrics.inactive}</strong></>,
             },
             {
-                label: "Medicamentos", value: metrics.medications, icon: Icon.Pill, tone: "primary",
+                label: "Medicamentos", value: metrics.medications, icon: Icon.Pill, tone: "ink",
                 badge: medsPct != null ? `${medsPct}%` : null,
                 foot: <>Con receta: <strong>{metrics.withRx}</strong></>,
             },
@@ -476,7 +476,7 @@ const Inventory = () => {
             },
             {
                 label: "Valor del stock", value: `$${fmtCur(animatedTotalVal)}`, icon: Icon.Wallet,
-                tone: "forest", wide: true, counting: isTotalValAnimating,
+                tone: "ink", wide: true, counting: isTotalValAnimating,
                 foot: "A precio de venta",
             },
         ];
@@ -969,24 +969,14 @@ const Inventory = () => {
             {/* ── Page header ── */}
             <div className={s.phead}>
                 <div>
-                    <div className={s.ptag}>Control de stock</div>
-                    <h1 className={s.ptitle}>Inventario</h1>
-                    <p className={s.psub}>Productos, medicamentos y suministros de la clínica</p>
+                    <h1 className="page-title">Inventario</h1>
+                    <p className="page-subtitle">Productos, medicamentos y suministros de la clínica</p>
                 </div>
                 <div className={s.pacts}>
-                    {canReceive && (
+                    {/* Orden del encabezado (plan UX D7): ayuda → secundarias → primaria al final. */}
+                    {canManage && (
                         <button
-                            className="btn btn-secondary btn-md"
-                            onClick={() => setReceptionsOpen(true)}
-                            title="Consultar en el servidor qué pasó con cada recepción"
-                        >
-                            <Icon.Rows s={13} />
-                            Recepciones
-                        </button>
-                    )}
-                    {canManage && (<>
-                        <button
-                            className="btn btn-secondary btn-md"
+                            className="btn btn-ghost btn-md"
                             onClick={() => tour.start({
                                 openWizardCreate,
                                 setWizardProduct,
@@ -1005,6 +995,18 @@ const Inventory = () => {
                             <Icon.Help s={13} />
                             Ver ejemplo
                         </button>
+                    )}
+                    {canReceive && (
+                        <button
+                            className="btn btn-secondary btn-md"
+                            onClick={() => setReceptionsOpen(true)}
+                            title="Consultar en el servidor qué pasó con cada recepción"
+                        >
+                            <Icon.Rows s={13} />
+                            Recepciones
+                        </button>
+                    )}
+                    {canManage && (<>
                         <button
                             className="btn btn-secondary btn-md"
                             onClick={() => setStockEntryOpen(true)}

@@ -61,7 +61,7 @@ const PatientHeader = ({ pet, latestVitals, noPadding = false }) => {
       </div>
 
       <div className={styles.vitalsBar}>
-        <span className={styles.vitalsTitle}>Ultimos signos vitales registrados</span>
+        <span className={styles.vitalsTitle}>Últimos signos vitales registrados</span>
         {VITAL_FIELDS.map((vf) => (
           <div className={styles.vitalItem} key={vf.field}>
             <span className={styles.vitalLabel}>{vf.label}:</span>
@@ -73,7 +73,7 @@ const PatientHeader = ({ pet, latestVitals, noPadding = false }) => {
               <span className={styles.vitalNullValue}>—</span>
             )}
             {vf.alertThreshold && getValue(vf) != null && getValue(vf) >= vf.alertThreshold && (
-              <Icon.AlertTriangle s={14} c="#ef4444" />
+              <Icon.AlertTriangle s={14} c="var(--c-danger-text)" />
             )}
           </div>
         ))}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { getPets, getPet, getPetStats, getOwners, createPet, updatePet, deletePet, restorePet, archiveOwner, restoreOwner } from "../api/pets";
+import { getPets, getPet, getPetStats, getOwners, createPet, updatePet, deletePet, restorePet, restoreOwner } from "../api/pets";
 import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
 import { getMedicalRecords } from "../api/medicalRecords";
@@ -186,7 +186,7 @@ const PetModal = ({ form, setForm, editing, onSubmit, onClose, formErrors }) => 
 );
 
 // ─── Pet Card ─────────────────────────────────────────────────────────────────
-const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, onArchiveOwner, canArchive, canArchiveOwner }) => {
+const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, canArchive }) => {
     const age = calcAge(pet.birth_date);
     const ageGroup = getAgeGroup(pet.birth_date);
     const accent = speciesAccent(pet);
@@ -263,23 +263,20 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, onArchiveOwner, c
             </div>
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: "6px" }} onClick={e => e.stopPropagation()}>
+            {/* Ley de Fitts: la acción destructiva no va pegada a la frecuente ni con su
+                mismo peso (plan UX F2.3). «Archivar cliente» vive en la ficha (D13). */}
+            <div style={{ display: "flex", gap: "16px" }} onClick={e => e.stopPropagation()}>
                 {pet.is_active ? <>
                     <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => onEdit(pet)}>
                         <Icon.Edit s={13} /> Editar
                     </button>
-                    {canArchive && <button className="btn btn-secondary btn-sm" onClick={() => onDelete(pet.public_id)}>
+                    {canArchive && <button className="btn btn-ghost btn-sm" onClick={() => onDelete(pet.public_id)}>
                         Archivar
                     </button>}
                 </> : canArchive && <button className="btn btn-secondary btn-sm" onClick={() => onRestore(pet.public_id)}>
                     Restaurar
                 </button>}
             </div>
-            {pet.is_active && canArchiveOwner && !pet.owner?.is_generic && (
-                <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); onArchiveOwner(pet.owner.public_id); }}>
-                    Archivar cliente
-                </button>
-            )}
         </div>
     );
 };
@@ -832,24 +829,6 @@ const Pets = () => {
         }
     };
 
-    const handleOwnerArchive = async (id) => {
-        if (archiveSaving) return;
-        const ok = await confirm({ title: 'Archivar cliente',
-            message: 'También se archivarán sus mascotas activas. Los cobros y documentos se conservarán.',
-            confirmText: 'Archivar cliente' });
-        if (!ok) return;
-        setArchiveSaving(true);
-        try {
-            await toast.promise(archiveOwner(id), {
-                loading: 'Archivando cliente...', success: 'Cliente y mascotas archivados',
-                error: err => apiError(err, 'No se pudo archivar el cliente'),
-            });
-            closePanel(); reload();
-        } catch {
-            // Manejado por toast
-        } finally { setArchiveSaving(false); }
-    };
-
     const handleOwnerRestore = async (id) => {
         if (archiveSaving) return;
         setArchiveSaving(true);
@@ -885,7 +864,7 @@ const Pets = () => {
                     className="btn btn-primary btn-md"
                     onClick={() => { setEditing(null); setForm(EMPTY_FORM); ; setShowModal(true); }}
                 >
-                    + Nueva Mascota
+                    <Icon.Plus s={14} /> Nueva mascota
                 </button>
             </div>
 
@@ -895,7 +874,6 @@ const Pets = () => {
                     label="Total mascotas"
                     value={stats.total}
                     icon={Icon.Paw}
-                    tone="primary"
                     foot="Registradas en la clínica"
                 />
                 <StatTile
@@ -916,7 +894,6 @@ const Pets = () => {
                     label="Citas esta semana"
                     value={weekApptCount}
                     icon={Icon.Calendar}
-                    tone="forest"
                     foot="De lunes a domingo"
                 />
             </StatSection>
@@ -1099,9 +1076,7 @@ const Pets = () => {
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             onRestore={handleRestore}
-                            onArchiveOwner={handleOwnerArchive}
                             canArchive={can('patient.destroy')}
-                            canArchiveOwner={can('owner.destroy')}
                         />
                     ))}
                 </div>
@@ -1155,12 +1130,12 @@ const Pets = () => {
                                             )}
                                         </td>
                                         <td onClick={e => e.stopPropagation()}>
-                                            <div style={{ display: "flex", gap: "6px" }}>
+                                            <div style={{ display: "flex", gap: "16px" }}>
                                                 {pet.is_active ? <>
                                                     <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(pet)}>
                                                         <Icon.Edit s={13} /> Editar
                                                     </button>
-                                                    {can('patient.destroy') && <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(pet.public_id)}>Archivar</button>}
+                                                    {can('patient.destroy') && <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(pet.public_id)}>Archivar</button>}
                                                 </> : can('patient.destroy') && <button className="btn btn-secondary btn-sm" onClick={() => handleRestore(pet.public_id)}>Restaurar</button>}
                                             </div>
                                         </td>

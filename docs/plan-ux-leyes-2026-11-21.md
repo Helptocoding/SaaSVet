@@ -3,7 +3,7 @@
 **Fecha:** 2026-11-21
 **Revisión:** 2
 **Estado:** D1–D13 APROBADAS por el usuario (2026-11-22, todas según la recomendación).
-F0 y F1 IMPLEMENTADAS (sin commit). Siguiente: F2. Registro en §7.
+F0, F1 (commits 9bbeec9, ff98d4d) y F2 (sin commit) IMPLEMENTADAS. Siguiente: F3. Registro en §7.
 **Origen:** auditoría UX del 2026-11-21, hecha sobre la app local con la cuenta demo-admin:
 13 pantallas capturadas a 1440 px y 390 px, mediciones del DOM con Playwright y búsqueda en
 `frontend/src`. Capturas y métricas fuera del repositorio (scratchpad de la sesión).
@@ -267,3 +267,38 @@ apagado o CORS), 401, 403 por contraseña temporal vencida, 403 por clínica des
 Verifica tu internet». Origen: en local, el frontend del usuario arrancó en el 5174 porque un
 Vite de las capturas ocupaba el 5173, y el backend solo admite el 5173 por CORS. Pruebas en
 `hooks/useLoginForm.test.js`.
+
+### 2026-11-22 — F2 (sin commit)
+
+Verificación: `vitest` 924/924 (87 archivos), `eslint` 0 errores, `vite build` correcto,
+capturas a 1440 px de agenda (mes, semana, día, lista, modal, recorrido), Inventario, Cobros,
+Mascotas, ficha, Historial clínico, Caja y Configuración. Trinquete: **364 · 29 · 67 · 340**.
+
+- F2.1: los dos `<style>` de la agenda (141 líneas) pasan a `features/appointments/agenda.css`
+  solo con tokens. **Desvío del plan:** archivo global con prefijos propios (`agenda-`,
+  `appointment-`, `day-`, `week-`) en vez de CSS module; convertir ~60 clases de un archivo de
+  1.300 líneas multiplicaba el riesgo. Se verificó que ninguna otra pantalla usa esos nombres.
+  Se retiran la paleta `PAL`, `CATEGORY_PALETTE`, el color por veterinario y `--monday-teal`;
+  el tono sale de la categoría (urgencia, cirugía, vacunación; el resto neutro). ‹ Hoy › a
+  32 px con clases. CSS muerto `week-*` eliminado. Token nuevo `--c-on-primary`.
+- F2.2: orden ayuda → secundarias → primaria en Citas, Inventario («Ver ejemplo» ghost),
+  Cobros («Nuevo cobro» al encabezado) y Punto de Venta; rótulos «Nueva mascota»,
+  «Agregar miembro», «Nueva consulta», «Nueva cita» con ícono.
+- F2.3: «Archivar» en ghost y separado 16 px de «Editar» (tarjeta y tabla de Mascotas);
+  papelera de Inventario separada del lápiz. «Archivar cliente» pasa a la ficha (D13) con
+  confirmación; pruebas en `pages/petDetail.archive.test.jsx`.
+- F2.4: filas de Cobros clicables (`tr.table-row-clickable`); «Venta de mostrador» cuando no
+  hay mascota.
+- F2.5: Inventario sin color por categoría (había un teal `#0d9488` en el ícono de alimento),
+  «Normal» neutro; indicadores sin acción en tono `ink`.
+- F2.6: `.page-title` en Configuración, WhatsApp, Inventario y Caja; H1 «Historial clínico»
+  sin mascota elegida. Configuración usa los tokens (tenía otra paleta con dos verdes) y deja
+  de sangrar sobre el padding. Se quita la etiqueta decorativa «Control de stock».
+- F2.7: filtros de Citas con `.searchBar` y `.select-input`. **WhatsApp no se toca:** sus
+  chips están fijados por el contrato WA-FIL-01 (`aria-pressed`, 44 px, segmentos AND).
+- F2.8: Caja sin contenedor propio y con `.table-wrap`/`.table` (usaba `table-compact`, que no
+  existe).
+- F2.9: modal de cita con fecha y hora una sola vez, campos en dos columnas y botones de hora
+  de 36 px.
+- F2.10: signos vitales legibles («Últimos», 11,5–12 px, tokens); tipo de consulta con el
+  mismo criterio de color que la agenda; «Nueva consulta» sin el verde viejo `#1a4434`.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getPet } from "../api/pets";
+import { archiveOwner, getPet } from "../api/pets";
 import { getMedicalRecords, getMedicalRecord } from "../api/medicalRecords";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
@@ -8,6 +8,8 @@ import ImportedDataSection from "../components/ImportedDataSection";
 import StatusBadge from "../components/StatusBadge";
 import { PetDetailSkeleton } from "../features/pets/PetsSkeleton";
 import { apiError } from "../utils/apiError";
+import { useConfirm } from "../components/useConfirm";
+import { toast } from "sonner";
 import api from "../api/client";
 
 const SEX_LABELS = { male: "Macho", female: "Hembra", unknown: "Desconocido" };
@@ -15,7 +17,9 @@ const SEX_LABELS = { male: "Macho", female: "Hembra", unknown: "Desconocido" };
 const PetDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { token, user, initializing } = useAuth();
+    const { token, user, initializing, can } = useAuth();
+    const confirm = useConfirm();
+    const [archivingOwner, setArchivingOwner] = useState(false);
 
     const [pet, setPet] = useState(null);
     const [records, setRecords] = useState([]);
@@ -45,6 +49,33 @@ const PetDetail = () => {
             console.error(apiError(err));
         } finally {
             setLoading(false);
+        }
+    };
+
+    // «Archivar cliente» vive aquí, junto a los datos del cliente (plan UX D13):
+    // en cada tarjeta de mascota era una acción destructiva al alcance de un
+    // clic, repetida 25 veces por página.
+    const handleArchiveOwner = async () => {
+        if (archivingOwner || !pet?.owner?.public_id) return;
+        const ok = await confirm({
+            title: "Archivar cliente",
+            message: "También se archivarán sus mascotas activas. Los cobros y documentos se conservarán.",
+            confirmText: "Archivar cliente",
+            dangerMode: true,
+        });
+        if (!ok) return;
+        setArchivingOwner(true);
+        try {
+            await toast.promise(archiveOwner(pet.owner.public_id), {
+                loading: "Archivando cliente...",
+                success: "Cliente y mascotas archivados",
+                error: (err) => apiError(err, "No se pudo archivar el cliente"),
+            });
+            navigate("/pets");
+        } catch {
+            // Manejado por toast
+        } finally {
+            setArchivingOwner(false);
         }
     };
 
@@ -127,13 +158,13 @@ const PetDetail = () => {
                             className="btn btn-primary btn-md"
                             onClick={() => navigate(`/medical-records?pet=${pet.public_id}`)}
                         >
-                            + Nueva Consulta
+                            <Icon.Plus s={14} /> Nueva consulta
                         </button>
                         <button
                             className="btn btn-secondary btn-md"
                             onClick={() => navigate(`/appointments?pet=${pet.public_id}`)}
                         >
-                            + Nueva Cita
+                            <Icon.Plus s={14} /> Nueva cita
                         </button>
                     </div>
                 )}
@@ -198,6 +229,18 @@ const PetDetail = () => {
                             <span className="info-row-value">{pet.owner?.phone || "—"}</span>
                         </div>
                         <ImportedDataSection items={pet.owner?.extra_data} />
+                        {pet.is_active !== false && pet.owner?.public_id && !pet.owner?.is_generic && can?.("owner.destroy") && (
+                            <div className="pet-detail-danger">
+                                <button
+                                    type="button"
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={handleArchiveOwner}
+                                    disabled={archivingOwner}
+                                >
+                                    {archivingOwner ? "Archivando…" : "Archivar cliente"}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

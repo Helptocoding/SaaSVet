@@ -7,27 +7,6 @@
   flex-wrap: wrap;
   gap: 12px;
 }
-.ptag {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: var(--c-primary-light);
-  border: 0;
-  color: var(--c-primary-dark);
-  font-size: 11px;
-  font-weight: 500;
-  padding: 3px 10px;
-  border-radius: var(--r-sm);
-  margin-bottom: 7px;
-}
-.ptag::before {
-  content: '';
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--c-primary);
-}
-.ptitle { font-size: 20px; font-weight: 700; color: var(--c-text); line-height: 1.3; }
-.psub   { font-size: 13px; color: var(--c-text-3); margin-top: 4px; }
 .pacts  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 /* ── Indicadores ─────────────────────────────────────────────
@@ -132,10 +111,8 @@
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.icoMed   { background: rgba(59,130,246,.1); }
-.icoFood  { background: rgba(26,68,52,.1); }
-.icoAcc   { background: rgba(124,58,237,.1); }
-.icoOther { background: rgba(156,163,175,.12); }
+/* Ícono de categoría: neutro (plan UX D6). */
+.icoOther { background: var(--c-subtle); }
 .prodName { font-weight: 600; font-size: 13.5px; color: var(--c-text); white-space: nowrap; }
 .prodDesc { font-size: 11.5px; color: var(--c-text-3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
 
@@ -145,8 +122,6 @@
   font-size: 10px; font-weight: 600;
   padding: 2px 6px; border-radius: var(--r-sm); white-space: nowrap;
 }
-.badgeGreen  { background: var(--c-success-bg);  color: var(--c-success-text); }
-.badgeBlue   { background: var(--c-info-bg);     color: var(--c-info-text);    }
 .badgePurple { background: var(--c-purple-bg);   color: var(--c-purple-text);  }
 .badgeGray   { background: var(--c-subtle);      color: var(--c-text-3);       }
 
@@ -162,7 +137,7 @@
   margin-top: 5px; width: 100%;
 }
 .miniBarFill { height: 100%; border-radius: 2px; transition: width .4s; }
-.barOk   { background: rgba(26,68,52,.4); }
+.barOk   { background: var(--c-border-2); }
 .barLow  { background: #f59e0b; }
 .barCrit { background: #ef4444; }
 
@@ -172,11 +147,12 @@
   padding: 3px 7px; border-radius: var(--r-sm);
   font-size: 11.5px; font-weight: 500; white-space: nowrap;
 }
-.pillOk   { background: var(--c-success-bg); color: var(--c-success-text); }
+/* «Normal» no pide acción: neutro (plan UX D6). */
+.pillOk   { background: var(--c-subtle); color: var(--c-text-2); }
 .pillLow  { background: var(--c-warning-bg); color: var(--c-warning-text); }
 .pillCrit { background: var(--c-danger-bg);  color: var(--c-danger-text);  }
 .pillDot  { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.dotOk    { background: var(--c-success-text); }
+.dotOk    { background: var(--c-text-4); }
 .dotLow   { background: var(--c-warning-text); }
 .dotCrit  { background: var(--c-danger-text);  }
 
@@ -185,7 +161,7 @@
 .valSub  { font-size: 11px; color: var(--c-text-3); margin-top: 1px; }
 
 /* ─ Columna: Acciones ─ */
-.actCell { display: flex; align-items: center; gap: 5px; }
+.actCell { display: flex; align-items: center; gap: 6px; }
 .ab {
   width: 30px; height: 30px;
   border-radius: 7px;
@@ -198,7 +174,8 @@
 .abAj:hover { background: rgba(26,68,52,.2); }
 .abEd { background: var(--c-subtle); color: var(--c-text-2); border-color: var(--c-border); }
 .abEd:hover { border-color: var(--c-border-2); color: var(--c-text); }
-.abDl { background: none; color: var(--c-text-3); border-color: transparent; }
+/* Ley de Fitts: eliminar queda separado (12 px + gap) del lápiz, que es la acción frecuente. */
+.abDl { margin-left: 12px; background: none; color: var(--c-text-3); border-color: transparent; }
 .abDl:hover { background: var(--c-danger-bg); color: var(--c-danger-text); border-color: var(--c-danger-border); }
 
 /* ─ Footer de tabla ─ */

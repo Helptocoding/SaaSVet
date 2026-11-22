@@ -54,10 +54,10 @@ const MIN_FONT_PX = 11;
 
 // Línea base del 2026-11-22. Solo puede bajar.
 const BASELINE = {
-    hex: 523,
-    fontWeight: 45,
-    tinyFont: 84,
-    spacing: 388,
+    hex: 364,
+    fontWeight: 29,
+    tinyFont: 67,
+    spacing: 340,
 };
 
 const stripComments = (src) =>

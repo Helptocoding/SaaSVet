@@ -177,6 +177,8 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 - Header: fondo `--c-surface-2`, th 11.5px/600 `--c-text-2`, padding `11px 16px`, letter-spacing 0.01em, borde inferior `--c-border`.
 - Body: td 13.5px `--c-text`, padding `12px 16px`, fondo `--c-surface` sin cebra, hover `--c-hover`.
 - Radio header `--r-lg`. Footer `.table-footer`.
+- **Fila que abre un registro:** `tr.table-row-clickable` con `onClick` en la fila; el botón de la
+  última columna se conserva para teclado y detiene la propagación.
 - **Columna ordenable:** componente compartido `components/SortHeader.jsx` (`th.th-sortable`
   + `.th-inner` + `.sort-arrow` en `global.css`). No crear sorting por módulo.
 - 🚫 No crear `.tableCompact` ni tablas por módulo. Una sola tabla.
