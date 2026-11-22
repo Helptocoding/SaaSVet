@@ -3,6 +3,38 @@ import { loginRequest, getMe } from "../auth/login";
 import { useAuth } from "../auth/authContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { apiError } from "../utils/apiError";
+
+/**
+ * Mensaje del login según lo que realmente pasó. Antes todo lo que no era 401
+ * decía «Error de conexión. Verifica tu internet», también un bloqueo por
+ * demasiados intentos (429), una clínica desactivada o un error del servidor:
+ * el mensaje mandaba a revisar algo que no tenía la culpa.
+ */
+export function loginErrorMessage(err) {
+    const response = err?.response;
+    // Sin respuesta: el servidor no contestó o el navegador bloqueó la petición
+    // (red caída, backend apagado, origen no permitido por CORS).
+    if (!response) {
+        return "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.";
+    }
+    const status = response.status;
+    const code = response.data?.code;
+    if (status === 401) return "Usuario o contraseña incorrectos.";
+    if (status === 403 && code === "temp_password_expired") {
+        return "Tu contraseña temporal expiró. Pídele a tu administrador un nuevo reset.";
+    }
+    if (status === 403 && code === "organization_inactive") {
+        return "Tu clínica está desactivada. Comunícate con soporte para reactivarla.";
+    }
+    if (status === 429) {
+        return "Demasiados intentos de inicio de sesión. Por seguridad, espera unos minutos y vuelve a intentarlo.";
+    }
+    if (status >= 500) {
+        return "El servidor tuvo un problema. Inténtalo de nuevo en unos minutos.";
+    }
+    return apiError(err, "No se pudo iniciar sesión. Inténtalo de nuevo.");
+}
 
 export function useLoginForm() {
     const { login, setUserData } = useAuth();
@@ -31,15 +63,7 @@ export function useLoginForm() {
                 navigate("/");
             }
         } catch (err) {
-            const code = err.response?.status;
-            const errCode = err.response?.data?.code;
-            if (code === 401) {
-                toast.error("Usuario o contraseña incorrectos.");
-            } else if (code === 403 && errCode === "temp_password_expired") {
-                toast.error("Tu contraseña temporal expiró. Pídele a tu administrador un nuevo reset.");
-            } else {
-                toast.error("Error de conexión. Verifica tu internet e intenta de nuevo.");
-            }
+            toast.error(loginErrorMessage(err));
         } finally {
             setLoading(false);
         }
