@@ -1,4 +1,4 @@
-/* ── Indicadores «Linear Insights» ──────────────────────────────
+/* ── Indicadores ──────────────────────────────
    Estructura adaptada de ReUI `statistic-card-2` (MIT, keenthemes/reui):
    título + icono, valor + insignia y un pie separado por una línea.
    Tonos sutiles: fondo claro + borde + texto del trío de cada token.
@@ -22,7 +22,7 @@
 }
 
 .eyebrow {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.3em;
   color: var(--c-text-2);
@@ -184,4 +184,11 @@
 
 @media (max-width: 720px) {
   .grid { gap: 12px; }
+}
+
+/* Móvil (plan UX F4.2): dos indicadores por fila y tarjetas más compactas,
+   para que no llenen la primera pantalla. */
+@media (max-width: 560px) {
+  .grid { gap: 8px; }
+  .tile { gap: 8px; padding: 12px 14px; }
 }

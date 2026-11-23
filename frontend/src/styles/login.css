@@ -345,11 +345,35 @@
 }
 
 .login-page .forgot-password {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
   font-size: 12.5px;
   font-weight: 500;
   color: var(--lp-text-soft);
   text-decoration: none;
+  cursor: pointer;
   transition: color 150ms ease;
+}
+
+.login-page .forgot-password:focus-visible {
+  outline: 2px solid var(--lp-green);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Instrucción de recuperación (plan UX D4): no hay autoservicio, la contraseña
+   la restablece un ADMIN desde Equipo (ADR p21). */
+.login-page .login-recovery-hint {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-radius-md);
+  background: var(--lp-input-bg);
+  color: var(--lp-text-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 
 .login-page .forgot-password:hover {
@@ -521,8 +545,10 @@
   letter-spacing: 0;
 }
 
+/* Plan UX D12: verde de marca también al pasar el cursor, como `.btn-primary`
+   de la app (antes se volvía casi negro). */
 .login-page .btn-primary:hover:not(:disabled) {
-  background: var(--lp-bg-dark-2);
+  background: var(--c-primary-hover);
   transform: translateY(-1px);
   box-shadow: 0 10px 24px rgba(15, 42, 31, 0.28);
 }
@@ -538,10 +564,10 @@
 }
 
 .login-page .btn-primary:disabled {
-  background: #4a5f53;
-  color: #d5ddd6;
+  background: var(--lp-green);
+  color: #ffffff;
   cursor: not-allowed;
-  opacity: 0.75;
+  opacity: 0.45;
 }
 
 /* ── Secure note (footer) ──────────────────────────────── */

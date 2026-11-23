@@ -21,7 +21,7 @@ const ChangePassword = () => {
                 <div>
                     <h1 className="page-title">Cambiar contraseña</h1>
                     {mustChange ? (
-                        <p className="page-subtitle" style={{ color: "var(--c-warning)" }}>
+                        <p className="page-subtitle" style={{ color: "var(--c-warning-text)" }}>
                             Debes cambiar tu contraseña temporal antes de continuar.
                         </p>
                     ) : (
@@ -41,7 +41,7 @@ const ChangePassword = () => {
                         padding: "12px 14px",
                         marginBottom: "20px",
                         fontSize: "12.5px",
-                        color: "#fbbf24",
+                        color: "var(--c-warning-text)",
                     }}
                 >
                     <strong>Tu contraseña actual es temporal.</strong> Fue

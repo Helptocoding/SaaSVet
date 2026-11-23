@@ -1078,7 +1078,7 @@ const Inbox = () => {
         <div className={styles.page}>
             <div className={`page-header ${styles.pageHeader}`}>
                 <div>
-                    <h1>WhatsApp</h1>
+                    <h1 className="page-title">WhatsApp</h1>
                     <p className="page-subtitle">
                         Conversaciones con clientes — responde, toma o cierra cada hilo.
                     </p>

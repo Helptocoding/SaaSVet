@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { LoginForm } from "./LoginForm";
 
 // ADR p48 (Fase 0): el backend resuelve login por correo O username, así que el
@@ -37,5 +37,29 @@ describe("LoginForm — identidad de login (ADR p48)", () => {
     render(<LoginForm />);
     const input = screen.getByTestId("input-username");
     expect(input.getAttribute("placeholder")).toMatch(/usuario/i);
+  });
+});
+
+// Plan UX D4: no hay recuperación por correo (ADR p21). El enlace ya no es un
+// enlace muerto: explica a quién pedirle el restablecimiento.
+describe("LoginForm — ¿Olvidaste tu contraseña?", () => {
+  it("muestra a quién pedir el restablecimiento y lo vuelve a ocultar", () => {
+    render(<LoginForm />);
+    const trigger = screen.getByRole("button", { name: "¿Olvidaste tu contraseña?" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText(/administrador de tu clínica/)).toBeNull();
+
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/administrador de tu clínica/)).toBeInTheDocument();
+
+    fireEvent.click(trigger);
+    expect(screen.queryByText(/administrador de tu clínica/)).toBeNull();
+  });
+
+  it("no envía el formulario al pulsarlo", () => {
+    render(<LoginForm />);
+    const trigger = screen.getByRole("button", { name: "¿Olvidaste tu contraseña?" });
+    expect(trigger).toHaveAttribute("type", "button");
   });
 });

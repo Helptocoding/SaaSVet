@@ -137,13 +137,13 @@ function DashboardChart({ allPoints, hasCorrupt }) {
             <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 9, fill: colors.text3 }}
+                tick={{ fontSize: 11, fill: colors.text3 }}
                 axisLine={{ stroke: colors.border }}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fontSize: 10, fill: colors.text3 }}
+                tick={{ fontSize: 11, fill: colors.text3 }}
                 axisLine={false}
                 tickLine={false}
                 allowDecimals={false}

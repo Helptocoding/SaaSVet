@@ -1,29 +1,28 @@
+import { useCallback, useRef, useState } from "react";
 import { useAuth } from "../auth/authContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import NotificationBell from "./notifications/NotificationBell";
+import FeedbackButton from "./FeedbackButton";
 import { Icon } from "./icons";
 import styles from "./AppShell.module.css";
-
-const PAGE_TITLES = {
-    "/":               "Dashboard",
-    "/dashboard":      "Dashboard",
-    "/pets":           "Mascotas",
-    "/appointments":   "Citas",
-    "/medical-records":"Historial Clínico",
-    "/inventory":      "Inventario",
-    "/billing":        "Cobros",
-    "/pos":            "Punto de Venta",
-    "/staff":          "Equipo",
-    "/config":         "Configuración",
-    "/prescriptions":  "Recetas",
-    "/imports":        "Importar datos",
-};
 
 const Layout = ({ children }) => {
     const { logout, user, initializing, can } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Menú lateral como panel en pantallas ≤560px (plan UX D11). En pantallas
+    // mayores el botón no se muestra y este estado no tiene efecto visible.
+    const [navOpen, setNavOpen] = useState(false);
+    const menuButtonRef = useRef(null);
+    // Escape o el fondo: cerrar y devolver el foco al botón que lo abrió.
+    const closeNav = useCallback(() => {
+        setNavOpen(false);
+        menuButtonRef.current?.focus();
+    }, []);
+    // Navegar desde el panel: cerrar sin mover el foco (la página nueva lo toma).
+    const closeNavOnNavigate = useCallback(() => setNavOpen(false), []);
 
     if (initializing) {
         return (
@@ -38,10 +37,6 @@ const Layout = ({ children }) => {
 
     const handleLogout = () => { logout(); navigate("/login"); };
 
-    // Get page title from exact match or prefix match
-    const pageTitle = PAGE_TITLES[location.pathname] ||
-        (location.pathname.startsWith("/pets/") ? "Ficha de Mascota" : "");
-
     const isDashboard = location.pathname === "/" || location.pathname === "/dashboard";
 
     // Se llegó a este módulo desde un CTA del onboarding (FirstRunAssistant): mostrar
@@ -49,26 +44,53 @@ const Layout = ({ children }) => {
     // navegación normal. Solo un hint visual; sin lógica.
     const fromOnboarding = !!location.state?.fromOnboarding;
 
+    const menuButton = (
+        <button
+            ref={menuButtonRef}
+            type="button"
+            className={styles.menuButton}
+            onClick={() => setNavOpen(true)}
+            aria-label="Abrir menú"
+            aria-expanded={navOpen}
+            aria-controls="app-sidebar"
+        >
+            <Icon.Menu s={20} />
+        </button>
+    );
+
     return (
         <div className={styles.shell}>
-            <Sidebar onLogout={handleLogout} />
+            <Sidebar
+                onLogout={handleLogout}
+                mobileOpen={navOpen}
+                onClose={closeNav}
+                onNavigate={closeNavOnNavigate}
+            />
+            {navOpen && <div className={styles.backdrop} onClick={closeNav} aria-hidden="true" />}
 
             <main className={styles.main}>
-                {!isDashboard && (
+                {isDashboard ? (
+                    // El Dashboard trae su propia barra (saludo y acciones); en móvil
+                    // solo hace falta el botón del menú.
+                    <header className={`${styles.topbar} ${styles.topbarMobileOnly}`}>
+                        {menuButton}
+                    </header>
+                ) : (
                     <header className={styles.topbar}>
-                        {fromOnboarding ? (
+                        {menuButton}
+                        {/* Sin título: el H1 de cada página ya dice dónde estás (plan UX D8).
+                            Las rutas anidadas, como la ficha de mascota, tienen su propio
+                            «Volver a…» junto al H1; una miga aquí lo repetiría. */}
+                        {fromOnboarding && (
                             <button
                                 onClick={() => navigate("/")}
                                 className={styles.backAction}
                             >
                                 <Icon.ChevronLeft s={16} c="currentColor" /> Volver al Dashboard
                             </button>
-                        ) : (
-                            <span className={styles.topbarTitle}>
-                                {pageTitle}
-                            </span>
                         )}
                         <div className={styles.topbarActions}>
+                            <FeedbackButton />
                             {can?.("notification.list") && <NotificationBell />}
                             {location.pathname === "/config" && !user?.is_demo && (
                                 <button

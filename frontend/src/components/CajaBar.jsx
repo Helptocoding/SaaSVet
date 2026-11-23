@@ -166,7 +166,7 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
                 </button>
             )}
             {open && canClose && (
-                <button className={`btn ${compact ? "btn-xs" : "btn-sm"}`} style={{ background: "var(--c-danger-text)", color: "#fff", borderColor: "var(--c-danger-text)" }} onClick={() => setShowClose(true)}>
+                <button className={`btn ${compact ? "btn-xs" : "btn-sm"}`} style={{ background: "var(--c-danger-text)", color: "var(--c-on-primary)", borderColor: "var(--c-danger-text)" }} onClick={() => setShowClose(true)}>
                     {compact ? "Cerrar (Z)" : "Cerrar caja (Z)"}
                 </button>
             )}
@@ -186,7 +186,7 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
                 <div className="modal-overlay" onClick={() => !busy && setShowOpen(false)}>
                     <div className="modal" style={{ maxWidth: "340px" }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>Abrir caja</h3>
+                            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>Abrir caja</h3>
                             <button className="modal-close" onClick={() => setShowOpen(false)} disabled={busy}><Icon.X s={14} /></button>
                         </div>
                         <div className="modal-body">
@@ -211,7 +211,7 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
                 <div className="modal-overlay" onClick={() => !busy && setShowMove(false)}>
                     <div className="modal" style={{ maxWidth: "360px" }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>Movimiento de caja</h3>
+                            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>Movimiento de caja</h3>
                             <button className="modal-close" onClick={() => setShowMove(false)} disabled={busy}><Icon.X s={14} /></button>
                         </div>
                         <div className="modal-body">
@@ -261,7 +261,7 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
                 <div className="modal-overlay" onClick={() => !busy && setShowClose(false)}>
                     <div className="modal" style={{ maxWidth: "360px" }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>Cerrar caja — corte Z</h3>
+                            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>Cerrar caja — corte Z</h3>
                             <button className="modal-close" onClick={() => setShowClose(false)} disabled={busy}><Icon.X s={14} /></button>
                         </div>
                         <div className="modal-body">
@@ -276,7 +276,7 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
                         </div>
                         <div className="modal-footer">
                             <button className="btn btn-secondary btn-sm" onClick={() => setShowClose(false)} disabled={busy}>Cancelar</button>
-                            <button className="btn btn-sm" style={{ background: "var(--c-danger-text)", color: "#fff", borderColor: "var(--c-danger-text)" }} onClick={doClose} disabled={busy}>
+                            <button className="btn btn-sm" style={{ background: "var(--c-danger-text)", color: "var(--c-on-primary)", borderColor: "var(--c-danger-text)" }} onClick={doClose} disabled={busy}>
                                 {busy ? <Icon.Loader s={14} /> : "Cerrar y cortar"}
                             </button>
                         </div>

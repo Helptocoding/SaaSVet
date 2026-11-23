@@ -62,8 +62,8 @@ const UploadStep = ({ onUpload, uploading, config = OWNER_PET_CONFIG }) => {
 
     return (
         <div className="card">
-            <div style={{ marginBottom: 18 }}>
-                <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{config.uploadTitle}</p>
+            <div style={{ marginBottom: 16 }}>
+                <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{config.uploadTitle}</p>
                 <p style={{ fontSize: 12.5, color: "var(--c-text-2)" }}>
                     {config.uploadHint}
                 </p>

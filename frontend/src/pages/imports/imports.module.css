@@ -15,7 +15,7 @@
 .step {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   font-size: 13px;
   color: var(--c-text-3);
 }
@@ -37,7 +37,7 @@
 .stepActive .stepNum {
   border-color: var(--c-primary);
   background: var(--c-primary);
-  color: #fff;
+  color: var(--c-on-primary);
 }
 .stepDone .stepNum {
   border-color: var(--c-success-border);
@@ -56,7 +56,7 @@
   border: 2px dashed var(--c-border-2);
   border-radius: var(--r-lg);
   background: var(--c-surface);
-  padding: 44px 24px;
+  padding: 40px 24px;
   text-align: center;
   cursor: pointer;
   transition: border-color var(--t), background var(--t);
@@ -66,14 +66,14 @@
   border-color: var(--c-primary);
   background: var(--c-primary-light);
 }
-.dropTitle { font-size: 15px; font-weight: 600; color: var(--c-text); margin-top: 12px; }
+.dropTitle { font-size: 16px; font-weight: 600; color: var(--c-text); margin-top: 12px; }
 .dropHint  { font-size: 12.5px; color: var(--c-text-3); margin-top: 6px; }
 
 .fileChip {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 16px;
   padding: 10px 14px;
   border: 1px solid var(--c-border);
   border-radius: var(--r-md);
@@ -112,13 +112,13 @@
   color: var(--c-warning-text);
   font-size: 13px;
 }
-.missingBox ul { margin: 6px 0 0; padding-left: 18px; }
+.missingBox ul { margin: 6px 0 0; padding-left: 16px; }
 .missingBox li { margin-bottom: 2px; }
 
 /* ── Mapeo (Fase D, rediseño UX): "revisé unas cosas, no configuré una DB" ── */
 .summaryReady { color: var(--c-success-text); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
 .summaryWarn { color: var(--c-warning-text); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
-.btnWithIcon { display: inline-flex; align-items: center; gap: 5px; }
+.btnWithIcon { display: inline-flex; align-items: center; gap: 4px; }
 .exIntro {
   font-size: 13px; color: var(--c-text-2); line-height: 1.5;
   margin: 0 0 12px; max-width: 640px;
@@ -185,7 +185,7 @@
 .readyToggleLabel { display: inline-flex; align-items: center; gap: 6px; color: var(--c-success-text); }
 .readyChevron {
   font-size: 12px; color: var(--c-primary); font-weight: 500;
-  display: inline-flex; align-items: center; gap: 3px;
+  display: inline-flex; align-items: center; gap: 4px;
 }
 /* Grid multi-columna: no se alarga al desplegar (4 filas → ~2 en desktop). */
 .readyList {
@@ -194,7 +194,7 @@
   gap: 1px; background: var(--c-border); border-top: 1px solid var(--c-border);
 }
 .readyRow {
-  display: flex; align-items: center; gap: 7px;
+  display: flex; align-items: center; gap: 8px;
   padding: 8px 14px; background: var(--c-surface); font-size: 12.5px;
   white-space: nowrap; overflow: hidden;
 }
@@ -248,7 +248,7 @@
   .accBody { animation: none; }
 }
 .pickerOption {
-  text-align: left; font-size: 13px; padding: 9px 12px;
+  text-align: left; font-size: 13px; padding: 8px 12px;
   border: 1px solid var(--c-border); border-radius: var(--r-md);
   background: var(--c-surface); color: var(--c-text); cursor: pointer;
   transition: border-color var(--t), background var(--t);
@@ -270,10 +270,10 @@
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
   background: var(--c-surface);
-  padding: 16px 18px;
+  padding: 16px 16px;
   box-shadow: var(--shadow-xs);
 }
-.sumValue { font-size: 26px; font-weight: 700; line-height: 1; color: var(--c-text); font-family: var(--font-mono); }
+.sumValue { font-size: 24px; font-weight: 700; line-height: 1; color: var(--c-text); font-family: var(--font-mono); }
 .sumLabel { font-size: 12px; color: var(--c-text-3); margin-top: 6px; }
 .sumValueDanger  { color: var(--c-danger-text); }
 .sumValueWarning { color: var(--c-warning-text); }
@@ -282,7 +282,7 @@
 .summaryLine {
   font-size: 14px;
   color: var(--c-text-2);
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   line-height: 1.6;
 }
 
@@ -291,7 +291,7 @@
   font-size: 13.5px;
   font-weight: 700;
   color: var(--c-text);
-  margin: 18px 0 8px;
+  margin: 16px 0 8px;
 }
 .rowNum { font-family: var(--font-mono); color: var(--c-text-3); white-space: nowrap; }
 .fieldLabel { color: var(--c-text-2); }
@@ -302,7 +302,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 22px;
+  margin-top: 20px;
   flex-wrap: wrap;
 }
 .actionsRight { display: flex; gap: 8px; margin-left: auto; }
@@ -312,7 +312,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 .resultIcon {
   display: inline-flex;
@@ -325,12 +325,12 @@
   color: var(--c-success-text);
   flex-shrink: 0;
 }
-.resultTitle { font-size: 18px; font-weight: 700; color: var(--c-text); }
+.resultTitle { font-size: 16px; font-weight: 700; color: var(--c-text); }
 .resultSub   { font-size: 13px; color: var(--c-text-3); margin-top: 2px; }
 
 .incompleteList {
   margin: 0;
-  padding-left: 18px;
+  padding-left: 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -339,20 +339,20 @@
 }
 
 .incompleteList li strong {
-  color: var(--c-warning-text, #92400e);
+  color: var(--c-warning-text);
 }
 
 /* ── Barra de estado horizontal (tipo GitHub checks) ─────────── */
 .statusBar {
-  padding: 18px 20px 14px;
+  padding: 16px 20px 14px;
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
   background: var(--c-surface);
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 .statusBarTitle {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--c-text);
   margin-bottom: 2px;
 }
@@ -370,7 +370,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 4px 12px;
   border-radius: var(--r-full);
   font-size: 12.5px;
   font-weight: 500;
@@ -394,8 +394,8 @@
   color: var(--c-danger-text);
 }
 .pillInfo {
-  background: var(--c-info-bg, #e0f2fe);
-  color: var(--c-info-text, #0369a1);
+  background: var(--c-info-bg);
+  color: var(--c-info-text);
 }
 
 /* ── Secciones colapsables comunes ─────────── */
@@ -415,7 +415,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 16px;
+  padding: 12px 16px;
   background: none;
   border: none;
   cursor: pointer;
@@ -440,12 +440,12 @@
   color: var(--c-danger-text);
 }
 .iconInfo {
-  background: var(--c-info-bg, #e0f2fe);
-  color: var(--c-info-text, #0369a1);
+  background: var(--c-info-bg);
+  color: var(--c-info-text);
 }
 .sectionLabel { flex: 1; text-align: left; }
 .sectionChevron {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--c-text-3);
   flex-shrink: 0;
 }
@@ -536,7 +536,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 16px;
+  padding: 12px 16px;
   background: var(--c-subtle);
   border: none;
   cursor: pointer;
@@ -545,9 +545,9 @@
   color: var(--c-text);
 }
 .collapseToggle:hover { background: var(--c-border); }
-.collapseIcon { font-size: 15px; flex-shrink: 0; }
+.collapseIcon { font-size: 16px; flex-shrink: 0; }
 .collapseLabel { flex: 1; text-align: left; }
-.collapseChevron { font-size: 10px; color: var(--c-text-3); flex-shrink: 0; }
+.collapseChevron { font-size: 11px; color: var(--c-text-3); flex-shrink: 0; }
 .collapseBody { padding: 14px; border-top: 1px solid var(--c-border); }
 
 /* ── Panel de revisión tipo inbox ─────────── */
@@ -611,7 +611,7 @@
 .reviewItemActive {
   background: var(--c-surface);
   border-left: 3px solid var(--c-primary);
-  padding-left: 11px;
+  padding-left: 12px;
 }
 .reviewItemName { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reviewItemCount {
@@ -653,8 +653,8 @@
   margin-top: 1px;
 }
 .iconDanger { background: var(--c-danger-bg); color: var(--c-danger-text); }
-.iconInfo { background: var(--c-info-bg, #e0f2fe); color: var(--c-info-text, #0369a1); }
-.reviewDetailTitle { font-size: 15px; font-weight: 600; color: var(--c-text); }
+.iconInfo { background: var(--c-info-bg); color: var(--c-info-text); }
+.reviewDetailTitle { font-size: 16px; font-weight: 600; color: var(--c-text); }
 .reviewDetailSub { font-size: 12px; color: var(--c-text-3); margin-top: 2px; }
 .reviewDetailDivider {
   height: 1px;
@@ -679,7 +679,7 @@
   align-items: baseline;
   gap: 8px;
   font-size: 12.5px;
-  padding: 3px 0;
+  padding: 4px 0;
 }
 .reviewDetailExampleNum {
   font-family: var(--font-mono);
@@ -710,7 +710,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 13px 16px;
+  padding: 12px 16px;
   background: var(--c-subtle);
   border-bottom: 1px solid var(--c-border);
   font-size: 13.5px;
@@ -746,7 +746,7 @@
 }
 .previewTable thead th {
   text-align: left;
-  padding: 9px 12px;
+  padding: 8px 12px;
   font-size: 11.5px;
   font-weight: 600;
   color: var(--c-text-3);
@@ -758,7 +758,7 @@
 .previewTable tbody td {
   padding: 10px 12px;
   color: var(--c-text);
-  border-bottom: 1px solid var(--c-border-light, var(--c-border));
+  border-bottom: 1px solid var(--c-border);
   white-space: nowrap;
 }
 .previewTable tbody tr:last-child td {
@@ -829,7 +829,7 @@
   text-align: left;
 }
 .warningNoticeToggle:hover {
-  background: var(--c-warning-border, #fde68a);
+  background: var(--c-warning-border);
 }
 .warningNoticeIcon {
   flex-shrink: 0;

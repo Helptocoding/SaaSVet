@@ -57,7 +57,7 @@ const RulesSection = ({ settings, onSettingsChange, canManage }) => {
         />
       ))}
       {!!settings?.allow_post_unpaid && (
-        <div style={{ padding: "14px 18px", borderTop: "1px solid var(--c-border)" }}>
+        <div style={{ padding: "14px 16px", borderTop: "1px solid var(--c-border)" }}>
           <label htmlFor="credit-default-days" style={{ display: "block", fontSize: "13px", fontWeight: 600, marginBottom: "6px" }}>
             Plazo de crédito predeterminado
           </label>

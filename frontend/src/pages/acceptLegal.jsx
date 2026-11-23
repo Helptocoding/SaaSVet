@@ -61,11 +61,11 @@ export default function AcceptLegal() {
     return (
         <div style={{
             minHeight: "100vh", display: "flex", alignItems: "center",
-            justifyContent: "center", padding: "24px", background: "var(--c-bg, #f5f5f5)",
+            justifyContent: "center", padding: "24px", background: "var(--c-bg)",
         }}>
             <div style={{
-                width: "100%", maxWidth: "560px", background: "#fff",
-                border: "1px solid var(--c-line, #e5e7eb)", borderRadius: "12px", padding: "28px",
+                width: "100%", maxWidth: "560px", background: "var(--c-surface)",
+                border: "1px solid var(--c-border)", borderRadius: "12px", padding: "24px",
             }}>
                 <h1 className="page-title" style={{ marginTop: 0 }}>Antes de continuar</h1>
                 <p className="page-subtitle">
@@ -75,7 +75,7 @@ export default function AcceptLegal() {
 
                 {loading ? (
                     // Una fila por documento (casilla + texto), como la lista real.
-                    <div role="status" aria-label="Cargando documentos" style={{ display: "flex", flexDirection: "column", gap: "12px", margin: "18px 0" }}>
+                    <div role="status" aria-label="Cargando documentos" style={{ display: "flex", flexDirection: "column", gap: "12px", margin: "16px 0" }}>
                         {[0, 1].map((i) => (
                             <div key={i} aria-hidden="true" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                                 <Skeleton width={16} height={16} borderRadius="var(--r-sm)" />
@@ -86,7 +86,7 @@ export default function AcceptLegal() {
                 ) : docs.length === 0 ? (
                     <p>No hay documentos pendientes.</p>
                 ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", margin: "18px 0" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", margin: "16px 0" }}>
                         {docs.map((d) => (
                             <label key={d.public_id} style={{ display: "flex", gap: "10px", alignItems: "flex-start", fontSize: "14px" }}>
                                 <input
@@ -94,7 +94,7 @@ export default function AcceptLegal() {
                                     checked={!!checked[d.public_id]}
                                     onChange={toggle(d.public_id)}
                                     disabled={saving}
-                                    style={{ marginTop: "3px" }}
+                                    style={{ marginTop: "4px" }}
                                 />
                                 <span>
                                     He leído y acepto{" "}

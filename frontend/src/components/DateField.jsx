@@ -36,7 +36,7 @@ const asDate = (v) => (v instanceof Date ? v : v ? parseISO(v) : undefined);
 // fino + peso medio. Nada de la caja beige (--c-subtle) del tema.
 const selectStyle = {
     background: "transparent", border: "1px solid var(--c-border)",
-    borderRadius: "var(--r-md)", padding: "5px 8px",
+    borderRadius: "var(--r-md)", padding: "4px 8px",
     fontSize: "13px", fontFamily: "inherit", fontWeight: 500, color: "var(--c-text)",
     cursor: "pointer", outline: "none",
 };

@@ -10,23 +10,23 @@ const NotFound = () => {
             alignItems: "center",
             justifyContent: "center",
             minHeight: "100vh",
-            backgroundColor: "var(--c-bg, #f5f5f3)",
+            backgroundColor: "var(--c-bg)",
             textAlign: "center",
             padding: "40px",
         }}>
             <p style={{ fontSize: "56px", margin: "0 0 8px", lineHeight: 1 }}>404</p>
-            <h1 style={{ fontSize: "20px", fontWeight: "700", color: "var(--c-text, #1a1a1a)", margin: "0 0 8px" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: "700", color: "var(--c-text)", margin: "0 0 8px" }}>
                 Página no encontrada
             </h1>
-            <p style={{ fontSize: "13px", color: "var(--c-text-3, #8a8a7f)", margin: "0 0 28px" }}>
+            <p style={{ fontSize: "13px", color: "var(--c-text-3)", margin: "0 0 24px" }}>
                 La ruta que buscas no existe o fue movida.
             </p>
             <button
                 onClick={() => navigate("/")}
                 style={{
                     padding: "10px 24px",
-                    background: "var(--c-primary, #1a4434)",
-                    color: "#fff",
+                    background: "var(--c-primary)",
+                    color: "var(--c-on-primary)",
                     border: "none",
                     borderRadius: "8px",
                     fontSize: "14px",

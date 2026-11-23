@@ -12,21 +12,21 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
 }
 
 .cashNotice {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: -10px 0 18px;
-    padding: 9px 0 9px 12px;
+    margin: -10px 0 16px;
+    padding: 8px 0 8px 12px;
     border-left: 2px solid var(--c-warning-text);
     color: var(--c-warning-text);
     font-size: 12.5px;
 }
 
-.cashNotice strong { font-weight: 650; }
+.cashNotice strong { font-weight: 600; }
 
 /* ── Labels uppercase de secciones y campos (modales) ── */
 .eyebrow {
@@ -106,4 +106,24 @@
     font-size: 16px;
     font-weight: 500;
     color: var(--c-text);
+}
+
+/* Encabezado: estado de caja y CTA principal al final (plan UX D7). */
+.headActions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Pista de atajo dentro del botón primario. */
+.kbdHint {
+    padding: 0 4px;
+    border: 1px solid currentColor;
+    border-radius: var(--r-sm);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 16px;
+    opacity: 0.7;
 }

@@ -42,8 +42,11 @@ const Cash = () => {
     useEffect(() => { load(); }, [load]);
 
     return (
-        <div style={{ padding: "24px", maxWidth: "1040px", margin: "0 auto" }}>
-            <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--c-text)", marginBottom: "16px" }}>Caja</h1>
+        // Mismo contenedor, título y tabla que las demás páginas (plan UX F2.6/F2.8).
+        <div>
+            <div className="page-header">
+                <h1 className="page-title">Caja</h1>
+            </div>
 
             <CajaBar onChange={load} showManageLink={false} />
 
@@ -56,7 +59,8 @@ const Cash = () => {
             ) : sessions.length === 0 ? (
                 <div className="empty-state"><p className="empty-state-title">No hay turnos registrados</p></div>
             ) : (
-                <table className="table-compact" style={{ width: "100%", border: "1px solid var(--c-border)", borderRadius: "8px", overflow: "hidden" }}>
+                <div className="table-wrap">
+                <table className="table">
                     <thead>
                         <tr>
                             <th>Apertura</th>
@@ -91,6 +95,7 @@ const Cash = () => {
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
 
             {/* Detalle Z (snapshot congelado) */}
@@ -98,7 +103,7 @@ const Cash = () => {
                 <div className="modal-overlay" onClick={() => setDetail(null)}>
                     <div className="modal" style={{ maxWidth: "420px" }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>Corte de caja</h3>
+                            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>Corte de caja</h3>
                             <button className="modal-close" onClick={() => setDetail(null)}><Icon.X s={14} /></button>
                         </div>
                         <div className="modal-body">
@@ -130,15 +135,12 @@ const CashHistorySkeleton = () => (
         <TableSkeleton
             rows={5}
             columns={CASH_SKELETON_COLUMNS}
-            wrap={false}
-            tableClassName="table-compact"
-            tableStyle={{ width: "100%", border: "1px solid var(--c-border)", borderRadius: "8px", overflow: "hidden" }}
         />
     </div>
 );
 
 const Row = ({ label, value, strong, color }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: "13px" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: "13px" }}>
         <span style={{ color: "var(--c-text-3)" }}>{label}</span>
         <span style={{ color: color || "var(--c-text)", fontWeight: strong ? 600 : 400 }}>{value}</span>
     </div>

@@ -116,7 +116,7 @@ function StatusPieChart({ pieData, grandTotal, onSelect, selectedKey }) {
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: "10px", color: colors.text2 }}
+              wrapperStyle={{ fontSize: "11px", color: colors.text2 }}
             />
           </PieChart>
         </ResponsiveContainer>

@@ -593,9 +593,24 @@ const Billing = () => {
         <div className={s.billingContainer}>
             <div className="page-header">
                 <h1 className="page-title">Cobros</h1>
-                {/* Estado de caja (Fase 3): estado + abrir/cerrar sin fila completa.
-                    onSession alimenta cashBlocked — único GET de sesión de la página. */}
-                <CajaBar variant="compact" onSession={setCashSession} />
+                {/* Orden del encabezado (plan UX D7): estado de caja y, al final, el
+                    CTA principal. Antes «+ Cobro» vivía en la fila de filtros. */}
+                <div className={s.headActions}>
+                    {/* Estado de caja (Fase 3): estado + abrir/cerrar sin fila completa.
+                        onSession alimenta cashBlocked — único GET de sesión de la página. */}
+                    <CajaBar variant="compact" onSession={setCashSession} />
+                    {can("invoice.create") && (
+                        <button
+                            className="btn btn-primary btn-md"
+                            onClick={() => navigate("/pos")}
+                            title="Atajo: F11 — abre el punto de venta"
+                        >
+                            <Icon.Plus s={14} />
+                            Nuevo cobro
+                            <kbd className={s.kbdHint}>F11</kbd>
+                        </button>
+                    )}
+                </div>
             </div>
 
             {cashBlocked && (
@@ -631,22 +646,6 @@ const Billing = () => {
                         Limpiar
                     </button>
                 )}
-                {can("invoice.create") && (
-                    <button
-                        className="btn btn-primary btn-sm"
-                        style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}
-                        onClick={() => navigate("/pos")}
-                        title="Atajo: F11 — abre el Punto de Venta"
-                    >
-                        + Cobro
-                        <kbd style={{
-                            fontSize: "10px", fontWeight: 600, padding: "1px 5px",
-                            borderRadius: "3px", border: "1px solid rgba(255,255,255,0.3)",
-                            background: "rgba(255,255,255,0.15)", color: "inherit",
-                            lineHeight: "16px",
-                        }}>F11</kbd>
-                    </button>
-                )}
             </div>
 
             {checkouts.length > 0 && (
@@ -657,7 +656,7 @@ const Billing = () => {
                             <th>Estado</th><th style={{ textAlign: "right" }}>Total</th><th></th>
                         </tr></thead>
                         <tbody>{checkouts.map(checkout => (
-                            <tr key={checkout.public_id}>
+                            <tr key={checkout.public_id} className="table-row-clickable" onClick={() => openCheckoutDetail(checkout)}>
                                 <td style={{ color: "var(--c-text-3)" }}>#{checkout.id}</td>
                                 <td>
                                     <div>{checkout.pet_name || "Venta de mostrador"}</div>
@@ -667,7 +666,7 @@ const Billing = () => {
                                 <td>{checkout.operational_hold === "dispute" ? "En disputa" : checkout.correction_status === "correction_overdue" ? "Corrección vencida" : "Por preparar"}</td>
                                 <td style={{ textAlign: "right" }}>${formatCurrency(checkout.total)}</td>
                                 <td style={{ textAlign: "right" }}>
-                                    <button className="btn btn-ghost btn-icon" aria-label={`Abrir preparación ${checkout.id}`} onClick={() => openCheckoutDetail(checkout)}><Icon.Eye s={14} /></button>
+                                    <button className="btn btn-ghost btn-icon" aria-label={`Abrir preparación ${checkout.id}`} onClick={(e) => { e.stopPropagation(); openCheckoutDetail(checkout); }}><Icon.Eye s={14} /></button>
                                 </td>
                             </tr>
                         ))}</tbody>
@@ -696,10 +695,10 @@ const Billing = () => {
                         </thead>
                         <tbody>
                             {invoices.map(inv => (
-                                <tr key={inv.id}>
+                                <tr key={inv.id} className="table-row-clickable" onClick={() => openInvoiceDetail(inv)}>
                                     <td style={{ color: "var(--c-text-3)" }}>#{inv.id}</td>
                                     <td>
-                                        <div>{inv.pet_name}</div>
+                                        <div>{inv.pet_name || "Venta de mostrador"}</div>
                                         <div style={{ fontSize: "11px", color: "var(--c-text-3)" }}>{inv.owner_name}</div>
                                     </td>
                                     <td style={{ fontSize: "12px" }}>{inv.invoice_type === "direct_sale" ? "Venta directa" : "Consulta"}</td>
@@ -712,7 +711,7 @@ const Billing = () => {
                                     <td style={{ color: "var(--c-text-3)" }}>{formatDate(inv.created_at)}</td>
                                     <td style={{ textAlign: "right" }}>${formatCurrency(inv.total)}</td>
                                     <td style={{ textAlign: "right" }}>
-                                        <button className="btn btn-ghost btn-icon" aria-label={`Ver cobro ${inv.id}`} onClick={() => openInvoiceDetail(inv)}><Icon.Eye s={14} /></button>
+                                        <button className="btn btn-ghost btn-icon" aria-label={`Ver cobro ${inv.id}`} onClick={(e) => { e.stopPropagation(); openInvoiceDetail(inv); }}><Icon.Eye s={14} /></button>
                                     </td>
                                 </tr>
                             ))}
@@ -787,7 +786,7 @@ const Billing = () => {
                                             <td>
                                                 {item.description}
                                                 {item.dispensed && (
-                                                    <span style={{ marginLeft: "6px", fontSize: "10px", fontWeight: 600, color: "var(--c-accent-text, var(--c-text-3))", border: "1px solid var(--c-border)", borderRadius: "4px", padding: "1px 5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                                    <span style={{ marginLeft: "6px", fontSize: "11px", fontWeight: 600, color: "var(--c-text-3)", border: "1px solid var(--c-border)", borderRadius: "4px", padding: "1px 4px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                                                         Para llevar
                                                     </span>
                                                 )}
@@ -843,7 +842,7 @@ const Billing = () => {
                         <div className="modal-footer">
                             <div style={{ display: "flex", gap: "8px", width: "100%" }}>
                                 {isCheckout && Number(selectedInvoice.total) > 0 && !selectedInvoice.operational_hold && (
-                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal} disabled={cashBlocked || checkoutActionBlocked("pay")} title={cashBlocked ? "Abre una caja para cobrar" : checkoutActionTitle("pay")}>
+                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "var(--c-on-primary)" }} onClick={openPayModal} disabled={cashBlocked || checkoutActionBlocked("pay")} title={cashBlocked ? "Abre una caja para cobrar" : checkoutActionTitle("pay")}>
                                         Cobrar
                                     </button>
                                 )}
@@ -854,7 +853,7 @@ const Billing = () => {
                                     <button className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={handleNoCharge} disabled={checkoutActionBlocked("complete_no_charge")} title={checkoutActionTitle("complete_no_charge")}>Completar sin cargo</button>
                                 )}
                                 {!isCheckout && selectedInvoice.status === "posted" && (
-                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal} disabled={cashBlocked} title={cashBlocked ? "Abre una caja para cobrar" : undefined}>Registrar Pago</button>
+                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "var(--c-on-primary)" }} onClick={openPayModal} disabled={cashBlocked} title={cashBlocked ? "Abre una caja para cobrar" : undefined}>Registrar Pago</button>
                                 )}
                                 {selectedInvoice.status === "paid" && can("billing.refund") && (
                                     <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => setShowRefundModal(true)}>Devolver</button>
@@ -890,7 +889,7 @@ const Billing = () => {
                         <div className="modal-overlay" style={{ zIndex: 1001 }}>
                             <div className="modal" style={{ maxWidth: "360px" }}>
                                 <div className="modal-header">
-                                    <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>
+                                    <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>
                                         {isCheckout ? "Cobrar preparación" : "Registrar pago"}
                                     </h3>
                                     <button className="modal-close" onClick={() => setShowPayModal(false)} disabled={paying}><Icon.X s={14} /></button>
@@ -911,7 +910,7 @@ const Billing = () => {
                                     <button className="btn btn-secondary btn-sm" onClick={() => setShowPayModal(false)} disabled={paying}>Cancelar</button>
                                     <button
                                         className="btn btn-primary btn-sm"
-                                        style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }}
+                                        style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "var(--c-on-primary)" }}
                                         onClick={submitPayment}
                                         disabled={paying || !paymentLinesValid(payLines, payTarget, true)}
                                     >
@@ -926,7 +925,7 @@ const Billing = () => {
                         <div className="modal-overlay" style={{ zIndex: 1001 }}>
                             <div className="modal" style={{ maxWidth: "520px" }}>
                                 <div className="modal-header">
-                                    <h3 style={{ fontSize: "15px", fontWeight: 600 }}>
+                                    <h3 style={{ fontSize: "16px", fontWeight: 600 }}>
                                         {replacementMode === "terminal" ? "Anular factura" : "Corregir factura emitida"}
                                     </h3>
                                     <button className="modal-close" onClick={() => setShowReplacementModal(false)} disabled={replacing}><Icon.X s={14} /></button>

@@ -54,7 +54,7 @@ const TimelineCard = ({
   return (
     <article
         className={`card ${styles.txCard} ${isExpanded ? styles.txCardOpen : ""}`}
-      style={{ "--tx-color": typeMeta.color, "--tx-soft": typeMeta.soft || "#f0f9f4" }}
+      style={{ "--tx-color": typeMeta.accent || typeMeta.color, "--tx-soft": typeMeta.soft || "var(--c-subtle)" }}
     >
       {/* ── Header: tipo · fecha · vet | badges · chevron ── */}
       <div

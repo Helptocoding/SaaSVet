@@ -365,9 +365,11 @@ const MedicalRecords = () => {
                   <div className={styles.emptyIconWrap}>
                     <Icon.Paw size={40} />
                   </div>
-                  <p className={styles.emptyTitle}>Selecciona una mascota</p>
+                  {/* Un H1 por página (plan UX F2.6): sin mascota elegida, el título es la
+                      página; con mascota, el H1 es su nombre (PatientHeader). */}
+                  <h1 className="page-title">Historial clínico</h1>
                   <p className={styles.emptySub}>
-                    Elige una mascota del panel izquierdo para ver su historial clínico completo.
+                    Elige una mascota del panel izquierdo para ver su historial completo.
                   </p>
                 </div>
               ) : (
@@ -380,8 +382,8 @@ const MedicalRecords = () => {
                         noPadding={true}
                       />
                       {canCreate && (
-                        <button className="btn btn-primary btn-md" style={{ background: '#1a4434' }} onClick={handleOpenStepper}>
-                          + Nueva Consulta
+                        <button className="btn btn-primary btn-md" onClick={handleOpenStepper}>
+                          <Icon.Plus s={14} /> Nueva consulta
                         </button>
                       )}
                     </div>
@@ -412,7 +414,7 @@ const MedicalRecords = () => {
                         <div className={styles.emptyIconWrap}>
                           <Icon.Paw size={32} />
                         </div>
-                        <p className={styles.emptyTitle} style={{ fontSize: "15px" }}>
+                        <p className={styles.emptyTitle} style={{ fontSize: "16px" }}>
                           {historySearch || typeFilter !== "all"
                             ? "No hay consultas con ese filtro"
                             : "Esta mascota no tiene historial clínico aún"}

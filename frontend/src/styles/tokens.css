@@ -33,6 +33,7 @@
   --c-primary-dark:  #0b3d30;
   --c-primary-light: #e4efeb;
   --c-primary-ring:  rgba(15, 98, 75, 0.18);
+  --c-on-primary:    #ffffff; /* texto e íconos sobre --c-primary */
 
   /* ── Accent (coral) ──────────────────────────────────────── */
   --c-accent:       #d67b5c;
@@ -109,41 +110,18 @@
   --t:  150ms ease;
   --t2: 200ms ease;
 
-  /* === LOGIN REDESIGN TOKENS (Surgical addition) === */
-  --bg-canvas:    #fafaf7;
-  --bg-card:      #ffffff;
-  --text-primary: #0c1612;
-  --text-body:    #2a3530;
-  --text-muted:   #4a5651;
-  --text-soft:    #6e7a73;
-  --text-faint:   #8a948f;
-  --text-ghost:   #a1aaa5;
-
-  --border:       #d9d9cf;
-  --border-soft:  #ebebe4;
-  --border-hover: #c2c8c4;
-
-  --accent:       #047857;
-  --accent-soft:  rgba(4, 120, 87, 0.10);
-
-  --font-sans: 'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --font-dm-sans: 'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --font-dm-serif: 'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-
-  --bg-dark: #1a2e2b;
-  --text-on-dark: #ffffff;
-
-  --radius-sm: 3px;
-  --radius-md: 6px;
-
+  /* ── Escala de espaciado (design-system.md §3) ─────────────
+     El antiguo bloque «LOGIN REDESIGN» se retiró (plan UX F4.3): nadie lo
+     usaba fuera de él, y el login tiene sus propias variables --lp-*. */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
-  --space-8: 36px;
+  --space-8: 32px;
   --space-10: 56px;
 
-  --control-h: 44px;
+  /* Alias que conserva Analítica (fuera del piloto, design-system.md §7). */
+  --font-dm-serif: var(--font-body);
 }

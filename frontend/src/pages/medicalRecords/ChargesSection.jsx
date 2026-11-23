@@ -62,7 +62,7 @@ const ChargesSection = forwardRef(function ChargesSection({
 
             {!disabled && (
               <div className={styles.adderLite}>
-                <div style={{ marginBottom: 9 }}>
+                <div style={{ marginBottom: 8 }}>
                   <span className={styles.adderLabel}>Producto</span>
                   <SearchSelect
                     placeholder="Buscar producto…"
@@ -129,7 +129,7 @@ const ChargesSection = forwardRef(function ChargesSection({
                   </div>
                 )}
 
-                <div className={styles.addGrid} style={{ marginTop: 9 }}>
+                <div className={styles.addGrid} style={{ marginTop: 8 }}>
                   <div className={styles.costToggle}>
                     <button
                       type="button"
@@ -263,7 +263,7 @@ const ChargesSection = forwardRef(function ChargesSection({
 
                 {!disabled && (
                   <div className={styles.adderLite}>
-                    <div style={{ marginBottom: 9 }}>
+                    <div style={{ marginBottom: 8 }}>
                       <span className={styles.adderLabel}>Servicio</span>
                       <SearchSelect
                         placeholder="Buscar servicio…"

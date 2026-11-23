@@ -4,56 +4,33 @@
    botones/inputs globales SOLO aquí. No toca el resto de la app.
 ═══════════════════════════════════════════════════════════════ */
 
+/* Alias locales hacia los tokens del sistema (plan UX F2.6). Antes era una
+   paleta propia con otros dos verdes y una superficie que sangraba sobre el
+   padding del layout (el título quedaba desalineado del resto de páginas). */
 .page {
-  --p-card: #ffffff;
-  --p-bg: #f4f5f4;
-  --p-border: #e7e8e4;
-  --p-border-strong: #d9dad4;
-  --p-text: #10151b;
-  --p-text-2: #5a636e;
-  --p-text-3: #8b929b;
-  --p-accent: #0b6b4f;
-  --p-accent-2: #0e8a63;
-  --p-accent-ring: rgba(11, 107, 79, 0.16);
-  --p-danger: #c0362c;
+  --p-card: var(--c-surface);
+  --p-bg: var(--c-bg);
+  --p-border: var(--c-border);
+  --p-border-strong: var(--c-border-2);
+  --p-text: var(--c-text);
+  --p-text-2: var(--c-text-2);
+  --p-text-3: var(--c-text-3);
+  --p-accent: var(--c-primary);
+  --p-accent-2: var(--c-primary-hover);
+  --p-accent-ring: var(--c-primary-ring);
+  --p-danger: var(--c-danger-text);
   --p-shadow-card: none;
   --p-shadow-btn: none;
 
   color: var(--p-text);
-  /* Superficie limpia propia: sangra sobre el padding (28px) del área de
-     contenido de la app para que TODA la config lea como fondo neutro
-     moderno, no el crema del resto del sistema. */
-  background: var(--p-bg);
-  margin: -28px;
-  padding: 32px 40px 80px;
-  min-height: calc(100vh - 56px);
-  box-sizing: border-box;
-}
-
-/* ─── Encabezado de página ─────────────────────────────────────── */
-.pageHead {
-  margin-bottom: 28px;
-}
-
-.pageTitle {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--p-text);
-  margin: 0 0 5px;
-}
-
-.pageSubtitle {
-  font-size: 14px;
-  color: var(--p-text-2);
-  margin: 0;
+  padding-bottom: 80px;
 }
 
 /* ─── Layout: rail + contenido ─────────────────────────────────── */
 .layout {
   display: grid;
   grid-template-columns: 236px minmax(0, 1fr);
-  gap: 44px;
+  gap: 40px;
   align-items: start;
 }
 
@@ -64,7 +41,7 @@
 }
 
 .sidebarLabel {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: none;
   letter-spacing: 0.1em;
@@ -83,8 +60,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 9px 12px;
+  gap: 12px;
+  padding: 8px 12px;
   border-radius: 0;
   border-left: 2px solid transparent;
   cursor: pointer;
@@ -151,8 +128,8 @@
 }
 
 .sectionTitle {
-  font-size: 19px;
-  font-weight: 680;
+  font-size: 20px;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--p-text);
   margin: 0;
@@ -204,8 +181,8 @@
 
 /* ─── Subgrupos ────────────────────────────────────────────────── */
 .group + .group {
-  margin-top: 28px;
-  padding-top: 26px;
+  margin-top: 24px;
+  padding-top: 24px;
   border-top: 1px solid var(--p-border);
 }
 
@@ -215,7 +192,7 @@
   text-transform: none;
   letter-spacing: 0.09em;
   color: var(--p-text-3);
-  margin: 0 0 18px;
+  margin: 0 0 16px;
 }
 
 /* ─── Header de identidad de la clínica ────────────────────────── */
@@ -235,8 +212,8 @@
   height: 54px;
   border-radius: 15px;
   background: var(--p-accent);
-  color: #fff;
-  font-size: 22px;
+  color: var(--c-on-primary);
+  font-size: 24px;
   font-weight: 700;
   flex-shrink: 0;
   box-shadow: 0 4px 12px -4px var(--p-accent-ring);
@@ -245,11 +222,11 @@
 .identityInfo { min-width: 0; }
 
 .identityName {
-  font-size: 18px;
-  font-weight: 680;
+  font-size: 16px;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--p-text);
-  margin: 0 0 3px;
+  margin: 0 0 4px;
 }
 
 .identityMeta {
@@ -268,7 +245,7 @@
 .settingRow {
   display: grid;
   grid-template-columns: minmax(180px, 240px) 1fr;
-  gap: 28px;
+  gap: 24px;
   padding: 20px 0;
   align-items: start;
 }
@@ -281,7 +258,7 @@
   color: var(--p-text);
   letter-spacing: -0.01em;
   margin: 0;
-  padding-top: 9px;
+  padding-top: 8px;
 }
 
 .settingLabelToggle { padding-top: 0; }
@@ -315,7 +292,7 @@
 .fieldGroup {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -339,11 +316,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 28px;
-  padding: 17px 28px;
+  gap: 24px;
+  padding: 16px 24px;
 }
 
-.ruleRow:hover { background: #fbfcfb; }
+.ruleRow:hover { background: var(--c-surface-2); }
 
 .ruleRow + .ruleRow { border-top: 1px solid var(--p-border); }
 
@@ -378,7 +355,7 @@
 }
 
 .toggleOn { background: var(--p-accent); }
-.toggleOff { background: #d3d5cf; }
+.toggleOff { background: var(--c-border-2); }
 .toggleDisabled { opacity: 0.45; cursor: not-allowed; }
 
 .toggleKnob {
@@ -387,7 +364,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--c-surface);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
   transition: left 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
@@ -412,7 +389,7 @@
 }
 
 .scheduleTd {
-  padding: 11px 16px 11px 0;
+  padding: 12px 16px 12px 0;
   border-bottom: 1px solid var(--p-border);
   vertical-align: middle;
 }
@@ -432,7 +409,7 @@
   height: 18px;
   border-radius: 5px;
   border: 1.5px solid var(--p-border-strong);
-  background: #fff;
+  background: var(--c-surface);
   cursor: pointer;
   position: relative;
   transition: background 0.15s, border-color 0.15s;
@@ -446,7 +423,7 @@
   position: absolute;
   left: 5px; top: 2px;
   width: 4px; height: 8px;
-  border: solid #fff;
+  border: solid var(--c-surface);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
@@ -454,7 +431,7 @@
 
 .scheduleTimeInput {
   height: 36px;
-  padding: 0 11px;
+  padding: 0 12px;
   font-size: 13px;
   font-family: var(--font-mono);
   border-radius: 8px;
@@ -473,7 +450,7 @@
 .scheduleTimeInput:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .scheduleHint {
-  padding: 15px 0 0;
+  padding: 16px 0 0;
   font-size: 12.5px;
   color: var(--p-text-2);
 }
@@ -484,14 +461,14 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 15px 0;
+  padding: 16px 0;
 }
 .serviceRow + .serviceRow { border-top: 1px solid var(--p-border); }
 
 .serviceInfo {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   min-width: 0;
   flex: 1;
 }
@@ -512,7 +489,7 @@
 }
 
 .servicePrice {
-  font-weight: 650;
+  font-weight: 600;
   color: var(--p-text);
   font-size: 14px;
   font-family: var(--font-mono);
@@ -544,15 +521,15 @@
 .accountInfo { flex: 1; min-width: 0; }
 
 .accountLabel {
-  font-weight: 650;
-  font-size: 14.5px;
+  font-weight: 600;
+  font-size: 14px;
   margin: 0 0 2px;
   color: var(--p-text);
 }
 .accountDesc { font-size: 13px; color: var(--p-text-2); margin: 0; }
 
 /* ─── Carga (esqueleto de un apartado) ─────────────────────────── */
-.skelFields { display: flex; flex-direction: column; gap: 18px; padding-top: 4px; }
+.skelFields { display: flex; flex-direction: column; gap: 16px; padding-top: 4px; }
 .skelField  { display: flex; flex-direction: column; gap: 8px; }
 
 /* ─── Responsive ───────────────────────────────────────────────── */
@@ -566,7 +543,7 @@
     padding-bottom: 4px;
   }
   .sidebarItem { white-space: nowrap; }
-  .sidebarItemActive, .sidebarItemActive:hover { background: var(--p-accent); color: #fff; }
+  .sidebarItemActive, .sidebarItemActive:hover { background: var(--p-accent); color: var(--c-on-primary); }
   .content { max-width: 100%; }
   .fieldGrid { grid-template-columns: 1fr; }
   .scheduleTh:nth-child(n+5), .scheduleTd:nth-child(n+5) { display: none; }

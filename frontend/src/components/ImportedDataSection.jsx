@@ -8,7 +8,7 @@
 const ImportedDataSection = ({ items }) => {
     if (!items || items.length === 0) return null;
     return (
-        <div style={{ marginTop: "18px" }}>
+        <div style={{ marginTop: "16px" }}>
             <p
                 style={{
                     fontWeight: "600",

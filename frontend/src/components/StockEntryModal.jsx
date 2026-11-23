@@ -10,14 +10,13 @@ const emptyLot = () => ({ lot_number: "", expiry_date: "", quantity: 1 });
 
 const fmt = (n) => Math.round(parseFloat(n ?? 0) || 0);
 
-const ICON_COLOR = { medication: "#3b82f6", food: "#0d9488", accessory: "#7c3aed", other: "#94a3b8" };
+// Categoría por el ícono, no por color (plan UX D6), igual que en Inventario.
 const CATEGORY_ICON = { medication: Icon.Pill, food: Icon.ShoppingBag, accessory: Icon.Package, other: Icon.Box };
-const ICO_CLS = { medication: s.icoMed, food: s.icoFood, accessory: s.icoAcc, other: s.icoOther };
+const ICO_CLS = { medication: s.icoOther, food: s.icoOther, accessory: s.icoOther, other: s.icoOther };
 
 const CategoryIcon = ({ category, size = 18 }) => {
-    const c = ICON_COLOR[category] || ICON_COLOR.other;
     const IconComp = CATEGORY_ICON[category] || CATEGORY_ICON.other;
-    return <IconComp s={size} c={c} />;
+    return <IconComp s={size} c="var(--c-text-2)" />;
 };
 
 /**
@@ -332,7 +331,7 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew, onReceptionI
                                                 <label className="form-label">
                                                     LOTES RECIBIDOS ({currentPres.name.toUpperCase()}) *
                                                 </label>
-                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 62px 30px", gap: 6, fontSize: 10.5, fontWeight: 600, color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 3 }}>
+                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 62px 30px", gap: 6, fontSize: 11, fontWeight: 600, color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 4 }}>
                                                     <span>Lote</span>
                                                     <span>Caduca</span>
                                                     <span style={{ textAlign: "center" }}>Cant.</span>

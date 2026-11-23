@@ -226,7 +226,7 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                                         onChange={e => setRow(r.key, { quantity: e.target.value })}
                                     />
                                     {!noPres && !exhausted && (
-                                        <div style={{ fontSize: "10px", textAlign: "right", marginTop: "2px", color: over ? "var(--c-danger-text)" : "var(--c-text-4)" }}>
+                                        <div style={{ fontSize: "11px", textAlign: "right", marginTop: "2px", color: over ? "var(--c-danger-text)" : "var(--c-text-4)" }}>
                                             máx {max}
                                             {max === 0 && blockingReason ? <><br />{blockingReason}</> : null}
                                         </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { getPets, getPet, getPetStats, getOwners, createPet, updatePet, deletePet, restorePet, archiveOwner, restoreOwner } from "../api/pets";
+import { getPets, getPet, getPetStats, getOwners, createPet, updatePet, deletePet, restorePet, restoreOwner } from "../api/pets";
 import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
 import { getMedicalRecords } from "../api/medicalRecords";
@@ -47,7 +47,8 @@ const calcAge = (bd) => {
 const getWeekRange = () => {
     const now = new Date();
     const start = new Date(now);
-    start.setDate(now.getDate() - now.getDay());
+    // La semana empieza en lunes (plan UX D1), como la agenda.
+    start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
@@ -65,11 +66,10 @@ const SpeciesIcon = ({ pet, size = 20, color }) => {
     return <Icon.Paw s={size} c={color} />;
 };
 
-const speciesAccent = (pet) => isCanino(pet)
-    ? { bg: "#dbeafe", icon: "#3b82f6", border: "#bfdbfe", text: "#1d4ed8" }
-    : isFelino(pet)
-    ? { bg: "#fce7f3", icon: "#ec4899", border: "#fbcfe8", text: "#be185d" }
-    : { bg: "var(--c-primary-light)", icon: "var(--c-primary-dark)", border: "var(--sage-400)", text: "var(--c-primary-dark)" };
+// La especie la dice el ícono (perro, gato, huella); el color queda para lo que
+// pide acción (plan UX D6). Antes: azul, rosa y verde por especie.
+const SPECIES_ACCENT = { bg: "var(--c-subtle)", icon: "var(--c-text-2)", border: "var(--c-border)", text: "var(--c-text-2)" };
+const speciesAccent = () => SPECIES_ACCENT;
 
 // ─── Birth Date Picker ────────────────────────────────────────────────────────
 function BirthDatePicker({ value, onChange }) {
@@ -185,7 +185,7 @@ const PetModal = ({ form, setForm, editing, onSubmit, onClose, formErrors }) => 
 );
 
 // ─── Pet Card ─────────────────────────────────────────────────────────────────
-const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, onArchiveOwner, canArchive, canArchiveOwner }) => {
+const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, canArchive }) => {
     const age = calcAge(pet.birth_date);
     const ageGroup = getAgeGroup(pet.birth_date);
     const accent = speciesAccent(pet);
@@ -197,7 +197,7 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, onArchiveOwner, c
     return (
         <div
             className="card card-hover"
-            style={{ cursor: "pointer", padding: "18px 20px" }}
+            style={{ cursor: "pointer", padding: "16px 20px" }}
             onClick={pet.is_active ? onSelect : undefined}
         >
             {/* Header */}
@@ -210,7 +210,7 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, onArchiveOwner, c
                     <SpeciesIcon pet={pet} size={22} color={accent.icon} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontSize: "15px", fontWeight: "700", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {pet.name}
                     </h3>
                     <p style={{ fontSize: "12.5px", color: "var(--c-text-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -227,18 +227,18 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, onArchiveOwner, c
             {/* Data grid */}
             <div style={{ borderTop: "1px solid var(--c-subtle)", marginBottom: "14px", paddingTop: "12px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 <div>
-                    <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "3px" }}>Edad</p>
+                    <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Edad</p>
                     <p style={{ fontSize: "13.5px", color: "var(--c-text)", fontWeight: "500" }}>{age || "—"}</p>
                 </div>
                 <div>
-                    <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "3px" }}>Sexo</p>
+                    <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Sexo</p>
                     <p style={{ fontSize: "13.5px", color: "var(--c-text)", fontWeight: "500" }}>
                         {pet.sex && pet.sex !== "unknown" ? SEX_LABELS[pet.sex] : "—"}
                     </p>
                 </div>
                 {pet.color && (
                     <div style={{ gridColumn: "1 / -1" }}>
-                        <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "3px" }}>Color</p>
+                        <p style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Color</p>
                         <p style={{ fontSize: "13.5px", color: "var(--c-text)", fontWeight: "500" }}>{pet.color}</p>
                     </div>
                 )}
@@ -262,23 +262,20 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete, onRestore, onArchiveOwner, c
             </div>
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: "6px" }} onClick={e => e.stopPropagation()}>
+            {/* Ley de Fitts: la acción destructiva no va pegada a la frecuente ni con su
+                mismo peso (plan UX F2.3). «Archivar cliente» vive en la ficha (D13). */}
+            <div style={{ display: "flex", gap: "16px" }} onClick={e => e.stopPropagation()}>
                 {pet.is_active ? <>
                     <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => onEdit(pet)}>
                         <Icon.Edit s={13} /> Editar
                     </button>
-                    {canArchive && <button className="btn btn-secondary btn-sm" onClick={() => onDelete(pet.public_id)}>
+                    {canArchive && <button className="btn btn-ghost btn-sm" onClick={() => onDelete(pet.public_id)}>
                         Archivar
                     </button>}
                 </> : canArchive && <button className="btn btn-secondary btn-sm" onClick={() => onRestore(pet.public_id)}>
                     Restaurar
                 </button>}
             </div>
-            {pet.is_active && canArchiveOwner && !pet.owner?.is_generic && (
-                <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); onArchiveOwner(pet.owner.public_id); }}>
-                    Archivar cliente
-                </button>
-            )}
         </div>
     );
 };
@@ -359,7 +356,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
 
                 {/* Header */}
                 <div style={{
-                    padding: "20px 22px 16px",
+                    padding: "20px 20px 16px",
                     borderBottom: "1px solid var(--c-border)",
                     display: "flex", alignItems: "flex-start", gap: "14px",
                     flexShrink: 0,
@@ -372,13 +369,13 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                         <SpeciesIcon pet={pet} size={26} color={accent.icon} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ fontSize: "17px", fontWeight: "700", marginBottom: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {pet.name}
                         </h3>
-                        <p style={{ fontSize: "12.5px", color: "var(--c-text-2)", marginBottom: "7px" }}>
+                        <p style={{ fontSize: "12.5px", color: "var(--c-text-2)", marginBottom: "8px" }}>
                             {speciesLabel(pet.species)}{pet.breed ? ` · ${pet.breed}` : ""}
                         </p>
-                        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
                             {age && <span className="badge badge-default">{age}</span>}
                             {pet.sex && pet.sex !== "unknown" && (
                                 <span className="badge badge-default">{SEX_LABELS[pet.sex]}</span>
@@ -400,13 +397,13 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                 </div>
 
                 {/* Body */}
-                <div style={{ flex: 1, overflowY: "auto", padding: "20px 22px" }}>
+                <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px" }}>
                     {loading ? (
                         <PetPanelSkeleton />
                     ) : (
                         <>
                             {/* Cliente */}
-                            <section style={{ marginBottom: "22px" }}>
+                            <section style={{ marginBottom: "20px" }}>
                                 <p style={sectionTitle}>Cliente</p>
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                     <div style={{
@@ -430,7 +427,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
 
                             {/* Datos físicos */}
                             {(pet.color || pet.birth_date) && (
-                                <section style={{ marginBottom: "22px" }}>
+                                <section style={{ marginBottom: "20px" }}>
                                     <p style={sectionTitle}>Datos físicos</p>
                                     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                                         {pet.birth_date && (
@@ -453,9 +450,9 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
 
                             {/* Próximas citas */}
                             {upcoming.length > 0 && (
-                                <section style={{ marginBottom: "22px" }}>
+                                <section style={{ marginBottom: "20px" }}>
                                     <p style={sectionTitle}>Próximas citas</p>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                                         {upcoming.map(appt => (
                                             <div key={appt.id} style={{
                                                 display: "flex", alignItems: "flex-start", gap: "10px",
@@ -479,7 +476,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                             )}
 
                             {/* Historial reciente */}
-                            <section style={{ marginBottom: "22px" }}>
+                            <section style={{ marginBottom: "20px" }}>
                                 <p style={sectionTitle}>Historial reciente</p>
                                 {sortedRecords.length === 0 ? (
                                     <p style={{ fontSize: "12.5px", color: "var(--c-text-3)", fontStyle: "italic" }}>Sin consultas registradas</p>
@@ -549,7 +546,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
 
                 {/* Footer */}
                 <div style={{
-                    padding: "14px 22px", borderTop: "1px solid var(--c-border)",
+                    padding: "14px 20px", borderTop: "1px solid var(--c-border)",
                     display: "flex", gap: "8px", flexShrink: 0,
                 }}>
                     <button
@@ -831,24 +828,6 @@ const Pets = () => {
         }
     };
 
-    const handleOwnerArchive = async (id) => {
-        if (archiveSaving) return;
-        const ok = await confirm({ title: 'Archivar cliente',
-            message: 'También se archivarán sus mascotas activas. Los cobros y documentos se conservarán.',
-            confirmText: 'Archivar cliente' });
-        if (!ok) return;
-        setArchiveSaving(true);
-        try {
-            await toast.promise(archiveOwner(id), {
-                loading: 'Archivando cliente...', success: 'Cliente y mascotas archivados',
-                error: err => apiError(err, 'No se pudo archivar el cliente'),
-            });
-            closePanel(); reload();
-        } catch {
-            // Manejado por toast
-        } finally { setArchiveSaving(false); }
-    };
-
     const handleOwnerRestore = async (id) => {
         if (archiveSaving) return;
         setArchiveSaving(true);
@@ -884,7 +863,7 @@ const Pets = () => {
                     className="btn btn-primary btn-md"
                     onClick={() => { setEditing(null); setForm(EMPTY_FORM); ; setShowModal(true); }}
                 >
-                    + Nueva Mascota
+                    <Icon.Plus s={14} /> Nueva mascota
                 </button>
             </div>
 
@@ -894,7 +873,6 @@ const Pets = () => {
                     label="Total mascotas"
                     value={stats.total}
                     icon={Icon.Paw}
-                    tone="primary"
                     foot="Registradas en la clínica"
                 />
                 <StatTile
@@ -915,8 +893,7 @@ const Pets = () => {
                     label="Citas esta semana"
                     value={weekApptCount}
                     icon={Icon.Calendar}
-                    tone="forest"
-                    foot="De domingo a sábado"
+                    foot="De lunes a domingo"
                 />
             </StatSection>
 
@@ -938,7 +915,7 @@ const Pets = () => {
                 </div>
 
                 {/* Species chips */}
-                <div style={{ display: "flex", gap: "3px", background: "var(--c-subtle)", padding: "3px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
+                <div style={{ display: "flex", gap: "4px", background: "var(--c-subtle)", padding: "4px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
                     {[
                         { key: "all", label: "Todos" },
                         { key: "caninos", label: "Caninos", icon: <Icon.Dog s={13} /> },
@@ -948,7 +925,7 @@ const Pets = () => {
                             key={key}
                             onClick={() => setFilter(setFilterSpecies, key)}
                             style={{
-                                display: "inline-flex", alignItems: "center", gap: "5px",
+                                display: "inline-flex", alignItems: "center", gap: "4px",
                                 height: "28px", padding: "0 10px",
                                 borderRadius: "var(--r-sm)", border: "none", cursor: "pointer",
                                 fontSize: "12.5px", fontWeight: "600", fontFamily: "inherit",
@@ -1005,7 +982,7 @@ const Pets = () => {
                 <div style={{ flex: 1 }} />
 
                 {/* View toggle */}
-                <div style={{ display: "flex", gap: "3px", background: "var(--c-subtle)", padding: "3px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
+                <div style={{ display: "flex", gap: "4px", background: "var(--c-subtle)", padding: "4px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
                     {[{ key: "cards", I: Icon.Grid }, { key: "table", I: Icon.Rows }].map(({ key, I }) => (
                         <button
                             key={key}
@@ -1098,9 +1075,7 @@ const Pets = () => {
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             onRestore={handleRestore}
-                            onArchiveOwner={handleOwnerArchive}
                             canArchive={can('patient.destroy')}
-                            canArchiveOwner={can('owner.destroy')}
                         />
                     ))}
                 </div>
@@ -1154,12 +1129,12 @@ const Pets = () => {
                                             )}
                                         </td>
                                         <td onClick={e => e.stopPropagation()}>
-                                            <div style={{ display: "flex", gap: "6px" }}>
+                                            <div style={{ display: "flex", gap: "16px" }}>
                                                 {pet.is_active ? <>
                                                     <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(pet)}>
                                                         <Icon.Edit s={13} /> Editar
                                                     </button>
-                                                    {can('patient.destroy') && <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(pet.public_id)}>Archivar</button>}
+                                                    {can('patient.destroy') && <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(pet.public_id)}>Archivar</button>}
                                                 </> : can('patient.destroy') && <button className="btn btn-secondary btn-sm" onClick={() => handleRestore(pet.public_id)}>Restaurar</button>}
                                             </div>
                                         </td>

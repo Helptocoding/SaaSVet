@@ -143,17 +143,18 @@ const newSalesPres = (unitLabel = "Unidad") => ({
 const easeOutExpo = (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
 
 // ── Category icon ──────────────────────────────────────────
-const ICON_COLOR = { medication: "#3b82f6", food: "#0d9488", accessory: "#7c3aed", other: "#94a3b8" };
+// La categoría se distingue por la forma del ícono y su rótulo, no por color
+// (plan UX D6: el color queda para lo que pide acción — bajo stock, agotado,
+// receta). Antes cada categoría tenía su color, incluido un teal prohibido.
 const CATEGORY_ICON = { medication: Icon.Pill, food: Icon.ShoppingBag, accessory: Icon.Package, other: Icon.Box };
 
 const CategoryIcon = ({ category, size = 18 }) => {
-    const c = ICON_COLOR[category] || ICON_COLOR.other;
     const IconComp = CATEGORY_ICON[category] || CATEGORY_ICON.other;
-    return <IconComp s={size} c={c} />;
+    return <IconComp s={size} c="var(--c-text-2)" />;
 };
 
-const ICO_CLS = { medication: s.icoMed, food: s.icoFood, accessory: s.icoAcc, other: s.icoOther };
-const BADGE_CLS = { medication: s.badgeBlue, food: s.badgeGreen, accessory: s.badgePurple, other: s.badgeGray };
+const ICO_CLS = { medication: s.icoOther, food: s.icoOther, accessory: s.icoOther, other: s.icoOther };
+const BADGE_CLS = { medication: s.badgeGray, food: s.badgeGray, accessory: s.badgeGray, other: s.badgeGray };
 
 // ── Esqueleto de carga ─────────────────────────────────────
 // Misma estructura que la página (encabezado, indicadores, filtros, tabla) para que
@@ -183,9 +184,8 @@ const InventorySkeleton = ({ withActions }) => (
     <div>
         <div className={s.phead}>
             <div>
-                <div className={s.ptag}>Control de stock</div>
-                <h1 className={s.ptitle}>Inventario</h1>
-                <p className={s.psub}>Productos, medicamentos y suministros de la clínica</p>
+                <h1 className="page-title">Inventario</h1>
+                <p className="page-subtitle">Productos, medicamentos y suministros de la clínica</p>
             </div>
         </div>
         <div role="status" aria-label="Cargando inventario">
@@ -460,7 +460,7 @@ const Inventory = () => {
                 foot: <>Desactivados: <strong>{metrics.inactive}</strong></>,
             },
             {
-                label: "Medicamentos", value: metrics.medications, icon: Icon.Pill, tone: "primary",
+                label: "Medicamentos", value: metrics.medications, icon: Icon.Pill, tone: "ink",
                 badge: medsPct != null ? `${medsPct}%` : null,
                 foot: <>Con receta: <strong>{metrics.withRx}</strong></>,
             },
@@ -476,7 +476,7 @@ const Inventory = () => {
             },
             {
                 label: "Valor del stock", value: `$${fmtCur(animatedTotalVal)}`, icon: Icon.Wallet,
-                tone: "forest", wide: true, counting: isTotalValAnimating,
+                tone: "ink", wide: true, counting: isTotalValAnimating,
                 foot: "A precio de venta",
             },
         ];
@@ -969,24 +969,14 @@ const Inventory = () => {
             {/* ── Page header ── */}
             <div className={s.phead}>
                 <div>
-                    <div className={s.ptag}>Control de stock</div>
-                    <h1 className={s.ptitle}>Inventario</h1>
-                    <p className={s.psub}>Productos, medicamentos y suministros de la clínica</p>
+                    <h1 className="page-title">Inventario</h1>
+                    <p className="page-subtitle">Productos, medicamentos y suministros de la clínica</p>
                 </div>
                 <div className={s.pacts}>
-                    {canReceive && (
+                    {/* Orden del encabezado (plan UX D7): ayuda → secundarias → primaria al final. */}
+                    {canManage && (
                         <button
-                            className="btn btn-secondary btn-md"
-                            onClick={() => setReceptionsOpen(true)}
-                            title="Consultar en el servidor qué pasó con cada recepción"
-                        >
-                            <Icon.Rows s={13} />
-                            Recepciones
-                        </button>
-                    )}
-                    {canManage && (<>
-                        <button
-                            className="btn btn-secondary btn-md"
+                            className="btn btn-ghost btn-md"
                             onClick={() => tour.start({
                                 openWizardCreate,
                                 setWizardProduct,
@@ -1005,6 +995,18 @@ const Inventory = () => {
                             <Icon.Help s={13} />
                             Ver ejemplo
                         </button>
+                    )}
+                    {canReceive && (
+                        <button
+                            className="btn btn-secondary btn-md"
+                            onClick={() => setReceptionsOpen(true)}
+                            title="Consultar en el servidor qué pasó con cada recepción"
+                        >
+                            <Icon.Rows s={13} />
+                            Recepciones
+                        </button>
+                    )}
+                    {canManage && (<>
                         <button
                             className="btn btn-secondary btn-md"
                             onClick={() => setStockEntryOpen(true)}
@@ -1141,11 +1143,11 @@ const Inventory = () => {
                     style={{
                         display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
                         padding: "10px 14px", marginBottom: 14, borderRadius: 10,
-                        border: "1px solid var(--c-warning, #e0b34a)",
-                        background: "var(--c-warning-bg, #fdf6ec)", fontSize: 13,
+                        border: "1px solid var(--c-warning-border)",
+                        background: "var(--c-warning-bg)", fontSize: 13,
                     }}
                 >
-                    <Icon.AlertTriangle s={16} c="var(--c-warning-text, #b7791f)" />
+                    <Icon.AlertTriangle s={16} c="var(--c-warning-text)" />
                     {lotAlerts.expired_with_stock?.length > 0 && (
                         <span><strong>{lotAlerts.expired_with_stock.length}</strong> lote(s) vencido(s) con saldo</span>
                     )}
@@ -1226,7 +1228,7 @@ const Inventory = () => {
                                                     {product.description && (
                                                         <div className={s.prodDesc}>{product.description}</div>
                                                     )}
-                                                    <div style={{ display: "flex", gap: "4px", marginTop: "3px", flexWrap: "wrap" }}>
+                                                    <div style={{ display: "flex", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
                                                         {multiPres && (
                                                             <span className={`${s.badge} ${s.badgeGray}`}>
                                                                 {product.presentations.length} presentaciones
@@ -1334,7 +1336,7 @@ const Inventory = () => {
                                 {multiPres && (
                                     <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "6px" }}>
                                         {product.presentations.map(p => (
-                                            <span key={p.id} className={`${s.badge} ${s.badgeGray}`} style={{ fontSize: "9.5px" }}>
+                                            <span key={p.id} className={`${s.badge} ${s.badgeGray}`} style={{ fontSize: "11px" }}>
                                                 {p.name}
                                             </span>
                                         ))}
@@ -1400,7 +1402,7 @@ const Inventory = () => {
                                             </div>
                                             <div>
                                                 <div className={s.summaryProdName}>{wizardProduct.name}</div>
-                                                <div style={{ display: "flex", gap: "6px", marginTop: "5px", flexWrap: "wrap", alignItems: "center" }}>
+                                                <div style={{ display: "flex", gap: "6px", marginTop: "4px", flexWrap: "wrap", alignItems: "center" }}>
                                                     <span className={`${s.badge} ${BADGE_CLS[wizardProduct.category] || s.badgeGray}`}>{CATEGORY_LABELS[wizardProduct.category]}</span>
                                                     {Number(wizardProduct.min_stock) > 0 && <span className={s.summaryMeta}>Mínimo: {wizardProduct.min_stock} {baseUnitLabel}</span>}
                                                 </div>
@@ -1408,17 +1410,17 @@ const Inventory = () => {
                                         </div>
 
                                         <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--c-subtle)", borderRadius: "var(--r-lg)" }}>
-                                            <div style={{ fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: "var(--c-text-3)", marginBottom: "5px" }}>Inventario inicial</div>
-                                            <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--c-text)", lineHeight: 1 }}>
+                                            <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: "var(--c-text-3)", marginBottom: "4px" }}>Inventario inicial</div>
+                                            <div style={{ fontSize: "20px", fontWeight: 700, color: "var(--c-text)", lineHeight: 1 }}>
                                                 {fmt(computedStock)} <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--c-text-2)" }}>{baseUnitLabelForSales}</span>
                                             </div>
                                             {!wizardProduct.tracks_lots && divides === true && Number(dividesCount) > 0 && (
-                                                <div style={{ fontSize: "12px", color: "var(--c-text-3)", marginTop: "3px" }}>
+                                                <div style={{ fontSize: "12px", color: "var(--c-text-3)", marginTop: "4px" }}>
                                                     {countQty} {countUnitLabel.toLowerCase()} × {dividesCount} {dividesUnitLabel}
                                                 </div>
                                             )}
                                             {wizardProduct.tracks_lots && (
-                                                <div style={{ fontSize: "12px", color: "var(--c-text-3)", marginTop: "3px" }}>
+                                                <div style={{ fontSize: "12px", color: "var(--c-text-3)", marginTop: "4px" }}>
                                                     {(() => {
                                                         const n = wizardLots.filter(l => (l.lot_number || "").trim() && Number(l.quantity) > 0).length;
                                                         if (!n) return "Sin lote inicial — regístralo en Entrada de stock";
@@ -1490,7 +1492,7 @@ const Inventory = () => {
                                                         style={{
                                                             background: "none", border: "none", cursor: "pointer",
                                                             fontSize: "12px", color: "var(--c-text-3)", fontFamily: "inherit",
-                                                            display: "inline-flex", alignItems: "center", gap: "5px",
+                                                            display: "inline-flex", alignItems: "center", gap: "4px",
                                                             padding: "4px 8px", borderRadius: "var(--r-sm)",
                                                         }}
                                                         onClick={() => setShowMultiAnim(true)}
@@ -1626,7 +1628,7 @@ const Inventory = () => {
                                                                     onChange={e => setWizardProduct(p => ({ ...p, tracks_lots: e.target.checked }))} />
                                                                 Requiere control de lotes y caducidad
                                                             </label>
-                                                            <p style={{ margin: "4px 0 0 26px", fontSize: 12, color: "var(--c-text-3)", lineHeight: 1.5 }}>
+                                                            <p style={{ margin: "4px 0 0 24px", fontSize: 12, color: "var(--c-text-3)", lineHeight: 1.5 }}>
                                                                 Actívalo para vacunas, inyectables o cualquier producto con caducidad.
                                                                 Podrás registrar lote y fecha de vencimiento al recibir mercancía.
                                                             </p>
@@ -1741,7 +1743,7 @@ const Inventory = () => {
                                                                         value={wizardSupplier}
                                                                         onChange={e => setWizardSupplier(e.target.value)} />
                                                                 </div>
-                                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 62px 30px", gap: 6, fontSize: 10.5, fontWeight: 600, color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 3 }}>
+                                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 62px 30px", gap: 6, fontSize: 11, fontWeight: 600, color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 4 }}>
                                                                     <span>Lote</span>
                                                                     <span>Caduca</span>
                                                                     <span style={{ textAlign: "center" }}>Cant.</span>
@@ -1814,7 +1816,7 @@ const Inventory = () => {
                                                                 <div className={s.presCardHead}>
                                                                     <span className={s.presNum}>
                                                                         {sp.name || `Forma ${idx + 1}`}
-                                                                        {sp.publicId && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--c-text-3)", fontWeight: 400 }}>(guardada)</span>}
+                                                                        {sp.publicId && <span style={{ marginLeft: 6, fontSize: 11, color: "var(--c-text-3)", fontWeight: 400 }}>(guardada)</span>}
                                                                     </span>
                                                                     {canRemove && <button type="button" className={s.presRemoveBtn} onClick={() => removeSalesPres(idx)}>Quitar</button>}
                                                                 </div>
@@ -1975,22 +1977,22 @@ const Inventory = () => {
                                         alignItems: "center", marginBottom: "20px",
                                     }}>
                                         <div>
-                                            <div style={{ fontSize: "10.5px", color: "var(--c-text-3)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "3px" }}>
+                                            <div style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>
                                                 Stock actual
                                             </div>
-                                            <div style={{ fontSize: "26px", fontWeight: "800", color: "var(--c-text)", lineHeight: 1 }}>
+                                            <div style={{ fontSize: "24px", fontWeight: "700", color: "var(--c-text)", lineHeight: 1 }}>
                                                 {fmt(adjStock)}
                                                 <span style={{ fontSize: "13px", fontWeight: "500", color: "var(--c-text-2)", marginLeft: "4px" }}>{adjUnit}</span>
                                             </div>
                                         </div>
                                         {preview !== null && (
                                             <>
-                                                <div style={{ fontSize: "22px", color: "var(--c-text-3)" }}>→</div>
+                                                <div style={{ fontSize: "24px", color: "var(--c-text-3)" }}>→</div>
                                                 <div style={{ textAlign: "right" }}>
-                                                    <div style={{ fontSize: "10.5px", color: "var(--c-text-3)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "3px" }}>
+                                                    <div style={{ fontSize: "11px", color: "var(--c-text-3)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>
                                                         Resultado
                                                     </div>
-                                                    <div style={{ fontSize: "26px", fontWeight: "800", color: "var(--c-primary-dark)", lineHeight: 1 }}>
+                                                    <div style={{ fontSize: "24px", fontWeight: "700", color: "var(--c-primary-dark)", lineHeight: 1 }}>
                                                         {fmt(preview)}
                                                         <span style={{ fontSize: "13px", fontWeight: "500", color: "var(--c-text-2)", marginLeft: "4px" }}>{adjUnit}</span>
                                                     </div>
@@ -2003,7 +2005,7 @@ const Inventory = () => {
 
                             <div className="form-group">
                                 <label className="form-label">TIPO DE MOVIMIENTO</label>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "7px" }}>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
                                     {[
                                         { value: "in", label: "Entrada", icon: "↑", color: "var(--c-success-text)", bg: "var(--c-success-bg)", border: "var(--c-success-border)" },
                                         { value: "out", label: "Salida", icon: "↓", color: "var(--c-danger-text)", bg: "var(--c-danger-bg)", border: "var(--c-danger-border)" },
@@ -2021,7 +2023,7 @@ const Inventory = () => {
                                                     borderRadius: "var(--r-lg)",
                                                     background: active ? opt.bg : "var(--c-surface)",
                                                     cursor: "pointer", transition: "all var(--t)",
-                                                    display: "flex", flexDirection: "column", alignItems: "center", gap: "3px",
+                                                    display: "flex", flexDirection: "column", alignItems: "center", gap: "4px",
                                                 }}
                                             >
                                                 <span style={{ fontSize: "20px", color: active ? opt.color : "var(--c-text-3)", lineHeight: 1 }}>{opt.icon}</span>
@@ -2048,7 +2050,7 @@ const Inventory = () => {
                                                 ? `NUEVO STOCK (en ${adjUnit || "unidades"}) *`
                                                 : `CANTIDAD (en ${adjCf > 1 ? `paquetes → ${adjUnit}` : adjUnit || "unidades"}) *`}
                                         </label>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                             <button
                                                 type="button" className="btn btn-secondary btn-md"
                                                 style={{ width: "38px", padding: 0, fontSize: "20px", fontWeight: "400", flexShrink: 0 }}
@@ -2067,7 +2069,7 @@ const Inventory = () => {
                                             >+</button>
                                         </div>
                                         {adjCf > 1 && adjustForm.quantity > 0 && (
-                                            <p style={{ fontSize: "11.5px", color: "var(--c-text-3)", marginTop: "5px" }}>
+                                            <p style={{ fontSize: "11.5px", color: "var(--c-text-3)", marginTop: "4px" }}>
                                                 {parseFloat(adjustForm.quantity)} paquete{parseFloat(adjustForm.quantity) !== 1 ? "s" : ""} = {parseFloat(adjustForm.quantity) * adjCf} {adjUnit}
                                             </p>
                                         )}

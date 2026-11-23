@@ -205,7 +205,7 @@ const PrescriptionForm = ({
                             {form.items.map((item, index) => {
                             const hasItemError = itemErrors.has(index);
                             return (
-                                <div key={index} className="card" style={{ padding: "14px", marginBottom: "10px", background: hasItemError ? "rgba(239,68,68,.04)" : "var(--c-subtle)", borderColor: hasItemError ? "#ef4444" : undefined }}>
+                                <div key={index} className="card" style={{ padding: "14px", marginBottom: "10px", background: hasItemError ? "var(--c-danger-bg)" : "var(--c-subtle)", borderColor: hasItemError ? "var(--c-danger-border)" : undefined }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
                                         <span style={{ fontWeight: "600", fontSize: "12px", color: "var(--c-text-2)" }}>Medicamento {index + 1}</span>
                                         {form.items.length > 1 && (
@@ -250,7 +250,7 @@ const PrescriptionForm = ({
                                                 onChange={e => updateItem(index, "quantity", e.target.value)}
                                                 placeholder="0"
                                                 disabled={submitting}
-                                                style={hasItemError && !Number(item.quantity) ? { borderColor: "#ef4444" } : {}}
+                                                style={hasItemError && !Number(item.quantity) ? { borderColor: "var(--c-danger-border)" } : {}}
                                             />
                                         </div>
                                     </div>
@@ -267,7 +267,7 @@ const PrescriptionForm = ({
                                                 onChange={e => updateItem(index, "dose", e.target.value)}
                                                 placeholder="Ej: 1 comprimido cada 12h"
                                                 disabled={submitting}
-                                                style={hasItemError && !item.dose.trim() ? { borderColor: "#ef4444" } : {}}
+                                                style={hasItemError && !item.dose.trim() ? { borderColor: "var(--c-danger-border)" } : {}}
                                             />
                                         </div>
                                         <div>

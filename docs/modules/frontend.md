@@ -1072,14 +1072,15 @@ de POS/Importación/`config.jsx` (no se alcanzan: `Layout` espera la sesión ant
 de montar la página), el Inbox (`InboxLoadState`, contrato propio con pruebas) y
 Analítica (excluida del piloto).
 
-### StatTiles (indicadores «Linear Insights»)
+### StatTiles (indicadores)
 
 `components/StatTiles.jsx` — **fuente única** de tarjetas de métrica. Presentacional:
 el caller arma título, valor, tono y pie; el componente no conoce permisos ni API.
 Contrato visual (tonos, rejilla, estados) en `design-system.md` §5.
 
-- `StatSection({ label, eyebrow = "Linear Insights", gridClassName, children })` —
-  `<section aria-label>` + rejilla. `eyebrow={null}` la oculta.
+- `StatSection({ label, eyebrow = null, gridClassName, children })` —
+  `<section aria-label>` + rejilla. Sin rótulo visible salvo que se pase `eyebrow`
+  (el antiguo «Linear Insights» era un nombre interno en inglés; plan UX D2).
 - `StatTile({ label, value, icon, tone, badge, foot, live, counting, className, onClick, pressed })`
   — `onClick` la vuelve `<button aria-pressed>` con nombre «título: valor» (así lo
   encuentran las pruebas); sin él es un `<div>`.
@@ -1380,7 +1381,7 @@ getUnitChoices()                           // catálogo de unidades base
 | KPIs, sidebar (Ahora/backlog/stock) | `useDashboardSummary` | `GET /api/v1/dashboard/summary/` | Live, cache 30s, polling 30s |
 | **Activación primer uso (`FirstRunAssistant`)** | `useActivationContext` (`ActivationProvider` en `Root`) | `GET /api/v1/dashboard/activation/` | Read-only, **existencia real** (sin flags), refetch en mount + `dashboard:refresh` + `refetch()` bajo demanda (sin polling) |
 | **Agenda del día (`TodayAgendaList`)** | `useDayAppointments` | `GET /appointments/?date=YYYY-MM-DD` | Live, refetch al cambiar día + evento `dashboard:refresh` (ADR p35) |
-| Spark + Δ de ingresos (admin) | `useFinancialSeries` | `financial/series/` | Snapshot + hoy live |
+| Indicador «Ingresos del día» y su Δ vs ayer (admin) | `useFinancialSeries` | `financial/series/` | Snapshot + hoy live |
 | Card "Analítica" | `useDashboardSeries` + `useFinancialSeries` | `operations/series/` + `financial/series/` | Snapshot + hoy live |
 | Card "Citas por resolver" | `useAppointmentsByStatus` | `GET /appointments/status-breakdown/?from=&to=` | Live, rango |
 
@@ -1392,7 +1393,7 @@ getUnitChoices()                           // catálogo de unidades base
 
 Sidebar (orden = urgencia): **Ahora** → **Citas por resolver** → **Pendientes clínicos** → **Stock crítico**.
 
-Columna principal: **KPIs** → **Agenda del día** (`TodayAgendaList`) → **Analítica**.
+Columna principal: **Agenda del día** (`TodayAgendaList`) → **Indicadores** → **Analítica** (plan UX D10: la agenda es la tarea principal; los ingresos son un indicador más y «En consulta» vive solo en el panel «Ahora»).
 Mientras la activación esté incompleta, **`FirstRunAssistant`** se monta como
 **overlay full-screen** por encima de todo (no es un ítem de la columna).
 
@@ -1488,7 +1489,7 @@ Mientras la activación esté incompleta, **`FirstRunAssistant`** se monta como
   ~1 s `Todo listo. {clínica} ya está lista. ✓` y fade. Personalizado con
   `user.organization_name` (nunca la marca).
 - **Volver guiado**: `Layout.jsx`, si `location.state?.fromOnboarding`, muestra
-  `← Volver al Dashboard` en el header en vez del título (hint de recorrido).
+  `← Volver al Dashboard` en la barra superior (hint de recorrido). La barra no lleva título de página: el H1 de cada página ya lo dice (plan UX D8).
 - **Gateado por capability** (no por rol): solo se renderiza si `can("service.create")`
   — proxy del acceso a la configuración inicial (un VET/ASISTENTE no ve CTAs a lugares
   sin permiso, p.ej. `/config`). No existe capability única para "ajustes de la org".

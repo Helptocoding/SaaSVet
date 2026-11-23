@@ -8,12 +8,12 @@ const SEX_OPTIONS = [
 
 const fldLbl = {
     display: 'block', fontSize: '11px', fontWeight: '600',
-    color: 'var(--c-text-2)', marginBottom: '3px',
+    color: 'var(--c-text-2)', marginBottom: '4px',
     textTransform: 'uppercase', letterSpacing: '0.05em',
 };
 
 const sectionLbl = {
-    fontSize: '10px', fontWeight: '700', color: 'var(--c-text-3)',
+    fontSize: '11px', fontWeight: '700', color: 'var(--c-text-3)',
     textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '6px',
 };
 
