@@ -9,7 +9,7 @@ stack documented in ADR p20.
 
 Only acceptable bypasses today:
   - ``createsuperuser`` (CLI bootstrap).
-  - ``StaffCreateView`` (initial password on user creation).
+  - ``create_staff_member`` (initial password generated on staff creation).
   - ``apps.platform.services.provision_organization`` (initial admin
     password on tenant provisioning).
   - Django admin password change form (operator escape hatch).
@@ -335,6 +335,16 @@ def _revoke_all_sessions(user) -> int:
     return revoked
 
 
+def _generate_password() -> str:
+    """Random password for credentials the system hands out (ADR p21).
+
+    ``TEMP_PASSWORD_ENTROPY_BYTES`` of entropy, base64-urlsafe. Shared by the
+    reset/reactivation temporary password and the initial password of a new
+    member, so every credential the system issues has the same strength.
+    """
+    return secrets.token_urlsafe(TEMP_PASSWORD_ENTROPY_BYTES)
+
+
 def _issue_temporary_password(user) -> tuple[str, int]:
     """Replace the password with a temporary one (ADR p21) and revoke every
     session. Returns ``(temp_password, revoked_refresh_count)``.
@@ -342,7 +352,7 @@ def _issue_temporary_password(user) -> tuple[str, int]:
     The temporary password is valid for ``TEMP_PASSWORD_VALIDITY`` and must be
     changed on first login. It is never logged.
     """
-    temp_password = secrets.token_urlsafe(TEMP_PASSWORD_ENTROPY_BYTES)
+    temp_password = _generate_password()
     user.set_password(temp_password)
     user.password_must_change = True
     user.password_temp_issued_at = timezone.now()
@@ -710,6 +720,129 @@ def reactivate_staff(
 
 
 # ---------------------------------------------------------------------------
+# Staff creation (Fase 1 Equipo): the system generates the initial password
+# ---------------------------------------------------------------------------
+
+STAFF_ROLES = ('ADMIN', 'VET', 'ASSISTANT')
+EMAIL_UNAVAILABLE = 'Este correo no está disponible.'
+USERNAME_UNAVAILABLE = 'Este nombre de usuario no está disponible.'
+
+
+@dataclass
+class CreateStaffResult:
+    """Return shape of ``create_staff_member``."""
+    user: object
+    temp_password: str
+    request_id: str
+
+
+def _assign_system_role(user):
+    """Link ``user`` to the system ``Role`` of its role name (RBAC).
+
+    The ``post_save`` signal ``assign_rbac_role_on_create`` does the same on
+    creation; both use ``get_or_create``, so running twice is harmless. Without
+    the role seeded, it warns: ``seed_permissions`` has not run for the clinic.
+    """
+    from apps.core.models import Role, UserRole
+
+    try:
+        role = Role.objects.get(
+            name=user.role, organization_id=user.organization_id, is_system_role=True,
+        )
+    except Role.DoesNotExist:
+        logger.warning(
+            "Rol '%s' no encontrado en org %s al crear usuario %s — "
+            "ejecuta seed_permissions",
+            user.role, user.organization_id, user.pk,
+        )
+        return
+    UserRole.objects.get_or_create(user=user, role=role)
+
+
+def _log_staff_created(fields):
+    logger.info("STAFF_CREATED", extra=fields)
+
+
+@transaction.atomic(durable=True)
+def create_staff_member(*, admin, data, request_id: str | None = None) -> CreateStaffResult:
+    """Create a member of the admin's clinic with a system-generated password.
+
+    ``data`` is the validated input of ``CreateEmployeeSerializer`` (username,
+    email, names, role, specialty, cédula). The organization always comes from
+    ``admin``, never from the request body (ADR p18).
+
+    The initial password follows ADR p21 (addendum 2026-06-24, amended
+    2026-11-23): generated like the reset's temporary password, must be changed on
+    first login (``password_must_change=True``) and, without
+    ``password_temp_issued_at``, it does not expire. It is returned once, after
+    the commit, and never logged.
+
+    **Must be the outermost transaction** (``durable=True``), like
+    ``reactivate_staff``: otherwise the password could be handed back before a
+    commit that later fails. Creation and role assignment are one unit: a
+    failure leaves no half-created member.
+
+    A concurrent creation with the same email or username loses on the database
+    constraint and gets a 400 on that field, never a 500.
+    """
+    from django.contrib.auth import get_user_model
+    from django.db import IntegrityError
+
+    User = get_user_model()
+    request_id = request_id or str(uuid.uuid4())
+
+    if admin.organization_id is None:
+        raise PermissionDenied("Tu cuenta no pertenece a una clínica.")
+    role = data.get('role')
+    if role not in STAFF_ROLES:
+        raise ValidationError({'role': ['Rol no válido.']})
+
+    temp_password = _generate_password()
+    try:
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=data['username'],
+                email=data['email'],
+                password=temp_password,
+                first_name=data.get('first_name', ''),
+                last_name=data.get('last_name', ''),
+                specialty=data.get('specialty', ''),
+                license_number=data.get('license_number', ''),
+                role=role,
+                organization_id=admin.organization_id,
+                # Contraseña de un solo uso (ADR p21): el gate obliga a cambiarla
+                # en el primer acceso. Solo en esta ruta de alta, nunca en
+                # create_user, un signal ni el default del modelo.
+                password_must_change=True,
+            )
+    except IntegrityError as exc:
+        if _is_email_unique_violation(exc):
+            raise ValidationError({'email': [EMAIL_UNAVAILABLE]}) from exc
+        if User.objects.filter(username__iexact=data['username']).exists():
+            raise ValidationError({'username': [USERNAME_UNAVAILABLE]}) from exc
+        raise
+
+    _assign_system_role(user)
+
+    event = {
+        "event": "STAFF_CREATED",
+        "request_id": request_id,
+        "actor_id": admin.pk,
+        "actor_username": admin.username,
+        "actor_role": admin.role,
+        "organization_id": admin.organization_id,
+        "target_user_id": user.pk,
+        "target_username": user.username,
+        "target_public_id": str(user.public_id),
+        "target_role": user.role,
+        # Note — the initial password is NEVER logged.
+    }
+    transaction.on_commit(lambda: _log_staff_created(event), robust=True)
+
+    return CreateStaffResult(user=user, temp_password=temp_password, request_id=request_id)
+
+
+# ---------------------------------------------------------------------------
 # Service account del agente virtual (ADR p51)
 # ---------------------------------------------------------------------------
 
@@ -760,7 +893,7 @@ def update_staff_profile(*, admin, target_user, changes):
             target_user.save(update_fields=fields)
     except IntegrityError as exc:
         if _is_email_unique_violation(exc):
-            raise ValidationError({'email': ['Este correo no está disponible.']}) from exc
+            raise ValidationError({'email': [EMAIL_UNAVAILABLE]}) from exc
         raise
     logger.info(
         "STAFF_PROFILE_UPDATED",
@@ -883,3 +1016,53 @@ def is_temp_password_expired(user) -> bool:
     if user.password_temp_issued_at is None:
         return False
     return (timezone.now() - user.password_temp_issued_at) > TEMP_PASSWORD_VALIDITY
+
+
+# ---------------------------------------------------------------------------
+# Last access (Fase 1 Equipo)
+# ---------------------------------------------------------------------------
+
+# Precisión del último acceso. Con sesiones que se renuevan solas (refresh cada
+# ~10 min), escribir en cada renovación sería una escritura por usuario cada 10
+# minutos para un dato que se lee en horas o días.
+ACCESS_RECORD_INTERVAL = timedelta(hours=1)
+
+
+def record_user_access(user, *, now=None) -> bool:
+    """Record that ``user`` just obtained tokens (login or refresh).
+
+    Called by the login and refresh views only after every rejection gate passed
+    (inactive organization, expired temporary password, revoked session), so a
+    refused attempt never counts as an access. ``SIMPLE_JWT['UPDATE_LAST_LOGIN']``
+    stays off on purpose: it writes inside the serializer, before those gates,
+    and never on refresh.
+
+    One conditional ``UPDATE`` of ``last_login`` only: no ``save()``, no other
+    field (``session_version`` and the rest stay untouched), and at most one
+    write per ``ACCESS_RECORD_INTERVAL``. Service accounts are skipped.
+
+    A database error is logged and swallowed: recording the access must never
+    break an authentication that already succeeded. Returns True if it wrote.
+    """
+    from django.contrib.auth import get_user_model
+    from django.db import DatabaseError
+    from django.db.models import Q
+
+    User = get_user_model()
+    now = now or timezone.now()
+    try:
+        updated = (
+            User.objects
+            .filter(pk=user.pk, is_service_account=False)
+            .filter(Q(last_login__isnull=True) | Q(last_login__lt=now - ACCESS_RECORD_INTERVAL))
+            .update(last_login=now)
+        )
+    except DatabaseError:
+        logger.warning("USER_ACCESS_RECORD_FAILED", extra={
+            "event": "USER_ACCESS_RECORD_FAILED",
+            "user_id": user.pk,
+        })
+        return False
+    if updated:
+        user.last_login = now
+    return bool(updated)

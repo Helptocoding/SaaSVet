@@ -1,0 +1,23 @@
+{
+  "ADMIN": {
+    "label": "Administrador",
+    "short": "Acceso completo, incluidos equipo y configuración",
+    "summary": "Acceso completo: equipo, configuración de la clínica, cobros y reembolsos, inventario y expedientes clínicos.",
+    "grants": ["staff.create", "organization.update", "invoice.pay", "billing.refund", "inventory.destroy", "medicalrecord.close"],
+    "lacks": []
+  },
+  "VET": {
+    "label": "Veterinario",
+    "short": "Consultas, recetas y vacunas; agenda citas",
+    "summary": "Atiende consultas, emite recetas y registra vacunas; agenda citas. No cobra ni administra el equipo o la clínica.",
+    "grants": ["medicalrecord.create", "medicalrecord.close", "prescription.create", "vaccinerecord.create", "appointment.create"],
+    "lacks": ["invoice.pay", "staff.create", "organization.update"]
+  },
+  "ASSISTANT": {
+    "label": "Asistente",
+    "short": "Recepción: citas, clientes, cobros y caja",
+    "summary": "Recepción: agenda citas, registra clientes y mascotas, cobra y maneja la caja; atiende WhatsApp. Consulta expedientes sin modificarlos.",
+    "grants": ["appointment.create", "owner.create", "patient.create", "invoice.pay", "cashsession.open", "agentinbox.send", "medicalrecord.retrieve"],
+    "lacks": ["medicalrecord.create", "medicalrecord.update", "prescription.create", "staff.create", "organization.update"]
+  }
+}

@@ -1036,7 +1036,10 @@ function EventManagerAppointments() {
     }), []);
     const tour = useAgendaTour(tourActions);
     const tourStartedRef = useRef(false);
-    const canCreate = user?.role !== "ASSISTANT";
+    // Crear citas se decide por capacidad (ADR p63): recepción (ASSISTANT) tiene
+    // `appointment.create` y antes quedaba en «Modo lectura» por su nombre de rol.
+    // `canEdit` sigue por rol: pendiente aparte (Fase 1 Equipo, §7).
+    const canCreate = can("appointment.create");
     const canEdit = user?.role === "ADMIN" || user?.role === "VET";
 
     const loadAll = async () => {

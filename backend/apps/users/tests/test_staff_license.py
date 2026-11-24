@@ -41,7 +41,7 @@ class StaffLicenseTests(APITestCase):
     def _create(self, **overrides):
         payload = {
             'username': 'nuevo_ced', 'email': 'nuevo_ced@example.com',
-            'password': 'Segura123', 'first_name': 'Ana', 'role': 'VET',
+            'first_name': 'Ana', 'role': 'VET',
         }
         payload.update(overrides)
         self.client.force_authenticate(self.admin)
@@ -66,13 +66,14 @@ class StaffLicenseTests(APITestCase):
     def test_create_vet_with_license_strips_spaces(self):
         r = self._create(license_number='  1234567 ')
         self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.content)
-        self.assertEqual(r.data['license_number'], '1234567')
+        # Fase 1 Equipo: el alta responde con el integrante en `member`.
+        self.assertEqual(r.data['member']['license_number'], '1234567')
         self.assertEqual(User.objects.get(username='nuevo_ced').license_number, '1234567')
 
     def test_create_assistant_without_license(self):
         r = self._create(role='ASSISTANT')
         self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.content)
-        self.assertEqual(r.data['license_number'], '')
+        self.assertEqual(r.data['member']['license_number'], '')
 
     def test_create_rejects_bad_formats(self):
         for value in ('1234', '12345678901', '12a4567', '123 4567'):

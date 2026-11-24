@@ -384,7 +384,7 @@ seguridad permanente.
 
 - `ADMIN`: ve todas las citas de su organizacion
 - `VET`: ve todas las citas de su organizacion; la vista por defecto muestra las propias
-- `ASSISTANT`: ve todas las citas de su organizacion (lectura)
+- `ASSISTANT`: ve todas las citas de su organizacion y **crea citas** (`appointment.create`, ADR p63). Hasta la Fase 1 de Equipo (2026-11-23) la agenda le mostraba «Modo lectura» porque decidía por nombre de rol; ahora decide con `can("appointment.create")`. Editar, cambiar el estado y la atención sin cita siguen decididos por rol en la interfaz (`canEdit`), aunque el backend también se los permite: pendiente aparte
 
 ## Seleccion de mascota en el frontend
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/authContext";
+import { STAFF_MANAGEMENT_PERMS } from "../features/staff/permissions";
 import { Icon } from "./icons";
 import styles from "./AppShell.module.css";
 
@@ -34,9 +35,6 @@ const NAV_GROUPS = [
 // clínica (`organization.update`, sensible: ADMIN y ADMIN_SAAS) ve
 // Configuración (plan UX F1.10).
 const STAFF_ITEM = { path: "/staff", label: "Equipo", icon: Icon.Users };
-const STAFF_MANAGEMENT_PERMS = [
-    "staff.create", "staff.update", "staff.destroy", "staff.reset_password", "staff.reactivate",
-];
 const CONFIG_ITEM = { path: "/config", label: "Configuración", icon: Icon.Settings };
 
 // Items de admin gated por capability (no por nombre de rol): el importador

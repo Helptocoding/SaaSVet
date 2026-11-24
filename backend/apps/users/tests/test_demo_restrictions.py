@@ -179,7 +179,7 @@ class DemoSeedAccountsInEquipoTests(TestCase):
 
     def test_demo_requires_reserved_email_domains(self):
         payload = {
-            'username': 'visitante', 'password': 'Segura123', 'first_name': 'Visita',
+            'username': 'visitante', 'first_name': 'Visita',
             'role': 'ASSISTANT',
         }
         res = self.client.post('/api/staff/create/', {**payload, 'email': 'alguien@gmail.com'},

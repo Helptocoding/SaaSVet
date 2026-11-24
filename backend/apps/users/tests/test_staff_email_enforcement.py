@@ -29,8 +29,7 @@ class StaffEmailEnforcementTests(APITestCase):
 
     def _create(self, **over):
         payload = {
-            "username": "newvet", "email": "new@a.test",
-            "password": "VetPass1234", "role": "VET",
+            "username": "newvet", "email": "new@a.test", "role": "VET",
             "first_name": "Nueva",  # D4 (plan Equipo): obligatorio en el alta
             "license_number": "1234567",  # M01: obligatoria para VET
         }
@@ -49,16 +48,19 @@ class StaffEmailEnforcementTests(APITestCase):
                          status.HTTP_201_CREATED)
         resp = self._create(username="second", email="taken@a.test")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST, resp.content)
+        self.assertIn("email", resp.data)  # el 400 se debe al correo
 
     def test_rejects_duplicate_email_case_insensitive(self):
         self._create(username="first", email="ci@a.test")
         resp = self._create(username="second", email="CI@A.test")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST, resp.content)
+        self.assertIn("email", resp.data)  # el 400 se debe al correo
 
     def test_rejects_duplicate_email_cross_org(self):
         # Único global: el correo de un usuario de OTRA org no se puede reusar.
         resp = self._create(username="collide", email="dup@shared.test")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST, resp.content)
+        self.assertIn("email", resp.data)  # el 400 se debe al correo
 
     def test_generic_message_does_not_leak_org(self):
         resp = self._create(username="collide2", email="dup@shared.test")
@@ -70,8 +72,9 @@ class StaffEmailEnforcementTests(APITestCase):
         resp = self.client.post(
             "/api/staff/create/",
             # first_name presente (D4) para que el 400 se deba solo al correo.
-            {"username": "noemail", "password": "VetPass1234", "role": "VET",
-             "first_name": "Nueva"},
+            {"username": "noemail", "role": "VET", "first_name": "Nueva",
+             "license_number": "1234567"},
             format="json",
         )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST, resp.content)
+        self.assertIn("email", resp.data)  # el 400 se debe al correo

@@ -136,6 +136,11 @@ class ThrottledTokenObtainPairView(NoStoreResponseMixin, TokenObtainPairView):
             if user.password_must_change:
                 response.data['must_change_password'] = True
 
+            # Fase 1 Equipo: último acceso, solo tras pasar todas las compuertas
+            # (un login rechazado arriba no cuenta como acceso).
+            from apps.users.services import record_user_access
+            record_user_access(user)
+
         return response
 
 
@@ -169,7 +174,14 @@ class PublicTokenRefreshView(NoStoreResponseMixin, TokenRefreshView):
         # de acceso no se rota (ni crea un OutstandingToken nuevo).
         if not session_version_matches(refresh, user):
             raise SessionRevoked()
-        return super().post(request, *args, **kwargs)
+        response = super().post(request, *args, **kwargs)
+        # Fase 1 Equipo: una sesión que se renueva sola también es actividad;
+        # sin esto, «último acceso» envejecería aunque la persona use el sistema
+        # a diario. Como máximo una escritura por hora (record_user_access).
+        if response.status_code == 200:
+            from apps.users.services import record_user_access
+            record_user_access(user)
+        return response
 
 class PublicTokenLogoutView(NoStoreResponseMixin, TokenBlacklistView):
     """Revoca el refresh recibido. Sin autenticación por access token, que puede

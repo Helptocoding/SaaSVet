@@ -208,7 +208,7 @@ class EmailRaceTests(_Fixtures):
 class CreateNamesTests(_Fixtures):
     def _create(self, n, **over):
         payload = {
-            'username': f'nuevo{n}', 'email': f'nuevo{n}@example.com', 'password': PASSWORD,
+            'username': f'nuevo{n}', 'email': f'nuevo{n}@example.com',
             'first_name': 'Nueva', 'role': 'ASSISTANT',
         }
         payload.update(over)
@@ -231,8 +231,7 @@ class CreateNamesTests(_Fixtures):
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.content)
         self.assertEqual(r.data['first_name'], ['El nombre es obligatorio.'])
         payload = {
-            'username': 'sinnombre', 'email': 'sinnombre@example.com', 'password': PASSWORD,
-            'role': 'ASSISTANT',
+            'username': 'sinnombre', 'email': 'sinnombre@example.com', 'role': 'ASSISTANT',
         }
         r = self.client.post('/api/staff/create/', payload, format='json')
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.content)

@@ -15,14 +15,17 @@ from apps.core.permissions import (
     user_has_permission,
 )
 from apps.core.views import resolve_public_id
+from apps.users.access import can_manage_staff
 from apps.users.serializers import (
     UserSerializer,
     CreateEmployeeSerializer,
     ChangePasswordSerializer,
+    StaffDirectorySerializer,
     UpdateEmployeeSerializer,
 )
 from apps.users.services import (
     change_password,
+    create_staff_member,
     deactivate_staff,
     reactivate_staff,
     reset_password_for_staff,
@@ -84,7 +87,12 @@ class MeView(APIView):
 class StaffListView(APIView):
     """GET /api/staff/ — activos (por defecto, lo consume Citas) o, con
     ``?archived=true``, los inactivos (plan Equipo A2, D6). Ver inactivos exige
-    además ``staff.reactivate``: son datos de ex empleados."""
+    además ``staff.reactivate``: son datos de ex empleados.
+
+    La forma de cada fila depende de quién pregunta (Fase 1 Equipo): quien
+    gestiona personal recibe el integrante completo con su estado de acceso
+    (``UserSerializer``); quien solo tiene ``staff.list`` (VET y ASSISTANT, para
+    elegir veterinario en Citas) recibe el directorio mínimo."""
     permission_classes = [make_permission("staff.list")]
 
     def get(self, request):
@@ -104,11 +112,24 @@ class StaffListView(APIView):
                 raise ValidationError(f"Rol inválido. Opciones válidas: {', '.join(VALID_ROLES)}")
             qs = qs.filter(role=role)
 
-        serializer = UserSerializer(qs, many=True)
-        return Response(serializer.data)
+        serializer_class = (
+            UserSerializer if can_manage_staff(request.user) else StaffDirectorySerializer
+        )
+        return Response(serializer_class(qs, many=True).data)
 
 
-class StaffCreateView(APIView):
+class StaffCreateView(NoStoreResponseMixin, APIView):
+    """POST /api/staff/create/ — alta de integrante (Fase 1 Equipo).
+
+    El sistema genera la contraseña inicial (``services.create_staff_member``):
+    responde ``201`` con ``member``, ``temp_password`` (una sola vez),
+    ``expires_in_seconds: null`` (la inicial no caduca, ADR p21) y
+    ``must_change_on_first_login``. ``no-store``: el cuerpo lleva una contraseña.
+
+    La vista no abre transacción: el servicio es durable y la respuesta se arma
+    solo con lo que devolvió, es decir, después del commit. Los errores de
+    validación conservan su forma previa (``serializer.errors``, sin sobre).
+    """
     permission_classes = [make_permission("staff.create")]
 
     def post(self, request):
@@ -116,13 +137,21 @@ class StaffCreateView(APIView):
             data=request.data,
             context={'request': request}
         )
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response(
-                UserSerializer(user).data,
-                status=status.HTTP_201_CREATED
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        result = create_staff_member(
+            admin=request.user,
+            data=serializer.validated_data,
+            request_id=request.META.get('HTTP_X_REQUEST_ID') or str(uuid.uuid4()),
+        )
+        return Response({
+            "detail": "Integrante creado.",
+            "request_id": result.request_id,
+            "temp_password": result.temp_password,
+            "expires_in_seconds": None,
+            "must_change_on_first_login": True,
+            "member": UserSerializer(result.user).data,
+        }, status=status.HTTP_201_CREATED)
 
 
 class StaffDetailView(APIView):

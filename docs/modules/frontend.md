@@ -1182,6 +1182,20 @@ actualiza `(sortCol, sortDir)` → `?ordering` y refetcha (la tabla pagina; orde
 client-side solo ordenaría la página actual). **No crear sorting por módulo**
 (design-system.md §5).
 
+### ActionMenu (menú de acciones de fila) — Fase 1 Equipo
+
+`components/ActionMenu.jsx` — botón de icono (⋯, `btn-ghost btn-icon`) que abre un
+`role="menu"` con las acciones **secundarias** de una fila; la principal (p. ej.
+«Editar») va visible junto a él. Se pinta en un **portal con posición fija**:
+`.table-wrap` recorta con `overflow: hidden` y un menú dentro de la celda quedaría
+cortado. Se cierra con Escape (devuelve el foco al botón), Tab, clic fuera, scroll o
+cambio de tamaño; ↑/↓, Inicio y Fin recorren las opciones.
+
+Props: `label` (nombre accesible), `items` (`[{ id, label, onSelect, danger? }]`; sin
+opciones no pinta nada), `disabled` (otra acción en curso: no abre) y `busy` (la acción
+de esa fila está en curso: `aria-busy` + indicador). Destructivas con `danger`. Primer
+consumidor: Equipo. **No crear menús desplegables por página.**
+
 ### Pagination (paginador Anterior/Siguiente) — ADR p42
 
 `components/Pagination.jsx` — paginador reusable para tablas paginadas
@@ -1654,6 +1668,36 @@ hooks/usePOSCart.js      — estado del carrito (solo UI)
   `buildPaymentLines()` (regla de sobrepago/cambio ADR p30 rev, única fuente).
 - `utils/idempotency.js` — `newIdempotencyKey()`.
 
+## Equipo (`/staff`) — Fase 1 Equipo
+
+Pantalla de **gestión** de integrantes (`pages/staff.jsx`). Contrato backend en
+[`organizations.md`](organizations.md) § Crear / Listar staff.
+
+- **Acceso por capacidad**: la abre quien tiene algún permiso de gestión
+  (`features/staff/permissions.js`, `STAFF_MANAGEMENT_PERMS`; el mismo que usa el menú).
+  Sin él, `/staff` redirige a `/` también por URL, y el backend tampoco le entrega correo,
+  cédula ni estado de acceso (directorio mínimo para Citas).
+- **Tabla de cinco columnas**: Integrante (nombre, «Tú», correo) · Rol (nombre y alcance) ·
+  Datos profesionales (especialidad, cédula; «Sin cédula: no puede firmar» solo en VET) ·
+  Acceso · acciones (Editar visible; Restablecer y Desactivar en `ActionMenu`; Reactivar en
+  Inactivos). Por debajo de 720 px cada fila se apila con el rótulo de cada dato
+  (`data-label`), sin scroll horizontal.
+- **Estado de acceso**: lo calcula el backend (`access.status`); `features/staff/access.js`
+  solo lo traduce a texto en la zona de la clínica. Color solo para lo que pide acción (una
+  temporal vencida, un VET sin cédula), regla D6.
+- **Resumen** bajo el título: activos · inactivos (si se pueden ver) · con acceso pendiente,
+  contado sobre lo cargado. Sin StatTiles.
+- **Roles**: textos en `features/staff/roleScopes.json` con los permisos que los respaldan
+  (`grants`) y los que niegan (`lacks`); `apps/users/tests/test_role_scopes_match_rbac.py`
+  los contrasta con `PERMISSIONS`. El alta elige rol con un grupo de radios que muestra qué
+  permite cada uno; la edición lo muestra, sin ofrecer cambiarlo.
+- **Alta sin contraseña**: la genera el backend y se muestra una sola vez en el mismo modal de
+  credenciales que restablecer y reactivar («Integrante creado»; válida hasta su primer
+  ingreso).
+- **Acciones en curso**: una acción de fila a la vez (`pendingAction`): mientras corre, las
+  demás quedan deshabilitadas y la fila muestra su indicador. Errores de validación en su
+  campo (`handleFormError` para los del servidor).
+
 ## Rutas
 
 | Ruta                | Pagina              | Acceso       |
@@ -1670,7 +1714,7 @@ hooks/usePOSCart.js      — estado del carrito (solo UI)
 | `/pos`              | Punto de Venta      | Privada      |
 | `/cash`             | Caja (turnos + Z)   | Privada      |
 | `/prescriptions`    | Recetas             | Privada      |
-| `/staff`            | Equipo              | Por capacidad (`staff.*`; plan Equipo) |
+| `/staff`            | Equipo              | Por capacidad de gestión (`staff.*`); sin ella redirige a `/` (Fase 1 Equipo) |
 | `/config`           | Configuracion       | Solo ADMIN   |
 
 ## Testing (Vitest + Testing Library) — P1-4

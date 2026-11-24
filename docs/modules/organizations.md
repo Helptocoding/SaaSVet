@@ -186,6 +186,17 @@ Invariante de identidad:
 - `username` se conserva como identidad interna estable (auditoría, throttle,
   logs); no es lo que el usuario necesita conocer para entrar.
 
+**Último acceso (Fase 1 Equipo, 2026-11-23).** `User.last_login` se registra al
+iniciar sesión y al renovar la sesión (`/api/token/refresh/`), con
+`apps.users.services.record_user_access`: un `UPDATE` condicional de ese único campo,
+como máximo una vez por hora (`ACCESS_RECORD_INTERVAL`), nunca para cuentas de
+servicio. Solo cuenta un acceso que pasó todas las compuertas: un login rechazado por
+contraseña incorrecta, contraseña temporal vencida, organización desactivada o sesión
+revocada no lo actualiza. Un error de base se registra (`USER_ACCESS_RECORD_FAILED`) y
+no rompe la autenticación. `SIMPLE_JWT['UPDATE_LAST_LOGIN']` sigue apagado a propósito:
+escribiría dentro del serializer, antes de esas compuertas, y nunca en el refresh. Los
+accesos anteriores a este cambio no se registraron.
+
 ### Crear staff
 
 ```
@@ -195,7 +206,6 @@ Authorization: Bearer <token ADMIN>
 {
   "username": "dra.garcia",
   "email": "garcia@clinica.com",
-  "password": "Clave1234!",
   "first_name": "Laura",
   "last_name": "Garcia",
   "role": "VET",
@@ -204,15 +214,28 @@ Authorization: Bearer <token ADMIN>
 }
 ```
 
-Validaciones de password: minimo 8 caracteres, al menos una mayuscula, al menos un numero.
+**La contraseña inicial la genera el sistema** (Fase 1 Equipo, 2026-11-23; ADR p21,
+addendum 2026-11-23). Enviar `password` es `400` en ese campo: un cliente antiguo no
+debe creer que fijó una contraseña. Respuesta `201` con `Cache-Control: no-store`:
 
-`first_name` es **obligatorio** también en el backend (plan Equipo, D4). Nombre y apellido siguen la regla de nombres de abajo (§ Editar integrante).
+```
+{ "detail": "Integrante creado.", "request_id": "...",
+  "temp_password": "<22 caracteres>", "expires_in_seconds": null,
+  "must_change_on_first_login": true, "member": { ...integrante... } }
+```
 
-`license_number` es la cédula profesional (M01, orden 7; ADR p64): solo dígitos, de 5 a 10, sin verificar contra la SEP. Es **obligatoria para `VET`** y opcional para los demás roles. Hay además un CHECK en base de datos (`user_license_number_digits`). Este endpoint devuelve `serializer.errors` sin el sobre `{code, errors}`.
+La contraseña tiene la misma fuerza que la temporal del restablecimiento
+(`secrets.token_urlsafe(16)`), se devuelve una sola vez, después del commit, y nunca se
+registra (`STAFF_CREATED` se emite con `on_commit(robust=True)` y no la lleva). Si la
+respuesta se pierde, la vía es Restablecer contraseña.
 
-La contraseña es **temporal de un solo uso**: el usuario creado entra con `password_must_change=True` y el sistema lo obliga a cambiarla en el primer login (`MustChangePasswordGate`). Sin `password_temp_issued_at` → no caduca (a diferencia del reset admin de 24h). El flag se setea en `CreateEmployeeSerializer.create` (ruta de alta por endpoint), nunca en `User.create_user` ni en signals. Ver ADR p21 (addendum 2026-06-24).
+`first_name` es **obligatorio** también en el backend (plan Equipo, D4). Nombre y apellido siguen la regla de nombres de abajo (§ Editar integrante). `username` es único **sin distinguir mayúsculas**, con el mensaje genérico «Este nombre de usuario no está disponible.» (antes un repetido terminaba en `500`). `specialty`, como máximo 100 caracteres.
 
-La asignacion de `UserRole` RBAC ocurre automaticamente al crear el usuario (requiere que `seed_permissions` haya corrido).
+`license_number` es la cédula profesional (M01, orden 7; ADR p64): solo dígitos, de 5 a 10, sin verificar contra la SEP. Es **obligatoria para `VET`** y opcional para los demás roles. Hay además un CHECK en base de datos (`user_license_number_digits`). Los errores de validación del serializer vuelven sin el sobre `{code, errors}`; los de una carrera con la restricción de base (usuario o correo tomado entre la validación y la escritura) vuelven con el sobre estándar, en el campo correspondiente y nunca como `500`.
+
+La contraseña es **de un solo uso**: el usuario creado entra con `password_must_change=True` y el sistema lo obliga a cambiarla en el primer login (`MustChangePasswordGate`). Sin `password_temp_issued_at` → no caduca (a diferencia del reset admin de 24h). El flag se setea en `apps.users.services.create_staff_member` (ruta de alta por endpoint), nunca en `User.create_user` ni en signals. Ver ADR p21 (addenda 2026-06-24 y 2026-11-23).
+
+El alta es una unidad: usuario y `UserRole` RBAC se crean en la misma transacción (requiere que `seed_permissions` haya corrido). `create_staff_member` es **durable**, como `reactivate_staff`: debe ser la transacción más externa (lo vigila un gate de llamador único) para que la contraseña no salga antes de un commit que pudiera fallar.
 
 ### Listar staff
 
@@ -226,6 +249,36 @@ Sin parámetros devuelve solo activos, como siempre. `?archived=true` devuelve s
 inactivos de la clínica, sin `ADMIN_SAAS` ni cuentas de servicio, y exige además
 `staff.reactivate` (sin él, `403`): son datos de ex empleados. Cada fila trae
 `demo_protected` (ver § Demo); solo sirve a la interfaz y no autoriza nada.
+
+**La forma de cada fila depende de quién pregunta** (Fase 1 Equipo):
+
+| Quién | Recibe |
+|---|---|
+| Quien gestiona personal (algún permiso `staff.create`, `staff.update`, `staff.destroy`, `staff.reset_password` o `staff.reactivate`; `apps.users.access.can_manage_staff`) | El integrante completo (`UserSerializer`) con su bloque `access` |
+| Quien solo tiene `staff.list` (VET y ASSISTANT, para elegir veterinario en Citas) | El directorio mínimo `{id, public_id, first_name, last_name, role}`: sin correo, usuario, cédula, organización ni datos de acceso |
+
+Antes cualquier `staff.list` recibía correo, usuario y cédula de cada colega aunque la
+interfaz no los mostrara. El directorio conserva `id` porque Citas envía el PK del
+veterinario en el cuerpo de la cita (ADR p18).
+
+**Estado de acceso** (`access`, solo para quien gestiona personal), derivado de campos
+existentes sin migración (`apps/users/access.py`):
+
+```
+"access": { "status": "...", "last_login": "<ISO>|null", "temp_password_expires_at": "<ISO>|null" }
+```
+
+| `status` | Cuándo (gana la primera que se cumple) |
+|---|---|
+| `inactive` | `is_active=False` |
+| `temp_password_expired` | Temporal de restablecimiento o reactivación vencida (misma regla que rechaza el login) |
+| `temp_password_active` | Temporal vigente; `temp_password_expires_at` = emisión + 24 h |
+| `pending_first_login` | Contraseña inicial del alta y ningún acceso registrado |
+| `password_change_pending` | Contraseña inicial y algún acceso registrado: entró y no completó el cambio |
+| `active` | Acceso normal |
+
+No se exponen hashes, tokens, `session_version` ni las banderas de contraseña en crudo.
+`last_login` vacío significa «sin accesos registrados», no «nunca entró».
 
 ### Desactivar usuario
 

@@ -1,12 +1,15 @@
 /**
- * Equipo: cédula profesional (M01, orden 7) y plan Equipo (F4–F6): permisos por
- * capacidad, fila propia, identidad (A1), reactivación (A2) y validación de
- * nombres (D4). Se usa el módulo real `api/staff`; solo se sustituye el cliente
- * HTTP.
+ * Equipo: cédula profesional (M01, orden 7), plan Equipo (F4–F6: permisos por
+ * capacidad, fila propia, identidad A1, reactivación A2, nombres D4) y Fase 1
+ * de profesionalización (estado de acceso, alta con contraseña generada, tabla
+ * de cinco columnas con menú de acciones, descripción de roles, acciones en
+ * curso y guarda de ruta). Se usa el módulo real `api/staff`; solo se sustituye
+ * el cliente HTTP.
  */
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const get = vi.fn();
 const post = vi.fn();
@@ -22,12 +25,13 @@ vi.mock("../api/client", () => ({
 }));
 let granted = new Set(["staff.list", "staff.create", "staff.update", "staff.destroy"]);
 const can = (code) => granted.has(code);
+const canAny = (codes) => codes.some((code) => granted.has(code));
 // Objeto estable: la página recarga Equipo cuando cambia `user` (useEffect).
-const ADMIN = { role: "ADMIN" };
+const ADMIN = { role: "ADMIN", organization_timezone: "UTC" };
 let currentUser = ADMIN;
 const refreshUser = vi.fn();
 vi.mock("../auth/authContext", () => ({
-    useAuth: () => ({ user: currentUser, initializing: false, can, refreshUser }),
+    useAuth: () => ({ user: currentUser, initializing: false, can, canAny, refreshUser }),
 }));
 const confirmMock = vi.fn(() => Promise.resolve(true));
 vi.mock("../components/useConfirm", () => ({ useConfirm: () => (...a) => confirmMock(...a) }));
@@ -37,14 +41,32 @@ import { toast } from "sonner";
 import Staff from "./staff";
 import { getStaff } from "../api/staff";
 
+const ACTIVE_ACCESS = { status: "active", last_login: null, temp_password_expires_at: null };
 const VET = {
     id: 3, public_id: "vet-uuid", username: "ana", email: "ana@vet.mx",
     first_name: "Ana", last_name: "Galeno", role: "VET",
     specialty: "Cirugía", license_number: "1234567", is_active: true,
+    access: ACTIVE_ACCESS,
 };
 
 let activeRows = [VET];
 let inactiveRows = [];
+
+function renderStaff() {
+    return render(
+        <MemoryRouter initialEntries={["/staff"]}>
+            <Routes>
+                <Route path="/staff" element={<Staff />} />
+                <Route path="/" element={<p>Inicio</p>} />
+            </Routes>
+        </MemoryRouter>,
+    );
+}
+
+const openRowMenu = async (user, name = "Ana Galeno") => {
+    await user.click(screen.getByRole("button", { name: `Más acciones para ${name}` }));
+    return screen.getByRole("menu");
+};
 
 beforeEach(() => {
     vi.clearAllMocks();
@@ -63,13 +85,13 @@ beforeEach(() => {
 
 describe("Equipo: cédula profesional", () => {
     it("muestra la cédula en la tabla", async () => {
-        render(<Staff />);
+        renderStaff();
         expect(await screen.findByText("1234567")).toBeInTheDocument();
     });
 
     it("editar envía PATCH sobre el public_id con la cédula normalizada", async () => {
         const user = userEvent.setup({ delay: null });
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         await user.click(screen.getByRole("button", { name: /editar/i }));
         const license = screen.getByLabelText(/cédula profesional/i);
@@ -85,29 +107,29 @@ describe("Equipo: cédula profesional", () => {
         });
     });
 
-    it("no guarda a un veterinario sin cédula", async () => {
+    it("no guarda a un veterinario sin cédula y lo dice en el campo", async () => {
         const user = userEvent.setup({ delay: null });
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         await user.click(screen.getByRole("button", { name: /editar/i }));
         await user.clear(screen.getByLabelText(/cédula profesional/i));
         await user.click(screen.getByRole("button", { name: /guardar/i }));
 
         expect(patch).not.toHaveBeenCalled();
-        expect(toast.error).toHaveBeenCalledWith("La cédula profesional es obligatoria para veterinarios");
+        // Fase 1: la validación del cliente se muestra en su campo, no en un toast.
+        expect(screen.getByText("La cédula profesional es obligatoria para veterinarios")).toBeInTheDocument();
+        expect(toast.error).not.toHaveBeenCalled();
     });
 
     it("el alta de un veterinario exige cédula con formato válido", async () => {
         const user = userEvent.setup({ delay: null });
-        render(<Staff />);
+        post.mockResolvedValueOnce({ data: { temp_password: "Gen-1", expires_in_seconds: null, member: VET } });
+        renderStaff();
         await screen.findByText("1234567");
         await user.click(screen.getByRole("button", { name: /agregar miembro/i }));
         await user.type(screen.getByPlaceholderText("usuario123"), "diego");
         await user.type(screen.getByPlaceholderText("Juan"), "Diego");
         await user.type(screen.getByPlaceholderText("correo@ejemplo.com"), "diego@vet.mx");
-        // Plan Equipo (F4): el placeholder dice 8 caracteres (antes, 6) y las
-        // validaciones del cliente se muestran en su campo, no en un toast.
-        await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres"), "Segura123");
         await user.click(screen.getByRole("button", { name: /guardar/i }));
         expect(post).not.toHaveBeenCalled();
         expect(screen.getByText("La cédula profesional es obligatoria para veterinarios")).toBeInTheDocument();
@@ -128,54 +150,68 @@ describe("Equipo: cédula profesional", () => {
 
     it("sin staff.update no ofrece editar", async () => {
         granted.delete("staff.update");
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         expect(screen.queryByRole("button", { name: /editar/i })).not.toBeInTheDocument();
     });
+
+    it("avisa, sin color de alarma general, al veterinario que no puede firmar", async () => {
+        activeRows = [{ ...VET, license_number: "" }];
+        renderStaff();
+        expect(await screen.findByText("Sin cédula: no puede firmar")).toBeInTheDocument();
+    });
 });
 
-describe("Equipo: permisos por capacidad y fila propia (F4)", () => {
+describe("Equipo: permisos por capacidad, ruta y fila propia (F4, Fase 1)", () => {
     it("decide por can() y no por rol", async () => {
         currentUser = { role: "VET", id: 99 };
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         expect(screen.getByRole("button", { name: /agregar miembro/i })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /editar a ana galeno/i })).toBeInTheDocument();
     });
 
-    it("un ADMIN sin permisos de gestión no ve acciones", async () => {
+    it("sin permisos de gestión, /staff redirige al inicio y no pide el equipo", async () => {
         granted = new Set(["staff.list"]);
-        render(<Staff />);
-        await screen.findByText("1234567");
-        expect(screen.queryByRole("button", { name: /agregar miembro/i })).not.toBeInTheDocument();
-        expect(screen.queryByRole("columnheader", { name: "Acciones" })).not.toBeInTheDocument();
-        expect(screen.queryByRole("button", { name: /editar|desactivar|restablecer/i })).not.toBeInTheDocument();
+        renderStaff();
+        expect(await screen.findByText("Inicio")).toBeInTheDocument();
+        expect(screen.queryByRole("heading", { name: "Equipo" })).not.toBeInTheDocument();
+        expect(get).not.toHaveBeenCalled();
     });
 
-    it("la fila propia muestra «Tú» y Editar, pero no Restablecer ni Desactivar", async () => {
+    it("con un solo permiso de gestión la página se abre con sus acciones", async () => {
+        granted = new Set(["staff.list", "staff.update"]);
+        renderStaff();
+        await screen.findByText("1234567");
+        expect(screen.getByRole("button", { name: /editar a ana galeno/i })).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /más acciones/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /agregar miembro/i })).not.toBeInTheDocument();
+    });
+
+    it("la fila propia muestra «Tú» y Editar, pero no el menú de restablecer ni desactivar", async () => {
         granted.add("staff.reset_password");
         currentUser = { role: "ADMIN", id: VET.id };
-        render(<Staff />);
+        renderStaff();
         const row = (await screen.findByText("1234567")).closest("tr");
         expect(within(row).getByText("Tú")).toBeInTheDocument();
         expect(within(row).getByRole("button", { name: /editar/i })).toBeInTheDocument();
-        expect(within(row).queryByRole("button", { name: /restablecer/i })).not.toBeInTheDocument();
-        expect(within(row).queryByRole("button", { name: /desactivar/i })).not.toBeInTheDocument();
+        expect(within(row).queryByRole("button", { name: /más acciones/i })).not.toBeInTheDocument();
     });
 
     it("una cuenta protegida de la demo no muestra acciones", async () => {
         granted.add("staff.reset_password");
         activeRows = [{ ...VET, demo_protected: true }];
-        render(<Staff />);
+        renderStaff();
         const row = (await screen.findByText("1234567")).closest("tr");
         expect(within(row).queryByRole("button")).not.toBeInTheDocument();
     });
 
-    it("desactivar usa la confirmación nueva y no el icono de basura", async () => {
+    it("desactivar vive en el menú, usa la confirmación nueva y no el icono de basura", async () => {
         const user = userEvent.setup({ delay: null });
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
-        await user.click(screen.getByRole("button", { name: "Desactivar acceso de Ana Galeno" }));
+        const menu = await openRowMenu(user);
+        await user.click(within(menu).getByRole("menuitem", { name: "Desactivar acceso" }));
         expect(confirmMock).toHaveBeenCalledWith({
             title: "Desactivar acceso de Ana Galeno",
             message: "Dejará de poder entrar y se cerrarán sus sesiones. Sus citas, consultas y registros se conservan. Revisa en Citas si tiene citas próximas asignadas. Podrás reactivarlo desde Inactivos.",
@@ -189,39 +225,168 @@ describe("Equipo: permisos por capacidad y fila propia (F4)", () => {
     it("el error del alta sin sobre aparece en su campo y el modal sigue abierto", async () => {
         const user = userEvent.setup({ delay: null });
         post.mockRejectedValueOnce({ response: { status: 400, data: { username: ["Ese usuario ya existe."] } } });
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         await user.click(screen.getByRole("button", { name: /agregar miembro/i }));
         await user.type(screen.getByPlaceholderText("usuario123"), "ana");
         await user.type(screen.getByPlaceholderText("Juan"), "Ana");
         await user.type(screen.getByPlaceholderText("correo@ejemplo.com"), "otra@vet.mx");
-        await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres"), "Segura123");
-        await user.selectOptions(screen.getByLabelText("ROL *"), "ASSISTANT");
+        await user.click(screen.getByRole("radio", { name: /^Asistente/ }));
         await user.click(screen.getByRole("button", { name: /guardar/i }));
 
         expect(await screen.findByText("Ese usuario ya existe.")).toBeInTheDocument();
         expect(screen.getByText("Nuevo Miembro")).toBeInTheDocument();
-    });
-
-    it("el texto de la contraseña pide 8 caracteres y ninguno menciona 6", async () => {
-        const user = userEvent.setup({ delay: null });
-        render(<Staff />);
-        await screen.findByText("1234567");
-        await user.click(screen.getByRole("button", { name: /agregar miembro/i }));
-        expect(screen.getByText(/Al menos 8 caracteres, una mayúscula y un número/)).toBeInTheDocument();
-        expect(screen.queryByText(/6 caracteres/)).not.toBeInTheDocument();
+        expect(post.mock.calls[0][1]).toMatchObject({ role: "ASSISTANT" });
     });
 
     it("el modal temporal calcula las horas desde expires_in_seconds", async () => {
         const user = userEvent.setup({ delay: null });
         granted.add("staff.reset_password");
         post.mockResolvedValueOnce({ data: { temp_password: "Tmp-123", expires_in_seconds: 7200 } });
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
-        await user.click(screen.getByRole("button", { name: /restablecer la contraseña de ana galeno/i }));
+        const menu = await openRowMenu(user);
+        await user.click(within(menu).getByRole("menuitem", { name: "Restablecer contraseña" }));
         const dialog = await screen.findByRole("dialog", { name: "Contraseña temporal generada" });
         expect(within(dialog).getByText("Tmp-123")).toBeInTheDocument();
         expect(within(dialog).getByText("2 horas para iniciar sesión")).toBeInTheDocument();
+        expect(post.mock.calls[0][0]).toBe("staff/vet-uuid/reset-password/");
+    });
+});
+
+describe("Equipo: alta con contraseña generada (Fase 1)", () => {
+    const fill = async (user) => {
+        await user.click(screen.getByRole("button", { name: /agregar miembro/i }));
+        await user.type(screen.getByPlaceholderText("usuario123"), "diego");
+        await user.type(screen.getByPlaceholderText("Juan"), "Diego");
+        await user.type(screen.getByPlaceholderText("correo@ejemplo.com"), "diego@vet.mx");
+        await user.type(screen.getByLabelText(/cédula profesional/i), "2468024");
+    };
+
+    it("no pide contraseña y explica que la genera el sistema", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderStaff();
+        await screen.findByText("1234567");
+        await user.click(screen.getByRole("button", { name: /agregar miembro/i }));
+        expect(screen.queryByLabelText(/contraseña/i)).not.toBeInTheDocument();
+        expect(screen.getByText(/el sistema generará una al guardar/)).toBeInTheDocument();
+        expect(screen.queryByText(/6 caracteres/)).not.toBeInTheDocument();
+    });
+
+    it("no envía contraseña y muestra las credenciales generadas una sola vez", async () => {
+        const user = userEvent.setup({ delay: null });
+        const created = {
+            ...VET, id: 9, public_id: "diego-uuid", username: "diego", email: "diego@vet.mx",
+            first_name: "Diego", last_name: "", license_number: "2468024",
+            access: { status: "pending_first_login", last_login: null, temp_password_expires_at: null },
+        };
+        post.mockResolvedValueOnce({
+            data: { temp_password: "Gen-Pass-xyz", expires_in_seconds: null, must_change_on_first_login: true, member: created },
+        });
+        renderStaff();
+        await screen.findByText("1234567");
+        await fill(user);
+        await user.click(screen.getByRole("button", { name: /guardar/i }));
+
+        await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+        expect(post.mock.calls[0][1]).not.toHaveProperty("password");
+        const dialog = await screen.findByRole("dialog", { name: "Integrante creado" });
+        expect(within(dialog).getByText("Gen-Pass-xyz")).toBeInTheDocument();
+        expect(within(dialog).getByText("diego@vet.mx")).toBeInTheDocument();
+        expect(within(dialog).getByText("Hasta su primer ingreso")).toBeInTheDocument();
+        expect(screen.queryByText("Nuevo Miembro")).not.toBeInTheDocument();
+
+        await user.click(within(dialog).getByRole("button", { name: "Listo" }));
+        expect(screen.queryByText("Gen-Pass-xyz")).not.toBeInTheDocument();
+    });
+
+    it("muestra la descripción real de cada rol al elegirlo", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderStaff();
+        await screen.findByText("1234567");
+        await user.click(screen.getByRole("button", { name: /agregar miembro/i }));
+        const roles = screen.getAllByRole("radio");
+        expect(roles).toHaveLength(3);
+        expect(screen.getByRole("radio", { name: /^Veterinario/ })).toBeChecked();
+        expect(screen.getByRole("radio", { name: /^Asistente.*Consulta expedientes sin modificarlos/ })).toBeInTheDocument();
+        expect(screen.getByRole("radio", { name: /^Administrador.*equipo/ })).toBeInTheDocument();
+    });
+});
+
+describe("Equipo: estado de acceso y resumen (Fase 1)", () => {
+    const NOW = new Date("2026-11-23T18:00:00Z");
+    const row = (overrides) => ({ ...VET, ...overrides });
+
+    beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(NOW);
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it("traduce cada estado del backend a un texto corto", async () => {
+        activeRows = [
+            row({ id: 1, public_id: "a", first_name: "Activa", access: { status: "active", last_login: "2026-11-23T15:00:00Z", temp_password_expires_at: null } }),
+            row({ id: 2, public_id: "b", first_name: "Nueva", access: { status: "pending_first_login", last_login: null, temp_password_expires_at: null } }),
+            row({ id: 4, public_id: "c", first_name: "Temporal", access: { status: "temp_password_active", last_login: null, temp_password_expires_at: "2026-11-23T23:00:00Z" } }),
+            row({ id: 5, public_id: "d", first_name: "Vencida", access: { status: "temp_password_expired", last_login: null, temp_password_expires_at: "2026-11-23T16:00:00Z" } }),
+            row({ id: 6, public_id: "e", first_name: "Cambio", access: { status: "password_change_pending", last_login: "2026-11-20T10:00:00Z", temp_password_expires_at: null } }),
+        ];
+        renderStaff();
+        await screen.findByText("Activa Galeno");
+        const cell = (name) => screen.getByText(`${name} Galeno`).closest("tr");
+        expect(within(cell("Activa")).getByText("Activo")).toBeInTheDocument();
+        expect(within(cell("Activa")).getByText("Último acceso: hace 3 h")).toBeInTheDocument();
+        expect(within(cell("Nueva")).getByText("Pendiente de primer ingreso")).toBeInTheDocument();
+        expect(within(cell("Nueva")).getByText("Sin accesos registrados")).toBeInTheDocument();
+        expect(within(cell("Temporal")).getByText("Contraseña temporal")).toBeInTheDocument();
+        expect(within(cell("Temporal")).getByText("Vence en 5 h")).toBeInTheDocument();
+        expect(within(cell("Vencida")).getByText("Contraseña temporal vencida")).toBeInTheDocument();
+        expect(within(cell("Vencida")).getByText("Venció hace 2 h")).toBeInTheDocument();
+        expect(within(cell("Cambio")).getByText("Debe cambiar su contraseña")).toBeInTheDocument();
+        expect(within(cell("Cambio")).getByText("Último acceso: 20 nov")).toBeInTheDocument();
+    });
+
+    it("resume activos, inactivos y accesos pendientes con datos reales", async () => {
+        granted.add("staff.reactivate");
+        activeRows = [
+            row({ id: 1, public_id: "a" }),
+            row({ id: 2, public_id: "b", first_name: "Nueva", access: { status: "pending_first_login", last_login: null, temp_password_expires_at: null } }),
+        ];
+        inactiveRows = [row({ id: 7, public_id: "z", first_name: "Luis", is_active: false, access: { status: "inactive", last_login: null, temp_password_expires_at: null } })];
+        renderStaff();
+        expect(await screen.findByText("2 activos · 1 inactivo · 1 con acceso pendiente")).toBeInTheDocument();
+    });
+
+    it("las celdas llevan su rótulo para la vista apilada en pantallas angostas", async () => {
+        renderStaff();
+        const tr = (await screen.findByText("1234567")).closest("tr");
+        const labels = [...tr.querySelectorAll("td[data-label]")].map((td) => td.dataset.label);
+        expect(labels).toEqual(["Rol", "Datos profesionales", "Acceso"]);
+        expect(screen.getAllByRole("columnheader").map((th) => th.textContent || th.getAttribute("aria-label")))
+            .toEqual(["Integrante", "Rol", "Datos profesionales", "Acceso", "Acciones"]);
+    });
+});
+
+describe("Equipo: acciones en curso (Fase 1)", () => {
+    it("mientras se restablece, ninguna otra acción de fila se puede lanzar", async () => {
+        const user = userEvent.setup({ delay: null });
+        granted.add("staff.reset_password");
+        let finish;
+        post.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+        renderStaff();
+        await screen.findByText("1234567");
+        const menu = await openRowMenu(user);
+        await user.click(within(menu).getByRole("menuitem", { name: "Restablecer contraseña" }));
+
+        const trigger = await screen.findByRole("button", { name: "Más acciones para Ana Galeno" });
+        await waitFor(() => expect(trigger).toBeDisabled());
+        expect(trigger).toHaveAttribute("aria-busy", "true");
+        expect(screen.getByRole("button", { name: /editar a ana galeno/i })).toBeDisabled();
+
+        finish({ data: { temp_password: "Tmp-1", expires_in_seconds: 86400 } });
+        await screen.findByRole("dialog", { name: "Contraseña temporal generada" });
+        expect(screen.getByRole("button", { name: "Más acciones para Ana Galeno" })).not.toBeDisabled();
+        expect(post).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -236,7 +401,7 @@ const NAME_EXAMPLES = [
     ["de la Cruz", true, "de la Cruz"],
     ["Zoë", true, "Zoë"],
     ["Łukasz", true, "Łukasz"],
-    ["José", true, "José"],
+    ["José", true, "José"],
     ["  Ana  ", true, "Ana"],
     ["Ana  Luz", true, "Ana  Luz"],
     ["Juan2", false, null],
@@ -250,7 +415,7 @@ describe("Equipo: edición de identidad (F5)", () => {
     it("envía solo lo que cambió, avisa del correo y refresca la sesión propia", async () => {
         const user = userEvent.setup({ delay: null });
         currentUser = { role: "ADMIN", id: VET.id };
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         await user.click(screen.getByRole("button", { name: /editar/i }));
         expect(screen.getByRole("button", { name: /guardar/i })).toBeDisabled();
@@ -265,12 +430,22 @@ describe("Equipo: edición de identidad (F5)", () => {
         await waitFor(() => expect(refreshUser).toHaveBeenCalled());
     });
 
+    it("muestra el rol y su alcance sin ofrecer cambiarlo", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderStaff();
+        await screen.findByText("1234567");
+        await user.click(screen.getByRole("button", { name: /editar/i }));
+        expect(screen.getByText(/Atiende consultas, emite recetas y registra vacunas/)).toBeInTheDocument();
+        expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+        expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    });
+
     it("el error del PATCH con sobre aparece en su campo", async () => {
         const user = userEvent.setup({ delay: null });
         patch.mockRejectedValueOnce({
             response: { status: 400, data: { code: "validation_error", errors: { email: ["Este correo no está disponible."] } } },
         });
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         await user.click(screen.getByRole("button", { name: /editar/i }));
         const email = screen.getByLabelText(/correo electrónico/i);
@@ -284,11 +459,10 @@ describe("Equipo: edición de identidad (F5)", () => {
     it("valida los nombres igual que el backend", async () => {
         const user = userEvent.setup({ delay: null });
         activeRows = [{ ...VET, first_name: "Zed" }];
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         for (const [value, accepted, stored] of NAME_EXAMPLES) {
             patch.mockClear();
-            toast.error.mockClear();
             await user.click(screen.getByRole("button", { name: /editar/i }));
             const first = screen.getByLabelText(/^nombre/i);
             await user.clear(first);
@@ -299,9 +473,10 @@ describe("Equipo: edición de identidad (F5)", () => {
                 await waitFor(() => expect(screen.queryByText("Editar miembro")).not.toBeInTheDocument());
             } else {
                 expect(patch, value).not.toHaveBeenCalled();
-                expect(toast.error).toHaveBeenCalledWith(
+                // Fase 1: el error queda en el campo, no en un toast.
+                expect(screen.getByText(
                     "El nombre solo puede contener letras, espacios, guiones y apóstrofos.",
-                );
+                )).toBeInTheDocument();
                 await user.click(screen.getByRole("button", { name: /cancelar/i }));
             }
         }
@@ -312,10 +487,11 @@ describe("Equipo: inactivos y reactivación (F6)", () => {
     const FORMER = {
         ...VET, id: 7, public_id: "former-uuid", username: "luis", first_name: "Luis",
         last_name: "Pardo", role: "ASSISTANT", license_number: "", specialty: "", is_active: false,
+        access: { status: "inactive", last_login: null, temp_password_expires_at: null },
     };
 
     it("sin staff.reactivate no hay segmento Inactivos", async () => {
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         expect(screen.queryByRole("button", { name: "Inactivos" })).not.toBeInTheDocument();
         expect(get).toHaveBeenCalledTimes(1);
@@ -328,9 +504,10 @@ describe("Equipo: inactivos y reactivación (F6)", () => {
         post.mockResolvedValueOnce({
             data: { temp_password: "Tmp-9", expires_in_seconds: 86400, member: { ...FORMER, is_active: true } },
         });
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         await user.click(screen.getByRole("button", { name: "Inactivos" }));
+        expect(screen.getByText("Inactivo")).toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: "Reactivar acceso de Luis Pardo" }));
 
         expect(confirmMock).toHaveBeenCalledWith(expect.objectContaining({
@@ -351,7 +528,7 @@ describe("Equipo: inactivos y reactivación (F6)", () => {
         inactiveRows = [FORMER];
         const message = "Ya está activo. Si no recibiste la contraseña temporal, usa Restablecer contraseña.";
         post.mockRejectedValueOnce({ response: { status: 409, data: { code: "already_active", message } } });
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         await user.click(screen.getByRole("button", { name: "Inactivos" }));
         await user.click(screen.getByRole("button", { name: "Reactivar acceso de Luis Pardo" }));
@@ -364,7 +541,7 @@ describe("Equipo: inactivos y reactivación (F6)", () => {
         granted.add("staff.reactivate");
         inactiveRows = [{ ...FORMER, role: "VET" }];
         post.mockResolvedValueOnce({ data: { temp_password: "x", expires_in_seconds: 86400 } });
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         await user.click(screen.getByRole("button", { name: "Inactivos" }));
         await user.click(screen.getByRole("button", { name: "Reactivar acceso de Luis Pardo" }));
@@ -374,7 +551,7 @@ describe("Equipo: inactivos y reactivación (F6)", () => {
     it("sin inactivos muestra un estado vacío", async () => {
         const user = userEvent.setup({ delay: null });
         granted.add("staff.reactivate");
-        render(<Staff />);
+        renderStaff();
         await screen.findByText("1234567");
         await user.click(screen.getByRole("button", { name: "Inactivos" }));
         expect(screen.getByText("No hay integrantes inactivos")).toBeInTheDocument();

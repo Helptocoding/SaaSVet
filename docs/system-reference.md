@@ -22,7 +22,7 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 | Botón cobrar deshabilitado | `Σ payment_lines ≠ remaining_balance`. | Verificar el split de pago y el cambio en efectivo (el cambio se capea en UI, no afecta `amount`). |
 | La consulta cerrada no aparece en Cobros | Falló la materialización/adopción del Checkout primario. | El cierre garantiza un Checkout, no una Invoice. Revisar el cierre y `get_or_create_primary_checkout_for_medical_record`. |
 | "No hay caja abierta" al cobrar | Toggle `require_open_cash_session=True` y el actor no tiene sesión de caja. | Abrir caja con `POST /api/cash/sessions/open/`. |
-| 403 al dispensar receta | Falta el permiso `billing.rx_dispense`. | Asignarlo al rol correspondiente (ADMIN/VET) desde la sección de Roles. |
+| 403 al dispensar receta | Falta el permiso `billing.rx_dispense`. | Lo tienen ADMIN y VET (ADR p63). Los roles no se editan desde la interfaz (no existe sección de Roles): dispensa alguien con ese rol. |
 | Checkout abierto de $0 | Consulta cerrada sin cargos. | Debe completarse con `complete_no_charge`; no se crea Invoice. |
 | `409 reception_unresolved` al registrar una recepción | Ese usuario tiene una operación `pending` de ese producto, quizá con una ejecución aún en curso. **No es un fallo.** | Inventario → Recepciones: completarla o descartarla. Después se registra la nueva. Nunca sumar por ajuste para saltárselo. |
 | Una recepción quedó sin respuesta o se perdió el navegador | El cliente no sabe qué ocurrió; el servidor sí. | Inventario → Recepciones, desde cualquier sesión: `confirmed` ya sumó y no se repite; `pending` todavía no, y se completa o descarta. Si no aparece y parece haber entrado, revisar «Entradas sin identidad». |
