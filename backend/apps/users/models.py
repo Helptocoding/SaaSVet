@@ -40,6 +40,11 @@ class User(AbstractUser):
     # recetas: lo exigen apps/users/professional.py y el dominio clínico. db_default
     # mantiene aditiva la migración (ver la nota de Organization.is_active).
     license_number = models.CharField(max_length=10, blank=True, default='', db_default='')
+    # ADR p66: función clínica, separada del rol. Solo decide algo en ADMIN (el
+    # dueño veterinario de una clínica pequeña): VET siempre atiende y ASSISTANT
+    # nunca, y los servicios de Equipo fijan el campo así. Quién atiende se
+    # pregunta SIEMPRE con apps.users.professional.is_clinician / clinician_q.
+    attends_patients = models.BooleanField(default=False, db_default=False)
     is_active = models.BooleanField(default=True)
 
     # ADR p21: credential lifecycle — forced password change.
@@ -126,3 +131,56 @@ class User(AbstractUser):
             using=using,
             update_fields=update_fields,
         )
+
+
+class StaffAccessEvent(models.Model):
+    """Historial de accesos de un integrante de Equipo (ADR p66, decisión 7).
+
+    De solo inserción: un evento no se corrige, se registra otro. Lo escriben los
+    servicios de Equipo en la misma transacción que el cambio. ``changes`` guarda
+    nombres de campo y roles, nunca contraseñas, correos ni otros valores
+    personales (los logs siguen la misma regla).
+    """
+    KIND_CREATED = 'created'
+    KIND_PROFILE_UPDATED = 'profile_updated'
+    KIND_ROLE_CHANGED = 'role_changed'
+    KIND_DEACTIVATED = 'deactivated'
+    KIND_REACTIVATED = 'reactivated'
+    KIND_PASSWORD_RESET = 'password_reset'
+    KIND_CHOICES = (
+        (KIND_CREATED, 'Alta'),
+        (KIND_PROFILE_UPDATED, 'Edición de datos'),
+        (KIND_ROLE_CHANGED, 'Cambio de rol'),
+        (KIND_DEACTIVATED, 'Desactivación'),
+        (KIND_REACTIVATED, 'Reactivación'),
+        (KIND_PASSWORD_RESET, 'Restablecimiento de contraseña'),
+    )
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name='staff_access_events',
+    )
+    member = models.ForeignKey(
+        'users.User', on_delete=models.PROTECT, related_name='access_events',
+    )
+    actor = models.ForeignKey(
+        'users.User', on_delete=models.PROTECT, related_name='staff_actions',
+    )
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    changes = models.JSONField(default=dict, blank=True)
+    request_id = models.CharField(max_length=64, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['organization', 'member', '-created_at'],
+                         name='staff_event_org_member_idx'),
+        ]
+        ordering = ['-created_at', '-pk']
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            raise ValueError('StaffAccessEvent es de solo inserción.')
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError('StaffAccessEvent es de solo inserción.')

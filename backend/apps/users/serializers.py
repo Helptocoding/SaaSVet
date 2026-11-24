@@ -6,7 +6,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from apps.organizations.models import Organization
 from apps.users.professional import (
-    LICENSE_REQUIRED_MESSAGE, LICENSE_REQUIRED_ROLES, normalize_license_number,
+    attends_for, is_clinician, license_required_message, normalize_license_number,
 )
 
 User = get_user_model()
@@ -64,6 +64,11 @@ PERSON_NAME_REGEX = re.compile(
 )
 PERSON_NAME_MAX_LENGTH = 150  # AbstractUser.first_name / last_name
 EMAIL_UNAVAILABLE_MESSAGE = "Este correo no está disponible."
+# ADR p66: la función clínica solo es una elección en ADMIN.
+ASSISTANT_DOES_NOT_ATTEND = "Un asistente no atiende pacientes; elige Veterinario o Administrador."
+ATTENDS_ONLY_FOR_ADMIN = (
+    "Solo se ajusta en administradores: en veterinarios y asistentes lo define el rol."
+)
 
 
 def normalize_person_name(value, *, label, required):
@@ -130,15 +135,20 @@ class UserSerializer(serializers.ModelSerializer):
     demo_protected = serializers.SerializerMethodField()
     # Fase 1 Equipo: estado de acceso derivado (apps/users/access.py).
     access = serializers.SerializerMethodField()
+    # ADR p66: función clínica efectiva (VET siempre; ADMIN si se marcó).
+    attends_patients = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         # Día 6 Fase 5: expone public_id para que frontend construya
         # URLs /staff/<uuid>/. id se conserva pre-beta.
         fields = ['id', 'public_id', 'username', 'email', 'first_name', 'last_name',
-                  'role', 'specialty', 'license_number', 'is_active', 'organization',
-                  'organization_name', 'demo_protected', 'access']
+                  'role', 'attends_patients', 'specialty', 'license_number', 'is_active',
+                  'organization', 'organization_name', 'demo_protected', 'access']
         read_only_fields = ['id', 'public_id']
+
+    def get_attends_patients(self, obj):
+        return is_clinician(obj)
 
     def get_demo_protected(self, obj):
         from apps.users.services import is_demo_seed_account
@@ -155,13 +165,18 @@ class StaffDirectorySerializer(serializers.ModelSerializer):
     VET y ASSISTANT tienen ``staff.list`` porque Citas necesita elegir
     veterinario: nombre, rol y el PK que viaja en el cuerpo de la cita (ADR p18).
     Correo, usuario, cédula, estado de acceso y datos de la organización no son
-    necesarios para eso y no se exponen.
+    necesarios para eso y no se exponen. ``attends_patients`` sí: es lo que decide
+    quién aparece como veterinario en la agenda (ADR p66).
     """
+    attends_patients = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'public_id', 'first_name', 'last_name', 'role']
+        fields = ['id', 'public_id', 'first_name', 'last_name', 'role', 'attends_patients']
         read_only_fields = fields
+
+    def get_attends_patients(self, obj):
+        return is_clinician(obj)
 
 
 class CreateEmployeeSerializer(serializers.Serializer):
@@ -196,8 +211,10 @@ class CreateEmployeeSerializer(serializers.Serializer):
     specialty = serializers.CharField(
         required=False, allow_blank=True, default='', max_length=100,
     )
-    # M01 (orden 7): obligatoria para VET (validate).
+    # M01 (orden 7) y ADR p66: obligatoria para quien atiende (validate).
     license_number = serializers.CharField(required=False, allow_blank=True, default='')
+    # ADR p66: solo decide en ADMIN; VET siempre atiende y ASSISTANT nunca.
+    attends_patients = serializers.BooleanField(required=False, default=False)
 
     def to_internal_value(self, data):
         if hasattr(data, 'keys') and 'password' in data:
@@ -235,14 +252,18 @@ class CreateEmployeeSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
-        if attrs.get('role') in LICENSE_REQUIRED_ROLES and not attrs.get('license_number'):
-            raise serializers.ValidationError({'license_number': LICENSE_REQUIRED_MESSAGE})
+        role = attrs.get('role')
+        if role == 'ASSISTANT' and attrs.get('attends_patients'):
+            raise serializers.ValidationError({'attends_patients': [ASSISTANT_DOES_NOT_ATTEND]})
+        attrs['attends_patients'] = attends_for(role, attrs.get('attends_patients'))
+        if attrs['attends_patients'] and not attrs.get('license_number'):
+            raise serializers.ValidationError({'license_number': license_required_message(role)})
         return attrs
 
 
 class UpdateEmployeeSerializer(serializers.Serializer):
     """PATCH /api/staff/<uuid>/: identidad (A1, plan Equipo), especialidad y
-    cédula (M01, orden 7).
+    cédula (M01, orden 7) y, solo en ADMIN, si atiende pacientes (ADR p66).
 
     Cualquier otra clave es 400: rol, username, contraseña o estado tienen sus
     propios caminos, y descartarla en silencio haría creer que se guardó.
@@ -253,6 +274,7 @@ class UpdateEmployeeSerializer(serializers.Serializer):
     """
     EDITABLE_FIELDS = frozenset({
         'first_name', 'last_name', 'email', 'specialty', 'license_number',
+        'attends_patients',
     })
 
     first_name = serializers.CharField(
@@ -264,6 +286,8 @@ class UpdateEmployeeSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     specialty = serializers.CharField(required=False, allow_blank=True, max_length=100)
     license_number = serializers.CharField(required=False, allow_blank=True)
+    # ADR p66: solo en ADMIN; en VET y ASSISTANT lo define el rol.
+    attends_patients = serializers.BooleanField(required=False)
 
     def _target(self):
         target = self.context.get('target')
@@ -274,8 +298,8 @@ class UpdateEmployeeSerializer(serializers.Serializer):
         unknown = sorted(set(data) - self.EDITABLE_FIELDS) if hasattr(data, 'keys') else []
         if unknown:
             raise serializers.ValidationError({'non_field_errors': [
-                'Solo se pueden editar nombre, apellido, correo, especialidad '
-                'y cédula profesional.']})
+                'Solo se pueden editar nombre, apellido, correo, especialidad, '
+                'cédula profesional y si atiende pacientes.']})
         return super().to_internal_value(data)
 
     def validate_first_name(self, value):
@@ -300,9 +324,12 @@ class UpdateEmployeeSerializer(serializers.Serializer):
             raise serializers.ValidationError({'non_field_errors': [
                 'Indica al menos un dato para editar.']})
         target = self._target()
+        if 'attends_patients' in attrs and target.role != 'ADMIN':
+            raise serializers.ValidationError({'attends_patients': [ATTENDS_ONLY_FOR_ADMIN]})
         license_number = attrs.get('license_number', target.license_number)
-        if target.role in LICENSE_REQUIRED_ROLES and not license_number:
-            raise serializers.ValidationError({'license_number': LICENSE_REQUIRED_MESSAGE})
+        attends = attends_for(target.role, attrs.get('attends_patients', target.attends_patients))
+        if attends and not license_number:
+            raise serializers.ValidationError({'license_number': license_required_message(target.role)})
         return {
             field: value for field, value in attrs.items()
             if getattr(target, field) != value
@@ -334,3 +361,28 @@ class ChangePasswordSerializer(serializers.Serializer):
                 "confirm_password": "Las contraseñas no coinciden.",
             })
         return attrs
+
+
+class ChangeRoleSerializer(serializers.Serializer):
+    """Entrada de ``POST /api/staff/<uuid>/role/`` (ADR p66).
+
+    ``attends_patients`` solo decide en ADMIN; si se omite, un ADMIN conserva la
+    función clínica que tenía. Las reglas (último ADMIN, cédula, a sí mismo) las
+    aplica ``services.change_staff_role``.
+    """
+    role = serializers.ChoiceField(choices=['ADMIN', 'VET', 'ASSISTANT'])
+    attends_patients = serializers.BooleanField(required=False, allow_null=True, default=None)
+
+
+class StaffAccessEventSerializer(serializers.Serializer):
+    """Evento del historial de accesos (ADR p66). Sin PK internos ni datos
+    personales: tipo, cuándo, quién y qué cambió (nombres de campo y roles)."""
+    kind = serializers.CharField()
+    kind_label = serializers.CharField(source='get_kind_display')
+    created_at = serializers.DateTimeField()
+    actor_name = serializers.SerializerMethodField()
+    changes = serializers.JSONField()
+
+    def get_actor_name(self, obj):
+        actor = obj.actor
+        return f'{actor.first_name} {actor.last_name}'.strip() or actor.username

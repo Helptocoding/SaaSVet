@@ -129,6 +129,7 @@ negocio dentro del SaaS** para cada dominio.
 **Requiere**
 - Permiso `staff.destroy`. No es uno mismo (400) y el actor sigue activo con el bloqueo tomado (`403 actor_inactive`).
 - Si el objetivo es ADMIN, debe quedar otro ADMIN activo en la clínica (`409 last_active_admin`), aunque otro rol tenga `staff.destroy` concedido en la base.
+- Sin caja abierta a su nombre (`409 open_cash_session`, ADR p66). Citas próximas y consultas abiertas solo se avisan y siguen asignadas.
 
 **Resultado**
 - `is_active=False`; se revocan sus refresh tokens y se incrementa su versión de sesión (ADR p65): ningún token anterior vuelve a servir, ni tras reactivarlo.
@@ -136,6 +137,19 @@ negocio dentro del SaaS** para cada dominio.
 
 **Desbloquea**
 - Reactivarlo desde Inactivos (`staff.reactivate`).
+
+---
+
+### Acción: Cambiar rol (ADR p66)
+
+**Requiere**
+- Permiso `staff.change_role` (sensible, solo ADMIN). No es uno mismo; objetivo activo de la clínica.
+- Si el objetivo deja de ser ADMIN, debe quedar otro ADMIN activo (`409 last_active_admin`, INV-J).
+- Cédula si el nuevo rol atiende pacientes (VET, o ADMIN marcado).
+
+**Resultado**
+- `User.role`, `attends_patients` y el `UserRole` de sistema cambian juntos; evento `role_changed` en el historial.
+- No se cierran sesiones: los permisos nuevos aplican en la siguiente petición.
 
 ---
 

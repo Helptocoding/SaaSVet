@@ -40,7 +40,8 @@ FAST_HASHER = override_settings(
     PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'],
 )
 
-DIRECTORY_FIELDS = {'id', 'public_id', 'first_name', 'last_name', 'role'}
+# ADR p66: el directorio incluye la función clínica (la agenda lista a quien atiende).
+DIRECTORY_FIELDS = {'id', 'public_id', 'first_name', 'last_name', 'role', 'attends_patients'}
 SECRET_FIELDS = {
     'password', 'session_version', 'password_temp_issued_at', 'password_must_change',
     'is_superuser', 'is_staff', 'is_service_account', 'groups', 'user_permissions',

@@ -34,3 +34,7 @@ La receta y el PDF de consulta llevaban el nombre y la especialidad del veterina
 - La demo siembra números de demostración (`00000001` para el ADMIN, `00000002` para el VET), que no son cédulas reales.
 - Editar una receta existente (PATCH) no exige cédula: el candado está en emitirla.
 - **Límite:** el sistema no afirma cumplimiento de ninguna norma. No se revisó formalmente qué exige la regulación aplicable a recetas veterinarias; el formato y la obligatoriedad son decisión de producto.
+
+## Enmienda 2026-11-24 (ADR p66)
+
+En Equipo la cédula la exige **quien atiende pacientes** (VET, o ADMIN marcado como que atiende), no solo `VET`: en el alta, la edición y el cambio de rol. La regla del firmante (`require_signer_license`) no cambia. Ver [ADR p66](2026-11-24-p66-funcion-clinica-y-cambio-de-rol.md).

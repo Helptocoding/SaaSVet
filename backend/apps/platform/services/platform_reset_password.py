@@ -40,7 +40,7 @@ from rest_framework_simplejwt.token_blacklist.models import (
     OutstandingToken,
 )
 
-from apps.users.services import bump_session_version
+from apps.users.services import bump_session_version, record_staff_event
 
 logger = logging.getLogger('platform.events')
 
@@ -117,6 +117,13 @@ def platform_reset_password(
         if created:
             revoked_count += 1
     bump_session_version(target_user)
+    # ADR p66: también queda en el historial de accesos de la clínica, con el
+    # operador de plataforma como actor y el origen marcado.
+    if target_user.organization_id is not None:
+        record_staff_event(
+            member=target_user, actor=actor, kind='password_reset',
+            changes={'source': 'platform'}, request_id=request_id or '',
+        )
 
     # --- 5. Audit log ----------------------------------------------------------
     # NOTE: temp_password is NEVER logged — not even hashed.

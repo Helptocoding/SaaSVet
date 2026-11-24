@@ -367,3 +367,23 @@ por rol). Se decide junto con `canEdit`.
 **Pendientes para fases posteriores** (sin tocar): impacto antes de desactivar; cambio de rol y
 función clínica (ADR conjunto); auditoría persistente; ausencias por veterinario;
 `reactivate_staff` sin protección de semillas demo; `canEdit` por rol en Citas.
+
+---
+
+## Registro de implementación — Fase 2 Eficiencia operativa (2026-11-24)
+
+Decisiones del PO (2026-11-24) y contratos: [ADR p66](decisions/2026-11-24-p66-funcion-clinica-y-cambio-de-rol.md),
+[`modules/organizations.md`](modules/organizations.md) § Función clínica, Cambiar rol, Impacto e historial.
+
+| Alcance | Resultado |
+|---|---|
+| D2 · Rol inmutable | `POST /api/staff/<uuid>/role/` (`staff.change_role`), INV-J con bloqueo ordenado y reverificación del permiso del actor; sin cierre de sesiones (PO) |
+| D3 · Función clínica deducida del rol | `User.attends_patients` + predicado único `is_clinician`/`clinician_q` en agenda, agente (candidatos, alta, reagendado, ejecución) y cédula. Backfill: VET y ADMIN con cédula (PO) |
+| D6 · Desactivar sin ver impacto | `GET .../impact/`; **caja abierta bloquea** (`409 open_cash_session`, PO); citas y consultas se avisan |
+| D7 · Sin auditoría persistente | `StaffAccessEvent` de solo inserción en todas las operaciones de Equipo (incluido el restablecimiento de plataforma) + `GET .../history/` y modal «Historial» |
+
+Migraciones aditivas: `users.0014` (campo + backfill) y `users.0015` (tabla).
+
+**Fuera de esta fase, a propósito**: reasignación masiva de citas al desactivar (Fase 3, PO); el
+camino de staff para crear citas aún acepta a cualquier integrante activo como veterinario;
+`canEdit` de Citas por rol; ausencias por veterinario.

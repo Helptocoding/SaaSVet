@@ -350,3 +350,7 @@ Se añade `staff.update` (sensible): editar especialidad y cédula profesional d
 Código nuevo `staff.reactivate`: en el catálogo, en `SENSITIVE_CODES` y en la lista literal del ADMIN.
 VET, ASSISTANT y AGENT no lo reciben. `seed_permissions` lo concede a los roles ADMIN existentes en el
 despliegue.
+
+## Enmienda 2026-11-24 (ADR p66)
+
+Nuevo código sensible `staff.change_role`, añadido a la lista explícita de `ADMIN` (y a ningún otro rol). Ver [ADR p66](2026-11-24-p66-funcion-clinica-y-cambio-de-rol.md).

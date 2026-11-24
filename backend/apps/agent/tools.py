@@ -1004,15 +1004,19 @@ def _scheduling_vets(organization, agent_settings):
     Si la clínica SÍ fija `default_veterinarian`, se respeta esa elección y solo
     se ofertan sus huecos. Lista vacía = la clínica no tiene veterinarios
     activos → `no_vet` (no hay nada que inventar).
+
+    ADR p66: «veterinario» = quien atiende pacientes (VET, o ADMIN que atiende:
+    el dueño veterinario de una clínica pequeña), no el nombre del rol.
     """
     from apps.users.models import User
+    from apps.users.professional import clinician_q, is_clinician
     if agent_settings and agent_settings.default_veterinarian_id:
         vet = agent_settings.default_veterinarian
-        if vet and vet.is_active:
+        if vet and vet.is_active and is_clinician(vet):
             return [vet]
     return list(
         User.objects.filter(
-            organization=organization, role='VET', is_active=True,
+            clinician_q(), organization=organization, is_active=True,
         ).order_by('pk')
     )
 

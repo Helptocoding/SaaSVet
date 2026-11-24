@@ -155,7 +155,9 @@ def validate_creation(command, *, require_schedule=False, expected_timezone=None
         vet = User.objects.filter(pk=command.veterinarian_id, organization_id=org.pk).first()
         if not vet or not vet.is_active:
             raise CreationRejected('entity_inactive')
-        if require_schedule and vet.role != 'VET':
+        # ADR p66: atiende quien es VET o ADMIN que atiende (predicado único).
+        from apps.users.professional import is_clinician
+        if require_schedule and not is_clinician(vet):
             raise CreationRejected('entity_scope')
     start_utc, end_utc = appointment_interval(org, command.date, command.start_time,
                                              command.end_time, strict_local=require_schedule)

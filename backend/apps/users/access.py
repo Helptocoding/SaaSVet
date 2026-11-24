@@ -40,6 +40,7 @@ STAFF_MANAGEMENT_PERMISSIONS = (
     'staff.destroy',
     'staff.reset_password',
     'staff.reactivate',
+    'staff.change_role',
 )
 
 ACCESS_INACTIVE = 'inactive'

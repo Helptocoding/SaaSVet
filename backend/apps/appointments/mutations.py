@@ -196,8 +196,10 @@ def validate_mutation(command):
         if sanitize_text(command.cancellation_reason, max_length=100) != command.cancellation_reason:
             raise MutationRejected('precondition_failed')
     elif command.kind == 'RESCHEDULE_APPOINTMENT':
-        if not User.objects.filter(pk=command.veterinarian_id, organization_id=org.pk,
-                                   is_active=True, role='VET').exists():
+        # ADR p66: atiende quien es VET o ADMIN que atiende (predicado único).
+        from apps.users.professional import clinician_q
+        if not User.objects.filter(clinician_q(), pk=command.veterinarian_id,
+                                   organization_id=org.pk, is_active=True).exists():
             raise MutationRejected('entity_scope')
         start, end = appointment_interval(org, command.date, command.start_time,
                                           command.end_time, strict_local=True)

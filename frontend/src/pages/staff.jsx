@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import {
     getStaff, createStaff, updateStaff, deactivateStaff, resetStaffPassword, reactivateStaff,
+    changeStaffRole, getStaffImpact, getStaffHistory,
 } from "../api/staff";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
@@ -11,10 +12,11 @@ import EmptyState from "../components/EmptyState";
 import ActionMenu from "../components/ActionMenu";
 import { apiError } from "../utils/apiError";
 import handleFormError from "../utils/handleFormError";
-import { orgTz } from "../utils/datetime";
+import { formatDateTime, orgTz } from "../utils/datetime";
 import { STAFF_MANAGEMENT_PERMS } from "../features/staff/permissions";
 import { STAFF_ROLE_ORDER, roleLabel, roleShort, roleSummary } from "../features/staff/roles";
 import { describeAccess, PENDING_ACCESS } from "../features/staff/access";
+import { describeEvent } from "../features/staff/history";
 import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
 import TableSkeleton from "../components/TableSkeleton";
@@ -40,6 +42,7 @@ const EMPTY_FORM = {
     last_name: "",
     email: "",
     role: "VET",
+    attends_patients: false,
     specialty: "",
     license_number: ""
 };
@@ -47,11 +50,19 @@ const EMPTY_FORM = {
 // M01 (orden 7): cédula profesional, solo dígitos (5 a 10). Obligatoria para VET.
 const LICENSE_RE = /^\d{5,10}$/;
 const LICENSE_REQUIRED = "La cédula profesional es obligatoria para veterinarios";
+const LICENSE_REQUIRED_CLINICIAN = "La cédula profesional es obligatoria para quien atiende pacientes";
 const LICENSE_FORMAT = "La cédula profesional debe tener solo dígitos, entre 5 y 10";
 
-function licenseError(role, value) {
+// ADR p66: atiende quien es VET, o ADMIN marcado. Misma regla que
+// apps/users/professional.py (la autoridad); aquí solo se avisa antes de enviar.
+const attendsFor = (role, attendsPatients) => role === "VET" || (role === "ADMIN" && Boolean(attendsPatients));
+
+function licenseError(role, value, attendsPatients = false) {
     const license = value.trim();
-    if (!license) return role === "VET" ? LICENSE_REQUIRED : null;
+    if (!license) {
+        if (role === "VET") return LICENSE_REQUIRED;
+        return attendsFor(role, attendsPatients) ? LICENSE_REQUIRED_CLINICIAN : null;
+    }
     return LICENSE_RE.test(license) ? null : LICENSE_FORMAT;
 }
 
@@ -101,7 +112,7 @@ function createErrors(form) {
     const last = nameError(form.last_name, { label: "El apellido", required: false });
     if (last) errors.last_name = last;
     if (!form.email.trim()) errors.email = "El correo electrónico es obligatorio.";
-    const license = licenseError(form.role, form.license_number);
+    const license = licenseError(form.role, form.license_number, form.attends_patients);
     if (license) errors.license_number = license;
     return errors;
 }
@@ -113,7 +124,7 @@ function editErrorsFor(editing) {
     const last = nameError(editing.last_name, { label: "El apellido", required: false });
     if (last) errors.last_name = last;
     if (!editing.email.trim()) errors.email = "El correo electrónico es obligatorio.";
-    const license = licenseError(editing.member.role, editing.license_number);
+    const license = licenseError(editing.member.role, editing.license_number, editing.attends_patients);
     if (license) errors.license_number = license;
     return errors;
 }
@@ -133,6 +144,9 @@ function editChanges(editing) {
     if (specialty !== (member.specialty || "")) changes.specialty = specialty;
     const license = editing.license_number.trim();
     if (license !== (member.license_number || "")) changes.license_number = license;
+    if (member.role === "ADMIN" && editing.attends_patients !== Boolean(member.attends_patients)) {
+        changes.attends_patients = editing.attends_patients;
+    }
     return changes;
 }
 
@@ -218,8 +232,8 @@ function CredentialsModal({ result, onClose }) {
     );
 }
 
-// Elección del rol en el alta, con lo que permite cada uno (Fase 1 Equipo).
-function RolePicker({ value, onChange }) {
+// Elección del rol (alta y cambio de rol), con lo que permite cada uno.
+function RolePicker({ value, onChange, name = "create-role" }) {
     return (
         <fieldset className={styles.roleOptions}>
             <legend className="form-label">ROL *</legend>
@@ -227,7 +241,7 @@ function RolePicker({ value, onChange }) {
                 <label key={role} className={`${styles.roleOption}${value === role ? ` ${styles.roleOptionSelected}` : ""}`}>
                     <input
                         type="radio"
-                        name="create-role"
+                        name={name}
                         value={role}
                         checked={value === role}
                         onChange={() => onChange(role)}
@@ -242,9 +256,128 @@ function RolePicker({ value, onChange }) {
     );
 }
 
+// ADR p66: solo en ADMIN se elige si atiende pacientes (VET siempre, ASSISTANT nunca).
+function AttendsField({ id, checked, onChange, disabled = false }) {
+    return (
+        <label className={styles.attendsField} htmlFor={id}>
+            <input
+                id={id}
+                type="checkbox"
+                checked={checked}
+                disabled={disabled}
+                onChange={(e) => onChange(e.target.checked)}
+            />
+            <span>
+                <span className={styles.roleName}>Atiende pacientes</span>
+                <span className={styles.roleDescription}>
+                    Aparece como veterinario en la agenda y puede recibir citas. Requiere cédula profesional.
+                </span>
+            </span>
+        </label>
+    );
+}
+
+function impactSentence(impact) {
+    if (!impact) return "";
+    const parts = [];
+    if (impact.upcoming_appointments > 0) {
+        parts.push(`${impact.upcoming_appointments} ${impact.upcoming_appointments === 1 ? "cita próxima" : "citas próximas"}`);
+    }
+    if (impact.open_medical_records > 0) {
+        parts.push(`${impact.open_medical_records} ${impact.open_medical_records === 1 ? "consulta abierta" : "consultas abiertas"}`);
+    }
+    if (parts.length === 0) return "";
+    return `Tiene ${parts.join(" y ")} a su nombre: seguirán asignadas, no se reasignan solas.`;
+}
+
+// Cambio de rol (ADR p66). Las reglas las aplica el backend (último ADMIN,
+// cédula, a sí mismo); aquí se avisa y se bloquea lo que ya se sabe inválido.
+function RoleChangeModal({ state, saving, onChange, onSave, onClose }) {
+    const { member, role, attends, impact } = state;
+    const nextAttends = attendsFor(role, attends);
+    const missingLicense = nextAttends && !member.license_number;
+    const unchanged = role === member.role && nextAttends === Boolean(member.attends_patients);
+    const losesClinic = Boolean(member.attends_patients) && !nextAttends;
+    return (
+        <div className="modal-overlay">
+            <div className="modal modal-md" role="dialog" aria-label={`Cambiar rol de ${fullName(member)}`}>
+                <div className="modal-header">
+                    <h3>Cambiar rol de {fullName(member)}</h3>
+                    <button className="modal-close" onClick={onClose} disabled={saving} aria-label="Cerrar"><Icon.X s={16} /></button>
+                </div>
+                <div className="modal-body">
+                    <RolePicker name="change-role" value={role} onChange={(next) => onChange({ role: next })} />
+                    {role === "ADMIN" && (
+                        <AttendsField id="change-attends" checked={attends} onChange={(next) => onChange({ attends: next })} />
+                    )}
+                    {missingLicense && (
+                        <p className={styles.notice}>
+                            No tiene cédula profesional registrada. Captúrala en Editar antes de darle un rol que atiende pacientes.
+                        </p>
+                    )}
+                    {losesClinic && impactSentence(impact) && (
+                        <p className={styles.notice}>{impactSentence(impact)}</p>
+                    )}
+                    <p className={styles.passwordHint}>
+                        El cambio aplica en su siguiente acción; no se cierran sus sesiones.
+                    </p>
+                </div>
+                <div className="modal-footer">
+                    <button className={`btn btn-primary btn-md ${styles.footerButton}`} onClick={onSave} disabled={saving || unchanged || missingLicense}>
+                        {saving ? "Guardando..." : "Cambiar rol"}
+                    </button>
+                    <button className={`btn btn-secondary btn-md ${styles.footerButton}`} onClick={onClose} disabled={saving}>
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Historial de accesos (ADR p66): quién hizo qué y cuándo, sin valores personales.
+function HistoryModal({ state, tz, onClose }) {
+    const { member, events, error } = state;
+    return (
+        <div className="modal-overlay">
+            <div className="modal modal-md" role="dialog" aria-label={`Historial de ${fullName(member)}`}>
+                <div className="modal-header">
+                    <h3>Historial de {fullName(member)}</h3>
+                    <button className="modal-close" onClick={onClose} aria-label="Cerrar"><Icon.X s={16} /></button>
+                </div>
+                <div className="modal-body">
+                    {error ? (
+                        <p className={styles.fieldError}>{error}</p>
+                    ) : events === null ? (
+                        <div role="status" aria-label="Cargando historial">
+                            <Skeleton count={3} height={14} />
+                        </div>
+                    ) : events.length === 0 ? (
+                        <p className={styles.secondaryText}>
+                            Sin cambios registrados. El historial empezó a guardarse con esta versión.
+                        </p>
+                    ) : (
+                        <ol className={styles.historyList}>
+                            {events.map((event, index) => (
+                                <li key={`${event.created_at}-${index}`} className={styles.historyItem}>
+                                    <span className={styles.primaryText}>{describeEvent(event)}</span>
+                                    <span className={styles.secondaryText}>
+                                        {formatDateTime(event.created_at, tz, "es-MX")} · {event.actor_name}
+                                    </span>
+                                </li>
+                            ))}
+                        </ol>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 const Staff = () => {
     const { user, initializing, can, canAny, refreshUser } = useAuth();
     const confirm = useConfirm();
+    const navigate = useNavigate();
 
     // Permisos por capacidad (nunca por rol).
     const canManage = canAny(STAFF_MANAGEMENT_PERMS);
@@ -253,6 +386,7 @@ const Staff = () => {
     const canReset = can("staff.reset_password");
     const canDestroy = can("staff.destroy");
     const canReactivate = can("staff.reactivate");
+    const canChangeRole = can("staff.change_role");
     const tz = orgTz(user);
 
     const [staff, setStaff] = useState([]);
@@ -271,6 +405,10 @@ const Staff = () => {
     // Acción de fila en curso: { publicId, kind } | null. Mientras dure, ninguna
     // otra acción de fila se puede lanzar.
     const [pendingAction, setPendingAction] = useState(null);
+    // Cambio de rol: { member, role, attends, impact } | null (ADR p66).
+    const [roleChange, setRoleChange] = useState(null);
+    // Historial: { member, events (null = cargando), error } | null (ADR p66).
+    const [history, setHistory] = useState(null);
 
     // Con `staff.reactivate`, activos e inactivos se cargan en paralelo.
     async function fetchStaff() {
@@ -304,7 +442,8 @@ const Staff = () => {
     const isSelf = (member) => user?.id != null && member.id === user.id;
     const showingInactive = canReactivate && view === "inactive";
     const rows = showingInactive ? inactive : staff;
-    const hasActions = showingInactive ? canReactivate : (canUpdate || canReset || canDestroy);
+    // El historial lo ve cualquiera que gestione personal: toda fila tiene acciones.
+    const hasActions = canManage;
     const rowBusy = Boolean(pendingAction);
 
     const runRowAction = async (member, kind, task) => {
@@ -341,6 +480,7 @@ const Staff = () => {
         try {
             const data = await createStaff({
                 ...form,
+                attends_patients: form.role === "ADMIN" ? form.attends_patients : false,
                 username: form.username.trim(),
                 first_name: normalizeName(form.first_name),
                 last_name: normalizeName(form.last_name),
@@ -368,6 +508,7 @@ const Staff = () => {
             email: member.email || "",
             specialty: member.specialty || "",
             license_number: member.license_number || "",
+            attends_patients: Boolean(member.attends_patients),
         });
     };
 
@@ -416,17 +557,35 @@ const Staff = () => {
         });
     };
 
+    // ADR p66: antes de confirmar se consulta qué tiene pendiente. Una caja
+    // abierta bloquea (también en el backend); citas y consultas solo se avisan.
     const handleDeactivate = async (member) => {
         if (pendingAction) return;
         const name = fullName(member);
-        const ok = await confirm({
-            title: `Desactivar acceso de ${name}`,
-            message: "Dejará de poder entrar y se cerrarán sus sesiones. Sus citas, consultas y registros se conservan. Revisa en Citas si tiene citas próximas asignadas. Podrás reactivarlo desde Inactivos.",
-            confirmText: "Desactivar acceso",
-            dangerMode: true,
-        });
-        if (!ok) return;
         await runRowAction(member, "deactivate", async () => {
+            let impact = null;
+            try {
+                impact = await getStaffImpact(member.public_id);
+            } catch (err) {
+                console.error(apiError(err));
+            }
+            if (impact?.open_cash_session) {
+                const goToCash = await confirm({
+                    title: `${name} tiene una caja abierta`,
+                    message: "Ciérrala desde Caja (cierre administrativo) antes de desactivar su acceso.",
+                    confirmText: "Ir a Caja",
+                });
+                if (goToCash) navigate("/cash");
+                return;
+            }
+            const base = "Dejará de poder entrar y se cerrarán sus sesiones. Sus citas, consultas y registros se conservan. Revisa en Citas si tiene citas próximas asignadas. Podrás reactivarlo desde Inactivos.";
+            const ok = await confirm({
+                title: `Desactivar acceso de ${name}`,
+                message: [impactSentence(impact), base].filter(Boolean).join(" "),
+                confirmText: "Desactivar acceso",
+                dangerMode: true,
+            });
+            if (!ok) return;
             try {
                 await deactivateStaff(member.public_id);
                 toast.success("Acceso desactivado");
@@ -435,6 +594,50 @@ const Staff = () => {
                 toast.error(apiError(err, "No se pudo desactivar el acceso."));
             }
         });
+    };
+
+    // ── Cambio de rol e historial (ADR p66) ───────────────────────────────
+    const openRoleChange = (member) => {
+        setRoleChange({ member, role: member.role, attends: Boolean(member.attends_patients), impact: null });
+        if (member.attends_patients) {
+            getStaffImpact(member.public_id)
+                .then((impact) => setRoleChange((current) => (
+                    current?.member.public_id === member.public_id ? { ...current, impact } : current
+                )))
+                .catch((err) => console.error(apiError(err)));
+        }
+    };
+
+    const handleRoleSave = async () => {
+        if (!roleChange || saving) return;
+        const { member, role, attends } = roleChange;
+        setSaving(true);
+        try {
+            await changeStaffRole(member.public_id, {
+                role,
+                attendsPatients: role === "ADMIN" ? attends : undefined,
+            });
+            toast.success("Rol actualizado");
+            setRoleChange(null);
+            fetchStaff();
+        } catch (err) {
+            toast.error(apiError(err, "No se pudo cambiar el rol."));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const openHistory = (member) => {
+        setHistory({ member, events: null, error: null });
+        getStaffHistory(member.public_id)
+            .then((events) => setHistory((current) => (
+                current?.member.public_id === member.public_id ? { ...current, events } : current
+            )))
+            .catch((err) => setHistory((current) => (
+                current?.member.public_id === member.public_id
+                    ? { ...current, error: apiError(err, "No se pudo cargar el historial.") }
+                    : current
+            )));
     };
 
     const handleReactivate = async (member) => {
@@ -465,12 +668,16 @@ const Staff = () => {
     };
 
     const rowMenuItems = (member) => {
-        if (isSelf(member)) return [];
+        const self = isSelf(member);
         const items = [];
-        if (canReset) {
+        if (canChangeRole && !self && !showingInactive) {
+            items.push({ id: "role", label: "Cambiar rol", onSelect: () => openRoleChange(member) });
+        }
+        items.push({ id: "history", label: "Historial", onSelect: () => openHistory(member) });
+        if (canReset && !self && !showingInactive) {
             items.push({ id: "reset", label: "Restablecer contraseña", onSelect: () => handleResetPassword(member) });
         }
-        if (canDestroy) {
+        if (canDestroy && !self && !showingInactive) {
             items.push({ id: "deactivate", label: "Desactivar acceso", danger: true, onSelect: () => handleDeactivate(member) });
         }
         return items;
@@ -496,7 +703,7 @@ const Staff = () => {
     }
 
     const renderProfessional = (member) => {
-        const missingLicense = member.role === "VET" && !member.license_number;
+        const missingLicense = Boolean(member.attends_patients) && !member.license_number;
         return (
             <>
                 <div className={member.specialty ? styles.primaryText : styles.secondaryText}>
@@ -530,15 +737,20 @@ const Staff = () => {
         const busyHere = pendingAction?.publicId === member.public_id;
         if (showingInactive) {
             return (
-                <button
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => handleReactivate(member)}
-                    disabled={rowBusy}
-                    aria-busy={busyHere || undefined}
-                    aria-label={`Reactivar acceso de ${name}`}
-                >
-                    {busyHere ? <><Icon.Loader s={14} /> Reactivando…</> : <><Icon.UserCheck s={14} /> Reactivar</>}
-                </button>
+                <>
+                    {canReactivate && (
+                        <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleReactivate(member)}
+                            disabled={rowBusy}
+                            aria-busy={busyHere || undefined}
+                            aria-label={`Reactivar acceso de ${name}`}
+                        >
+                            {busyHere ? <><Icon.Loader s={14} /> Reactivando…</> : <><Icon.UserCheck s={14} /> Reactivar</>}
+                        </button>
+                    )}
+                    <ActionMenu label={`Más acciones para ${name}`} items={rowMenuItems(member)} disabled={rowBusy} />
+                </>
             );
         }
         if (member.demo_protected) return null;
@@ -631,7 +843,10 @@ const Staff = () => {
                                     </td>
                                     <td data-label="Rol">
                                         <div className={styles.primaryText}>{roleLabel(member.role)}</div>
-                                        <div className={styles.secondaryText}>{roleShort(member.role)}</div>
+                                        <div className={styles.secondaryText}>
+                                            {roleShort(member.role)}
+                                            {member.role === "ADMIN" && member.attends_patients && " · Atiende pacientes"}
+                                        </div>
                                     </td>
                                     <td data-label="Datos profesionales">{renderProfessional(member)}</td>
                                     <td data-label="Acceso">{renderAccess(member)}</td>
@@ -651,6 +866,18 @@ const Staff = () => {
                 <CredentialsModal result={credentials} onClose={() => setCredentials(null)} />
             )}
 
+            {roleChange && (
+                <RoleChangeModal
+                    state={roleChange}
+                    saving={saving}
+                    onChange={(patch) => setRoleChange((current) => ({ ...current, ...patch }))}
+                    onSave={handleRoleSave}
+                    onClose={() => setRoleChange(null)}
+                />
+            )}
+
+            {history && <HistoryModal state={history} tz={tz} onClose={() => setHistory(null)} />}
+
             {/* Modal Editar Miembro — identidad (A1), especialidad y cédula (M01) */}
             {editing && (
                 <div className="modal-overlay">
@@ -665,6 +892,13 @@ const Staff = () => {
                                 <span className={styles.roleName}>{roleLabel(editing.member.role)}</span>
                                 <span className={styles.roleDescription}>{roleSummary(editing.member.role)}</span>
                             </div>
+                            {editing.member.role === "ADMIN" && (
+                                <AttendsField
+                                    id="edit-attends"
+                                    checked={editing.attends_patients}
+                                    onChange={(attends) => setEditing({ ...editing, attends_patients: attends })}
+                                />
+                            )}
                             <div className="form-group">
                                 <label className="form-label" htmlFor="edit-first-name">NOMBRE *</label>
                                 <input
@@ -711,7 +945,7 @@ const Staff = () => {
                             </div>
                             <div className="form-group">
                                 <label className="form-label" htmlFor="edit-license">
-                                    CÉDULA PROFESIONAL{editing.member.role === "VET" ? " *" : ""}
+                                    CÉDULA PROFESIONAL{attendsFor(editing.member.role, editing.attends_patients) ? " *" : ""}
                                 </label>
                                 <input
                                     id="edit-license"
@@ -796,6 +1030,14 @@ const Staff = () => {
                                     <div className={styles.fullRow}>
                                         <RolePicker value={form.role} onChange={(role) => setForm({ ...form, role })} />
                                         <FieldError message={formErrors.role} />
+                                        {form.role === "ADMIN" && (
+                                            <AttendsField
+                                                id="create-attends"
+                                                checked={form.attends_patients}
+                                                onChange={(attends) => setForm({ ...form, attends_patients: attends })}
+                                            />
+                                        )}
+                                        <FieldError message={formErrors.attends_patients} />
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label" htmlFor="create-specialty">ESPECIALIDAD</label>
@@ -810,7 +1052,7 @@ const Staff = () => {
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label" htmlFor="create-license">
-                                            CÉDULA PROFESIONAL{form.role === "VET" ? " *" : ""}
+                                            CÉDULA PROFESIONAL{attendsFor(form.role, form.attends_patients) ? " *" : ""}
                                         </label>
                                         <input
                                             id="create-license"

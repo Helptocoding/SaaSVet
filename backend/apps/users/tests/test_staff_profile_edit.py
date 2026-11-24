@@ -147,8 +147,8 @@ class EditIdentityTests(_Fixtures):
                 r = self.patch(self.vet, {field: value, 'first_name': 'Cambio'})
                 self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.data)
                 self.assertEqual(r.data['errors']['non_field_errors'], [
-                    'Solo se pueden editar nombre, apellido, correo, especialidad '
-                    'y cédula profesional.'])
+                    'Solo se pueden editar nombre, apellido, correo, especialidad, '
+                    'cédula profesional y si atiende pacientes.'])
         self.vet.refresh_from_db()
         self.assertEqual(
             (self.vet.role, self.vet.username, self.vet.first_name, self.vet.is_active,
