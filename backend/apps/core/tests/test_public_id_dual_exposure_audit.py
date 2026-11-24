@@ -47,6 +47,12 @@ BASELINE = {
     ('patients', 'serializers.py', 'PetSerializer'),
     ('prescriptions', 'serializers.py', 'PrescriptionSerializer'),
     ('users', 'serializers.py', 'UserSerializer'),
+    # Revisado 2026-11-23 (Fase 1 Equipo): directorio mínimo para quien no
+    # gestiona personal. Es un SUBCONJUNTO de UserSerializer (que esos mismos
+    # clientes ya recibían): quita correo, usuario, cédula y datos de acceso; no
+    # añade deuda. Citas envía el PK del veterinario en el cuerpo (ADR p18), por
+    # eso conserva `id`; se retira con la migración por-modelo de UserSerializer.
+    ('users', 'serializers.py', 'StaffDirectorySerializer'),
 }
 
 

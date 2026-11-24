@@ -33,7 +33,7 @@ CLASSIFIED = {
     ('apps/billing/models.py', 'CheckoutItem.delete', 'is_active=False'): 'otro modelo',
     ('apps/patients/archive.py', 'change_archive_state', 'is_active=False'):
         'otro modelo (Pet/Owner)',
-    ('apps/users/serializers.py', 'CreateEmployeeSerializer.create', 'role'): CREATION,
+    ('apps/users/services.py', 'create_staff_member', 'role'): CREATION,
     ('apps/platform/services/provision_organization.py', 'provision_organization', 'role'):
         CREATION + '; también ' + USER_ROLE,
     ('apps/users/bootstrap.py', 'bootstrap_platform_superuser', 'role'):
@@ -47,7 +47,7 @@ CLASSIFIED = {
     ('apps/users/services.py', 'ensure_agent_user', 'is_service_account'):
         'único escritor del criterio de cuenta de servicio, al crearla',
     ('apps/users/management/commands/migrate_users_to_roles.py', 'Command.handle', 'role'): USER_ROLE,
-    ('apps/users/serializers.py', 'CreateEmployeeSerializer._assign_rbac_role', 'role'): USER_ROLE,
+    ('apps/users/services.py', '_assign_system_role', 'role'): USER_ROLE,
     ('apps/users/signals.py', 'assign_rbac_role_on_create', 'role'): USER_ROLE,
 }
 

@@ -194,7 +194,6 @@ class CreateStaffOrgImmutableTests(APITestCase):
         payload = {
             "username": "evil_vet",
             "email": "evil@example.com",
-            "password": "EvilPass123",
             "first_name": "Evil",
             "last_name": "Vet",
             "role": "VET",

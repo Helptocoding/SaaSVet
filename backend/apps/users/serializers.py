@@ -1,6 +1,5 @@
 import re
 import unicodedata
-import logging
 
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -9,8 +8,6 @@ from apps.organizations.models import Organization
 from apps.users.professional import (
     LICENSE_REQUIRED_MESSAGE, LICENSE_REQUIRED_ROLES, normalize_license_number,
 )
-
-logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -121,10 +118,18 @@ def normalize_staff_email(value, *, exclude_pk=None, organization=None):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Integrante tal como lo ve quien gestiona personal (Equipo).
+
+    Solo lo usan respuestas que exigen un permiso de gestión (listado para
+    gestores, alta, edición y reactivación). Quien solo tiene ``staff.list``
+    recibe ``StaffDirectorySerializer``.
+    """
     organization_name = serializers.CharField(source='organization.name', read_only=True)
     # D5 (plan Equipo): solo para que la interfaz oculte acciones sobre las
     # cuentas semilla de la demo. NO autoriza nada: lo aplican los servicios.
     demo_protected = serializers.SerializerMethodField()
+    # Fase 1 Equipo: estado de acceso derivado (apps/users/access.py).
+    access = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -132,18 +137,50 @@ class UserSerializer(serializers.ModelSerializer):
         # URLs /staff/<uuid>/. id se conserva pre-beta.
         fields = ['id', 'public_id', 'username', 'email', 'first_name', 'last_name',
                   'role', 'specialty', 'license_number', 'is_active', 'organization',
-                  'organization_name', 'demo_protected']
+                  'organization_name', 'demo_protected', 'access']
         read_only_fields = ['id', 'public_id']
 
     def get_demo_protected(self, obj):
         from apps.users.services import is_demo_seed_account
         return is_demo_seed_account(obj)
 
+    def get_access(self, obj):
+        from apps.users.access import access_summary
+        return access_summary(obj)
 
-class CreateEmployeeSerializer(serializers.ModelSerializer):
-    username = serializers.CharField()
+
+class StaffDirectorySerializer(serializers.ModelSerializer):
+    """Directorio mínimo del equipo para quien no gestiona personal (Fase 1).
+
+    VET y ASSISTANT tienen ``staff.list`` porque Citas necesita elegir
+    veterinario: nombre, rol y el PK que viaja en el cuerpo de la cita (ADR p18).
+    Correo, usuario, cédula, estado de acceso y datos de la organización no son
+    necesarios para eso y no se exponen.
+    """
+
+    class Meta:
+        model = User
+        fields = ['id', 'public_id', 'first_name', 'last_name', 'role']
+        read_only_fields = fields
+
+
+class CreateEmployeeSerializer(serializers.Serializer):
+    """Entrada de ``POST /api/staff/create/`` (alta de integrante).
+
+    Solo valida; el alta la hace ``services.create_staff_member``. La contraseña
+    inicial la genera el sistema (Fase 1 Equipo): enviar ``password`` es 400,
+    para que un cliente antiguo no crea que fijó una contraseña.
+
+    La organización nunca viene del cuerpo (Día 6 Fase 4, Issue #40; ADR p18): un
+    ``organization``/``organization_id`` enviado se ignora y el servicio usa la del
+    ADMIN autenticado.
+    """
+    PASSWORD_NOT_ACCEPTED = (
+        'La contraseña inicial la genera el sistema; no se envía en el alta.'
+    )
+
+    username = serializers.CharField(max_length=150)
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True, min_length=8)
     # D4: el nombre es obligatorio también aquí (antes solo lo exigía el frontend).
     first_name = serializers.CharField(
         allow_blank=True, max_length=PERSON_NAME_MAX_LENGTH,
@@ -156,25 +193,28 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
         choices=['ADMIN', 'VET', 'ASSISTANT'],
         default='ASSISTANT'
     )
-    specialty = serializers.CharField(required=False, allow_blank=True, default='')
+    specialty = serializers.CharField(
+        required=False, allow_blank=True, default='', max_length=100,
+    )
     # M01 (orden 7): obligatoria para VET (validate).
     license_number = serializers.CharField(required=False, allow_blank=True, default='')
-    # Día 6 Fase 4 (Issue #40): organization_id NO writable.
-    # ADR p18: organization siempre se deriva de request.user.organization (JWT).
-    # Aceptarlo en body permite que un ADMIN cree usuarios en otra org →
-    # privilege escalation cross-tenant. read_only es el guard correcto.
-    organization_id = serializers.IntegerField(read_only=True)
 
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'first_name', 'last_name',
-                  'role', 'specialty', 'license_number', 'organization_id']
+    def to_internal_value(self, data):
+        if hasattr(data, 'keys') and 'password' in data:
+            raise serializers.ValidationError({'password': [self.PASSWORD_NOT_ACCEPTED]})
+        return super().to_internal_value(data)
 
     def validate_username(self, value):
         if not USERNAME_REGEX.match(value):
             raise serializers.ValidationError(
                 "El nombre de usuario solo puede contener letras, números, puntos, guiones y guiones bajos."
             )
+        # Único global sin distinguir mayúsculas (como el correo, ADR p48): «Ana»
+        # y «ana» serían dos cuentas que se confunden al entrar. El mensaje no
+        # dice en qué clínica existe. La restricción de base de datos decide las
+        # carreras (services.create_staff_member).
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("Este nombre de usuario no está disponible.")
         return value
 
     def validate_email(self, value):
@@ -190,15 +230,6 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
     def validate_last_name(self, value):
         return normalize_person_name(value, label="El apellido", required=False)
 
-    def validate_password(self, value):
-        if len(value) < 8:
-            raise serializers.ValidationError("La contraseña debe tener al menos 8 caracteres.")
-        if not any(c.isupper() for c in value):
-            raise serializers.ValidationError("La contraseña debe contener al menos una letra mayúscula.")
-        if not any(c.isdigit() for c in value):
-            raise serializers.ValidationError("La contraseña debe contener al menos un número.")
-        return value
-
     def validate_license_number(self, value):
         return normalize_license_number(value)
 
@@ -207,57 +238,6 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
         if attrs.get('role') in LICENSE_REQUIRED_ROLES and not attrs.get('license_number'):
             raise serializers.ValidationError({'license_number': LICENSE_REQUIRED_MESSAGE})
         return attrs
-
-    def create(self, validated_data):
-        # Día 6 Fase 4: organization_id es read_only — extra-safety pop por si
-        # algún caller histórico envía el campo (DRF ignora read_only en input,
-        # pero el .pop() documenta que jamás se debe consumir de body).
-        validated_data.pop('organization_id', None)
-
-        request = self.context.get('request')
-        organization = request.user.organization if request else None
-
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data.get('email', ''),
-            password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
-            specialty=validated_data.get('specialty', ''),
-            license_number=validated_data.get('license_number', ''),
-            role=validated_data.get('role', 'ASSISTANT'),
-            organization=organization,
-        )
-
-        # El staff creado por el ADMIN entra con contraseña de un solo uso: debe
-        # cambiarla en el primer login (MustChangePasswordGate). Sin
-        # password_temp_issued_at → no caduca a 24h (igual que el admin
-        # provisionado). Se setea SOLO aquí (ruta de alta por endpoint), NUNCA en
-        # User.create_user / signal / default del modelo, para no gatear los
-        # usuarios de setUp de la suite, los seeds, ni createsuperuser.
-        user.password_must_change = True
-        user.save(update_fields=['password_must_change'])
-
-        self._assign_rbac_role(user, organization)
-        return user
-
-    def _assign_rbac_role(self, user, organization):
-        if not organization:
-            return
-        from apps.core.models import Role, UserRole
-        try:
-            db_role = Role.objects.get(
-                name=user.role,
-                organization=organization,
-                is_system_role=True,
-            )
-            UserRole.objects.get_or_create(user=user, role=db_role)
-        except Role.DoesNotExist:
-            logger.warning(
-                "Rol '%s' no encontrado en org %s al crear usuario %s — "
-                "ejecuta seed_permissions",
-                user.role, organization.id, user.id,
-            )
 
 
 class UpdateEmployeeSerializer(serializers.Serializer):

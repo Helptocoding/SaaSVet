@@ -88,14 +88,15 @@ negocio dentro del SaaS** para cada dominio.
 ### Acción: Crear staff (VET o ASSISTANT)
 
 **Requiere**
-- Un usuario `ADMIN` autenticado y perteneciente a la organización.
-- Contraseña de al menos 8 caracteres, con al menos 1 mayúscula y 1 número.
+- Un usuario `ADMIN` autenticado y perteneciente a la organización (`staff.create`).
+- Usuario y correo no tomados en todo el sistema (sin distinguir mayúsculas). **Sin contraseña**: la genera el sistema (Fase 1 Equipo; enviar `password` es `400`).
 - Si el rol es `VET`, cédula profesional: solo dígitos, de 5 a 10 (orden 7, ADR p64).
 - Que `seed_permissions` ya se haya ejecutado en la organización.
 
-**Resultado**
-- Se crea el `User` con `organization` igual a la del `ADMIN` que lo creó y `password_must_change=True` (contraseña de un solo uso: el empleado la cambia en su primer login vía `MustChangePasswordGate`; sin `password_temp_issued_at` → no caduca).
-- El signal `assign_rbac_role_on_create` genera el `UserRole` correspondiente.
+**Resultado** (atómico y durable, `create_staff_member`)
+- Se crea el `User` con `organization` igual a la del `ADMIN` que lo creó, una contraseña generada por el sistema y `password_must_change=True` (contraseña de un solo uso: el empleado la cambia en su primer login vía `MustChangePasswordGate`; sin `password_temp_issued_at` → no caduca).
+- Se asigna el `UserRole` correspondiente en la misma transacción.
+- La contraseña se devuelve una sola vez, después del commit, con `no-store`; nunca se registra. `STAFF_CREATED` sale con `on_commit`.
 
 **Desbloquea**
 - El nuevo usuario puede iniciar sesión y operar según los permisos de su rol (tras cambiar la contraseña en el primer acceso).

@@ -225,6 +225,13 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 - Para filtros mutuamente excluyentes de la misma vista usa `SegmentedControl` / `.segmented-control`; los `.tabs` quedan reservados para navegación entre secciones.
 - Los autocompletados usan `.result-popover` y `.result-popover-item`, siempre con estados de foco/selección visibles.
 
+### Menú de acciones de fila — `components/ActionMenu`
+- Las acciones secundarias de una fila (restablecer, desactivar…) van en `ActionMenu` (botón ⋯
+  `btn-ghost btn-icon` + `role="menu"` en portal); la acción frecuente queda visible a su lado.
+- Mismo lenguaje que `.result-popover` (superficie, borde, `--r-lg`, `--shadow-md`). Opción
+  destructiva con texto `--c-danger-text`, nunca sola como botón rojo en cada fila.
+- 🚫 No crear menús desplegables por página.
+
 ### Header de página — `.page-header`
 - `.page-title` (20/700) + `.page-subtitle` (13). Acciones a la derecha con `.btn`.
 - **Orden de acciones (D7, ley de Jakob):** de izquierda a derecha, ayuda (`btn-ghost`: «Cómo

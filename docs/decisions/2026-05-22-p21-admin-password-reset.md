@@ -347,3 +347,24 @@ Ref: `docs/fix-provision-must-change-password-2026-06-24.md`.
   (ADR p45), que se había quedado sin él.
 - Desde ADR p65, restablecer y reactivar también invalidan los access tokens emitidos antes (versión de
   sesión), no solo los refresh tokens.
+
+## Addendum 2026-11-23 — La contraseña inicial del alta la genera el sistema (Fase 1 Equipo)
+
+Sustituye, **solo para el alta de staff**, el punto «Contraseña elegida por el humano» del
+addendum 2026-06-24. El provisioning de plataforma (ADR p19) no cambia.
+
+- `POST /api/staff/create/` ya no acepta `password` (enviarla es `400`). El servicio
+  `apps.users.services.create_staff_member` genera la contraseña con la misma función que la
+  temporal de este ADR (`secrets.token_urlsafe(16)`) y la devuelve **una sola vez**, después del
+  commit, con `Cache-Control: no-store`. Nunca se registra.
+- **Se conservan las reglas de la contraseña inicial**: `password_must_change=True` y sin
+  `password_temp_issued_at`, así que **no caduca** (el handoff puede tardar más de 24 h). La
+  ventana de 24 h sigue siendo exclusiva del restablecimiento y la reactivación.
+- Motivo: el ADMIN ya no conoce ni inventa la credencial (antes era predecible y su placeholder
+  hablaba de 6 caracteres), y todas las credenciales que emite el sistema tienen la misma fuerza y
+  el mismo modal de entrega de un solo uso. No hay correo transaccional: la entrega sigue siendo
+  en persona o por un canal privado.
+- El alta pasa a ser una unidad durable (usuario + `UserRole`, `durable=True`, gate de llamador
+  único, igual que la reactivación). Un usuario o correo repetido es `400` en su campo, nunca `500`.
+- Locus del flag: `create_staff_member` (antes `CreateEmployeeSerializer.create`). Sigue sin
+  ponerse en `User.create_user`, signals ni el default del modelo.

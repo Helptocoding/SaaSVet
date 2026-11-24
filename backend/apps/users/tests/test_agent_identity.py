@@ -289,9 +289,10 @@ class AgentStaffSurfacesTests(APITestCase):
     def test_staff_create_rejects_agent_role(self):
         r = self.client.post("/api/staff/create/", {
             "username": "sneaky_agent", "email": "sneaky@example.com",
-            "password": "Password123", "role": "AGENT",
+            "first_name": "Sneaky", "role": "AGENT",
         })
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.content)
+        self.assertIn("role", r.data)  # el 400 se debe al rol, no a otro campo
 
     def test_deactivate_agent_returns_404(self):
         r = self.client.delete(f"/api/staff/{self.agent.public_id}/")

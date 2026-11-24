@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import {
     getStaff, createStaff, updateStaff, deactivateStaff, resetStaffPassword, reactivateStaff,
 } from "../api/staff";
@@ -7,20 +8,30 @@ import { Icon } from "../components/icons";
 import { useConfirm } from "../components/useConfirm";
 import SegmentedControl from "../components/SegmentedControl";
 import EmptyState from "../components/EmptyState";
+import ActionMenu from "../components/ActionMenu";
 import { apiError } from "../utils/apiError";
 import handleFormError from "../utils/handleFormError";
+import { orgTz } from "../utils/datetime";
+import { STAFF_MANAGEMENT_PERMS } from "../features/staff/permissions";
+import { STAFF_ROLE_ORDER, roleLabel, roleShort, roleSummary } from "../features/staff/roles";
+import { describeAccess, PENDING_ACCESS } from "../features/staff/access";
 import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
 import TableSkeleton from "../components/TableSkeleton";
 import styles from "./staff.module.css";
 
+const twoLines = (first, second) => () => (
+    <div>
+        <Skeleton width={first} height={13} />
+        <Skeleton width={second} height={11} />
+    </div>
+);
+
 const STAFF_SKELETON_COLUMNS = [
-    { label: "Nombre", width: 140 },
-    { label: "Usuario", width: 90 },
-    { label: "Correo", width: 160 },
-    { label: "Rol", cell: () => <Skeleton width={84} height={20} borderRadius="var(--r-full)" /> },
-    { label: "Especialidad", width: 90 },
-    { label: "Cédula", width: 70 },
+    { label: "Integrante", cell: twoLines(140, 170) },
+    { label: "Rol", cell: twoLines(90, 150) },
+    { label: "Datos profesionales", cell: twoLines(90, 110) },
+    { label: "Acceso", cell: twoLines(80, 130) },
 ];
 
 const EMPTY_FORM = {
@@ -28,7 +39,6 @@ const EMPTY_FORM = {
     first_name: "",
     last_name: "",
     email: "",
-    password: "",
     role: "VET",
     specialty: "",
     license_number: ""
@@ -66,19 +76,18 @@ const USERNAME_RE = /^[A-Za-z0-9_.-]+$/;
 const DEMO_EMAIL_HINT = "En la demo usa un correo de ejemplo, como nombre@example.com.";
 const EMAIL_CHANGE_NOTICE = "Es su acceso al sistema. Desde que guardes entrará con el correo nuevo; avísale.";
 
-const ROLE_BADGE = {
-    ADMIN: "badge-warning",
-    VET: "badge-primary",
-    ASSISTANT: "badge-default",
-};
-
-const ROLE_LABELS = {
-    ADMIN: "Administrador",
-    VET: "Veterinario",
-    ASSISTANT: "Asistente",
-};
-
 const fullName = (member) => `${member.first_name} ${member.last_name}`.trim() || member.username;
+
+const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
+
+// Resumen del equipo bajo el título (Fase 1 Equipo): cuenta lo que ya se cargó.
+function teamSummary(active, inactive, showInactive) {
+    const parts = [plural(active.length, "activo", "activos")];
+    if (showInactive) parts.push(plural(inactive.length, "inactivo", "inactivos"));
+    const pending = active.filter((member) => PENDING_ACCESS.has(member.access?.status)).length;
+    if (pending > 0) parts.push(`${pending} con acceso pendiente`);
+    return parts.join(" · ");
+}
 
 function createErrors(form) {
     const errors = {};
@@ -92,14 +101,19 @@ function createErrors(form) {
     const last = nameError(form.last_name, { label: "El apellido", required: false });
     if (last) errors.last_name = last;
     if (!form.email.trim()) errors.email = "El correo electrónico es obligatorio.";
-    if (!form.password || form.password.length < 8) {
-        errors.password = "La contraseña debe tener al menos 8 caracteres.";
-    } else if (!/[A-Z]/.test(form.password)) {
-        errors.password = "La contraseña debe contener al menos una letra mayúscula.";
-    } else if (!/[0-9]/.test(form.password)) {
-        errors.password = "La contraseña debe contener al menos un número.";
-    }
     const license = licenseError(form.role, form.license_number);
+    if (license) errors.license_number = license;
+    return errors;
+}
+
+function editErrorsFor(editing) {
+    const errors = {};
+    const first = nameError(editing.first_name, { label: "El nombre", required: true });
+    if (first) errors.first_name = first;
+    const last = nameError(editing.last_name, { label: "El apellido", required: false });
+    if (last) errors.last_name = last;
+    if (!editing.email.trim()) errors.email = "El correo electrónico es obligatorio.";
+    const license = licenseError(editing.member.role, editing.license_number);
     if (license) errors.license_number = license;
     return errors;
 }
@@ -128,17 +142,24 @@ function FieldError({ message }) {
 
 const inputClass = (error) => `input${error ? " input-error" : ""}`;
 
-// Contraseña temporal: se muestra una sola vez (restablecer y reactivar).
-function TempPasswordModal({ result, onClose }) {
+// Credenciales que se muestran una sola vez: la inicial del alta (no vence) y la
+// temporal de restablecer o reactivar (24 h).
+function CredentialsModal({ result, onClose }) {
     const [copied, setCopied] = useState(false);
-    const hours = Math.round((result.expires_in_seconds || 0) / 3600);
-    const validity = `${hours} ${hours === 1 ? "hora" : "horas"}`;
+    const created = result.kind === "created";
+    const title = created ? "Integrante creado" : "Contraseña temporal generada";
+    const seconds = result.expires_in_seconds;
+    const hours = seconds ? Math.round(seconds / 3600) : null;
+    const validity = hours != null
+        ? `${hours} ${hours === 1 ? "hora" : "horas"} para iniciar sesión`
+        : "Hasta su primer ingreso";
 
     const copy = async () => {
         const lines = [
             `Usuario: ${result.target.username}`,
+            ...(result.target.email ? [`Correo: ${result.target.email}`] : []),
             `Contraseña temporal: ${result.temp_password}`,
-            `Válida por: ${validity}`,
+            `Válida: ${validity}`,
             "Importante: debe cambiar la contraseña al iniciar sesión.",
         ];
         try {
@@ -153,24 +174,35 @@ function TempPasswordModal({ result, onClose }) {
 
     return (
         <div className="modal-overlay">
-            <div className="modal modal-sm" role="dialog" aria-label="Contraseña temporal generada">
+            <div className="modal modal-sm" role="dialog" aria-label={title}>
                 <div className="modal-header">
-                    <h3>Contraseña temporal generada</h3>
+                    <h3>{title}</h3>
                 </div>
                 <div className="modal-body">
+                    {created && (
+                        <p className={styles.credentialsIntro}>
+                            Entrégale estos datos a {fullName(result.target)} para su primer ingreso.
+                        </p>
+                    )}
                     <div className={styles.tempWarning}>
                         <strong>⚠ Anota o copia ahora.</strong> Esta contraseña no se vuelve a mostrar. Si la pierdes, deberás restablecerla de nuevo.
                     </div>
                     <dl className={styles.credentials}>
                         <dt>Usuario</dt>
                         <dd className={styles.credentialMono}>{result.target.username}</dd>
+                        {result.target.email && (
+                            <>
+                                <dt>Correo</dt>
+                                <dd className={styles.credentialMono}>{result.target.email}</dd>
+                            </>
+                        )}
                         <dt>Contraseña</dt>
                         <dd className={styles.tempPassword}>{result.temp_password}</dd>
                         <dt>Válida</dt>
-                        <dd>{validity} para iniciar sesión</dd>
+                        <dd>{validity}</dd>
                     </dl>
                     <p className={styles.tempNote}>
-                        Deberá cambiar esta contraseña al iniciar sesión. Entrégala en persona o por un canal privado.
+                        Entra con su correo o su usuario. Deberá cambiar esta contraseña al iniciar sesión. Entrégala en persona o por un canal privado.
                     </p>
                     <div className={styles.modalActions}>
                         <button type="button" className="btn btn-secondary btn-md" onClick={copy}>
@@ -186,16 +218,42 @@ function TempPasswordModal({ result, onClose }) {
     );
 }
 
+// Elección del rol en el alta, con lo que permite cada uno (Fase 1 Equipo).
+function RolePicker({ value, onChange }) {
+    return (
+        <fieldset className={styles.roleOptions}>
+            <legend className="form-label">ROL *</legend>
+            {STAFF_ROLE_ORDER.map((role) => (
+                <label key={role} className={`${styles.roleOption}${value === role ? ` ${styles.roleOptionSelected}` : ""}`}>
+                    <input
+                        type="radio"
+                        name="create-role"
+                        value={role}
+                        checked={value === role}
+                        onChange={() => onChange(role)}
+                    />
+                    <span>
+                        <span className={styles.roleName}>{roleLabel(role)}</span>
+                        <span className={styles.roleDescription}>{roleSummary(role)}</span>
+                    </span>
+                </label>
+            ))}
+        </fieldset>
+    );
+}
+
 const Staff = () => {
-    const { user, initializing, can, refreshUser } = useAuth();
+    const { user, initializing, can, canAny, refreshUser } = useAuth();
     const confirm = useConfirm();
 
     // Permisos por capacidad (nunca por rol).
+    const canManage = canAny(STAFF_MANAGEMENT_PERMS);
     const canCreate = can("staff.create");
     const canUpdate = can("staff.update");
     const canReset = can("staff.reset_password");
     const canDestroy = can("staff.destroy");
     const canReactivate = can("staff.reactivate");
+    const tz = orgTz(user);
 
     const [staff, setStaff] = useState([]);
     const [inactive, setInactive] = useState([]);
@@ -208,14 +266,11 @@ const Staff = () => {
     // Edición: { member, first_name, last_name, email, specialty, license_number } | null
     const [editing, setEditing] = useState(null);
     const [editErrors, setEditErrors] = useState({});
-    // Contraseña temporal (restablecer o reactivar): se muestra una sola vez.
-    const [tempResult, setTempResult] = useState(null);
-
-    useEffect(() => {
-        if (!initializing && user) {
-            fetchStaff();
-        }
-    }, [initializing, user]);
+    // Credenciales (alta, restablecer o reactivar): se muestran una sola vez.
+    const [credentials, setCredentials] = useState(null);
+    // Acción de fila en curso: { publicId, kind } | null. Mientras dure, ninguna
+    // otra acción de fila se puede lanzar.
+    const [pendingAction, setPendingAction] = useState(null);
 
     // Con `staff.reactivate`, activos e inactivos se cargan en paralelo.
     async function fetchStaff() {
@@ -233,10 +288,34 @@ const Staff = () => {
         }
     }
 
+    useEffect(() => {
+        if (!initializing && user && canManage) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial del equipo desde la API al montar
+            fetchStaff();
+        }
+    }, [initializing, user]);
+
+    // Equipo es una pantalla de gestión: quien no gestiona personal no la abre ni
+    // por URL. El backend tampoco le entrega correo, cédula ni datos de acceso.
+    if (!initializing && !canManage) {
+        return <Navigate to="/" replace />;
+    }
+
     const isSelf = (member) => user?.id != null && member.id === user.id;
     const showingInactive = canReactivate && view === "inactive";
     const rows = showingInactive ? inactive : staff;
     const hasActions = showingInactive ? canReactivate : (canUpdate || canReset || canDestroy);
+    const rowBusy = Boolean(pendingAction);
+
+    const runRowAction = async (member, kind, task) => {
+        if (pendingAction) return;
+        setPendingAction({ publicId: member.public_id, kind });
+        try {
+            await task();
+        } finally {
+            setPendingAction(null);
+        }
+    };
 
     // ── Alta ──────────────────────────────────────────────────────────────
     const openCreate = () => {
@@ -253,13 +332,14 @@ const Staff = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (saving) return;
         const errors = createErrors(form);
         setFormErrors(errors);
         if (Object.keys(errors).length > 0) return;
 
         setSaving(true);
         try {
-            await createStaff({
+            const data = await createStaff({
                 ...form,
                 username: form.username.trim(),
                 first_name: normalizeName(form.first_name),
@@ -267,8 +347,8 @@ const Staff = () => {
                 email: form.email.trim(),
                 license_number: form.license_number.trim(),
             });
-            toast.success("Usuario creado exitosamente");
             closeModal();
+            setCredentials({ ...data, kind: "created", target: data.member });
             fetchStaff();
         } catch (err) {
             // El modal queda abierto con los errores en sus campos.
@@ -295,14 +375,10 @@ const Staff = () => {
     const editHasChanges = Object.keys(editPending).length > 0;
 
     const handleEditSave = async () => {
-        if (!editing || !editHasChanges) return;
-        const first = nameError(editing.first_name, { label: "El nombre", required: true });
-        if (first) { toast.error(first); return; }
-        const last = nameError(editing.last_name, { label: "El apellido", required: false });
-        if (last) { toast.error(last); return; }
-        if (!editing.email.trim()) { toast.error("El correo electrónico es obligatorio."); return; }
-        const licenseProblem = licenseError(editing.member.role, editing.license_number);
-        if (licenseProblem) { toast.error(licenseProblem); return; }
+        if (!editing || !editHasChanges || saving) return;
+        const errors = editErrorsFor(editing);
+        setEditErrors(errors);
+        if (Object.keys(errors).length > 0) return;
 
         const self = isSelf(editing.member);
         setSaving(true);
@@ -321,6 +397,7 @@ const Staff = () => {
 
     // ── Restablecer, desactivar, reactivar ────────────────────────────────
     const handleResetPassword = async (member) => {
+        if (pendingAction) return;
         const ok = await confirm({
             title: "Restablecer contraseña",
             message: `Se generará una contraseña temporal para ${fullName(member)}. Sus sesiones activas se cerrarán y deberá cambiarla en su próximo acceso. La contraseña se mostrará una sola vez.`,
@@ -328,15 +405,19 @@ const Staff = () => {
             dangerMode: true,
         });
         if (!ok) return;
-        try {
-            const data = await resetStaffPassword(member.public_id);
-            setTempResult({ ...data, target: member });
-        } catch (err) {
-            toast.error(apiError(err, "No se pudo restablecer la contraseña."));
-        }
+        await runRowAction(member, "reset", async () => {
+            try {
+                const data = await resetStaffPassword(member.public_id);
+                setCredentials({ ...data, kind: "reset", target: member });
+                fetchStaff();
+            } catch (err) {
+                toast.error(apiError(err, "No se pudo restablecer la contraseña."));
+            }
+        });
     };
 
     const handleDeactivate = async (member) => {
+        if (pendingAction) return;
         const name = fullName(member);
         const ok = await confirm({
             title: `Desactivar acceso de ${name}`,
@@ -345,17 +426,20 @@ const Staff = () => {
             dangerMode: true,
         });
         if (!ok) return;
-        try {
-            await deactivateStaff(member.public_id);
-            toast.success("Acceso desactivado");
-            fetchStaff();
-        } catch (err) {
-            toast.error(apiError(err, "No se pudo desactivar el acceso."));
-        }
+        await runRowAction(member, "deactivate", async () => {
+            try {
+                await deactivateStaff(member.public_id);
+                toast.success("Acceso desactivado");
+                await fetchStaff();
+            } catch (err) {
+                toast.error(apiError(err, "No se pudo desactivar el acceso."));
+            }
+        });
     };
 
     const handleReactivate = async (member) => {
-        const role = ROLE_LABELS[member.role] || member.role;
+        if (pendingAction) return;
+        const role = roleLabel(member.role);
         let message = `Conservará su rol (${role}) y su historial. Se generará una contraseña temporal válida por 24 h que deberá cambiar al entrar.`;
         if (member.role === "VET" && !member.license_number) {
             message += " No tiene cédula profesional registrada: no podrá firmar consultas ni recetas hasta que la captures.";
@@ -366,16 +450,30 @@ const Staff = () => {
             confirmText: "Reactivar acceso",
         });
         if (!ok) return;
-        try {
-            const data = await reactivateStaff(member.public_id);
-            setTempResult({ ...data, target: data.member || member });
-        } catch (err) {
-            // 409 already_active (p. ej. tras una respuesta perdida): el mensaje
-            // del backend indica usar Restablecer contraseña.
-            toast.error(apiError(err, "No se pudo reactivar el acceso."));
-        } finally {
-            fetchStaff();
+        await runRowAction(member, "reactivate", async () => {
+            try {
+                const data = await reactivateStaff(member.public_id);
+                setCredentials({ ...data, kind: "reactivated", target: data.member || member });
+            } catch (err) {
+                // 409 already_active (p. ej. tras una respuesta perdida): el mensaje
+                // del backend indica usar Restablecer contraseña.
+                toast.error(apiError(err, "No se pudo reactivar el acceso."));
+            } finally {
+                await fetchStaff();
+            }
+        });
+    };
+
+    const rowMenuItems = (member) => {
+        if (isSelf(member)) return [];
+        const items = [];
+        if (canReset) {
+            items.push({ id: "reset", label: "Restablecer contraseña", onSelect: () => handleResetPassword(member) });
         }
+        if (canDestroy) {
+            items.push({ id: "deactivate", label: "Desactivar acceso", danger: true, onSelect: () => handleDeactivate(member) });
+        }
+        return items;
     };
 
     if (loading) {
@@ -384,7 +482,7 @@ const Staff = () => {
                 <div className="page-header">
                     <div>
                         <h1 className="page-title">Equipo</h1>
-                        <Skeleton width={90} height={12} />
+                        <Skeleton width={180} height={12} />
                     </div>
                 </div>
                 <div role="status" aria-label="Cargando equipo">
@@ -397,14 +495,81 @@ const Staff = () => {
         );
     }
 
+    const renderProfessional = (member) => {
+        const missingLicense = member.role === "VET" && !member.license_number;
+        return (
+            <>
+                <div className={member.specialty ? styles.primaryText : styles.secondaryText}>
+                    {member.specialty || "—"}
+                </div>
+                {member.license_number ? (
+                    <div className={styles.secondaryText}>
+                        Cédula <span className={styles.mono}>{member.license_number}</span>
+                    </div>
+                ) : missingLicense ? (
+                    <div className={styles.attentionText}>Sin cédula: no puede firmar</div>
+                ) : null}
+            </>
+        );
+    };
+
+    const renderAccess = (member) => {
+        const access = describeAccess(member.access, tz);
+        return (
+            <>
+                <div className={access.attention ? styles.attentionText : styles.primaryText}>{access.label}</div>
+                {access.detail && (
+                    <div className={styles.secondaryText} title={access.title || undefined}>{access.detail}</div>
+                )}
+            </>
+        );
+    };
+
+    const renderActions = (member) => {
+        const name = fullName(member);
+        const busyHere = pendingAction?.publicId === member.public_id;
+        if (showingInactive) {
+            return (
+                <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => handleReactivate(member)}
+                    disabled={rowBusy}
+                    aria-busy={busyHere || undefined}
+                    aria-label={`Reactivar acceso de ${name}`}
+                >
+                    {busyHere ? <><Icon.Loader s={14} /> Reactivando…</> : <><Icon.UserCheck s={14} /> Reactivar</>}
+                </button>
+            );
+        }
+        if (member.demo_protected) return null;
+        return (
+            <>
+                {canUpdate && (
+                    <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => openEdit(member)}
+                        disabled={rowBusy}
+                        aria-label={`Editar a ${name}`}
+                    >
+                        <Icon.Edit s={14} /> Editar
+                    </button>
+                )}
+                <ActionMenu
+                    label={`Más acciones para ${name}`}
+                    items={rowMenuItems(member)}
+                    disabled={rowBusy}
+                    busy={busyHere}
+                />
+            </>
+        );
+    };
+
     return (
         <div>
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Equipo</h1>
-                    <p className="page-subtitle">
-                        {rows.length} miembro{rows.length !== 1 ? "s" : ""}{showingInactive ? " inactivo" + (rows.length !== 1 ? "s" : "") : ""}
-                    </p>
+                    <p className="page-subtitle">{teamSummary(staff, inactive, canReactivate)}</p>
                 </div>
                 {canCreate && (
                     <button className="btn btn-primary btn-md" onClick={openCreate}>
@@ -435,101 +600,55 @@ const Staff = () => {
                         body="Quien desactives aparecerá aquí y podrás reactivar su acceso."
                     />
                 ) : (
-                    <div className="empty-state">
-                        <p className="empty-state-title">Aún no hay miembros registrados</p>
-                        <p className="empty-state-sub">
-                            {canCreate ? "Usa el botón de arriba para agregar miembros" : "Contacta al administrador"}
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={Icon.Users}
+                        title="Aún no hay integrantes"
+                        body="Agrega a tu equipo para que cada persona entre con su propia cuenta y su propio rol."
+                        actions={[canCreate ? { label: "Agregar miembro", onClick: openCreate, variant: "primary" } : null]}
+                    />
                 )
             ) : (
                 <div className="table-wrap">
-                    <table className="table">
+                    <table className={`table ${styles.teamTable}`}>
                         <thead>
                             <tr>
-                                <th>Nombre</th>
-                                <th>Usuario</th>
-                                <th>Correo</th>
+                                <th>Integrante</th>
                                 <th>Rol</th>
-                                <th>Especialidad</th>
-                                <th>Cédula</th>
+                                <th>Datos profesionales</th>
+                                <th>Acceso</th>
                                 {hasActions && <th aria-label="Acciones"></th>}
                             </tr>
                         </thead>
                         <tbody>
-                            {rows.map((member) => {
-                                const self = isSelf(member);
-                                const locked = Boolean(member.demo_protected);
-                                return (
-                                    <tr key={member.public_id}>
-                                        <td className={styles.nameCell}>
-                                            {member.first_name} {member.last_name}
-                                            {self && <span className={`badge badge-default ${styles.selfTag}`}>Tú</span>}
+                            {rows.map((member) => (
+                                <tr key={member.public_id}>
+                                    <td className={styles.memberCell}>
+                                        <div className={styles.memberName}>
+                                            {fullName(member)}
+                                            {isSelf(member) && <span className={`badge badge-default ${styles.selfTag}`}>Tú</span>}
+                                        </div>
+                                        <div className={styles.secondaryText}>{member.email}</div>
+                                    </td>
+                                    <td data-label="Rol">
+                                        <div className={styles.primaryText}>{roleLabel(member.role)}</div>
+                                        <div className={styles.secondaryText}>{roleShort(member.role)}</div>
+                                    </td>
+                                    <td data-label="Datos profesionales">{renderProfessional(member)}</td>
+                                    <td data-label="Acceso">{renderAccess(member)}</td>
+                                    {hasActions && (
+                                        <td className={styles.actionsCell}>
+                                            <div className={styles.actions}>{renderActions(member)}</div>
                                         </td>
-                                        <td className={styles.muted}>@{member.username}</td>
-                                        <td className={styles.muted}>{member.email}</td>
-                                        <td>
-                                            <span className={`badge ${ROLE_BADGE[member.role] || "badge-default"}`}>
-                                                {ROLE_LABELS[member.role] || member.role}
-                                            </span>
-                                        </td>
-                                        <td className={styles.subtle}>{member.specialty || "—"}</td>
-                                        <td className={styles.mono}>{member.license_number || "—"}</td>
-                                        {hasActions && (
-                                            <td>
-                                                <div className={styles.actions}>
-                                                    {showingInactive ? (
-                                                        <button
-                                                            className="btn btn-secondary btn-sm"
-                                                            onClick={() => handleReactivate(member)}
-                                                            aria-label={`Reactivar acceso de ${fullName(member)}`}
-                                                        >
-                                                            <Icon.UserCheck s={14} /> Reactivar
-                                                        </button>
-                                                    ) : (
-                                                        <>
-                                                            {canUpdate && !locked && (
-                                                                <button
-                                                                    className="btn btn-secondary btn-sm"
-                                                                    onClick={() => openEdit(member)}
-                                                                    aria-label={`Editar a ${fullName(member)}`}
-                                                                >
-                                                                    <Icon.Edit s={14} /> Editar
-                                                                </button>
-                                                            )}
-                                                            {canReset && !self && !locked && (
-                                                                <button
-                                                                    className="btn btn-secondary btn-sm"
-                                                                    onClick={() => handleResetPassword(member)}
-                                                                    aria-label={`Restablecer la contraseña de ${fullName(member)}`}
-                                                                >
-                                                                    <Icon.Refresh s={14} /> Restablecer
-                                                                </button>
-                                                            )}
-                                                            {canDestroy && !self && !locked && (
-                                                                <button
-                                                                    className="btn btn-danger btn-sm"
-                                                                    onClick={() => handleDeactivate(member)}
-                                                                    aria-label={`Desactivar acceso de ${fullName(member)}`}
-                                                                >
-                                                                    <Icon.UserX s={14} /> Desactivar
-                                                                </button>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        )}
-                                    </tr>
-                                );
-                            })}
+                                    )}
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
             )}
 
-            {tempResult && (
-                <TempPasswordModal result={tempResult} onClose={() => setTempResult(null)} />
+            {credentials && (
+                <CredentialsModal result={credentials} onClose={() => setCredentials(null)} />
             )}
 
             {/* Modal Editar Miembro — identidad (A1), especialidad y cédula (M01) */}
@@ -541,10 +660,11 @@ const Staff = () => {
                             <button className="modal-close" onClick={() => setEditing(null)} disabled={saving} aria-label="Cerrar"><Icon.X s={16} /></button>
                         </div>
                         <div className="modal-body">
-                            <p className={styles.editHeading}>
-                                {fullName(editing.member)}
-                                <span className={styles.editRole}> · {ROLE_LABELS[editing.member.role] || editing.member.role}</span>
-                            </p>
+                            <p className={styles.editHeading}>{fullName(editing.member)}</p>
+                            <div className={styles.roleReadonly}>
+                                <span className={styles.roleName}>{roleLabel(editing.member.role)}</span>
+                                <span className={styles.roleDescription}>{roleSummary(editing.member.role)}</span>
+                            </div>
                             <div className="form-group">
                                 <label className="form-label" htmlFor="edit-first-name">NOMBRE *</label>
                                 <input
@@ -616,13 +736,13 @@ const Staff = () => {
                 </div>
             )}
 
-            {/* Modal Nuevo Miembro */}
+            {/* Modal Nuevo Miembro: la contraseña inicial la genera el sistema */}
             {showModal && (
                 <div className="modal-overlay">
                     <div className="modal modal-lg">
                         <div className="modal-header">
                             <h3>Nuevo Miembro</h3>
-                            <button className="modal-close" onClick={closeModal} aria-label="Cerrar"><Icon.X s={16} /></button>
+                            <button className="modal-close" onClick={closeModal} disabled={saving} aria-label="Cerrar"><Icon.X s={16} /></button>
                         </div>
                         <div className="modal-body">
                             <form onSubmit={handleSubmit} noValidate>
@@ -673,33 +793,9 @@ const Staff = () => {
                                         />
                                         <FieldError message={formErrors.last_name} />
                                     </div>
-                                    <div className="form-group">
-                                        <label className="form-label" htmlFor="create-password">CONTRASEÑA *</label>
-                                        <input
-                                            id="create-password"
-                                            type="password"
-                                            className={inputClass(formErrors.password)}
-                                            placeholder="Mínimo 8 caracteres"
-                                            value={form.password}
-                                            onChange={e => setForm({ ...form, password: e.target.value })}
-                                        />
-                                        <FieldError message={formErrors.password} />
-                                        <p className="form-hint">
-                                            Al menos 8 caracteres, una mayúscula y un número. Deberá cambiarla en su primer acceso.
-                                        </p>
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label" htmlFor="create-role">ROL *</label>
-                                        <select
-                                            id="create-role"
-                                            className="select-input"
-                                            value={form.role}
-                                            onChange={e => setForm({ ...form, role: e.target.value })}
-                                        >
-                                            <option value="VET">Veterinario</option>
-                                            <option value="ASSISTANT">Asistente</option>
-                                            <option value="ADMIN">Administrador</option>
-                                        </select>
+                                    <div className={styles.fullRow}>
+                                        <RolePicker value={form.role} onChange={(role) => setForm({ ...form, role })} />
+                                        <FieldError message={formErrors.role} />
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label" htmlFor="create-specialty">ESPECIALIDAD</label>
@@ -727,6 +823,9 @@ const Staff = () => {
                                         <FieldError message={formErrors.license_number} />
                                     </div>
                                 </div>
+                                <p className={styles.passwordHint}>
+                                    No necesitas inventar una contraseña: el sistema generará una al guardar y te la mostrará una sola vez. Deberá cambiarla en su primer ingreso.
+                                </p>
                             </form>
                         </div>
                         <div className="modal-footer">
