@@ -51,7 +51,8 @@ pedía cédula. Además, el rol era inmutable: ascender a una asistente era impo
    devuelve citas próximas, consultas abiertas y caja abierta, cada conteo desde su dominio
    (`appointments`, `medical_records`, `cash`). **Caja abierta bloquea la desactivación (PO)**:
    `409 open_cash_session`, se cierra antes desde Caja (cierre administrativo existente). Citas
-   y consultas solo se advierten; la reasignación masiva queda para la Fase 3.
+   y consultas solo se advierten; la reasignación masiva queda para la Fase 3 (hecha en
+   [ADR p67](2026-11-24-p67-ausencias-reasignacion-y-ficha.md)).
 7. **Auditoría persistente de accesos**: modelo de solo inserción `StaffAccessEvent`
    (organización, integrante, actor, tipo, cambios, fecha, request_id). Lo escriben en la misma
    transacción las operaciones de Equipo: alta, edición, cambio de rol, desactivación,

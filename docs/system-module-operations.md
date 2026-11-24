@@ -140,6 +140,32 @@ negocio dentro del SaaS** para cada dominio.
 
 ---
 
+### Acción: Registrar o cancelar una ausencia (ADR p67)
+
+**Requiere**
+- Permiso `staff.manage_absences` (sensible, solo ADMIN). Integrante activo de la clínica.
+- Días completos (fechas locales): el último no antes del primero, no terminada antes de hoy, máximo 366 días; sin cruzarse con otra vigente (`409 absence_overlap`).
+
+**Resultado**
+- `StaffAbsence` vigente y evento `absence_added`. Las citas de esos días **no se mueven**: la respuesta las lista para reasignarlas.
+- Cancelar deja `cancelled_at/by` y el evento `absence_cancelled`; no borra.
+
+**Bloquea**
+- Mientras esté vigente: crear, mover, reasignar a, reactivar y atender sin cita a ese integrante esos días (`400 veterinarian_absent`), también al agente.
+
+---
+
+### Acción: Reasignar citas por atender (ADR p67)
+
+**Requiere**
+- Permiso `appointment.update`. Cada cita con su `expected_state` (INV-A). Destino: clínico activo de la clínica, distinto del origen. Máximo 100.
+
+**Resultado**
+- Un destino para todas: se mueve cada cita que sigue igual, está por atender y cuyo horario está libre en la agenda del destino, que además no está ausente ese día. Solo cambia el veterinario; fecha y hora se conservan. Cada una deja un `AppointmentStatusChange` y el origen un evento `appointments_reassigned`.
+- Las demás se quedan como estaban y vuelven con su motivo.
+
+---
+
 ### Acción: Cambiar rol (ADR p66)
 
 **Requiere**

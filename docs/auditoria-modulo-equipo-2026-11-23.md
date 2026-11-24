@@ -387,3 +387,21 @@ Migraciones aditivas: `users.0014` (campo + backfill) y `users.0015` (tabla).
 **Fuera de esta fase, a propósito**: reasignación masiva de citas al desactivar (Fase 3, PO); el
 camino de staff para crear citas aún acepta a cualquier integrante activo como veterinario;
 `canEdit` de Citas por rol; ausencias por veterinario.
+
+---
+
+## Registro de implementación — Fase 3 (2026-11-24)
+
+Decisiones del PO (2026-11-24) y contratos: [ADR p67](decisions/2026-11-24-p67-ausencias-reasignacion-y-ficha.md),
+[`modules/organizations.md`](modules/organizations.md) § Ficha, ausencias y citas por atender y
+[`modules/appointments.md`](modules/appointments.md) § Ausencias y reasignación.
+
+| Alcance | Resultado |
+|---|---|
+| Reasignación de citas | `POST /api/appointments/reassign/`: un destino para todas (PO); las que chocan o cambiaron se quedan y vuelven con su motivo. INV-A por cita, INV-D con bloqueo de origen y destino |
+| Ausencias por veterinario | `StaffAbsence` por días completos, `staff.manage_absences`; **bloquea** agendar, mover, reactivar y atender sin cita esos días (PO), también al agente. Registrarla lista las citas afectadas sin moverlas (PO) |
+| Ficha del integrante | `/staff/:publicId`: datos, pendientes, citas con «Reasignar», ausencias e historial; sustituye al modal de historial |
+
+Migración aditiva `users.0016`. **Fuera de esta fase, a propósito**: ausencias por horas o
+recurrentes, solicitudes con aprobación, aviso al cliente cuando cambia su veterinario y el
+título profesional impreso en documentos (PO).

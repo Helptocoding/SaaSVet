@@ -1,3 +1,5 @@
+import uuid
+
 from rest_framework import serializers
 from apps.core.tenant_validation import require_same_organization
 from django.db.models import Q
@@ -13,6 +15,7 @@ from .services import (
     MISSING,
     SlotTaken,
     enforce_expected_state,
+    reject_if_veterinarian_absent,
     parse_expected_state,
 )
 
@@ -221,6 +224,19 @@ class AppointmentSerializer(serializers.ModelSerializer):
         if target_status in ACTIVE_STATUSES and conflicts.exists():
             raise SlotTaken()
 
+        # ADR p67: mover una cita a un día en que el veterinario está ausente
+        # (o reasignarla a uno ausente) se bloquea. El alta lo comprueba en
+        # `validate_creation`, ya con el veterinario bloqueado; aquí solo la
+        # edición, que `AppointmentDetailView.update` valida bajo ese mismo lock.
+        if instance and target_status in ACTIVE_STATUSES:
+            moving = (
+                date_or_time_changing
+                or vet_pk != instance.veterinarian_id
+                or target_status != instance.status
+            )
+            if moving:
+                reject_if_veterinarian_absent(org.pk, vet_pk, local_date)
+
         pet = attrs.get('pet', instance.pet if instance else None)
         raw_owner = self.context['request'].data.get('owner_id')
         if pet and raw_owner:
@@ -270,3 +286,43 @@ class AppointmentStatusChangeSerializer(serializers.ModelSerializer):
 
     def get_to_status_display(self, obj):
         return self.STATUS_LABELS.get(obj.to_status, obj.to_status)
+
+
+class ReassignAppointmentsSerializer(serializers.Serializer):
+    """Cuerpo de `POST /api/appointments/reassign/` (ADR p67).
+
+    Cada cita viaja con su `expected_state` (INV-A): omitirla es
+    `400 precondition_required`, igual que en una edición individual.
+    """
+    source_public_id = serializers.UUIDField()
+    target_public_id = serializers.UUIDField()
+    appointments = serializers.ListField(child=serializers.DictField(), allow_empty=False)
+
+    def validate(self, attrs):
+        from .reassignment import MAX_REASSIGN
+        from .services import MISSING, PreconditionRequired, parse_expected_state
+
+        if attrs['source_public_id'] == attrs['target_public_id']:
+            raise serializers.ValidationError(
+                {'target_public_id': ['El veterinario destino debe ser otro.']})
+        raw_items = attrs['appointments']
+        if len(raw_items) > MAX_REASSIGN:
+            raise serializers.ValidationError(
+                {'appointments': [f'Como máximo {MAX_REASSIGN} citas por operación.']})
+        items, seen = [], set()
+        for raw in raw_items:
+            try:
+                public_id = uuid.UUID(str(raw.get('public_id')))
+            except (TypeError, ValueError):
+                raise serializers.ValidationError(
+                    {'appointments': ['Cada cita necesita un public_id válido.']})
+            if public_id in seen:
+                raise serializers.ValidationError(
+                    {'appointments': ['Hay citas repetidas.']})
+            seen.add(public_id)
+            expected = parse_expected_state(raw.get(EXPECTED_STATE_FIELD, MISSING))
+            if expected is None:
+                raise PreconditionRequired()
+            items.append((public_id, expected))
+        attrs['items'] = items
+        return attrs

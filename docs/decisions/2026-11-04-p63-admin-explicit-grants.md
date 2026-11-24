@@ -354,3 +354,5 @@ despliegue.
 ## Enmienda 2026-11-24 (ADR p66)
 
 Nuevo código sensible `staff.change_role`, añadido a la lista explícita de `ADMIN` (y a ningún otro rol). Ver [ADR p66](2026-11-24-p66-funcion-clinica-y-cambio-de-rol.md).
+
+Nuevo código sensible `staff.manage_absences` (ADR p67, 2026-11-24), también solo en la lista de `ADMIN`.

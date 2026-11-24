@@ -8,6 +8,7 @@
  * (no corre en jsdom), las llamadas HTTP y la sesión.
  */
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -28,7 +29,9 @@ vi.mock("../api/appointments", () => ({
     createAppointmentWithPatient: vi.fn(),
 }));
 vi.mock("../api/organizations", () => ({ getOrgSettings: vi.fn(() => Promise.resolve({})) }));
+const absenceState = vi.hoisted(() => ({ rows: [] }));
 vi.mock("../api/staff", () => ({
+    getAbsences: vi.fn(() => Promise.resolve(absenceState.rows)),
     getStaff: vi.fn(() => Promise.resolve([
         { id: 3, public_id: "vet-uuid", first_name: "Eva", last_name: "Galeno", role: "VET", attends_patients: true },
         { id: 4, public_id: "owner-uuid", first_name: "Dora", last_name: "Dueña", role: "ADMIN", attends_patients: true },
@@ -70,6 +73,7 @@ beforeEach(() => {
     localStorage.setItem(AGENDA_TOUR_KEY, "true"); // sin recorrido automático
     currentUser = { id: 10, role: "ASSISTANT" };
     granted = new Set(ASSISTANT_GRANTS);
+    absenceState.rows = [];
 });
 
 // La agenda completa es pesada de montar en jsdom: la primera prueba paga el
@@ -103,6 +107,19 @@ describe("Citas: recepción puede agendar", { timeout: 20000 }, () => {
         expect(within(vets).getByRole("button", { name: "Dora Dueña" })).toBeInTheDocument();
         expect(within(vets).queryByRole("button", { name: "Olga Oficina" })).not.toBeInTheDocument();
         expect(within(vets).queryByRole("button", { name: "Rita Recepción" })).not.toBeInTheDocument();
+    });
+
+    it("marca como ausente a quien tiene ausencia ese día (ADR p67)", async () => {
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        absenceState.rows = [{ public_id: "abs-1", member: 3, member_public_id: "vet-uuid", start_date: today, end_date: today }];
+        currentUser = { id: 20, role: "ADMIN" };
+        granted = new Set([...ASSISTANT_GRANTS, "appointment.create_walkin"]);
+        const user = userEvent.setup({ delay: null });
+        renderAgenda();
+        await user.click(await screen.findByRole("button", { name: "Atención sin cita" }));
+        expect(await screen.findByRole("option", { name: "Eva Galeno · ausente" })).toBeInTheDocument();
+        expect(screen.getAllByRole("option", { name: "Dora Dueña" }).length).toBeGreaterThan(0);
     });
 
     it("un veterinario conserva la creación y la atención sin cita", async () => {

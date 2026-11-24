@@ -10,7 +10,8 @@ import {
     getAppointmentHistory, assignPatient, createAppointmentWithPatient,
 } from "../api/appointments";
 import { getOrgSettings } from "../api/organizations";
-import { getStaff } from "../api/staff";
+import { getAbsences, getStaff } from "../api/staff";
+import { absencesByMember, vetOptionLabel } from "../features/staff/absences";
 import EntitySearch from "../components/EntitySearch";
 import { searchPets } from "../api/lookups";
 import { renderPetOption, petOptionLabel } from "../components/lookupOptions";
@@ -511,7 +512,7 @@ function EditModal({ appt, staff, user, onClose, onSave }) {
                             disabled={user?.role==="VET"}>
                             <option value="">Seleccionar</option>
                             {staff.map(s=>(
-                                <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                                <option key={s.id} value={s.id}>{vetOptionLabel(s, form.date)}</option>
                             ))}
                         </select>
                     </div>
@@ -740,7 +741,7 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
                     disabled={user?.role==="VET"} style={{fontSize:"13px"}}>
                     <option value="">Seleccionar veterinario</option>
                     {staff.map(s=>(
-                        <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                        <option key={s.id} value={s.id}>{vetOptionLabel(s, slot ? toDateStr(slot.date) : "")}</option>
                     ))}
                 </select>
             </div>
@@ -860,7 +861,7 @@ function WalkInModal({ staff, user, onClose, onSave, allowAnonymousWalkIn }) {
                             disabled={user?.role === "VET"}>
                             <option value="">Seleccionar veterinario</option>
                             {staff.map(s=>(
-                                <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                                <option key={s.id} value={s.id}>{vetOptionLabel(s, localTodayStr())}</option>
                             ))}
                         </select>
                         {formErrors.veterinarian && (
@@ -1044,9 +1045,17 @@ function EventManagerAppointments() {
 
     const loadAll = async () => {
         try {
-            const [staffData, apptData] = await Promise.all([getStaff(), getAppointments(token)]);
+            const [staffData, apptData, absenceData] = await Promise.all([
+                getStaff(),
+                getAppointments(token),
+                // ADR p67: las ausencias solo marcan al veterinario; si fallan, la agenda sigue.
+                getAbsences().catch(() => []),
+            ]);
+            const absences = absencesByMember(absenceData);
             // ADR p66: veterinario = quien atiende pacientes (VET, o ADMIN que atiende), no el rol.
-            setStaff(staffData.filter((member) => member.attends_patients));
+            setStaff(staffData
+                .filter((member) => member.attends_patients)
+                .map((member) => ({ ...member, absences: absences.get(member.id) || [] })));
             setAppointments(Array.isArray(apptData) ? apptData : (apptData.results || []));
         } catch (err) { console.error(apiError(err)); } finally { setLoading(false); }
     };

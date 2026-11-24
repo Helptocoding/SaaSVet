@@ -147,6 +147,10 @@ class StaffAccessEvent(models.Model):
     KIND_DEACTIVATED = 'deactivated'
     KIND_REACTIVATED = 'reactivated'
     KIND_PASSWORD_RESET = 'password_reset'
+    # ADR p67: ausencias y reasignación de citas también quedan en la ficha.
+    KIND_ABSENCE_ADDED = 'absence_added'
+    KIND_ABSENCE_CANCELLED = 'absence_cancelled'
+    KIND_APPOINTMENTS_REASSIGNED = 'appointments_reassigned'
     KIND_CHOICES = (
         (KIND_CREATED, 'Alta'),
         (KIND_PROFILE_UPDATED, 'Edición de datos'),
@@ -154,6 +158,9 @@ class StaffAccessEvent(models.Model):
         (KIND_DEACTIVATED, 'Desactivación'),
         (KIND_REACTIVATED, 'Reactivación'),
         (KIND_PASSWORD_RESET, 'Restablecimiento de contraseña'),
+        (KIND_ABSENCE_ADDED, 'Ausencia registrada'),
+        (KIND_ABSENCE_CANCELLED, 'Ausencia cancelada'),
+        (KIND_APPOINTMENTS_REASSIGNED, 'Citas reasignadas'),
     )
 
     organization = models.ForeignKey(
@@ -165,7 +172,7 @@ class StaffAccessEvent(models.Model):
     actor = models.ForeignKey(
         'users.User', on_delete=models.PROTECT, related_name='staff_actions',
     )
-    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    kind = models.CharField(max_length=32, choices=KIND_CHOICES)
     changes = models.JSONField(default=dict, blank=True)
     request_id = models.CharField(max_length=64, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -184,3 +191,73 @@ class StaffAccessEvent(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValueError('StaffAccessEvent es de solo inserción.')
+
+
+class StaffAbsence(models.Model):
+    """Ausencia de un integrante por días completos (ADR p67).
+
+    Fechas locales de la clínica, ambos extremos incluidos: es la misma unidad
+    que ``Appointment.date``. Mientras una ausencia esté vigente
+    (``cancelled_at`` nulo), nadie puede crear, mover ni reactivar citas de ese
+    integrante en esos días, y el agente no ofrece sus huecos. No se borra: se
+    cancela, y la cancelación queda con quién y cuándo.
+
+    ``kind`` es una etiqueta operativa, no un diagnóstico: «Permiso» cubre una
+    incapacidad sin registrar datos de salud.
+    """
+    KIND_VACATION = 'vacation'
+    KIND_TRAINING = 'training'
+    KIND_LEAVE = 'leave'
+    KIND_OTHER = 'other'
+    KIND_CHOICES = (
+        (KIND_VACATION, 'Vacaciones'),
+        (KIND_TRAINING, 'Capacitación'),
+        (KIND_LEAVE, 'Permiso'),
+        (KIND_OTHER, 'Otro'),
+    )
+
+    public_id = models.UUIDField(default=uuid4, unique=True, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name='staff_absences',
+    )
+    member = models.ForeignKey(
+        'users.User', on_delete=models.PROTECT, related_name='absences',
+    )
+    start_date = models.DateField()
+    end_date = models.DateField()
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES, default=KIND_OTHER)
+    created_by = models.ForeignKey(
+        'users.User', on_delete=models.PROTECT, related_name='absences_created',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancelled_by = models.ForeignKey(
+        'users.User', on_delete=models.PROTECT, related_name='absences_cancelled',
+        null=True, blank=True,
+    )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(end_date__gte=models.F('start_date')),
+                name='staff_absence_end_not_before_start',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(cancelled_at__isnull=True, cancelled_by__isnull=True)
+                    | models.Q(cancelled_at__isnull=False, cancelled_by__isnull=False)
+                ),
+                name='staff_absence_cancel_pair',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'member', 'start_date'],
+                         name='staff_absence_member_idx'),
+            models.Index(fields=['organization', 'start_date', 'end_date'],
+                         name='staff_absence_range_idx'),
+        ]
+        ordering = ['start_date', 'pk']
+
+    @property
+    def is_active(self):
+        return self.cancelled_at is None

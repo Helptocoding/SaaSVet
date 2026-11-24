@@ -34,6 +34,7 @@ from .services import (
     lock_appointment_and_veterinarians,
     lock_veterinarians,
     reject_expected_state_on_create,
+    reject_if_veterinarian_absent,
     retry_on_vet_lock_race,
 )
 
@@ -379,6 +380,10 @@ def update_status(request, pk):
                     # ni se reubica automáticamente; hay que programar de nuevo.
                     # El pre-chequeo aquí solo produce el mensaje: la garantía es la
                     # restricción, que también cubre la carrera.
+                    # ADR p67: tampoco vuelve a un día de ausencia del veterinario.
+                    reject_if_veterinarian_absent(
+                        locked.organization_id, locked.veterinarian_id, locked.date,
+                    )
                     _reject_if_slot_taken(locked)
 
                 update_fields = ['status']
@@ -825,6 +830,9 @@ def walk_in(request):
                 serializer = AppointmentSerializer(existing, context={'request': request})
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
+            # ADR p67: un veterinario ausente hoy no recibe atenciones sin cita.
+            reject_if_veterinarian_absent(org.pk, vet.pk, today)
+
             appointment = Appointment.objects.create(
                 organization=org,
                 pet=pet,
@@ -939,3 +947,38 @@ def status_breakdown(request):
         'by_status': result_by_status,
         'status_order': DASHBOARD_STATUS_ORDER,
     })
+
+
+@api_view(['POST'])
+@permission_classes([make_permission("appointment.update")])
+def reassign(request):
+    """POST /api/appointments/reassign/ — mueve citas por atender de un
+    veterinario a otro (ADR p67). Responde 200 con las movidas y las omitidas
+    (con su motivo); nunca mueve de hora ni de día.
+
+    El origen puede estar inactivo: lo normal es reasignar lo que dejó quien se
+    desactivó. El destino tiene que ser un clínico activo de la clínica.
+    """
+    import uuid as _uuid
+
+    from apps.users.professional import is_clinician
+    from .reassignment import reassign_appointments
+    from .serializers import ReassignAppointmentsSerializer
+
+    org = request.user.organization
+    body = ReassignAppointmentsSerializer(data=request.data)
+    body.is_valid(raise_exception=True)
+    data = body.validated_data
+    members = (User.objects.filter(organization=org)
+               .exclude(role='ADMIN_SAAS').exclude(is_service_account=True))
+    source = resolve_public_id(members, str(data['source_public_id']))
+    target = members.filter(public_id=data['target_public_id'], is_active=True).first()
+    if target is None or not is_clinician(target):
+        raise ValidationError({'target_public_id': [
+            'Elige un veterinario activo que atienda pacientes.']})
+    result = reassign_appointments(
+        actor=request.user, organization=org, source=source, target=target,
+        items=data['items'],
+        request_id=request.META.get('HTTP_X_REQUEST_ID') or str(_uuid.uuid4()),
+    )
+    return Response(result)

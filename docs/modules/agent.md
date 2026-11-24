@@ -1629,7 +1629,7 @@ sistema no elige "un veterinario asignado al bot"; elige al que está **libre**.
 
 | Configuración | Comportamiento |
 |---|---|
-| `default_veterinarian` **sin** configurar (default) | Candidatos = todos los **clínicos** activos de la org (VET, o ADMIN que atiende pacientes; ADR p66). Un hueco se ofrece si **alguno** lo tiene libre, y la cita se asigna al primero libre a esa hora |
+| `default_veterinarian` **sin** configurar (default) | Candidatos = todos los **clínicos** activos de la org (VET, o ADMIN que atiende pacientes; ADR p66), menos los **ausentes ese día** (ADR p67). Un hueco se ofrece si **alguno** lo tiene libre, y la cita se asigna al primero libre a esa hora |
 | `default_veterinarian` configurado | Solo se ofertan y asignan los huecos de ese veterinario (la clínica eligió explícitamente), si atiende pacientes; si no, se usan todos los clínicos |
 | Sin ningún clínico activo | `no_vet` → el agente se disculpa y ofrece pasar con una persona. Es el único caso honesto: no hay con quién agendar |
 
@@ -1637,6 +1637,11 @@ sistema no elige "un veterinario asignado al bot"; elige al que está **libre**.
 (`appointments.creation`, `require_schedule`), reagendado (`appointments.mutations`) y ejecución autorizada
 (`operation_execution`) usan el predicado único `apps.users.professional.clinician_q` / `is_clinician`: el
 dueño veterinario con rol ADMIN marcado como que atiende recibe huecos. Los adapters B8 siguen apagados.
+
+**ADR p67:** un veterinario con ausencia vigente no tiene huecos ese día. `_present_vets` lo
+excluye en `_free_slots_for_day`, `_exact_slot_status` y `pick_free_vet`; si nadie queda, la hora
+sale `slot_taken` y se re-oferta. `validate_creation` (B8B) y `validate_mutation` (B8C) lo
+revalidan bajo lock con la razón `veterinarian_absent`, añadida a `PRECONDITION_REASONS`.
 
 Por qué importa: con "el primer VET por pk" la capacidad ofertada era la de
 **un** veterinario aunque hubiera tres, y toda la agenda del bot caía sobre el

@@ -192,17 +192,24 @@ def enforce_expected_state(appointment, expected):
     """
     if expected is None:
         raise PreconditionRequired()
-    same = (
+    if not matches_expected_state(appointment, expected):
+        raise AppointmentChanged(appointment)
+
+
+def matches_expected_state(appointment, expected):
+    """¿La fila coincide con la tupla que el usuario vio? Solo la comparación:
+    quien la llama decide qué hacer si no coincide (409 en una cita sola, una
+    cita omitida en una reasignación en bloque). Debe correr bajo lock."""
+    return (
         appointment.status == expected['status']
         and appointment.date == expected['date']
         # Comparación al minuto: la tupla que viaja es wall-clock del usuario
         # (HH:MM), no el instante UTC. Los segundos nunca son significativos
         # en la agenda (el schema los ignora en toda la UI).
+        and appointment.start_time is not None
         and appointment.start_time.replace(second=0, microsecond=0)
         == expected['start_time'].replace(second=0, microsecond=0)
     )
-    if not same:
-        raise AppointmentChanged(appointment)
 
 
 def expected_state_from_request(request):
@@ -316,6 +323,38 @@ class SlotTaken(APIException):
     def __init__(self, detail=None):
         super().__init__(detail)
         self.error_payload = {'errors': {'error': [str(self.detail)]}}
+
+
+VETERINARIAN_ABSENT_MESSAGE = (
+    'Ese veterinario tiene registrada una ausencia ese día. '
+    'Elige otro veterinario u otra fecha.'
+)
+
+
+class VeterinarianAbsent(APIException):
+    """400 `veterinarian_absent` — ausencia vigente ese día (ADR p67).
+
+    Decisión del PO: una ausencia **bloquea** crear, mover o reactivar citas de
+    ese integrante en esos días, para recepción y para el agente. Si al final sí
+    viene a trabajar, se cancela la ausencia. Mismo cuerpo que `slot_taken`: el
+    mensaje va a `errors.error`, que la interfaz muestra como aviso.
+    """
+    status_code = 400
+    default_detail = VETERINARIAN_ABSENT_MESSAGE
+    default_code = 'veterinarian_absent'
+
+    def __init__(self, detail=None):
+        super().__init__(detail)
+        self.error_payload = {'errors': {'error': [str(self.detail)]}}
+
+
+def reject_if_veterinarian_absent(organization_id, veterinarian_id, day):
+    """Debe correr con la fila del veterinario ya bloqueada (`lock_veterinarians`):
+    registrar una ausencia bloquea esa misma fila, así que la comprobación no
+    pierde la carrera contra una ausencia concurrente."""
+    from apps.users.absences import is_absent
+    if is_absent(organization_id, veterinarian_id, day):
+        raise VeterinarianAbsent()
 
 
 def is_no_overlap_violation(exc):
@@ -632,14 +671,25 @@ def complete_appointment_on_record_close(appointment, actor):
 UPCOMING_STATUSES = ('scheduled', 'confirmed')
 
 
-def count_upcoming_for_veterinarian(organization, user):
+def upcoming_for_veterinarian(organization, user, *, start_date=None, end_date=None):
     """Citas por atender (programadas o confirmadas, aún no empezadas) asignadas
-    a ``user`` en ``organization``. Solo lectura; la usa Equipo para avisar antes
-    de desactivar a alguien o quitarle la función clínica."""
+    a ``user`` en ``organization``, opcionalmente entre dos fechas locales
+    (incluidas). Solo lectura; la usa Equipo para avisar antes de desactivar a
+    alguien, al registrar una ausencia y para reasignar (ADR p66, p67)."""
     from django.utils import timezone
 
-    return Appointment.objects.for_organization(organization).filter(
+    qs = Appointment.objects.for_organization(organization).filter(
         veterinarian=user,
         status__in=UPCOMING_STATUSES,
         start_datetime__gte=timezone.now(),
-    ).count()
+    )
+    if start_date is not None:
+        qs = qs.filter(date__gte=start_date)
+    if end_date is not None:
+        qs = qs.filter(date__lte=end_date)
+    return qs.select_related('pet__owner').order_by('start_datetime', 'pk')
+
+
+def count_upcoming_for_veterinarian(organization, user):
+    """Cuántas citas devuelve ``upcoming_for_veterinarian`` sin rango."""
+    return upcoming_for_veterinarian(organization, user).count()

@@ -433,3 +433,145 @@ class StaffHistoryView(APIView):
             .order_by('-created_at', '-pk')[:self.HISTORY_LIMIT]
         )
         return Response(StaffAccessEventSerializer(events, many=True).data)
+
+
+# ---------------------------------------------------------------------------
+# ADR p67: ficha del integrante, ausencias y citas por atender.
+# ---------------------------------------------------------------------------
+
+STAFF_APPOINTMENTS_LIMIT = 200
+
+
+def _request_id(request):
+    return request.META.get('HTTP_X_REQUEST_ID') or str(uuid.uuid4())
+
+
+def _query_date(request, name):
+    from django.utils.dateparse import parse_date
+    raw = request.query_params.get(name)
+    if not raw:
+        return None
+    try:
+        value = parse_date(raw)
+    except ValueError:
+        value = None
+    if value is None:
+        raise ValidationError({name: ['Usa el formato AAAA-MM-DD.']})
+    return value
+
+
+class StaffProfileView(APIView):
+    """GET /api/staff/<public_id>/profile/ — datos del integrante para su ficha
+    (ADR p67), también si está inactivo. Solo para quien gestiona personal."""
+    permission_classes = [make_permission('staff.list')]
+
+    def get(self, request, pk):
+        _require_staff_manager(request)
+        target = resolve_public_id(_clinic_members(request, active_only=False), pk)
+        return Response(UserSerializer(target).data)
+
+
+class StaffAppointmentsView(APIView):
+    """GET /api/staff/<public_id>/appointments/?from=&to= — citas por atender del
+    integrante (programadas o confirmadas, aún no empezadas), con su
+    ``expected_state`` para reasignarlas (ADR p67). Solo para quien gestiona
+    personal; también de inactivos, que es cuando más hace falta."""
+    permission_classes = [make_permission('staff.list')]
+
+    def get(self, request, pk):
+        from apps.appointments.services import upcoming_for_veterinarian
+        from apps.users.serializers import StaffAppointmentSerializer
+
+        _require_staff_manager(request)
+        target = resolve_public_id(_clinic_members(request, active_only=False), pk)
+        start, end = _query_date(request, 'from'), _query_date(request, 'to')
+        if start and end and end < start:
+            raise ValidationError({'to': ['La fecha final no puede ser anterior a la inicial.']})
+        rows = upcoming_for_veterinarian(
+            request.user.organization, target, start_date=start, end_date=end,
+        )[:STAFF_APPOINTMENTS_LIMIT]
+        return Response(StaffAppointmentSerializer(rows, many=True).data)
+
+
+class StaffAbsenceListView(APIView):
+    """GET /api/staff/absences/?from=&to=&member= — ausencias vigentes que se
+    cruzan con el rango (por defecto, de hoy en adelante). La agenda las usa
+    para avisar antes de elegir veterinario, así que basta ``staff.list``; el
+    tipo y quién la registró solo los ve quien gestiona personal (ADR p67)."""
+    permission_classes = [make_permission('staff.list')]
+
+    def get(self, request):
+        from apps.core.datetime_utils import org_today_local
+        from apps.users.absences import active_absences
+        from apps.users.serializers import (
+            StaffAbsenceDirectorySerializer, StaffAbsenceSerializer,
+        )
+
+        org = request.user.organization
+        start = _query_date(request, 'from') or org_today_local(org)
+        end = _query_date(request, 'to')
+        if end and end < start:
+            raise ValidationError({'to': ['La fecha final no puede ser anterior a la inicial.']})
+        qs = active_absences(org.pk).filter(end_date__gte=start).select_related(
+            'member', 'created_by')
+        if end:
+            qs = qs.filter(start_date__lte=end)
+        member = request.query_params.get('member')
+        if member:
+            qs = qs.filter(member=resolve_public_id(_clinic_members(request, active_only=False), member))
+        qs = qs.order_by('start_date', 'pk')
+        serializer = (StaffAbsenceSerializer if can_manage_staff(request.user)
+                      else StaffAbsenceDirectorySerializer)
+        return Response(serializer(qs, many=True).data)
+
+
+class StaffMemberAbsencesView(APIView):
+    """POST /api/staff/<public_id>/absences/ — registra una ausencia (ADR p67).
+    Permiso ``staff.manage_absences``. No mueve citas: responde la ausencia y
+    las citas por atender de esos días para que quien la registra decida si
+    reasignarlas."""
+    permission_classes = [make_permission('staff.manage_absences')]
+
+    def post(self, request, pk):
+        from apps.appointments.services import upcoming_for_veterinarian
+        from apps.users.absences import create_absence
+        from apps.users.serializers import (
+            CreateAbsenceSerializer, StaffAbsenceSerializer, StaffAppointmentSerializer,
+        )
+
+        target = resolve_public_id(_clinic_members(request, active_only=True), pk)
+        body = CreateAbsenceSerializer(
+            data=request.data, context={'organization': request.user.organization})
+        body.is_valid(raise_exception=True)
+        absence = create_absence(
+            actor=request.user, member=target, request_id=_request_id(request),
+            **body.validated_data,
+        )
+        affected = upcoming_for_veterinarian(
+            request.user.organization, target,
+            start_date=absence.start_date, end_date=absence.end_date,
+        )[:STAFF_APPOINTMENTS_LIMIT]
+        return Response({
+            'absence': StaffAbsenceSerializer(absence).data,
+            'affected_appointments': StaffAppointmentSerializer(affected, many=True).data,
+        }, status=status.HTTP_201_CREATED)
+
+
+class StaffAbsenceDetailView(APIView):
+    """DELETE /api/staff/absences/<public_id>/ — cancela una ausencia (ADR p67).
+    No se borra: queda con quién y cuándo la canceló. Repetirlo no cambia nada."""
+    permission_classes = [make_permission('staff.manage_absences')]
+
+    def delete(self, request, pk):
+        from apps.users.absences import cancel_absence
+        from apps.users.models import StaffAbsence
+        from apps.users.serializers import StaffAbsenceSerializer
+
+        absence = resolve_public_id(
+            StaffAbsence.objects.filter(organization=request.user.organization)
+            .select_related('member', 'created_by'),
+            pk,
+        )
+        absence = cancel_absence(actor=request.user, absence=absence,
+                                 request_id=_request_id(request))
+        return Response(StaffAbsenceSerializer(absence).data)

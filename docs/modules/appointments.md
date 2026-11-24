@@ -380,6 +380,37 @@ en ventana de deploy y re-auditar. PostgreSQL no admite exclusiones `NOT VALID`:
 con un solape histórico vivo, la migración falla. El comando queda como red de
 seguridad permanente.
 
+## Ausencias y reasignación (ADR p67)
+
+**Una ausencia vigente del veterinario bloquea** (decisión del PO) crear, mover, reasignar a,
+reactivar (`canceled|no_show → scheduled`) y atender sin cita en esos días: `400
+veterinarian_absent`, con el mensaje en `errors.error` (mismo cuerpo que `slot_taken`). Lo
+comprueban `validate_creation` (alta, registro rápido y comando del agente), el `validate` del
+serializer en la edición, `/status/` al reactivar, la atención sin cita y `validate_mutation`
+(reagendado del agente), siempre **después** de bloquear la fila del veterinario: registrar una
+ausencia toma esa misma fila. Editar una cita de ese día sin moverla sigue permitido. El agente
+no ofrece huecos de un ausente (`_present_vets`).
+
+**Reasignación en bloque** — `POST /api/appointments/reassign/`:
+
+```json
+{ "source_public_id": "uuid", "target_public_id": "uuid",
+  "appointments": [{ "public_id": "uuid", "expected_state": {"status", "date", "start_time"} }] }
+```
+
+Un destino para todas (PO). Responde `200 {moved: [public_id], skipped: [{public_id, code,
+message}]}`. Cada cita se mueve si sigue a nombre del origen, coincide con su `expected_state`,
+está programada o confirmada y aún no empieza, el destino no está ausente ese día y está libre a
+esa hora; si no, se queda como estaba con `appointment_changed`, `not_reassignable`,
+`veterinarian_absent`, `slot_taken` o `not_found`. **Nunca cambia fecha ni hora.** Origen y
+destino se bloquean con `lock_veterinarians` (orden por pk) y las citas en una consulta ordenada
+por pk; la restricción de exclusión sigue siendo la garantía (su violación → `slot_taken`).
+Cada cita movida deja un `AppointmentStatusChange` con el mismo estado y el motivo de la
+reasignación. El origen puede estar inactivo; el destino debe ser un clínico activo de la
+clínica (`400 target_public_id`). `400`: sin `expected_state` en un elemento
+(`precondition_required`), destino igual al origen, lista vacía, repetidos o más de 100.
+Origen de otra clínica → `404`.
+
 ## Visibilidad
 
 - `ADMIN`: ve todas las citas de su organizacion
@@ -505,6 +536,7 @@ Esto evita dos problemas:
 | `PATCH`  | `/api/appointments/<id>/status/` | Cambiar estado con validacion de transicion |
 | `GET`    | `/api/appointments/<id>/history/` | Historial de cambios de estado |
 | `PATCH`  | `/api/appointments/<id>/assign-patient/` | Vincular paciente real a cita con paciente generico |
+| `POST`   | `/api/appointments/reassign/` | Reasignar en bloque citas por atender a otro veterinario (ADR p67) |
 
 ### Permisos RBAC de los nuevos endpoints
 
@@ -513,6 +545,7 @@ Esto evita dos problemas:
 | `POST create-with-patient/` | `appointment.create` |
 | `GET <id>/history/` | `appointment.retrieve` |
 | `PATCH <id>/assign-patient/` | `appointment.update` |
+| `POST reassign/` | `appointment.update` (el agente no: B8A niega sus escrituras por API) |
 
 ### Filtros disponibles (GET /api/appointments/)
 

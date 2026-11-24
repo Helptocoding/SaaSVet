@@ -23,6 +23,17 @@ describe("describeEvent", () => {
             .toBe("Soporte de la plataforma restableció su contraseña");
     });
 
+    it("describe ausencias y reasignaciones (ADR p67)", () => {
+        expect(describeEvent({ kind: "absence_added", changes: { kind: "vacation", start_date: "2026-12-01", end_date: "2026-12-01" } }))
+            .toMatch(/^Registró vacaciones: .*1 de dic/);
+        expect(describeEvent({ kind: "absence_cancelled", changes: { kind: "leave", start_date: "2026-12-01", end_date: "2026-12-03" } }))
+            .toMatch(/^Canceló la ausencia del .*–/);
+        expect(describeEvent({ kind: "appointments_reassigned", changes: { moved: 1, skipped: 0 } }))
+            .toBe("Reasignó 1 cita a otro veterinario");
+        expect(describeEvent({ kind: "appointments_reassigned", changes: { moved: 3, skipped: 2 } }))
+            .toBe("Reasignó 3 citas a otro veterinario; 2 quedaron sin mover");
+    });
+
     it("un tipo desconocido usa la etiqueta del backend", () => {
         expect(describeEvent({ kind: "otro", kind_label: "Algo nuevo" })).toBe("Algo nuevo");
     });

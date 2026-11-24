@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
     getStaff, createStaff, updateStaff, deactivateStaff, resetStaffPassword, reactivateStaff,
-    changeStaffRole, getStaffImpact, getStaffHistory,
+    changeStaffRole, getStaffImpact,
 } from "../api/staff";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
@@ -12,11 +12,10 @@ import EmptyState from "../components/EmptyState";
 import ActionMenu from "../components/ActionMenu";
 import { apiError } from "../utils/apiError";
 import handleFormError from "../utils/handleFormError";
-import { formatDateTime, orgTz } from "../utils/datetime";
+import { orgTz } from "../utils/datetime";
 import { STAFF_MANAGEMENT_PERMS } from "../features/staff/permissions";
 import { STAFF_ROLE_ORDER, roleLabel, roleShort, roleSummary } from "../features/staff/roles";
 import { describeAccess, PENDING_ACCESS } from "../features/staff/access";
-import { describeEvent } from "../features/staff/history";
 import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
 import TableSkeleton from "../components/TableSkeleton";
@@ -287,7 +286,7 @@ function impactSentence(impact) {
         parts.push(`${impact.open_medical_records} ${impact.open_medical_records === 1 ? "consulta abierta" : "consultas abiertas"}`);
     }
     if (parts.length === 0) return "";
-    return `Tiene ${parts.join(" y ")} a su nombre: seguirán asignadas, no se reasignan solas.`;
+    return `Tiene ${parts.join(" y ")} a su nombre: seguirán asignadas; las citas se reasignan desde su ficha.`;
 }
 
 // Cambio de rol (ADR p66). Las reglas las aplica el backend (último ADMIN,
@@ -335,45 +334,6 @@ function RoleChangeModal({ state, saving, onChange, onSave, onClose }) {
     );
 }
 
-// Historial de accesos (ADR p66): quién hizo qué y cuándo, sin valores personales.
-function HistoryModal({ state, tz, onClose }) {
-    const { member, events, error } = state;
-    return (
-        <div className="modal-overlay">
-            <div className="modal modal-md" role="dialog" aria-label={`Historial de ${fullName(member)}`}>
-                <div className="modal-header">
-                    <h3>Historial de {fullName(member)}</h3>
-                    <button className="modal-close" onClick={onClose} aria-label="Cerrar"><Icon.X s={16} /></button>
-                </div>
-                <div className="modal-body">
-                    {error ? (
-                        <p className={styles.fieldError}>{error}</p>
-                    ) : events === null ? (
-                        <div role="status" aria-label="Cargando historial">
-                            <Skeleton count={3} height={14} />
-                        </div>
-                    ) : events.length === 0 ? (
-                        <p className={styles.secondaryText}>
-                            Sin cambios registrados. El historial empezó a guardarse con esta versión.
-                        </p>
-                    ) : (
-                        <ol className={styles.historyList}>
-                            {events.map((event, index) => (
-                                <li key={`${event.created_at}-${index}`} className={styles.historyItem}>
-                                    <span className={styles.primaryText}>{describeEvent(event)}</span>
-                                    <span className={styles.secondaryText}>
-                                        {formatDateTime(event.created_at, tz, "es-MX")} · {event.actor_name}
-                                    </span>
-                                </li>
-                            ))}
-                        </ol>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
-
 const Staff = () => {
     const { user, initializing, can, canAny, refreshUser } = useAuth();
     const confirm = useConfirm();
@@ -407,8 +367,6 @@ const Staff = () => {
     const [pendingAction, setPendingAction] = useState(null);
     // Cambio de rol: { member, role, attends, impact } | null (ADR p66).
     const [roleChange, setRoleChange] = useState(null);
-    // Historial: { member, events (null = cargando), error } | null (ADR p66).
-    const [history, setHistory] = useState(null);
 
     // Con `staff.reactivate`, activos e inactivos se cargan en paralelo.
     async function fetchStaff() {
@@ -442,7 +400,7 @@ const Staff = () => {
     const isSelf = (member) => user?.id != null && member.id === user.id;
     const showingInactive = canReactivate && view === "inactive";
     const rows = showingInactive ? inactive : staff;
-    // El historial lo ve cualquiera que gestione personal: toda fila tiene acciones.
+    // La ficha la abre cualquiera que gestione personal: toda fila tiene acciones.
     const hasActions = canManage;
     const rowBusy = Boolean(pendingAction);
 
@@ -578,7 +536,7 @@ const Staff = () => {
                 if (goToCash) navigate("/cash");
                 return;
             }
-            const base = "Dejará de poder entrar y se cerrarán sus sesiones. Sus citas, consultas y registros se conservan. Revisa en Citas si tiene citas próximas asignadas. Podrás reactivarlo desde Inactivos.";
+            const base = "Dejará de poder entrar y se cerrarán sus sesiones. Sus citas, consultas y registros se conservan. Podrás reactivarlo desde Inactivos.";
             const ok = await confirm({
                 title: `Desactivar acceso de ${name}`,
                 message: [impactSentence(impact), base].filter(Boolean).join(" "),
@@ -588,7 +546,11 @@ const Staff = () => {
             if (!ok) return;
             try {
                 await deactivateStaff(member.public_id);
-                toast.success("Acceso desactivado");
+                // ADR p67: con citas por atender, el siguiente paso es reasignarlas.
+                const pendingAppointments = impact?.upcoming_appointments > 0 && can("appointment.update");
+                toast.success("Acceso desactivado", pendingAppointments ? {
+                    action: { label: "Reasignar citas", onClick: () => navigate(`/staff/${member.public_id}`) },
+                } : undefined);
                 await fetchStaff();
             } catch (err) {
                 toast.error(apiError(err, "No se pudo desactivar el acceso."));
@@ -627,19 +589,6 @@ const Staff = () => {
         }
     };
 
-    const openHistory = (member) => {
-        setHistory({ member, events: null, error: null });
-        getStaffHistory(member.public_id)
-            .then((events) => setHistory((current) => (
-                current?.member.public_id === member.public_id ? { ...current, events } : current
-            )))
-            .catch((err) => setHistory((current) => (
-                current?.member.public_id === member.public_id
-                    ? { ...current, error: apiError(err, "No se pudo cargar el historial.") }
-                    : current
-            )));
-    };
-
     const handleReactivate = async (member) => {
         if (pendingAction) return;
         const role = roleLabel(member.role);
@@ -673,7 +622,7 @@ const Staff = () => {
         if (canChangeRole && !self && !showingInactive) {
             items.push({ id: "role", label: "Cambiar rol", onSelect: () => openRoleChange(member) });
         }
-        items.push({ id: "history", label: "Historial", onSelect: () => openHistory(member) });
+        items.push({ id: "profile", label: "Ver ficha", onSelect: () => navigate(`/staff/${member.public_id}`) });
         if (canReset && !self && !showingInactive) {
             items.push({ id: "reset", label: "Restablecer contraseña", onSelect: () => handleResetPassword(member) });
         }
@@ -836,7 +785,9 @@ const Staff = () => {
                                 <tr key={member.public_id}>
                                     <td className={styles.memberCell}>
                                         <div className={styles.memberName}>
-                                            {fullName(member)}
+                                            <Link to={`/staff/${member.public_id}`} className={styles.memberLink}>
+                                                {fullName(member)}
+                                            </Link>
                                             {isSelf(member) && <span className={`badge badge-default ${styles.selfTag}`}>Tú</span>}
                                         </div>
                                         <div className={styles.secondaryText}>{member.email}</div>
@@ -876,7 +827,6 @@ const Staff = () => {
                 />
             )}
 
-            {history && <HistoryModal state={history} tz={tz} onClose={() => setHistory(null)} />}
 
             {/* Modal Editar Miembro — identidad (A1), especialidad y cédula (M01) */}
             {editing && (
