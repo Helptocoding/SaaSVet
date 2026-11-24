@@ -471,3 +471,14 @@ _MATERIALIZERS = {
     MedicalRecord.ConsultationType.SURGERY: _materialize_surgery,
     MedicalRecord.ConsultationType.EMERGENCY: _materialize_emergency,
 }
+
+
+def count_open_for_veterinarian(organization, user):
+    """Consultas abiertas asignadas a ``user`` en ``organization`` (ADR p66).
+
+    Solo lectura; la usa Equipo para avisar antes de desactivar a alguien o
+    quitarle la función clínica. Una consulta abierta de alguien inactivo solo la
+    puede cerrar un ADMIN (policies)."""
+    return MedicalRecord.objects.for_organization(organization).filter(
+        veterinarian=user, status=MedicalRecord.Status.OPEN,
+    ).count()

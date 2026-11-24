@@ -18,17 +18,21 @@ from apps.core.views import resolve_public_id
 from apps.users.access import can_manage_staff
 from apps.users.serializers import (
     UserSerializer,
+    ChangeRoleSerializer,
     CreateEmployeeSerializer,
     ChangePasswordSerializer,
+    StaffAccessEventSerializer,
     StaffDirectorySerializer,
     UpdateEmployeeSerializer,
 )
 from apps.users.services import (
     change_password,
+    change_staff_role,
     create_staff_member,
     deactivate_staff,
     reactivate_staff,
     reset_password_for_staff,
+    staff_impact,
     update_staff_profile,
 )
 
@@ -364,3 +368,68 @@ class StaffReactivateView(NoStoreResponseMixin, APIView):
             "must_change_on_first_login": True,
             "member": UserSerializer(result.user).data,
         }, status=status.HTTP_201_CREATED)
+
+
+def _clinic_members(request, *, active_only):
+    """Integrantes gestionables de la clínica del que pregunta: sin ADMIN_SAAS ni
+    cuentas de servicio (404-as-403 para todo lo demás)."""
+    qs = User.objects.filter(organization=request.user.organization)
+    if active_only:
+        qs = qs.filter(is_active=True)
+    return qs.exclude(role='ADMIN_SAAS').exclude(is_service_account=True)
+
+
+def _require_staff_manager(request):
+    if not can_manage_staff(request.user):
+        raise PermissionDenied("No tienes permiso para gestionar el equipo.")
+
+
+class StaffRoleView(APIView):
+    """POST /api/staff/<public_id>/role/ — cambia el rol y la función clínica
+    (ADR p66). Permiso ``staff.change_role`` (sensible, solo ADMIN). Responde el
+    integrante actualizado. No cierra sesiones: los permisos aplican en la
+    siguiente petición."""
+    permission_classes = [make_permission('staff.change_role')]
+
+    def post(self, request, pk):
+        target = resolve_public_id(_clinic_members(request, active_only=True), pk)
+        serializer = ChangeRoleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = change_staff_role(
+            admin=request.user,
+            target_user=target,
+            role=serializer.validated_data['role'],
+            attends_patients=serializer.validated_data.get('attends_patients'),
+            request_id=request.META.get('HTTP_X_REQUEST_ID') or str(uuid.uuid4()),
+        )
+        return Response(UserSerializer(user).data)
+
+
+class StaffImpactView(APIView):
+    """GET /api/staff/<public_id>/impact/ — citas próximas, consultas abiertas y
+    caja abierta del integrante (ADR p66), para avisar antes de desactivarlo o
+    quitarle la función clínica. Solo para quien gestiona personal."""
+    permission_classes = [make_permission('staff.list')]
+
+    def get(self, request, pk):
+        _require_staff_manager(request)
+        target = resolve_public_id(_clinic_members(request, active_only=False), pk)
+        return Response(staff_impact(target))
+
+
+class StaffHistoryView(APIView):
+    """GET /api/staff/<public_id>/history/ — últimos 50 eventos de acceso del
+    integrante (ADR p66), del más reciente al más antiguo. Solo para quien
+    gestiona personal; también para integrantes inactivos."""
+    permission_classes = [make_permission('staff.list')]
+    HISTORY_LIMIT = 50
+
+    def get(self, request, pk):
+        _require_staff_manager(request)
+        target = resolve_public_id(_clinic_members(request, active_only=False), pk)
+        events = (
+            target.access_events.filter(organization_id=request.user.organization_id)
+            .select_related('actor')
+            .order_by('-created_at', '-pk')[:self.HISTORY_LIMIT]
+        )
+        return Response(StaffAccessEventSerializer(events, many=True).data)

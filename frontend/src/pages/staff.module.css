@@ -280,3 +280,41 @@
 .footerButton {
     flex: 1;
 }
+
+/* ── Función clínica e historial (ADR p66) ─────────────────────── */
+
+.attendsField {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    cursor: pointer;
+}
+
+.attendsField input {
+    margin-top: 2px;
+    accent-color: var(--c-primary);
+}
+
+.historyList {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.historyItem {
+    display: grid;
+    gap: 2px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--c-border);
+}
+
+.historyItem:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}

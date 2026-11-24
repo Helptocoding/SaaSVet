@@ -44,10 +44,14 @@ import { getStaff } from "../api/staff";
 const ACTIVE_ACCESS = { status: "active", last_login: null, temp_password_expires_at: null };
 const VET = {
     id: 3, public_id: "vet-uuid", username: "ana", email: "ana@vet.mx",
-    first_name: "Ana", last_name: "Galeno", role: "VET",
+    first_name: "Ana", last_name: "Galeno", role: "VET", attends_patients: true,
     specialty: "Cirugía", license_number: "1234567", is_active: true,
     access: ACTIVE_ACCESS,
 };
+
+const NO_IMPACT = { upcoming_appointments: 0, open_medical_records: 0, open_cash_session: false };
+let impact = NO_IMPACT;
+let historyRows = [];
 
 let activeRows = [VET];
 let inactiveRows = [];
@@ -58,6 +62,7 @@ function renderStaff() {
             <Routes>
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/" element={<p>Inicio</p>} />
+                <Route path="/cash" element={<p>Caja</p>} />
             </Routes>
         </MemoryRouter>,
     );
@@ -74,8 +79,12 @@ beforeEach(() => {
     currentUser = ADMIN;
     activeRows = [VET];
     inactiveRows = [];
+    impact = NO_IMPACT;
+    historyRows = [];
     get.mockImplementation((url) => Promise.resolve({
-        data: url.includes("archived=true") ? inactiveRows : activeRows,
+        data: url.endsWith("/impact/") ? impact
+            : url.endsWith("/history/") ? historyRows
+            : url.includes("archived=true") ? inactiveRows : activeRows,
     }));
     post.mockResolvedValue({ data: VET });
     patch.mockResolvedValue({ data: VET });
@@ -180,22 +189,28 @@ describe("Equipo: permisos por capacidad, ruta y fila propia (F4, Fase 1)", () =
     });
 
     it("con un solo permiso de gestión la página se abre con sus acciones", async () => {
+        const user = userEvent.setup({ delay: null });
         granted = new Set(["staff.list", "staff.update"]);
         renderStaff();
         await screen.findByText("1234567");
         expect(screen.getByRole("button", { name: /editar a ana galeno/i })).toBeInTheDocument();
-        expect(screen.queryByRole("button", { name: /más acciones/i })).not.toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /agregar miembro/i })).not.toBeInTheDocument();
+        // ADR p66: el menú solo ofrece el historial; sin permisos para lo demás.
+        const menu = await openRowMenu(user);
+        expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(["Historial"]);
     });
 
-    it("la fila propia muestra «Tú» y Editar, pero no el menú de restablecer ni desactivar", async () => {
+    it("la fila propia muestra «Tú» y Editar, y su menú solo el historial", async () => {
+        const user = userEvent.setup({ delay: null });
         granted.add("staff.reset_password");
+        granted.add("staff.change_role");
         currentUser = { role: "ADMIN", id: VET.id };
         renderStaff();
         const row = (await screen.findByText("1234567")).closest("tr");
         expect(within(row).getByText("Tú")).toBeInTheDocument();
         expect(within(row).getByRole("button", { name: /editar/i })).toBeInTheDocument();
-        expect(within(row).queryByRole("button", { name: /más acciones/i })).not.toBeInTheDocument();
+        const menu = await openRowMenu(user);
+        expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(["Historial"]);
     });
 
     it("una cuenta protegida de la demo no muestra acciones", async () => {
@@ -560,5 +575,142 @@ describe("Equipo: inactivos y reactivación (F6)", () => {
     it("getStaff() sin argumentos no envía parámetros (regresión de Citas)", async () => {
         await getStaff();
         expect(get).toHaveBeenLastCalledWith("staff/");
+    });
+});
+
+describe("Equipo: rol, función clínica, impacto e historial (ADR p66)", () => {
+    const ASSISTANT = {
+        ...VET, id: 8, public_id: "asst-uuid", username: "rosa", email: "rosa@vet.mx",
+        first_name: "Rosa", last_name: "Mora", role: "ASSISTANT", attends_patients: false,
+        specialty: "", license_number: "",
+    };
+
+    it("cambia el rol desde el menú y conserva la función clínica al pasar a ADMIN", async () => {
+        const user = userEvent.setup({ delay: null });
+        granted.add("staff.change_role");
+        post.mockResolvedValueOnce({ data: { ...VET, role: "ADMIN" } });
+        renderStaff();
+        await screen.findByText("1234567");
+        const menu = await openRowMenu(user);
+        await user.click(within(menu).getByRole("menuitem", { name: "Cambiar rol" }));
+        const dialog = await screen.findByRole("dialog", { name: "Cambiar rol de Ana Galeno" });
+        expect(within(dialog).getByRole("button", { name: "Cambiar rol" })).toBeDisabled();
+        await user.click(within(dialog).getByRole("radio", { name: /^Administrador/ }));
+        expect(within(dialog).getByRole("checkbox", { name: /atiende pacientes/i })).toBeChecked();
+        await user.click(within(dialog).getByRole("button", { name: "Cambiar rol" }));
+        await waitFor(() => expect(post).toHaveBeenCalledWith(
+            "staff/vet-uuid/role/", { role: "ADMIN", attends_patients: true },
+        ));
+        expect(toast.success).toHaveBeenCalledWith("Rol actualizado");
+    });
+
+    it("no deja dar un rol que atiende a quien no tiene cédula", async () => {
+        const user = userEvent.setup({ delay: null });
+        granted.add("staff.change_role");
+        activeRows = [VET, ASSISTANT];
+        renderStaff();
+        await screen.findByText("Rosa Mora");
+        const menu = await openRowMenu(user, "Rosa Mora");
+        await user.click(within(menu).getByRole("menuitem", { name: "Cambiar rol" }));
+        const dialog = await screen.findByRole("dialog", { name: "Cambiar rol de Rosa Mora" });
+        await user.click(within(dialog).getByRole("radio", { name: /^Veterinario/ }));
+        expect(within(dialog).getByText(/No tiene cédula profesional registrada/)).toBeInTheDocument();
+        expect(within(dialog).getByRole("button", { name: "Cambiar rol" })).toBeDisabled();
+    });
+
+    it("avisa de sus citas al quitarle la función clínica", async () => {
+        const user = userEvent.setup({ delay: null });
+        granted.add("staff.change_role");
+        impact = { upcoming_appointments: 3, open_medical_records: 1, open_cash_session: false };
+        renderStaff();
+        await screen.findByText("1234567");
+        const menu = await openRowMenu(user);
+        await user.click(within(menu).getByRole("menuitem", { name: "Cambiar rol" }));
+        const dialog = await screen.findByRole("dialog", { name: "Cambiar rol de Ana Galeno" });
+        await user.click(within(dialog).getByRole("radio", { name: /^Asistente/ }));
+        expect(await within(dialog).findByText(
+            "Tiene 3 citas próximas y 1 consulta abierta a su nombre: seguirán asignadas, no se reasignan solas.",
+        )).toBeInTheDocument();
+    });
+
+    it("sin staff.change_role no ofrece cambiar el rol", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderStaff();
+        await screen.findByText("1234567");
+        const menu = await openRowMenu(user);
+        expect(within(menu).queryByRole("menuitem", { name: "Cambiar rol" })).not.toBeInTheDocument();
+    });
+
+    it("una caja abierta bloquea la desactivación y lleva a Caja", async () => {
+        const user = userEvent.setup({ delay: null });
+        impact = { ...NO_IMPACT, open_cash_session: true };
+        renderStaff();
+        await screen.findByText("1234567");
+        const menu = await openRowMenu(user);
+        await user.click(within(menu).getByRole("menuitem", { name: "Desactivar acceso" }));
+        await waitFor(() => expect(confirmMock).toHaveBeenCalledWith(expect.objectContaining({
+            title: "Ana Galeno tiene una caja abierta", confirmText: "Ir a Caja",
+        })));
+        expect(await screen.findByText("Caja")).toBeInTheDocument();
+        expect(del).not.toHaveBeenCalled();
+    });
+
+    it("avisa de citas y consultas antes de desactivar, sin bloquear", async () => {
+        const user = userEvent.setup({ delay: null });
+        impact = { upcoming_appointments: 2, open_medical_records: 0, open_cash_session: false };
+        renderStaff();
+        await screen.findByText("1234567");
+        const menu = await openRowMenu(user);
+        await user.click(within(menu).getByRole("menuitem", { name: "Desactivar acceso" }));
+        await waitFor(() => expect(del).toHaveBeenCalledWith("staff/vet-uuid/"));
+        expect(confirmMock.mock.calls[0][0].message).toMatch(
+            /^Tiene 2 citas próximas a su nombre: seguirán asignadas, no se reasignan solas\. Dejará de poder entrar/,
+        );
+    });
+
+    it("muestra el historial con frases y sin datos personales", async () => {
+        const user = userEvent.setup({ delay: null });
+        historyRows = [
+            { kind: "role_changed", kind_label: "Cambio de rol", created_at: "2026-11-24T15:00:00Z", actor_name: "Ada Admin",
+              changes: { role: { from: "VET", to: "ADMIN" } } },
+            { kind: "created", kind_label: "Alta", created_at: "2026-11-20T10:00:00Z", actor_name: "Ada Admin",
+              changes: { role: "VET", attends_patients: true } },
+        ];
+        renderStaff();
+        await screen.findByText("1234567");
+        const menu = await openRowMenu(user);
+        await user.click(within(menu).getByRole("menuitem", { name: "Historial" }));
+        const dialog = await screen.findByRole("dialog", { name: "Historial de Ana Galeno" });
+        expect(await within(dialog).findByText("Cambió el rol de veterinario a administrador")).toBeInTheDocument();
+        expect(within(dialog).getByText("Alta como veterinario")).toBeInTheDocument();
+        expect(within(dialog).getAllByText(/Ada Admin/)).toHaveLength(2);
+        expect(get).toHaveBeenCalledWith("staff/vet-uuid/history/");
+    });
+
+    it("el alta de un ADMIN que atiende exige cédula y la envía marcada", async () => {
+        const user = userEvent.setup({ delay: null });
+        post.mockResolvedValueOnce({ data: { temp_password: "Gen-2", expires_in_seconds: null, member: VET } });
+        renderStaff();
+        await screen.findByText("1234567");
+        await user.click(screen.getByRole("button", { name: /agregar miembro/i }));
+        await user.type(screen.getByPlaceholderText("usuario123"), "duena");
+        await user.type(screen.getByPlaceholderText("Juan"), "Dueña");
+        await user.type(screen.getByPlaceholderText("correo@ejemplo.com"), "duena@vet.mx");
+        await user.click(screen.getByRole("radio", { name: /^Administrador/ }));
+        await user.click(screen.getByRole("checkbox", { name: /atiende pacientes/i }));
+        await user.click(screen.getByRole("button", { name: /guardar/i }));
+        expect(post).not.toHaveBeenCalled();
+        expect(screen.getByText("La cédula profesional es obligatoria para quien atiende pacientes")).toBeInTheDocument();
+        await user.type(screen.getByRole("textbox", { name: /cédula profesional/i }), "2468024");
+        await user.click(screen.getByRole("button", { name: /guardar/i }));
+        await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+        expect(post.mock.calls[0][1]).toMatchObject({ role: "ADMIN", attends_patients: true, license_number: "2468024" });
+    });
+
+    it("un ADMIN que atiende se distingue en la tabla y su falta de cédula se avisa", async () => {
+        activeRows = [{ ...VET, role: "ADMIN", attends_patients: true, license_number: "" }];
+        renderStaff();
+        expect(await screen.findByText(/· Atiende pacientes/)).toBeInTheDocument();
+        expect(screen.getByText("Sin cédula: no puede firmar")).toBeInTheDocument();
     });
 });

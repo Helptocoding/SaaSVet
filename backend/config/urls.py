@@ -30,6 +30,9 @@ from apps.users.views import (
     StaffDetailView,
     StaffResetPasswordView,
     StaffReactivateView,
+    StaffRoleView,
+    StaffImpactView,
+    StaffHistoryView,
     ChangeMyPasswordView,
 )
 from rest_framework.routers import DefaultRouter
@@ -244,6 +247,10 @@ urlpatterns = [
     # Plan Equipo (A2): reactivar a un integrante desactivado.
     path('api/staff/<str:pk>/reactivate/', StaffReactivateView.as_view(),
          name='staff-reactivate'),
+    # ADR p66: cambio de rol, impacto antes de desactivar e historial de accesos.
+    path('api/staff/<str:pk>/role/', StaffRoleView.as_view(), name='staff-role'),
+    path('api/staff/<str:pk>/impact/', StaffImpactView.as_view(), name='staff-impact'),
+    path('api/staff/<str:pk>/history/', StaffHistoryView.as_view(), name='staff-history'),
     # ADR p20: credential self-change. Explicit action endpoint — NOT a
     # field PATCH on /staff/<id>/, which would bypass token invalidation,
     # validate_password, and audit logging.

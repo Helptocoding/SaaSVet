@@ -36,6 +36,8 @@ from rest_framework_simplejwt.token_blacklist.models import (
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.users.professional import attends_for, license_required_message
+
 
 logger = logging.getLogger('users.events')
 
@@ -277,6 +279,37 @@ class DemoSeedAccount(PermissionDenied):
     default_code = 'demo_seed_account'
 
 
+class OpenCashSession(APIException):
+    """409: the member has an open cash session (ADR p66, PO decision).
+
+    Deactivating would leave a turn nobody can close from their side. Caja
+    already offers the administrative close.
+    """
+    status_code = 409
+    default_detail = (
+        'Tiene una caja abierta. Ciérrala desde Caja antes de desactivar su acceso.'
+    )
+    default_code = 'open_cash_session'
+
+
+def record_staff_event(*, member, actor, kind, changes=None, request_id=''):
+    """Append a ``StaffAccessEvent`` inside the caller's transaction (ADR p66).
+
+    ``changes`` carries field names and roles only — never passwords, emails or
+    other personal values. A rolled-back operation leaves no event.
+    """
+    from apps.users.models import StaffAccessEvent
+
+    return StaffAccessEvent.objects.create(
+        organization_id=member.organization_id,
+        member=member,
+        actor=actor,
+        kind=kind,
+        changes=changes or {},
+        request_id=(request_id or '')[:64],
+    )
+
+
 def is_demo_seed_account(user) -> bool:
     """True for the three shared seed accounts of the demo organization (D5).
 
@@ -449,6 +482,9 @@ def reset_password_for_staff(
     # an admin reset has no current session of the target to spare — the
     # target was not in the loop. Refresh AND access tokens die (ADR p65).
     temp_password, revoked_count = _issue_temporary_password(target_user)
+    record_staff_event(
+        member=target_user, actor=admin, kind='password_reset', request_id=request_id,
+    )
 
     # --- 5. Audit log -------------------------------------------------------
     duration_ms = int((time.monotonic() - started_at) * 1000)
@@ -572,6 +608,11 @@ def deactivate_staff(
         ]
         if not others:
             raise LastActiveAdmin()
+    # ADR p66 (PO): an open cash session blocks the deactivation. Upcoming
+    # appointments and open records only warn (GET .../impact/).
+    from apps.cash.services import get_open_session
+    if get_open_session(target) is not None:
+        raise OpenCashSession()
 
     # --- 1. Deactivate -------------------------------------------------------
     target.is_active = False
@@ -580,6 +621,9 @@ def deactivate_staff(
 
     # --- 2. Revoke every existing session (refresh + access, ADR p65) -------
     revoked_count = _revoke_all_sessions(target)
+    record_staff_event(
+        member=target, actor=admin, kind='deactivated', request_id=request_id,
+    )
 
     # --- 3. Audit log --------------------------------------------------------
     duration_ms = int((time.monotonic() - started_at) * 1000)
@@ -689,6 +733,9 @@ def reactivate_staff(
     target.is_active = True
     target.save(update_fields=['is_active'])
     temp_password, revoked_count = _issue_temporary_password(target)
+    record_staff_event(
+        member=target, actor=admin, kind='reactivated', request_id=request_id,
+    )
 
     duration_ms = int((time.monotonic() - started_at) * 1000)
     event = {
@@ -717,6 +764,151 @@ def reactivate_staff(
         duration_ms=duration_ms,
         request_id=request_id,
     )
+
+
+# ---------------------------------------------------------------------------
+# Role change and clinical function (ADR p66)
+# ---------------------------------------------------------------------------
+
+ROLE_LABELS = {'ADMIN': 'Administrador', 'VET': 'Veterinario', 'ASSISTANT': 'Asistente'}
+
+
+class SelfRoleChange(ValidationError):
+    """400: an ADMIN cannot change their own role (lockout / self-escalation)."""
+    default_detail = 'No puedes cambiar tu propio rol.'
+
+
+def _swap_system_role(user):
+    """Replace the system ``UserRole`` of ``user`` by the one of its current role.
+
+    Only system roles of the clinic roles are touched; any custom role assigned
+    in the database stays as it is.
+    """
+    from apps.core.models import UserRole
+
+    UserRole.objects.filter(
+        user=user,
+        role__organization_id=user.organization_id,
+        role__is_system_role=True,
+        role__name__in=STAFF_ROLES,
+    ).exclude(role__name=user.role).delete()
+    _assign_system_role(user)
+
+
+@transaction.atomic
+def change_staff_role(*, admin, target_user, role, attends_patients=None,
+                      request_id: str | None = None):
+    """Change the role (and clinical function) of a clinic member (ADR p66).
+
+    Rules:
+      - Not on oneself (400) — no lockout, no self-escalation.
+      - Same 404-as-403 scope as the other staff operations; demo seed accounts
+        are protected (403); the target must be active.
+      - INV-J: if the target stops being ADMIN, every active ADMIN of the clinic
+        is locked (one query ordered by pk) and at least another one must remain
+        (409 ``last_active_admin``). Two ADMINs demoting each other serialize and
+        the second finds its actor inactive or not ADMIN.
+      - The clinical function follows the role: VET always attends, ASSISTANT
+        never; ADMIN keeps ``attends_patients`` (default: whether the member
+        attended before the change). Whoever attends needs a cédula (400).
+      - ``User.role`` and the system ``UserRole`` change in this transaction.
+      - Same role and same function: no write, no event (idempotent).
+      - Sessions are NOT revoked (PO decision): permissions are read from the
+        database on every request, so the change applies on the next one.
+    """
+    from django.http import Http404
+
+    request_id = request_id or str(uuid.uuid4())
+    if role not in STAFF_ROLES:
+        raise ValidationError({'role': ['Rol no válido.']})
+    if target_user.pk == admin.pk:
+        raise SelfRoleChange()
+    _assert_manageable_target(admin, target_user)
+    _assert_not_demo_seed_account(target_user)
+
+    demoting_admin = target_user.role == 'ADMIN' and role != 'ADMIN'
+    locked = _lock_users(
+        pks=[admin.pk, target_user.pk],
+        active_admins_of=target_user.organization_id if demoting_admin else None,
+    )
+    actor = locked.get(admin.pk)
+    target = locked.get(target_user.pk)
+    if actor is None or not actor.is_active:
+        raise ActorInactive()
+    # Another ADMIN may have changed the actor's own role while we waited.
+    from apps.core.permissions import user_has_permission
+    if not user_has_permission(actor, 'staff.change_role'):
+        raise PermissionDenied('Ya no tienes permiso para cambiar roles.')
+    if target is None or not target.is_active:
+        raise Http404("Usuario no encontrado.")
+    # Re-check with the row locked: the role may have changed meanwhile.
+    if target.role == 'ADMIN' and role != 'ADMIN':
+        others = [
+            row for row in locked.values()
+            if row.pk != target.pk and row.role == 'ADMIN' and row.is_active
+            and not row.is_service_account and row.organization_id == target.organization_id
+        ]
+        if not others:
+            raise LastActiveAdmin(
+                detail='No puedes quitar el rol de administrador al último '
+                       'administrador activo de la clínica.',
+            )
+
+    if role != 'ADMIN' and attends_patients is not None and bool(attends_patients) != attends_for(role):
+        raise ValidationError({'attends_patients': [
+            'Solo se ajusta en administradores: en veterinarios y asistentes lo define el rol.']})
+    previous_attends = attends_for(target.role, target.attends_patients)
+    wanted = previous_attends if attends_patients is None else attends_patients
+    new_attends = attends_for(role, wanted)
+    if new_attends and not target.license_number:
+        raise ValidationError({'license_number': [license_required_message(role)]})
+
+    old_role = target.role
+    if old_role == role and target.attends_patients == new_attends:
+        return target
+
+    target.role = role
+    target.attends_patients = new_attends
+    target.save(update_fields=['role', 'attends_patients'])
+    if old_role != role:
+        _swap_system_role(target)
+
+    changes = {'role': {'from': old_role, 'to': role}}
+    if previous_attends != new_attends:
+        changes['attends_patients'] = {'from': previous_attends, 'to': new_attends}
+    record_staff_event(
+        member=target, actor=admin, kind='role_changed', changes=changes,
+        request_id=request_id,
+    )
+    log = {
+        "event": "STAFF_ROLE_CHANGED",
+        "request_id": request_id,
+        "actor_id": admin.pk,
+        "organization_id": admin.organization_id,
+        "target_user_id": target.pk,
+        "target_public_id": str(target.public_id),
+        "from_role": old_role,
+        "to_role": role,
+        "attends_patients": new_attends,
+    }
+    transaction.on_commit(lambda: logger.info("STAFF_ROLE_CHANGED", extra=log), robust=True)
+    return target
+
+
+def staff_impact(member):
+    """What a member has pending, for the warning before deactivating them or
+    removing their clinical function (ADR p66). Read-only; each count comes from
+    its own domain."""
+    from apps.appointments.services import count_upcoming_for_veterinarian
+    from apps.cash.services import get_open_session
+    from apps.medical_records.services import count_open_for_veterinarian
+
+    organization = member.organization
+    return {
+        'upcoming_appointments': count_upcoming_for_veterinarian(organization, member),
+        'open_medical_records': count_open_for_veterinarian(organization, member),
+        'open_cash_session': get_open_session(member) is not None,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -809,6 +1001,8 @@ def create_staff_member(*, admin, data, request_id: str | None = None) -> Create
                 specialty=data.get('specialty', ''),
                 license_number=data.get('license_number', ''),
                 role=role,
+                # ADR p66: VET siempre, ASSISTANT nunca, ADMIN según el alta.
+                attends_patients=attends_for(role, data.get('attends_patients', False)),
                 organization_id=admin.organization_id,
                 # Contraseña de un solo uso (ADR p21): el gate obliga a cambiarla
                 # en el primer acceso. Solo en esta ruta de alta, nunca en
@@ -823,6 +1017,10 @@ def create_staff_member(*, admin, data, request_id: str | None = None) -> Create
         raise
 
     _assign_system_role(user)
+    record_staff_event(
+        member=user, actor=admin, kind='created', request_id=request_id,
+        changes={'role': user.role, 'attends_patients': user.attends_patients},
+    )
 
     event = {
         "event": "STAFF_CREATED",
@@ -895,6 +1093,9 @@ def update_staff_profile(*, admin, target_user, changes):
         if _is_email_unique_violation(exc):
             raise ValidationError({'email': [EMAIL_UNAVAILABLE]}) from exc
         raise
+    record_staff_event(
+        member=target_user, actor=admin, kind='profile_updated', changes={'fields': fields},
+    )
     logger.info(
         "STAFF_PROFILE_UPDATED",
         extra={

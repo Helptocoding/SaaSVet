@@ -62,3 +62,26 @@ export const reactivateStaff = async (publicId) => {
     );
     return res.data;
 };
+
+/**
+ * Cambia el rol (y, en ADMIN, si atiende pacientes) de un integrante (ADR p66).
+ * Devuelve el integrante actualizado. No cierra sus sesiones.
+ */
+export const changeStaffRole = async (publicId, { role, attendsPatients } = {}) => {
+    const body = { role };
+    if (attendsPatients !== undefined) body.attends_patients = attendsPatients;
+    const res = await api.post(`staff/${publicId}/role/`, body);
+    return res.data;
+};
+
+/** Pendientes del integrante: { upcoming_appointments, open_medical_records, open_cash_session }. */
+export const getStaffImpact = async (publicId) => {
+    const res = await api.get(`staff/${publicId}/impact/`);
+    return res.data;
+};
+
+/** Historial de accesos (últimos 50, del más reciente al más antiguo). */
+export const getStaffHistory = async (publicId) => {
+    const res = await api.get(`staff/${publicId}/history/`);
+    return res.data;
+};

@@ -29,7 +29,9 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 | Drift de stock detectado por `audit_stock_integrity` | Escritura directa a `stock` sin pasar por `apply_stock_movement`. | Investigar el caller. Se corrige con migración de baseline o `adjustment` manual. |
 | `RBAC_FALLBACK_ALLOWED` en logs | Usuario sin `UserRole` en la base de datos. | Ejecutar `seed_permissions` en la organización. |
 | 401 en frontend tras login válido | Toggle "Recordarme" e inconsistencia en el almacenamiento del token. | Revisar `auth/tokenStorage.js` (session tiene prioridad sobre local). |
-| `409 last_active_admin` al desactivar | El objetivo es el último ADMIN activo de la clínica (INV-J). | Correcto: crear o reactivar otro ADMIN antes. Si el único ADMIN perdió el acceso, restablecimiento de plataforma (ADR p45). |
+| `409 last_active_admin` al desactivar o cambiar el rol | El objetivo es el último ADMIN activo de la clínica (INV-J). | Correcto: crear, ascender o reactivar otro ADMIN antes. Si el único ADMIN perdió el acceso, restablecimiento de plataforma (ADR p66, p45). |
+| `409 open_cash_session` al desactivar | El integrante tiene una caja abierta (ADR p66). | Correcto: cerrarla desde Caja (cierre administrativo) y desactivar después. |
+| Un ADMIN no aparece como veterinario en la agenda ni en el agente | No está marcado como que atiende pacientes (ADR p66). | Equipo → Editar → «Atiende pacientes» (requiere cédula). Los VET siempre atienden. |
 | `403 actor_inactive` al desactivar o reactivar | Otro ADMIN desactivó al actor mientras la operación esperaba su bloqueo. | Correcto: la otra operación ganó. Volver a entrar con una cuenta activa. |
 | `409 already_active` al reactivar | El integrante ya está activo; típico tras una respuesta perdida. | No se emite otra contraseña. Si no se vio la temporal, usar Restablecer contraseña. |
 | `403 demo_seed_account` | Edición, restablecimiento o desactivación de una cuenta semilla de la demo. | Correcto (D5). Crear una cuenta propia con correo `@example.com`. |
@@ -197,10 +199,11 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 
 29. **INV-J — una clínica nunca queda sin al menos un ADMIN activo como consecuencia de una operación de
     gestión de personal** (plan Equipo, II.3.1). ADMIN activo = `User` de la clínica con `role='ADMIN'`,
-    `is_active=True` y que no es cuenta de servicio. `deactivate_staff` es la única vía del producto que reduce ese
-    conjunto: bloquea en **una sola consulta ordenada por `pk`** al actor, al objetivo y, si el objetivo es ADMIN, a
-    todos los ADMIN activos, y vuelve a comprobar con el bloqueo tomado (`409 last_active_admin`,
-    `403 actor_inactive`). No hay cambio de rol después del alta y `UserRole` solo se crea. Un gate estático
+    `is_active=True` y que no es cuenta de servicio. Dos vías del producto reducen ese conjunto, `deactivate_staff`
+    y `change_staff_role` (ADR p66); ambas bloquean en **una sola consulta ordenada por `pk`** al actor, al objetivo
+    y, si el objetivo es ADMIN, a todos los ADMIN activos, y vuelven a comprobar con el bloqueo tomado
+    (`409 last_active_admin`, `403 actor_inactive`; el cambio de rol revisa además que el actor conserve
+    `staff.change_role`). `UserRole` de sistema solo cambia en esas operaciones de Equipo. Un gate estático
     (`apps/users/tests/test_staff_lifecycle_writers_gate.py`) enumera los escritores de `is_active=False`, `role` e
     `is_service_account`. Fuera del invariante, a propósito: el admin de Django y la shell (operadores) y la
     desactivación de la organización completa. Recuperación si el único ADMIN olvida su contraseña: restablecimiento

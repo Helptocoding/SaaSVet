@@ -623,3 +623,23 @@ def complete_appointment_on_record_close(appointment, actor):
     )
 
     return appointment
+
+
+# ---------------------------------------------------------------------------
+# Lectura para Equipo (ADR p66): impacto antes de desactivar o cambiar de rol
+# ---------------------------------------------------------------------------
+
+UPCOMING_STATUSES = ('scheduled', 'confirmed')
+
+
+def count_upcoming_for_veterinarian(organization, user):
+    """Citas por atender (programadas o confirmadas, aún no empezadas) asignadas
+    a ``user`` en ``organization``. Solo lectura; la usa Equipo para avisar antes
+    de desactivar a alguien o quitarle la función clínica."""
+    from django.utils import timezone
+
+    return Appointment.objects.for_organization(organization).filter(
+        veterinarian=user,
+        status__in=UPCOMING_STATUSES,
+        start_datetime__gte=timezone.now(),
+    ).count()

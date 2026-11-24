@@ -1629,9 +1629,14 @@ sistema no elige "un veterinario asignado al bot"; elige al que está **libre**.
 
 | Configuración | Comportamiento |
 |---|---|
-| `default_veterinarian` **sin** configurar (default) | Candidatos = todos los VET activos de la org. Un hueco se ofrece si **alguno** lo tiene libre, y la cita se asigna al primero libre a esa hora |
-| `default_veterinarian` configurado | Solo se ofertan y asignan los huecos de ese veterinario (la clínica eligió explícitamente) |
-| Sin ningún VET activo | `no_vet` → el agente se disculpa y ofrece pasar con una persona. Es el único caso honesto: no hay con quién agendar |
+| `default_veterinarian` **sin** configurar (default) | Candidatos = todos los **clínicos** activos de la org (VET, o ADMIN que atiende pacientes; ADR p66). Un hueco se ofrece si **alguno** lo tiene libre, y la cita se asigna al primero libre a esa hora |
+| `default_veterinarian` configurado | Solo se ofertan y asignan los huecos de ese veterinario (la clínica eligió explícitamente), si atiende pacientes; si no, se usan todos los clínicos |
+| Sin ningún clínico activo | `no_vet` → el agente se disculpa y ofrece pasar con una persona. Es el único caso honesto: no hay con quién agendar |
+
+**ADR p66 (2026-11-24):** «veterinario» ya no es `role='VET'`. Candidatos (`_scheduling_vets`), alta
+(`appointments.creation`, `require_schedule`), reagendado (`appointments.mutations`) y ejecución autorizada
+(`operation_execution`) usan el predicado único `apps.users.professional.clinician_q` / `is_clinician`: el
+dueño veterinario con rol ADMIN marcado como que atiende recibe huecos. Los adapters B8 siguen apagados.
 
 Por qué importa: con "el primer VET por pk" la capacidad ofertada era la de
 **un** veterinario aunque hubiera tres, y toda la agenda del bot caía sobre el

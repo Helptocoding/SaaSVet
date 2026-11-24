@@ -116,6 +116,8 @@ PERMISSION_CODES = [
     "staff.reset_password",
     # Plan Equipo (A2, D1): reactivar a un integrante desactivado. Solo ADMIN.
     "staff.reactivate",
+    # ADR p66: cambiar el rol (y la función clínica) de un integrante. Solo ADMIN.
+    "staff.change_role",
 
     # Organización. `list` lo exigen los GET de me, schedule, settings y configuration.
     "organization.list",
@@ -210,7 +212,7 @@ SENSITIVE_CODES = frozenset({
     "billing.clinical_charge.reprice", "billing.refund",
     "checkout.dispute.resolve", "collection.resolve",
     "staff.create", "staff.update", "staff.destroy", "staff.reset_password",
-    "staff.reactivate",
+    "staff.reactivate", "staff.change_role",
     "organization.update", "import.commit", "dashboard.financial.view",
     "agentinbox.config", "agentinbox.identity_verify",
     "inventory.destroy", "medicalrecord.destroy",
@@ -255,7 +257,7 @@ PERMISSIONS = {
         "prescription.list", "prescription.retrieve", "prescription.create",
         "prescription.update", "prescription.destroy",
         "staff.list", "staff.create", "staff.update", "staff.destroy",
-        "staff.reset_password", "staff.reactivate",
+        "staff.reset_password", "staff.reactivate", "staff.change_role",
         "organization.list", "organization.retrieve", "organization.update",
         "dashboard.view", "dashboard.financial.view", "dashboard.summary",
         "cashsession.list", "cashsession.retrieve", "cashsession.open", "cashsession.close",

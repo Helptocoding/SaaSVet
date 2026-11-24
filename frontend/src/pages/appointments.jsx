@@ -1045,7 +1045,8 @@ function EventManagerAppointments() {
     const loadAll = async () => {
         try {
             const [staffData, apptData] = await Promise.all([getStaff(), getAppointments(token)]);
-            setStaff(staffData.filter((member) => member.role === "VET" || member.role === "ADMIN"));
+            // ADR p66: veterinario = quien atiende pacientes (VET, o ADMIN que atiende), no el rol.
+            setStaff(staffData.filter((member) => member.attends_patients));
             setAppointments(Array.isArray(apptData) ? apptData : (apptData.results || []));
         } catch (err) { console.error(apiError(err)); } finally { setLoading(false); }
     };

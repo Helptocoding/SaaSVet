@@ -279,8 +279,10 @@ def _definition_reason(operation, conv, goal, context):
         return 'entity_scope'
     if 'veterinarian_id' in params:
         from apps.users.models import User
-        if not User.objects.filter(pk=params['veterinarian_id'], organization_id=conv.organization_id,
-                is_active=True, role='VET').exists():
+        from apps.users.professional import clinician_q
+        # ADR p66: atiende quien es VET o ADMIN que atiende (predicado único).
+        if not User.objects.filter(clinician_q(), pk=params['veterinarian_id'],
+                organization_id=conv.organization_id, is_active=True).exists():
             return 'entity_scope'
     return ''
 

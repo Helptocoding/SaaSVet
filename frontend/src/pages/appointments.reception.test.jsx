@@ -7,7 +7,7 @@
  * La agenda real se renderiza; solo se sustituyen el calendario de FullCalendar
  * (no corre en jsdom), las llamadas HTTP y la sesión.
  */
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -30,7 +30,10 @@ vi.mock("../api/appointments", () => ({
 vi.mock("../api/organizations", () => ({ getOrgSettings: vi.fn(() => Promise.resolve({})) }));
 vi.mock("../api/staff", () => ({
     getStaff: vi.fn(() => Promise.resolve([
-        { id: 3, public_id: "vet-uuid", first_name: "Eva", last_name: "Galeno", role: "VET" },
+        { id: 3, public_id: "vet-uuid", first_name: "Eva", last_name: "Galeno", role: "VET", attends_patients: true },
+        { id: 4, public_id: "owner-uuid", first_name: "Dora", last_name: "Dueña", role: "ADMIN", attends_patients: true },
+        { id: 5, public_id: "office-uuid", first_name: "Olga", last_name: "Oficina", role: "ADMIN", attends_patients: false },
+        { id: 6, public_id: "rec-uuid", first_name: "Rita", last_name: "Recepción", role: "ASSISTANT", attends_patients: false },
     ])),
 }));
 vi.mock("../api/lookups", () => ({ searchPets: vi.fn(() => Promise.resolve({ items: [], hasMore: false })) }));
@@ -90,6 +93,16 @@ describe("Citas: recepción puede agendar", { timeout: 20000 }, () => {
         renderAgenda();
         await screen.findByRole("button", { name: /nueva cita/i });
         expect(screen.queryByRole("button", { name: "Atención sin cita" })).not.toBeInTheDocument();
+    });
+
+    it("lista como veterinarios a quienes atienden pacientes, no por rol (ADR p66)", async () => {
+        renderAgenda();
+        await screen.findByRole("button", { name: /nueva cita/i });
+        const vets = screen.getByText("Veterinarios").parentElement;
+        expect(within(vets).getByRole("button", { name: "Eva Galeno" })).toBeInTheDocument();
+        expect(within(vets).getByRole("button", { name: "Dora Dueña" })).toBeInTheDocument();
+        expect(within(vets).queryByRole("button", { name: "Olga Oficina" })).not.toBeInTheDocument();
+        expect(within(vets).queryByRole("button", { name: "Rita Recepción" })).not.toBeInTheDocument();
     });
 
     it("un veterinario conserva la creación y la atención sin cita", async () => {

@@ -255,7 +255,7 @@ inactivos de la clínica, sin `ADMIN_SAAS` ni cuentas de servicio, y exige adem�
 | Quién | Recibe |
 |---|---|
 | Quien gestiona personal (algún permiso `staff.create`, `staff.update`, `staff.destroy`, `staff.reset_password` o `staff.reactivate`; `apps.users.access.can_manage_staff`) | El integrante completo (`UserSerializer`) con su bloque `access` |
-| Quien solo tiene `staff.list` (VET y ASSISTANT, para elegir veterinario en Citas) | El directorio mínimo `{id, public_id, first_name, last_name, role}`: sin correo, usuario, cédula, organización ni datos de acceso |
+| Quien solo tiene `staff.list` (VET y ASSISTANT, para elegir veterinario en Citas) | El directorio mínimo `{id, public_id, first_name, last_name, role, attends_patients}`: sin correo, usuario, cédula, organización ni datos de acceso |
 
 Antes cualquier `staff.list` recibía correo, usuario y cédula de cada colega aunque la
 interfaz no los mostrara. El directorio conserva `id` porque Citas envía el PK del
@@ -280,6 +280,50 @@ existentes sin migración (`apps/users/access.py`):
 No se exponen hashes, tokens, `session_version` ni las banderas de contraseña en crudo.
 `last_login` vacío significa «sin accesos registrados», no «nunca entró».
 
+### Función clínica: «atiende pacientes» (ADR p66)
+
+`attends_patients` (en `UserSerializer` y en el directorio mínimo) es la función clínica
+**efectiva**: `VET` siempre atiende, `ASSISTANT` nunca y `ADMIN` según su marca (el dueño
+veterinario de una clínica pequeña). Es la única respuesta a «¿quién atiende?»: la agenda lista
+como veterinarios a quienes atienden, el agente les ofrece huecos y Equipo les exige cédula
+(`apps.users.professional.is_clinician` / `clinician_q`). Solo se edita en ADMIN (alta y
+`PATCH`); en otro rol es `400` en `attends_patients`. Quien atiende necesita cédula (`400` en
+`license_number`). Migración `users.0014`: VET y ADMIN con cédula quedaron en `true` (PO).
+
+### Cambiar rol (ADR p66)
+
+```
+POST /api/staff/<public_id>/role/
+{ "role": "ADMIN" | "VET" | "ASSISTANT", "attends_patients": true | false (solo ADMIN, opcional) }
+```
+
+Permiso `staff.change_role` (sensible, solo ADMIN). Responde `200` con el integrante. Cambia
+`User.role` y el `UserRole` de sistema en una transacción (los roles personalizados de la base se
+conservan). La función clínica sigue al rol; un ADMIN conserva la que tenía si no se indica. **No
+cierra sesiones** (PO): los permisos se leen de la base en cada petición, así que el cambio aplica
+en la siguiente con el mismo token. Repetir el mismo rol no escribe nada.
+
+| Respuesta | Cuándo |
+|---|---|
+| `400` | A sí mismo; rol fuera de `ADMIN/VET/ASSISTANT`; `attends_patients` que contradice un rol no ADMIN; nuevo rol que atiende sin cédula |
+| `403` | Sin `staff.change_role`, o el actor lo perdió mientras esperaba el bloqueo; cuenta semilla de la demo |
+| `404` | Otra clínica, inactivo, `ADMIN_SAAS` o cuenta de servicio |
+| `409 last_active_admin` | Quitaría el rol al último ADMIN activo (INV-J, mismo bloqueo que la desactivación) |
+
+### Impacto e historial (ADR p66)
+
+- `GET /api/staff/<public_id>/impact/` → `{upcoming_appointments, open_medical_records,
+  open_cash_session}`: citas programadas o confirmadas por empezar, consultas abiertas y caja
+  abierta a su nombre, cada conteo desde su dominio (`appointments`, `medical_records`, `cash`).
+- `GET /api/staff/<public_id>/history/` → últimos 50 `StaffAccessEvent` (`kind`, `kind_label`,
+  `created_at`, `actor_name`, `changes`), del más reciente al más antiguo, también de inactivos.
+  Los escriben en la misma transacción el alta, la edición, el cambio de rol, la desactivación,
+  la reactivación y los restablecimientos (de clínica y de plataforma, con `source: platform`).
+  Solo nombres de campo y roles: nunca contraseñas, correos ni otros valores. De solo inserción;
+  los cambios anteriores a `users.0015` no existen.
+
+Ambos exigen ser quien gestiona personal (`403` si no); otra clínica, `404`.
+
 ### Desactivar usuario
 
 ```
@@ -289,7 +333,9 @@ Authorization: Bearer <token ADMIN>
 
 No elimina el usuario: marca `is_active = False`, revoca todos sus refresh tokens e
 incrementa su versión de sesión (ADR p65), así que sus access tokens dejan de servir
-aunque después se le reactive.
+aunque después se le reactive. **Una caja abierta lo bloquea** (`409 open_cash_session`, ADR
+p66): se cierra antes desde Caja. Citas próximas y consultas abiertas no bloquean (la interfaz
+las avisa con `impact/`) y siguen asignadas: no se reasignan solas.
 
 **Una clínica nunca queda sin un ADMIN activo** (plan Equipo, II.3.1). El servicio
 bloquea en una sola consulta ordenada por `pk` al actor, al objetivo y, si el objetivo es

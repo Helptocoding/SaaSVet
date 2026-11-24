@@ -1,9 +1,9 @@
 """Gate estático: escritores de ``is_active=False``, ``role`` e ``is_service_account``.
 
 Invariante (plan Equipo, II.3.1): una organización nunca queda sin al menos un
-ADMIN activo como consecuencia de una operación de gestión de personal. Hoy
-``deactivate_staff`` es la única vía del producto que reduce el conjunto de
-ADMIN activos, y la protege un bloqueo ordenado. Este gate mantiene esa
+ADMIN activo como consecuencia de una operación de gestión de personal. Hoy dos
+vías del producto reducen el conjunto de ADMIN activos, ``deactivate_staff`` y
+``change_staff_role`` (ADR p66), y ambas las protege un bloqueo ordenado. Este gate mantiene esa
 afirmación verdadera: enumera cada sitio productivo que escribe esos campos y
 falla si aparece uno sin clasificar (o si una clasificación ya no existe).
 
@@ -30,6 +30,10 @@ USER_ROLE = 'escribe UserRole.role, no User.role'
 CLASSIFIED = {
     ('apps/users/services.py', 'deactivate_staff', 'is_active=False'):
         'User: protegido por el bloqueo y la regla del último ADMIN',
+    ('apps/users/services.py', 'change_staff_role', 'role'):
+        'User: protegido por el bloqueo y la regla del último ADMIN (ADR p66)',
+    ('apps/users/views.py', 'StaffRoleView.post', 'role'):
+        'pasa el rol pedido a change_staff_role, que aplica el bloqueo',
     ('apps/billing/models.py', 'CheckoutItem.delete', 'is_active=False'): 'otro modelo',
     ('apps/patients/archive.py', 'change_archive_state', 'is_active=False'):
         'otro modelo (Pet/Owner)',

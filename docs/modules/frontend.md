@@ -1698,6 +1698,15 @@ Pantalla de **gestión** de integrantes (`pages/staff.jsx`). Contrato backend en
   demás quedan deshabilitadas y la fila muestra su indicador. Errores de validación en su
   campo (`handleFormError` para los del servidor).
 
+- **Fase 2 (ADR p66)**: el menú ⋯ de cada fila ofrece «Cambiar rol» (`staff.change_role`;
+  modal con el mismo selector de roles y, en ADMIN, «Atiende pacientes»; avisa si quien deja de
+  atender tiene citas o consultas y bloquea un rol que atiende sin cédula) e «Historial» (eventos
+  de `GET .../history/` en frases, `features/staff/history.js`, sin valores personales). Desactivar
+  consulta antes `GET .../impact/`: con caja abierta no desactiva y ofrece «Ir a Caja»; con citas o
+  consultas antepone el aviso a la confirmación. «Atiende pacientes» se elige en el alta y la edición
+  de un ADMIN; la cédula se marca obligatoria para quien atiende.
+- **Agenda (`pages/appointments.jsx`)**: lista como veterinarios a quienes `attends_patients`
+  (del directorio), no a `VET`/`ADMIN` por nombre de rol.
 ## Rutas
 
 | Ruta                | Pagina              | Acceso       |
