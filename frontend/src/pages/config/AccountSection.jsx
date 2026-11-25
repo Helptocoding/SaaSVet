@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ChangePasswordForm from "../../components/ChangePasswordForm";
 import { Icon } from "../../components/icons";
 import SettingsPanel from "./SettingsPanel";
+import MfaSettings from "./MfaSettings";
 import styles from "./config.module.css";
 
 const AccountSection = () => {
@@ -30,6 +31,9 @@ const AccountSection = () => {
           Cambiar contraseña
         </button>
       </div>
+
+      {/* ADR p68: solo aparece si la cuenta puede usarla (ADMIN, fuera de la demo). */}
+      <MfaSettings />
 
       {showModal && (
         <div className="modal-overlay">

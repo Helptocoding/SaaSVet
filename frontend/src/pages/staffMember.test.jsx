@@ -46,7 +46,7 @@ const ACCESS = { status: "active", last_login: null, temp_password_expires_at: n
 const VET = {
     id: 3, public_id: "vet-uuid", username: "ana", email: "ana@vet.mx",
     first_name: "Ana", last_name: "Galeno", role: "VET", attends_patients: true,
-    specialty: "Cirugía", license_number: "1234567", is_active: true, access: ACCESS,
+    specialties: ["surgery"], specialty_label: "Cirugía", license_number: "1234567", is_active: true, access: ACCESS,
 };
 const OTHER_VET = { ...VET, id: 4, public_id: "luis-uuid", username: "luis", first_name: "Luis", last_name: "Pérez" };
 const ASSISTANT = { ...VET, id: 5, public_id: "rosa-uuid", first_name: "Rosa", last_name: "Mora", role: "ASSISTANT", attends_patients: false };

@@ -14,7 +14,10 @@ def reconstruct_known_vets(apps, schema_editor):
         from django.utils import timezone
         Record.objects.filter(pk=record.pk, vet_snapshot_source='unknown').update(
             vet_public_id_at_close=vet.public_id, vet_name_at_close=name,
-            vet_specialty_at_close=vet.specialty,
+            # `specialty` era texto libre en este punto del historial; desde
+            # users.0017 (ADR p68) no existe y una prueba invoca esta función
+            # con los modelos actuales.
+            vet_specialty_at_close=getattr(vet, 'specialty', '') or '',
             vet_snapshot_source='reconstructed', vet_snapshot_recorded_at=timezone.now(),
         )
 

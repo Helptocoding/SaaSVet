@@ -33,6 +33,8 @@ ALLOWED_WRITERS = {
     ('apps/users/services.py', 'bump_session_version'): 'la única escritura legítima',
     ('apps/core/authentication.py', 'session_version_matches'):
         'lectura: nombres de campo del log AUTH_SESSION_REVOKED',
+    ('apps/users/mfa.py', 'complete_login_challenge'):
+        'lectura: el reto de MFA muere si la versión cambió (ADR p68)',
 }
 
 # Sitios productivos que emiten tokens (`for_user(` o `get_token(`).
@@ -42,6 +44,10 @@ EXPECTED_MINTERS = {
     ('apps/users/services.py', 'change_password'): 'estampa la versión nueva',
     ('apps/agent/executor.py', 'mint_agent_token'):
         'cuenta de servicio: sin claim, su versión nunca se incrementa',
+    ('apps/users/serializers.py', 'EmailOrUsernameTokenObtainPairSerializer.validate'):
+        'login sin MFA: emite con get_token, que estampa la versión (ADR p68)',
+    ('config/urls.py', 'TokenMFAView.post'):
+        'segundo paso con MFA: emite con get_token, que estampa la versión (ADR p68)',
 }
 
 
@@ -347,6 +353,10 @@ EXPECTED_401_SITES = {
         'autenticación de DRF: corre antes del handler de la vista',
     ('config/urls.py', 'PublicTokenRefreshView.post'):
         'token/refresh/: excluido del reintento en api/client.js',
+    ('apps/users/mfa.py', 'MFAChallengeInvalid'):
+        'token/mfa/: viaja sin Authorization y está en isLoginAttempt de api/client.js (ADR p68)',
+    ('apps/users/mfa.py', 'MFACodeInvalid'):
+        'token/mfa/: viaja sin Authorization y está en isLoginAttempt de api/client.js (ADR p68)',
 }
 
 

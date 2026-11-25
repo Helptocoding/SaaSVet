@@ -58,7 +58,7 @@ DEMO_USERS = [
         "first_name": "Diego",
         "last_name": "Ramírez",
         "role": "VET",
-        "specialty": "Medicina general",
+        "specialties": ["general_medicine"],
         "license_number": "00000002",
     },
     {

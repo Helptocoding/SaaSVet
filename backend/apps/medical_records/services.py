@@ -125,7 +125,7 @@ def close_medical_record_service(request, pk):
         if vet and vet.organization_id == record.organization_id and name:
             record.vet_public_id_at_close = vet.public_id
             record.vet_name_at_close = name
-            record.vet_specialty_at_close = vet.specialty
+            record.vet_specialty_at_close = vet.specialty_label[:100]
             record.vet_license_at_close = vet.license_number
             record.vet_snapshot_source = 'captured'
             record.vet_snapshot_recorded_at = record.closed_at

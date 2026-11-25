@@ -724,34 +724,40 @@ def _specialty_tokens(value):
 
 
 def get_offered_specialties(conversation, executor, args, triggered_by=None):
-    """Especialidades que tienen servicio activo Y personal activo asignable.
+    """Especialidades que tienen servicio activo Y personal activo que atiende.
 
-    Se consulta el dominio directamente para no publicar nombres de personal,
-    correos ni otros datos internos que no necesita el cliente.
+    ADR p68: ambos eligen del catálogo cerrado (`apps.users.specialties`), así
+    que se cruzan por código, no comparando textos libres. Se consulta el
+    dominio directamente para no publicar nombres de personal, correos ni otros
+    datos internos que no necesita el cliente.
     """
     from apps.billing.models import Service
     from apps.users.models import User
+    from apps.users.professional import clinician_q
+    from apps.users.specialties import SPECIALTY_CODES, specialty_label
 
     organization = conversation.organization
-    services = list(Service.objects.filter(
-        organization=organization, is_active=True,
-    ).values_list('name', flat=True))
-    staff_specialties = list(User.objects.filter(
+    service_codes = set(Service.objects.filter(
         organization=organization, is_active=True,
     ).exclude(specialty='').values_list('specialty', flat=True))
-    service_keys = {_specialty_tokens(name) for name in services}
+    staff_codes = {
+        code
+        for codes in User.objects.filter(
+            clinician_q(), organization=organization, is_active=True,
+        ).values_list('specialties', flat=True)
+        for code in codes
+    }
     query_tokens = _specialty_tokens(args.get('query', ''))
     offered = []
-    for specialty in staff_specialties:
-        key = _specialty_tokens(specialty)
-        if not key or key not in service_keys:
+    for code in SPECIALTY_CODES:
+        if code not in service_codes or code not in staff_codes:
             continue
-        if query_tokens and not query_tokens.issubset(key):
+        label = specialty_label(code)
+        if query_tokens and not query_tokens.issubset(_specialty_tokens(label)):
             continue
-        offered.append(specialty.strip())
+        offered.append(label)
 
-    projection = [{'especialidad': specialty}
-                  for specialty in sorted(set(offered), key=_norm)[:MAX_ITEMS]]
+    projection = [{'especialidad': label} for label in offered[:MAX_ITEMS]]
     executor.record_local(
         tool_name='get_offered_specialties', args_redacted={},
         summary={'matches': len(projection)}, triggered_by_message=triggered_by,

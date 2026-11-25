@@ -528,6 +528,37 @@
 }
 .accountDesc { font-size: 13px; color: var(--p-text-2); margin: 0; }
 
+/* ─── Verificación en dos pasos (ADR p68) ──────────────────────── */
+.mfaActions { display: flex; gap: 8px; flex-wrap: wrap; }
+.mfaText { margin: 0 0 12px; font-size: 13px; color: var(--p-text-2); line-height: 1.5; }
+.mfaSteps { margin: 0 0 12px; padding-left: 20px; font-size: 13px; color: var(--p-text); line-height: 1.6; }
+.mfaKey {
+  display: block;
+  margin: 4px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+.mfaLink { font-size: 12px; color: var(--c-primary-dark); }
+.mfaCodes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 16px;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+.mfaError { margin: 4px 0 0; font-size: 12px; color: var(--c-danger-text); }
+
 /* ─── Carga (esqueleto de un apartado) ─────────────────────────── */
 .skelFields { display: flex; flex-direction: column; gap: 16px; padding-top: 4px; }
 .skelField  { display: flex; flex-direction: column; gap: 8px; }

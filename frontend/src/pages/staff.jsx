@@ -16,6 +16,8 @@ import { orgTz } from "../utils/datetime";
 import { STAFF_MANAGEMENT_PERMS } from "../features/staff/permissions";
 import { STAFF_ROLE_ORDER, roleLabel, roleShort, roleSummary } from "../features/staff/roles";
 import { describeAccess, PENDING_ACCESS } from "../features/staff/access";
+import { orderSpecialties, sameSpecialties } from "../features/staff/specialties";
+import SpecialtyPicker from "../features/staff/SpecialtyPicker";
 import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
 import TableSkeleton from "../components/TableSkeleton";
@@ -42,7 +44,7 @@ const EMPTY_FORM = {
     email: "",
     role: "VET",
     attends_patients: false,
-    specialty: "",
+    specialties: [],
     license_number: ""
 };
 
@@ -139,8 +141,9 @@ function editChanges(editing) {
     if (last !== (member.last_name || "")) changes.last_name = last;
     const email = editing.email.trim();
     if (email.toLowerCase() !== (member.email || "").toLowerCase()) changes.email = email;
-    const specialty = editing.specialty.trim();
-    if (specialty !== (member.specialty || "")) changes.specialty = specialty;
+    if (!sameSpecialties(editing.specialties, member.specialties)) {
+        changes.specialties = orderSpecialties(editing.specialties);
+    }
     const license = editing.license_number.trim();
     if (license !== (member.license_number || "")) changes.license_number = license;
     if (member.role === "ADMIN" && editing.attends_patients !== Boolean(member.attends_patients)) {
@@ -357,7 +360,7 @@ const Staff = () => {
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState(EMPTY_FORM);
     const [formErrors, setFormErrors] = useState({});
-    // Edición: { member, first_name, last_name, email, specialty, license_number } | null
+    // Edición: { member, first_name, last_name, email, specialties, license_number } | null
     const [editing, setEditing] = useState(null);
     const [editErrors, setEditErrors] = useState({});
     // Credenciales (alta, restablecer o reactivar): se muestran una sola vez.
@@ -439,6 +442,8 @@ const Staff = () => {
             const data = await createStaff({
                 ...form,
                 attends_patients: form.role === "ADMIN" ? form.attends_patients : false,
+                // ADR p68: solo quien atiende tiene especialidades.
+                specialties: attendsFor(form.role, form.attends_patients) ? form.specialties : [],
                 username: form.username.trim(),
                 first_name: normalizeName(form.first_name),
                 last_name: normalizeName(form.last_name),
@@ -464,7 +469,7 @@ const Staff = () => {
             first_name: member.first_name || "",
             last_name: member.last_name || "",
             email: member.email || "",
-            specialty: member.specialty || "",
+            specialties: member.specialties || [],
             license_number: member.license_number || "",
             attends_patients: Boolean(member.attends_patients),
         });
@@ -655,8 +660,8 @@ const Staff = () => {
         const missingLicense = Boolean(member.attends_patients) && !member.license_number;
         return (
             <>
-                <div className={member.specialty ? styles.primaryText : styles.secondaryText}>
-                    {member.specialty || "—"}
+                <div className={member.specialty_label ? styles.primaryText : styles.secondaryText}>
+                    {member.specialty_label || "—"}
                 </div>
                 {member.license_number ? (
                     <div className={styles.secondaryText}>
@@ -882,17 +887,16 @@ const Staff = () => {
                                 {"email" in editPending && <p className={styles.notice}>{EMAIL_CHANGE_NOTICE}</p>}
                                 {user?.is_demo && <p className="form-hint">{DEMO_EMAIL_HINT}</p>}
                             </div>
-                            <div className="form-group">
-                                <label className="form-label" htmlFor="edit-specialty">ESPECIALIDAD</label>
-                                <input
-                                    id="edit-specialty"
-                                    className={inputClass(editErrors.specialty)}
-                                    placeholder="Cirugía, Dermatología..."
-                                    value={editing.specialty}
-                                    onChange={e => setEditing({ ...editing, specialty: e.target.value })}
-                                />
-                                <FieldError message={editErrors.specialty} />
-                            </div>
+                            {attendsFor(editing.member.role, editing.attends_patients) && (
+                                <div className="form-group">
+                                    <SpecialtyPicker
+                                        idPrefix="edit-specialty"
+                                        value={editing.specialties}
+                                        onChange={(next) => setEditing({ ...editing, specialties: next })}
+                                        error={editErrors.specialties}
+                                    />
+                                </div>
+                            )}
                             <div className="form-group">
                                 <label className="form-label" htmlFor="edit-license">
                                     CÉDULA PROFESIONAL{attendsFor(editing.member.role, editing.attends_patients) ? " *" : ""}
@@ -989,17 +993,16 @@ const Staff = () => {
                                         )}
                                         <FieldError message={formErrors.attends_patients} />
                                     </div>
-                                    <div className="form-group">
-                                        <label className="form-label" htmlFor="create-specialty">ESPECIALIDAD</label>
-                                        <input
-                                            id="create-specialty"
-                                            className={inputClass(formErrors.specialty)}
-                                            placeholder="Cirugía, Dermatología..."
-                                            value={form.specialty}
-                                            onChange={e => setForm({ ...form, specialty: e.target.value })}
-                                        />
-                                        <FieldError message={formErrors.specialty} />
-                                    </div>
+                                    {attendsFor(form.role, form.attends_patients) && (
+                                        <div className="form-group">
+                                            <SpecialtyPicker
+                                                idPrefix="create-specialty"
+                                                value={form.specialties}
+                                                onChange={(next) => setForm({ ...form, specialties: next })}
+                                                error={formErrors.specialties}
+                                            />
+                                        </div>
+                                    )}
                                     <div className="form-group">
                                         <label className="form-label" htmlFor="create-license">
                                             CÉDULA PROFESIONAL{attendsFor(form.role, form.attends_patients) ? " *" : ""}

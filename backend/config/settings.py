@@ -345,6 +345,9 @@ REST_FRAMEWORK = {
         'user': '500/hour',
         'login': '5/15min',
         'login_by_user': '5/15min',
+        # ADR p68: segundo paso del login y gestión de la verificación en dos pasos.
+        'login_mfa': '10/15min',
+        'mfa': '20/hour',
         'token_logout': '60/hour',
         'vitals': '60/hour',
         # Platform-wide provisioning — operación cara + privilegiada.

@@ -45,7 +45,7 @@ const ACTIVE_ACCESS = { status: "active", last_login: null, temp_password_expire
 const VET = {
     id: 3, public_id: "vet-uuid", username: "ana", email: "ana@vet.mx",
     first_name: "Ana", last_name: "Galeno", role: "VET", attends_patients: true,
-    specialty: "Cirugía", license_number: "1234567", is_active: true,
+    specialties: ["surgery"], specialty_label: "Cirugía", license_number: "1234567", is_active: true,
     access: ACTIVE_ACCESS,
 };
 
@@ -500,7 +500,7 @@ describe("Equipo: edición de identidad (F5)", () => {
 describe("Equipo: inactivos y reactivación (F6)", () => {
     const FORMER = {
         ...VET, id: 7, public_id: "former-uuid", username: "luis", first_name: "Luis",
-        last_name: "Pardo", role: "ASSISTANT", license_number: "", specialty: "", is_active: false,
+        last_name: "Pardo", role: "ASSISTANT", license_number: "", specialties: [], specialty_label: "", is_active: false,
         access: { status: "inactive", last_login: null, temp_password_expires_at: null },
     };
 
@@ -581,7 +581,7 @@ describe("Equipo: rol, función clínica, impacto e historial (ADR p66)", () => 
     const ASSISTANT = {
         ...VET, id: 8, public_id: "asst-uuid", username: "rosa", email: "rosa@vet.mx",
         first_name: "Rosa", last_name: "Mora", role: "ASSISTANT", attends_patients: false,
-        specialty: "", license_number: "",
+        specialties: [], specialty_label: "", license_number: "",
     };
 
     it("cambia el rol desde el menú y conserva la función clínica al pasar a ADMIN", async () => {
@@ -719,5 +719,50 @@ describe("Equipo: rol, función clínica, impacto e historial (ADR p66)", () => 
         renderStaff();
         expect(await screen.findByText(/· Atiende pacientes/)).toBeInTheDocument();
         expect(screen.getByText("Sin cédula: no puede firmar")).toBeInTheDocument();
+    });
+});
+
+describe("Equipo: especialidades del catálogo (ADR p68)", () => {
+    it("la tabla muestra la etiqueta de sus especialidades", async () => {
+        renderStaff();
+        expect(await screen.findByText("Cirugía")).toBeInTheDocument();
+    });
+
+    it("el alta de un veterinario envía los códigos elegidos", async () => {
+        const user = userEvent.setup({ delay: null });
+        post.mockResolvedValueOnce({ data: { temp_password: "Gen-3", expires_in_seconds: null, member: VET } });
+        renderStaff();
+        await screen.findByText("1234567");
+        await user.click(screen.getByRole("button", { name: /agregar miembro/i }));
+        await user.type(screen.getByPlaceholderText("usuario123"), "eva");
+        await user.type(screen.getByPlaceholderText("Juan"), "Eva");
+        await user.type(screen.getByPlaceholderText("correo@ejemplo.com"), "eva@vet.mx");
+        await user.type(screen.getByRole("textbox", { name: /cédula profesional/i }), "2468024");
+        await user.click(screen.getByRole("checkbox", { name: "Dermatología" }));
+        await user.click(screen.getByRole("checkbox", { name: "Medicina general" }));
+        await user.click(screen.getByRole("button", { name: /guardar/i }));
+        await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+        expect(post.mock.calls[0][1].specialties).toEqual(["general_medicine", "dermatology"]);
+    });
+
+    it("un asistente no tiene especialidades", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderStaff();
+        await screen.findByText("1234567");
+        await user.click(screen.getByRole("button", { name: /agregar miembro/i }));
+        await user.click(screen.getByRole("radio", { name: /^Asistente/ }));
+        expect(screen.queryByRole("checkbox", { name: "Cirugía" })).not.toBeInTheDocument();
+    });
+
+    it("editar envía solo la lista nueva cuando cambia", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderStaff();
+        await screen.findByText("1234567");
+        await user.click(screen.getByRole("button", { name: /editar/i }));
+        expect(screen.getByRole("checkbox", { name: "Cirugía" })).toBeChecked();
+        await user.click(screen.getByRole("checkbox", { name: "Oncología" }));
+        await user.click(screen.getByRole("button", { name: /guardar/i }));
+        await waitFor(() => expect(patch).toHaveBeenCalledTimes(1));
+        expect(patch).toHaveBeenCalledWith("staff/vet-uuid/", { specialties: ["surgery", "oncology"] });
     });
 });

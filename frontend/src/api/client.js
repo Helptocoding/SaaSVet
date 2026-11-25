@@ -26,11 +26,13 @@ api.interceptors.request.use((config) => {
 
 const isLoginAttempt = (config) => {
     const url = config?.url || "";
-    return url.endsWith("token/") || url.endsWith("token");
+    // ADR p68: el segundo paso con verificación en dos pasos tampoco redirige:
+    // su 401 es un código mal escrito o un reto vencido, no una sesión caída.
+    return url.endsWith("token/") || url.endsWith("token") || /(^|\/)token\/mfa\/?$/.test(url);
 };
 
-// Login, refresh y cierre de sesión: nunca se reintentan.
-const AUTH_ENDPOINT = /(^|\/)token(\/(refresh|logout))?\/?$/;
+// Login, segundo paso, refresh y cierre de sesión: nunca se reintentan.
+const AUTH_ENDPOINT = /(^|\/)token(\/(refresh|logout|mfa))?\/?$/;
 
 // ADR p65 (D14): un 401 de una petición que viajó con un access token que ya no
 // es el almacenado (se renovó mientras viajaba, p. ej. al cambiar la propia

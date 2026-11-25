@@ -93,10 +93,10 @@ class StaffLicenseTests(APITestCase):
         self.client.force_authenticate(self.admin)
         with self.assertLogs('users.events', level='INFO') as logs:
             r = self.client.patch(staff_url(self.vet), {
-                'license_number': '87654321', 'specialty': 'Cirugía'}, format='json')
+                'license_number': '87654321', 'specialties': ['surgery']}, format='json')
         self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
         self.vet.refresh_from_db()
-        self.assertEqual((self.vet.license_number, self.vet.specialty), ('87654321', 'Cirugía'))
+        self.assertEqual((self.vet.license_number, self.vet.specialties), ('87654321', ['surgery']))
         self.assertEqual(r.data['license_number'], '87654321')
         self.assertTrue(any('STAFF_PROFILE_UPDATED' in line for line in logs.output))
 

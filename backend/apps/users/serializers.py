@@ -2,7 +2,9 @@ import re
 import unicodedata
 
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.models import update_last_login
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenObtainSerializer
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
 from django.contrib.auth import get_user_model
 from apps.organizations.models import Organization
 from apps.users.models import StaffAbsence
@@ -11,6 +13,25 @@ from apps.users.professional import (
 )
 
 User = get_user_model()
+
+
+class SpecialtiesField(serializers.ListField):
+    """Lista de códigos del catálogo de especialidades (ADR p68). Devuelve los
+    códigos sin repetir y en el orden del catálogo; uno desconocido es 400."""
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault('child', serializers.CharField())
+        kwargs.setdefault('allow_empty', True)
+        super().__init__(**kwargs)
+
+    def to_internal_value(self, data):
+        from apps.users.specialties import normalize_specialties
+        codes = super().to_internal_value(data)
+        try:
+            return normalize_specialties(codes)
+        except ValueError as exc:
+            raise serializers.ValidationError(
+                f'Especialidad no reconocida: {", ".join(exc.args[0])}.')
 
 
 class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -38,7 +59,17 @@ class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
             )
             if user is not None:
                 attrs[self.username_field] = user.get_username()
-        return super().validate(attrs)
+        # Autentica (y fija self.user) SIN emitir tokens todavía: con la
+        # verificación en dos pasos activa (ADR p68) la contraseña sola no basta.
+        TokenObtainSerializer.validate(self, attrs)
+        from apps.users.mfa import is_mfa_enabled, issue_login_challenge
+        if is_mfa_enabled(self.user):
+            return {'mfa_required': True, 'mfa_token': issue_login_challenge(self.user)}
+        refresh = self.get_token(self.user)
+        data = {'refresh': str(refresh), 'access': str(refresh.access_token)}
+        if jwt_settings.UPDATE_LAST_LOGIN:
+            update_last_login(None, self.user)
+        return data
 
     @classmethod
     def get_token(cls, user):
@@ -144,9 +175,10 @@ class UserSerializer(serializers.ModelSerializer):
         # Día 6 Fase 5: expone public_id para que frontend construya
         # URLs /staff/<uuid>/. id se conserva pre-beta.
         fields = ['id', 'public_id', 'username', 'email', 'first_name', 'last_name',
-                  'role', 'attends_patients', 'specialty', 'license_number', 'is_active',
+                  'role', 'attends_patients', 'specialties', 'specialty_label',
+                  'license_number', 'is_active',
                   'organization', 'organization_name', 'demo_protected', 'access']
-        read_only_fields = ['id', 'public_id']
+        read_only_fields = ['id', 'public_id', 'specialty_label']
 
     def get_attends_patients(self, obj):
         return is_clinician(obj)
@@ -209,9 +241,8 @@ class CreateEmployeeSerializer(serializers.Serializer):
         choices=['ADMIN', 'VET', 'ASSISTANT'],
         default='ASSISTANT'
     )
-    specialty = serializers.CharField(
-        required=False, allow_blank=True, default='', max_length=100,
-    )
+    # ADR p68: códigos del catálogo cerrado; se guardan sin repetir y en su orden.
+    specialties = SpecialtiesField(required=False, default=list)
     # M01 (orden 7) y ADR p66: obligatoria para quien atiende (validate).
     license_number = serializers.CharField(required=False, allow_blank=True, default='')
     # ADR p66: solo decide en ADMIN; VET siempre atiende y ASSISTANT nunca.
@@ -274,7 +305,7 @@ class UpdateEmployeeSerializer(serializers.Serializer):
     registra.
     """
     EDITABLE_FIELDS = frozenset({
-        'first_name', 'last_name', 'email', 'specialty', 'license_number',
+        'first_name', 'last_name', 'email', 'specialties', 'license_number',
         'attends_patients',
     })
 
@@ -285,7 +316,7 @@ class UpdateEmployeeSerializer(serializers.Serializer):
         required=False, allow_blank=True, max_length=PERSON_NAME_MAX_LENGTH,
     )
     email = serializers.EmailField(required=False)
-    specialty = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    specialties = SpecialtiesField(required=False)
     license_number = serializers.CharField(required=False, allow_blank=True)
     # ADR p66: solo en ADMIN; en VET y ASSISTANT lo define el rol.
     attends_patients = serializers.BooleanField(required=False)
@@ -299,7 +330,7 @@ class UpdateEmployeeSerializer(serializers.Serializer):
         unknown = sorted(set(data) - self.EDITABLE_FIELDS) if hasattr(data, 'keys') else []
         if unknown:
             raise serializers.ValidationError({'non_field_errors': [
-                'Solo se pueden editar nombre, apellido, correo, especialidad, '
+                'Solo se pueden editar nombre, apellido, correo, especialidades, '
                 'cédula profesional y si atiende pacientes.']})
         return super().to_internal_value(data)
 

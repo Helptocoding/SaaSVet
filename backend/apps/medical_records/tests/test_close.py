@@ -93,8 +93,8 @@ class CloseMedicalRecordTests(APITestCase):
     def test_close_captures_vet_identity_once_even_after_rename_and_replay(self):
         self.vet_a.first_name = 'Eva'
         self.vet_a.last_name = 'Original'
-        self.vet_a.specialty = 'Cirugía'
-        self.vet_a.save(update_fields=['first_name', 'last_name', 'specialty'])
+        self.vet_a.specialties = ['surgery']
+        self.vet_a.save(update_fields=['first_name', 'last_name', 'specialties'])
         mr = self._make_record()
         self.client.force_authenticate(self.vet_a)
         first = self.client.post(self._close_url(mr.public_id))

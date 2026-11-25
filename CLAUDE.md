@@ -103,7 +103,27 @@ Antes de implementar:
 Antes de crear una migración:
 
 - explicar cambio de schema
-- validar compatibilidad con datos existentes
+- validar compatibilidad con datos existentes (hoy: bases de desarrollo, CI y la demo; ver abajo)
+
+---
+
+# Datos y usuarios reales
+
+Hoy NO existen clínicas, usuarios ni datos reales (confirmado por el PO el 2026-11-09 y el
+2026-11-24). Todo lo que hay en las bases es de prueba y se puede cambiar o eliminar.
+
+Al planear, auditar o implementar:
+
+- No limitar ni posponer una propuesta por «impacto en usuarios actuales», «clínicas en
+  producción» o «datos históricos que proteger»: no existen.
+- No hacen falta backfills conservadores, ventanas de deprecación para clientes existentes,
+  convivencia de versiones, regularizaciones de datos ni aprobaciones por dato.
+- Sí sigue vigente todo lo que protege a los usuarios futuros: seguridad, aislamiento entre
+  clínicas, invariantes de dominio, pruebas, y que las migraciones apliquen limpias sobre bases
+  de desarrollo, CI y la demo (`seed_demo_clinic`).
+- Sigue prohibido conectar al servidor de producción, y commit/push requieren petición expresa.
+
+Reverificar con el PO en cuanto se incorpore una clínica real.
 
 ---
 

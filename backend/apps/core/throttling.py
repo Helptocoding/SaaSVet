@@ -87,6 +87,17 @@ class LoginRateThrottle(ExtendedRateThrottle, AnonRateThrottle):
         return caches['throttle_login']
 
 
+class LoginMFAThrottle(ExtendedRateThrottle, AnonRateThrottle):
+    """Segundo paso del login con verificación en dos pasos (ADR p68), por IP y
+    en su propio bucket: teclear la contraseña no debe gastar los intentos del
+    código. Misma caché fail-closed que el login."""
+    scope = 'login_mfa'
+
+    @property
+    def cache(self):
+        return caches['throttle_login']
+
+
 class TokenLogoutThrottle(ExtendedRateThrottle, AnonRateThrottle):
     """Limita el logout por IP, en un bucket propio: cerrar sesión no debe gastar
     los intentos de login. Fail-open con la cache `default`: el cliente cierra la

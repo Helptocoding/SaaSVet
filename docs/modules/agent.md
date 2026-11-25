@@ -1638,6 +1638,10 @@ sistema no elige "un veterinario asignado al bot"; elige al que está **libre**.
 (`operation_execution`) usan el predicado único `apps.users.professional.clinician_q` / `is_clinician`: el
 dueño veterinario con rol ADMIN marcado como que atiende recibe huecos. Los adapters B8 siguen apagados.
 
+**ADR p68:** `get_offered_specialties` cruza por **código** del catálogo cerrado
+(`apps.users.specialties`) los servicios activos con especialidad y los clínicos activos con
+esa especialidad; devuelve la etiqueta. Antes comparaba textos libres por tokens.
+
 **ADR p67:** un veterinario con ausencia vigente no tiene huecos ese día. `_present_vets` lo
 excluye en `_free_slots_for_day`, `_exact_slot_status` y `pick_free_vet`; si nadie queda, la hora
 sale `slot_taken` y se re-oferta. `validate_creation` (B8B) y `validate_mutation` (B8C) lo

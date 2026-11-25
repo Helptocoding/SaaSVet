@@ -38,3 +38,9 @@ La receta y el PDF de consulta llevaban el nombre y la especialidad del veterina
 ## Enmienda 2026-11-24 (ADR p66)
 
 En Equipo la cédula la exige **quien atiende pacientes** (VET, o ADMIN marcado como que atiende), no solo `VET`: en el alta, la edición y el cambio de rol. La regla del firmante (`require_signer_license`) no cambia. Ver [ADR p66](2026-11-24-p66-funcion-clinica-y-cambio-de-rol.md).
+
+## Enmienda 2026-11-24 (ADR p68)
+
+La especialidad deja de ser texto libre: `User.specialties` (lista de códigos de un catálogo
+cerrado) y `specialty_label` para mostrar e imprimir. Los documentos cerrados conservan su
+`vet_specialty_at_close`. Ver [ADR p68](2026-11-24-p68-mfa-y-especialidades.md).

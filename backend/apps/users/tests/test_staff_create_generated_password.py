@@ -140,7 +140,7 @@ class CreateServiceTests(_Fixtures):
     def data(self, **over):
         data = {
             'username': 'svc.vet', 'email': 'svc.vet@example.com', 'first_name': 'Svc',
-            'last_name': '', 'role': 'VET', 'specialty': '', 'license_number': '1234567',
+            'last_name': '', 'role': 'VET', 'specialties': [], 'license_number': '1234567',
         }
         data.update(over)
         return data
