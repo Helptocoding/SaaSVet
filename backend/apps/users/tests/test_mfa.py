@@ -26,12 +26,14 @@ from apps.users import totp
 from apps.users.models import StaffAccessEvent, UserMFA
 
 User = get_user_model()
-PASSWORD = 'Contrasena-Segura-1'
+# Contraseña de prueba, no una credencial real.
+PASSWORD = 'Contrasena-Segura-1'  # gitleaks:allow
 FAST = override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
 
 
 class TotpTests(SimpleTestCase):
-    RFC_SECRET = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'  # b'12345678901234567890'
+    # Secreto público de los vectores de prueba del RFC 6238 (b'12345678901234567890').
+    RFC_SECRET = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'  # gitleaks:allow
 
     def test_rfc6238_sha1_vectors_truncated_to_six_digits(self):
         for unix_time, expected in ((59, '287082'), (1111111109, '081804'),
