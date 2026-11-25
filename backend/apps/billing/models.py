@@ -7,6 +7,7 @@ from django.db.models import Q, Sum
 from django.utils import timezone
 from apps.core.models import OrganizationalModel, PublicIdMixin
 from apps.billing.money import discount_amount, invoice_totals, line_subtotal, money
+from apps.users.specialties import SPECIALTIES
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,9 @@ class Service(PublicIdMixin, OrganizationalModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    # ADR p68: especialidad del catálogo único (apps.users.specialties), opcional.
+    # Liga el servicio con quienes lo pueden dar.
+    specialty = models.CharField(max_length=32, choices=SPECIALTIES, blank=True, default='')
     # is_active, created_at, updated_at heredados de OrganizationalModel
 
     def __str__(self):

@@ -57,7 +57,8 @@ class MeView(APIView):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "role": user.role,
-            "specialty": user.specialty,
+            "specialties": user.specialties,
+            "specialty_label": user.specialty_label,
             # Día 6 Fase 4: emite organization (id PK, retrocompat) +
             # organization_public_id (UUID, nuevo). Frontend nuevo debe
             # consumir organization_public_id para deep links.
@@ -574,3 +575,70 @@ class StaffAbsenceDetailView(APIView):
         absence = cancel_absence(actor=request.user, absence=absence,
                                  request_id=_request_id(request))
         return Response(StaffAbsenceSerializer(absence).data)
+
+
+# ---------------------------------------------------------------------------
+# ADR p68: verificación en dos pasos de la propia cuenta (solo ADMIN, opcional).
+# ---------------------------------------------------------------------------
+
+def _body_str(request, name):
+    value = (request.data or {}).get(name)
+    return value if isinstance(value, str) else ('' if value is None else str(value))
+
+
+class MyMFAView(APIView):
+    """GET /api/users/mfa/ — ``{available, enabled, enabled_at,
+    recovery_codes_remaining}`` de la propia cuenta."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.users.mfa import mfa_status
+        return Response(mfa_status(request.user))
+
+
+class _MFAChangeView(APIView):
+    # La demo comparte credenciales fijas: activar MFA la dejaría inaccesible.
+    permission_classes = [IsAuthenticated, NotDemoAccount]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'mfa'
+
+
+class MyMFASetupView(NoStoreResponseMixin, _MFAChangeView):
+    """POST /api/users/mfa/setup/ ``{password}`` → ``{secret, otpauth_uri}``: la
+    clave para teclear en la app (vale 30 minutos hasta confirmarla)."""
+
+    def post(self, request):
+        from apps.users.mfa import start_setup
+        return Response(start_setup(request.user, _body_str(request, 'password')))
+
+
+class MyMFAEnableView(NoStoreResponseMixin, _MFAChangeView):
+    """POST /api/users/mfa/enable/ ``{code}`` → activa y devuelve los 10 códigos
+    de respaldo, que no se vuelven a mostrar."""
+
+    def post(self, request):
+        from apps.users.mfa import enable, mfa_status
+        codes = enable(request.user, _body_str(request, 'code'), request_id=_request_id(request))
+        return Response({**mfa_status(request.user), 'recovery_codes': codes})
+
+
+class MyMFADisableView(_MFAChangeView):
+    """POST /api/users/mfa/disable/ ``{password, code}`` (código de la app o de
+    respaldo) → desactiva."""
+
+    def post(self, request):
+        from apps.users.mfa import disable, mfa_status
+        disable(request.user, _body_str(request, 'password'), _body_str(request, 'code'),
+                request_id=_request_id(request))
+        return Response(mfa_status(request.user))
+
+
+class MyMFARecoveryCodesView(NoStoreResponseMixin, _MFAChangeView):
+    """POST /api/users/mfa/recovery-codes/ ``{password, code}`` → 10 códigos
+    nuevos; los anteriores dejan de servir."""
+
+    def post(self, request):
+        from apps.users.mfa import mfa_status, regenerate_recovery_codes
+        codes = regenerate_recovery_codes(
+            request.user, _body_str(request, 'password'), _body_str(request, 'code'))
+        return Response({**mfa_status(request.user), 'recovery_codes': codes})

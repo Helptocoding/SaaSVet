@@ -1736,6 +1736,22 @@ Pantalla de **gestión** de integrantes (`pages/staff.jsx`). Contrato backend en
 | `/prescriptions`    | Recetas             | Privada      |
 | `/staff`            | Equipo              | Por capacidad de gestión (`staff.*`); sin ella redirige a `/` (Fase 1 Equipo) |
 | `/staff/:publicId`  | Ficha del integrante | Misma guarda que Equipo (ADR p67) |
+
+**Verificación en dos pasos (ADR p68).** `useLoginForm`: si `token/` responde
+`mfa_required`, guarda el reto y `LoginForm` pide «Código de verificación» (de la app o de
+respaldo) para `token/mfa/` (`auth/login.js::loginMfaRequest`). Un `mfa_challenge_invalid`
+vuelve a la contraseña; un `mfa_code_invalid` deja reintentar. Tras un código de respaldo avisa
+cuántos quedan. `api/client.js` trata `token/mfa/` como el login: un 401 ahí no cierra la sesión
+ni se reintenta. La gestión vive en Configuración → Cuenta (`pages/config/MfaSettings.jsx`, con
+`api/mfa.js`): activar (contraseña → clave para teclear + enlace `otpauth://` → primer código →
+10 códigos de respaldo mostrados una vez), desactivar y generar códigos nuevos. Solo aparece si
+`available`.
+
+**Especialidades (ADR p68).** `features/staff/specialties.json` (copia del catálogo del
+backend) + `specialties.js` (`specialtyLabel`, `orderSpecialties`, `sameSpecialties`).
+`features/staff/SpecialtyPicker.jsx`: casillas, varias a la vez, en el alta y la edición de
+quien atiende pacientes. Tabla y ficha muestran `specialty_label`. Configuración → Servicios
+elige una especialidad opcional por servicio.
 | `/config`           | Configuracion       | Solo ADMIN   |
 
 ## Testing (Vitest + Testing Library) — P1-4

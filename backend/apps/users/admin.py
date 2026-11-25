@@ -9,7 +9,7 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ('role', 'organization', 'is_active')
     search_fields = ('username', 'email')
     fieldsets = UserAdmin.fieldsets + (
-        ('Veterinaria SaaS', {'fields': ('organization', 'role', 'specialty')}),
+        ('Veterinaria SaaS', {'fields': ('organization', 'role', 'specialties')}),
     )
 
     # PR-4B / ADR p16: DELETE bloqueado en admin. Aunque User no tiene FKs

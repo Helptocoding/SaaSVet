@@ -64,8 +64,8 @@ class PrescriptionPdfTests(APITestCase):
         cls.vet = _make_user("vet_rx_pdf", cls.org, "VET")
         cls.vet.first_name = "Ana"
         cls.vet.last_name = "Galeno"
-        cls.vet.specialty = "Dermatología"
-        cls.vet.save(update_fields=["first_name", "last_name", "specialty"])
+        cls.vet.specialties = ["dermatology"]
+        cls.vet.save(update_fields=["first_name", "last_name", "specialties"])
 
         cls.owner = Owner.objects.create(name="Pedro Ramirez", phone="5550001111",
                                          organization=cls.org)

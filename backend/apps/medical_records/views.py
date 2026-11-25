@@ -548,7 +548,7 @@ def medical_record_pdf(request, pk):
         vet = record.veterinarian if record.status != MedicalRecord.Status.CLOSED else None
         vet_name = (record.vet_name_at_close or 'Desconocido') if vet is None else (
             f"{vet.first_name} {vet.last_name}".strip() or vet.username)
-        specialty = record.vet_specialty_at_close if vet is None else vet.specialty
+        specialty = record.vet_specialty_at_close if vet is None else vet.specialty_label
         # M01 (orden 7): cédula congelada al cierre; la del usuario mientras está abierta.
         license_number = record.vet_license_at_close if vet is None else vet.license_number
         spec = f" &nbsp;·&nbsp; {pdf_markup(specialty)}" if specialty else ""

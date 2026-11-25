@@ -1,9 +1,11 @@
 from uuid import uuid4
 
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models.functions import Lower
 from apps.organizations.models import Organization
+from apps.users.specialties import SPECIALTIES, specialties_display
 
 
 class User(AbstractUser):
@@ -34,7 +36,12 @@ class User(AbstractUser):
         blank=True
     )
     role = models.CharField(max_length=15, choices=ROLE_CHOICES, default='ASSISTANT')
-    specialty = models.CharField(max_length=100, blank=True, default='')
+    # ADR p68: catálogo cerrado, varias por integrante, en el orden del catálogo
+    # (apps.users.specialties). Antes era texto libre (`specialty`).
+    specialties = ArrayField(
+        models.CharField(max_length=32, choices=SPECIALTIES),
+        default=list, blank=True,
+    )
     # M01 (orden 7, ADR p64): cédula profesional, solo dígitos (5 a 10), sin
     # verificar contra la SEP. Obligatoria para VET y para quien firma consultas y
     # recetas: lo exigen apps/users/professional.py y el dominio clínico. db_default
@@ -101,6 +108,11 @@ class User(AbstractUser):
             ),
         ]
 
+    @property
+    def specialty_label(self):
+        """«Cirugía, Dermatología» (ADR p68): lo que se muestra y se imprime."""
+        return specialties_display(self.specialties)
+
     def save(self, *, force_insert=False, force_update=False, using=None, update_fields=None):
         """Guarda sin escribir nunca `session_version` en una fila existente (ADR p65).
 
@@ -151,6 +163,9 @@ class StaffAccessEvent(models.Model):
     KIND_ABSENCE_ADDED = 'absence_added'
     KIND_ABSENCE_CANCELLED = 'absence_cancelled'
     KIND_APPOINTMENTS_REASSIGNED = 'appointments_reassigned'
+    # ADR p68: verificación en dos pasos.
+    KIND_MFA_ENABLED = 'mfa_enabled'
+    KIND_MFA_DISABLED = 'mfa_disabled'
     KIND_CHOICES = (
         (KIND_CREATED, 'Alta'),
         (KIND_PROFILE_UPDATED, 'Edición de datos'),
@@ -161,6 +176,8 @@ class StaffAccessEvent(models.Model):
         (KIND_ABSENCE_ADDED, 'Ausencia registrada'),
         (KIND_ABSENCE_CANCELLED, 'Ausencia cancelada'),
         (KIND_APPOINTMENTS_REASSIGNED, 'Citas reasignadas'),
+        (KIND_MFA_ENABLED, 'Verificación en dos pasos activada'),
+        (KIND_MFA_DISABLED, 'Verificación en dos pasos desactivada'),
     )
 
     organization = models.ForeignKey(
@@ -261,3 +278,43 @@ class StaffAbsence(models.Model):
     @property
     def is_active(self):
         return self.cancelled_at is None
+
+
+class UserMFA(models.Model):
+    """Verificación en dos pasos de una persona (ADR p68): código de 6 dígitos de
+    una app autenticadora (TOTP, ``apps.users.totp``).
+
+    Opcional y solo para ADMIN. Mientras se configura, el secreto vive en
+    ``pending_secret_encrypted``; pasa a ``secret_encrypted`` cuando la persona
+    demuestra que su app genera códigos válidos. Los secretos se guardan
+    cifrados y los códigos de respaldo, como HMAC: la base sola no permite
+    generarlos ni leerlos.
+
+    Un restablecimiento de contraseña (de clínica o de plataforma) y una
+    reactivación borran esta fila: es la salida para quien perdió su celular y
+    sus códigos de respaldo (decisión del PO).
+    """
+    user = models.OneToOneField('users.User', on_delete=models.CASCADE, related_name='mfa')
+    secret_encrypted = models.TextField(blank=True, default='')
+    pending_secret_encrypted = models.TextField(blank=True, default='')
+    pending_created_at = models.DateTimeField(null=True, blank=True)
+    enabled_at = models.DateTimeField(null=True, blank=True)
+    # Último paso TOTP aceptado: un código no se acepta dos veces.
+    last_used_step = models.BigIntegerField(null=True, blank=True)
+    recovery_code_hashes = models.JSONField(default=list, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(enabled_at__isnull=True)
+                    | ~models.Q(secret_encrypted='')
+                ),
+                name='user_mfa_enabled_has_secret',
+            ),
+        ]
+
+    @property
+    def is_enabled(self):
+        return self.enabled_at is not None and bool(self.secret_encrypted)

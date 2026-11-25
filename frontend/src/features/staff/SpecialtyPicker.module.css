@@ -1,0 +1,36 @@
+/* Selector de especialidades (ADR p68). Solo tokens. */
+
+.fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-1) var(--space-3);
+    max-height: 200px;
+    margin-top: var(--space-1);
+    overflow-y: auto;
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 32px;
+    color: var(--c-text);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.option input {
+    accent-color: var(--c-primary);
+}
+
+.error {
+    margin-top: var(--space-1);
+    color: var(--c-danger-text);
+    font-size: 12px;
+}

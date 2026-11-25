@@ -226,7 +226,7 @@ const StaffMember = () => {
                     <dl className={styles.fields}>
                         <Field label="Correo">{member.email}</Field>
                         <Field label="Usuario">{member.username}</Field>
-                        <Field label="Especialidad">{member.specialty}</Field>
+                        <Field label="Especialidades">{member.specialty_label}</Field>
                         <Field label="Cédula profesional">{member.license_number}</Field>
                         <Field label="Acceso">
                             <span title={access.title}>{access.label}{access.detail ? ` · ${access.detail}` : ""}</span>

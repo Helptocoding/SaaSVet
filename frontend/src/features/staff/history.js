@@ -9,6 +9,7 @@ const FIELD_LABELS = {
     last_name: "apellido",
     email: "correo",
     specialty: "especialidad",
+    specialties: "especialidades",
     license_number: "cédula",
     attends_patients: "si atiende pacientes",
 };

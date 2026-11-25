@@ -117,12 +117,19 @@ def platform_reset_password(
         if created:
             revoked_count += 1
     bump_session_version(target_user)
+    # ADR p68 (PO): quita también la verificación en dos pasos. Es la salida de
+    # un único ADMIN que perdió su celular y sus códigos de respaldo.
+    from apps.users.mfa import remove_for_reset
+    mfa_removed = remove_for_reset(target_user)
     # ADR p66: también queda en el historial de accesos de la clínica, con el
     # operador de plataforma como actor y el origen marcado.
     if target_user.organization_id is not None:
+        changes = {'source': 'platform'}
+        if mfa_removed:
+            changes['mfa_removed'] = True
         record_staff_event(
             member=target_user, actor=actor, kind='password_reset',
-            changes={'source': 'platform'}, request_id=request_id or '',
+            changes=changes, request_id=request_id or '',
         )
 
     # --- 5. Audit log ----------------------------------------------------------

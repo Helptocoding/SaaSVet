@@ -140,6 +140,23 @@ negocio dentro del SaaS** para cada dominio.
 
 ---
 
+### Acción: Activar o desactivar la verificación en dos pasos (ADR p68)
+
+**Requiere**
+- Ser ADMIN (no demo ni cuenta de servicio). Activar: contraseña y el primer código de la app.
+  Desactivar o generar códigos nuevos: contraseña y un código (de la app o de respaldo).
+
+**Resultado**
+- Activa: `UserMFA` con secreto cifrado, 10 códigos de respaldo de un solo uso (se muestran una
+  vez) y evento `mfa_enabled`. Desde entonces la contraseña sola no emite tokens: el login pide
+  el código en `token/mfa/`.
+- Desactivar borra el `UserMFA` y deja `mfa_disabled`.
+
+**Bloquea**
+- Restablecer la contraseña (clínica o plataforma) y reactivar **quitan** el MFA (PO).
+
+---
+
 ### Acción: Registrar o cancelar una ausencia (ADR p67)
 
 **Requiere**

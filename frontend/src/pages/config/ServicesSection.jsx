@@ -7,9 +7,10 @@ import { useConfirm } from "../../components/useConfirm";
 import { Icon } from "../../components/icons";
 import EmptyState from "../../components/EmptyState";
 import SettingsPanel from "./SettingsPanel";
+import { SPECIALTIES, specialtyLabel } from "../../features/staff/specialties";
 import styles from "./config.module.css";
 
-const EMPTY_SERVICE = { name: "", description: "", base_price: "", is_active: true };
+const EMPTY_SERVICE = { name: "", description: "", base_price: "", specialty: "", is_active: true };
 
 const ServicesSection = ({ services, onServicesChange, onOnboardingDone }) => {
   const { can } = useAuth();
@@ -24,7 +25,7 @@ const ServicesSection = ({ services, onServicesChange, onOnboardingDone }) => {
   const openNew = () => { setEditing(null); setForm(EMPTY_SERVICE); setShowModal(true); };
   const openEdit = (svc) => {
     setEditing(svc);
-    setForm({ name: svc.name, description: svc.description || "", base_price: svc.base_price, is_active: svc.is_active });
+    setForm({ name: svc.name, description: svc.description || "", base_price: svc.base_price, specialty: svc.specialty || "", is_active: svc.is_active });
     setShowModal(true);
   };
   const close = () => { setShowModal(false); setEditing(null); setForm(EMPTY_SERVICE); };
@@ -97,6 +98,7 @@ const ServicesSection = ({ services, onServicesChange, onOnboardingDone }) => {
               <span className={`${styles.serviceName} ${!svc.is_active ? styles.serviceNameInactive : ""}`}>
                 {svc.name}
               </span>
+              {svc.specialty && <span className="badge badge-info">{specialtyLabel(svc.specialty)}</span>}
               {!svc.is_active && <span className="badge badge-default">Inactivo</span>}
             </div>
             <div className={styles.serviceActions}>
@@ -133,6 +135,15 @@ const ServicesSection = ({ services, onServicesChange, onOnboardingDone }) => {
                     value={form.base_price}
                     onChange={(e) => setForm({ ...form, base_price: e.target.value })}
                     placeholder="0.00" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="service-specialty">ESPECIALIDAD</label>
+                  <select id="service-specialty" className="select-input" value={form.specialty}
+                    onChange={(e) => setForm({ ...form, specialty: e.target.value })}>
+                    <option value="">Sin especialidad</option>
+                    {SPECIALTIES.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+                  </select>
+                  <p className="form-hint">Liga el servicio con quienes tienen esa especialidad en Equipo.</p>
                 </div>
                 <div className="form-group">
                   <label className="form-label">DESCRIPCIÓN</label>
