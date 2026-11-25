@@ -1707,6 +1707,17 @@ Pantalla de **gestión** de integrantes (`pages/staff.jsx`). Contrato backend en
   de un ADMIN; la cédula se marca obligatoria para quien atiende.
 - **Agenda (`pages/appointments.jsx`)**: lista como veterinarios a quienes `attends_patients`
   (del directorio), no a `VET`/`ADMIN` por nombre de rol.
+- **Fase 3 (ADR p67) — ficha `/staff/:publicId`** (`pages/staffMember.jsx`): datos, pendientes,
+  citas por atender con «Reasignar citas», ausencias (registrar con `DateField`, cancelar con
+  `useConfirm`) e historial. Sustituye al modal «Historial»: el nombre de la fila y «Ver ficha»
+  la abren. Misma guarda que Equipo. `features/staff/ReassignModal.jsx` envía todas las citas
+  con el `expected_state` con que llegaron (nunca relee) y muestra las que no se movieron con su
+  motivo; se abre también al registrar una ausencia con citas en esos días. Tras desactivar a
+  alguien con citas, el aviso ofrece «Reasignar citas». `features/staff/absences.js` compara y
+  formatea fechas locales sin pasar por la zona del navegador (`orgTodayIso`, `formatLocalDate`).
+- **Agenda y ausencias (ADR p67)**: `loadAll` pide `getAbsences()` (si falla, la agenda sigue) y
+  los selectores de veterinario muestran «· ausente» para la fecha del formulario; el backend
+  bloquea con `400 veterinarian_absent`, que llega como aviso.
 ## Rutas
 
 | Ruta                | Pagina              | Acceso       |
@@ -1724,6 +1735,7 @@ Pantalla de **gestión** de integrantes (`pages/staff.jsx`). Contrato backend en
 | `/cash`             | Caja (turnos + Z)   | Privada      |
 | `/prescriptions`    | Recetas             | Privada      |
 | `/staff`            | Equipo              | Por capacidad de gestión (`staff.*`); sin ella redirige a `/` (Fase 1 Equipo) |
+| `/staff/:publicId`  | Ficha del integrante | Misma guarda que Equipo (ADR p67) |
 | `/config`           | Configuracion       | Solo ADMIN   |
 
 ## Testing (Vitest + Testing Library) — P1-4

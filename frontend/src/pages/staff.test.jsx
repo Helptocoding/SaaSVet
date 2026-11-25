@@ -51,7 +51,6 @@ const VET = {
 
 const NO_IMPACT = { upcoming_appointments: 0, open_medical_records: 0, open_cash_session: false };
 let impact = NO_IMPACT;
-let historyRows = [];
 
 let activeRows = [VET];
 let inactiveRows = [];
@@ -63,6 +62,7 @@ function renderStaff() {
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/" element={<p>Inicio</p>} />
                 <Route path="/cash" element={<p>Caja</p>} />
+                <Route path="/staff/:publicId" element={<p>Ficha del integrante</p>} />
             </Routes>
         </MemoryRouter>,
     );
@@ -80,10 +80,9 @@ beforeEach(() => {
     activeRows = [VET];
     inactiveRows = [];
     impact = NO_IMPACT;
-    historyRows = [];
     get.mockImplementation((url) => Promise.resolve({
         data: url.endsWith("/impact/") ? impact
-            : url.endsWith("/history/") ? historyRows
+            : url.endsWith("/history/") ? []
             : url.includes("archived=true") ? inactiveRows : activeRows,
     }));
     post.mockResolvedValue({ data: VET });
@@ -195,12 +194,12 @@ describe("Equipo: permisos por capacidad, ruta y fila propia (F4, Fase 1)", () =
         await screen.findByText("1234567");
         expect(screen.getByRole("button", { name: /editar a ana galeno/i })).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /agregar miembro/i })).not.toBeInTheDocument();
-        // ADR p66: el menú solo ofrece el historial; sin permisos para lo demás.
+        // ADR p67: el menú solo ofrece la ficha; sin permisos para lo demás.
         const menu = await openRowMenu(user);
-        expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(["Historial"]);
+        expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(["Ver ficha"]);
     });
 
-    it("la fila propia muestra «Tú» y Editar, y su menú solo el historial", async () => {
+    it("la fila propia muestra «Tú» y Editar, y su menú solo la ficha", async () => {
         const user = userEvent.setup({ delay: null });
         granted.add("staff.reset_password");
         granted.add("staff.change_role");
@@ -210,7 +209,7 @@ describe("Equipo: permisos por capacidad, ruta y fila propia (F4, Fase 1)", () =
         expect(within(row).getByText("Tú")).toBeInTheDocument();
         expect(within(row).getByRole("button", { name: /editar/i })).toBeInTheDocument();
         const menu = await openRowMenu(user);
-        expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(["Historial"]);
+        expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(["Ver ficha"]);
     });
 
     it("una cuenta protegida de la demo no muestra acciones", async () => {
@@ -229,7 +228,7 @@ describe("Equipo: permisos por capacidad, ruta y fila propia (F4, Fase 1)", () =
         await user.click(within(menu).getByRole("menuitem", { name: "Desactivar acceso" }));
         expect(confirmMock).toHaveBeenCalledWith({
             title: "Desactivar acceso de Ana Galeno",
-            message: "Dejará de poder entrar y se cerrarán sus sesiones. Sus citas, consultas y registros se conservan. Revisa en Citas si tiene citas próximas asignadas. Podrás reactivarlo desde Inactivos.",
+            message: "Dejará de poder entrar y se cerrarán sus sesiones. Sus citas, consultas y registros se conservan. Podrás reactivarlo desde Inactivos.",
             confirmText: "Desactivar acceso",
             dangerMode: true,
         });
@@ -629,7 +628,7 @@ describe("Equipo: rol, función clínica, impacto e historial (ADR p66)", () => 
         const dialog = await screen.findByRole("dialog", { name: "Cambiar rol de Ana Galeno" });
         await user.click(within(dialog).getByRole("radio", { name: /^Asistente/ }));
         expect(await within(dialog).findByText(
-            "Tiene 3 citas próximas y 1 consulta abierta a su nombre: seguirán asignadas, no se reasignan solas.",
+            "Tiene 3 citas próximas y 1 consulta abierta a su nombre: seguirán asignadas; las citas se reasignan desde su ficha.",
         )).toBeInTheDocument();
     });
 
@@ -664,27 +663,35 @@ describe("Equipo: rol, función clínica, impacto e historial (ADR p66)", () => 
         await user.click(within(menu).getByRole("menuitem", { name: "Desactivar acceso" }));
         await waitFor(() => expect(del).toHaveBeenCalledWith("staff/vet-uuid/"));
         expect(confirmMock.mock.calls[0][0].message).toMatch(
-            /^Tiene 2 citas próximas a su nombre: seguirán asignadas, no se reasignan solas\. Dejará de poder entrar/,
+            /^Tiene 2 citas próximas a su nombre: seguirán asignadas; las citas se reasignan desde su ficha\. Dejará de poder entrar/,
         );
+        // Sin `appointment.update` no se ofrece reasignar.
+        expect(toast.success).toHaveBeenCalledWith("Acceso desactivado", undefined);
     });
 
-    it("muestra el historial con frases y sin datos personales", async () => {
+    it("tras desactivar a alguien con citas ofrece reasignarlas en su ficha (ADR p67)", async () => {
         const user = userEvent.setup({ delay: null });
-        historyRows = [
-            { kind: "role_changed", kind_label: "Cambio de rol", created_at: "2026-11-24T15:00:00Z", actor_name: "Ada Admin",
-              changes: { role: { from: "VET", to: "ADMIN" } } },
-            { kind: "created", kind_label: "Alta", created_at: "2026-11-20T10:00:00Z", actor_name: "Ada Admin",
-              changes: { role: "VET", attends_patients: true } },
-        ];
+        granted.add("appointment.update");
+        impact = { upcoming_appointments: 2, open_medical_records: 0, open_cash_session: false };
         renderStaff();
         await screen.findByText("1234567");
         const menu = await openRowMenu(user);
-        await user.click(within(menu).getByRole("menuitem", { name: "Historial" }));
-        const dialog = await screen.findByRole("dialog", { name: "Historial de Ana Galeno" });
-        expect(await within(dialog).findByText("Cambió el rol de veterinario a administrador")).toBeInTheDocument();
-        expect(within(dialog).getByText("Alta como veterinario")).toBeInTheDocument();
-        expect(within(dialog).getAllByText(/Ada Admin/)).toHaveLength(2);
-        expect(get).toHaveBeenCalledWith("staff/vet-uuid/history/");
+        await user.click(within(menu).getByRole("menuitem", { name: "Desactivar acceso" }));
+        await waitFor(() => expect(toast.success).toHaveBeenCalled());
+        const [, options] = toast.success.mock.calls[0];
+        expect(options.action.label).toBe("Reasignar citas");
+        options.action.onClick();
+        expect(await screen.findByText("Ficha del integrante")).toBeInTheDocument();
+    });
+
+    it("«Ver ficha» y el nombre abren la ficha del integrante (ADR p67)", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderStaff();
+        await screen.findByText("1234567");
+        expect(screen.getByRole("link", { name: "Ana Galeno" })).toHaveAttribute("href", "/staff/vet-uuid");
+        const menu = await openRowMenu(user);
+        await user.click(within(menu).getByRole("menuitem", { name: "Ver ficha" }));
+        expect(await screen.findByText("Ficha del integrante")).toBeInTheDocument();
     });
 
     it("el alta de un ADMIN que atiende exige cédula y la envía marcada", async () => {

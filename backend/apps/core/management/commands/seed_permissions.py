@@ -90,7 +90,7 @@ class Command(BaseCommand):
         for role in roles:
             roles_by_org.setdefault(role.organization_id, []).append(role)
 
-        for org in Organization.objects.all():
+        for org in Organization.objects.order_by("pk"):
             org_users = users.filter(organization=org)
             without_role = org_users.exclude(pk__in=UserRole.objects.values("user_id")).count()
             mismatched = org_users.filter(user_roles__isnull=False).exclude(
@@ -135,7 +135,10 @@ class Command(BaseCommand):
     def _seed_roles(self):
         perms_map = {p.code: p for p in Permission.objects.filter(code__in=PERMISSION_CODES)}
 
-        orgs = list(Organization.objects.all())
+        # Orden determinista: sin él PostgreSQL devuelve el orden físico de las
+        # filas, que cambia con lo que se haya borrado antes, y un seed que falla
+        # a mitad dejaría hechas organizaciones distintas en cada corrida.
+        orgs = list(Organization.objects.order_by("pk"))
         roles_created = 0
         roles_updated = 0
 

@@ -19,7 +19,10 @@ from apps.organizations.models import Organization, OrganizationSchedule
 from apps.patients.models import Owner, Pet
 from apps.users.models import User
 from .models import Appointment
-from .services import ACTIVE_STATUSES, lock_veterinarians, is_no_overlap_violation, NO_OVERLAP_EXCEPTIONS
+from .services import (
+    ACTIVE_STATUSES, VETERINARIAN_ABSENT_MESSAGE, lock_veterinarians, is_no_overlap_violation,
+    NO_OVERLAP_EXCEPTIONS,
+)
 
 
 @dataclass(frozen=True)
@@ -54,6 +57,7 @@ class CreationRejected(APIException):
             'entity_scope': 'Las entidades de la cita ya no son válidas.',
             'entity_inactive': 'La mascota o el profesional ya no está activo.',
             'precondition_failed': 'La definición de la cita requiere una nueva propuesta.',
+            'veterinarian_absent': VETERINARIAN_ABSENT_MESSAGE,
         }
         code = 'slot_taken' if reason == 'slot_unavailable' else reason
         super().__init__(messages[reason], code=code)
@@ -159,6 +163,11 @@ def validate_creation(command, *, require_schedule=False, expected_timezone=None
         from apps.users.professional import is_clinician
         if require_schedule and not is_clinician(vet):
             raise CreationRejected('entity_scope')
+        # ADR p67: una ausencia vigente bloquea la cita, con la fila del
+        # veterinario ya bloqueada arriba (la ausencia toma la misma fila).
+        from apps.users.absences import is_absent
+        if command.status in ACTIVE_STATUSES and is_absent(org.pk, vet.pk, command.date):
+            raise CreationRejected('veterinarian_absent')
     start_utc, end_utc = appointment_interval(org, command.date, command.start_time,
                                              command.end_time, strict_local=require_schedule)
     if start_utc < timezone.now():

@@ -33,6 +33,11 @@ from apps.users.views import (
     StaffRoleView,
     StaffImpactView,
     StaffHistoryView,
+    StaffProfileView,
+    StaffAppointmentsView,
+    StaffAbsenceListView,
+    StaffMemberAbsencesView,
+    StaffAbsenceDetailView,
     ChangeMyPasswordView,
 )
 from rest_framework.routers import DefaultRouter
@@ -240,6 +245,10 @@ urlpatterns = [
     path('api/me/', MeView.as_view()),
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
     path('api/staff/create/', StaffCreateView.as_view(), name='staff-create'),
+    # ADR p67: rutas fijas de ausencias ANTES de `<str:pk>/`.
+    path('api/staff/absences/', StaffAbsenceListView.as_view(), name='staff-absences'),
+    path('api/staff/absences/<str:pk>/', StaffAbsenceDetailView.as_view(),
+         name='staff-absence-detail'),
     path('api/staff/<str:pk>/', StaffDetailView.as_view(), name='staff-detail'),
     # ADR p21: admin-initiated password reset for staff member.
     path('api/staff/<str:pk>/reset-password/', StaffResetPasswordView.as_view(),
@@ -251,6 +260,11 @@ urlpatterns = [
     path('api/staff/<str:pk>/role/', StaffRoleView.as_view(), name='staff-role'),
     path('api/staff/<str:pk>/impact/', StaffImpactView.as_view(), name='staff-impact'),
     path('api/staff/<str:pk>/history/', StaffHistoryView.as_view(), name='staff-history'),
+    path('api/staff/<str:pk>/profile/', StaffProfileView.as_view(), name='staff-profile'),
+    path('api/staff/<str:pk>/appointments/', StaffAppointmentsView.as_view(),
+         name='staff-appointments'),
+    path('api/staff/<str:pk>/absences/', StaffMemberAbsencesView.as_view(),
+         name='staff-member-absences'),
     # ADR p20: credential self-change. Explicit action endpoint — NOT a
     # field PATCH on /staff/<id>/, which would bypass token invalidation,
     # validate_password, and audit logging.

@@ -324,6 +324,31 @@ en la siguiente con el mismo token. Repetir el mismo rol no escribe nada.
 
 Ambos exigen ser quien gestiona personal (`403` si no); otra clínica, `404`.
 
+### Ficha, ausencias y citas por atender (ADR p67)
+
+- `GET /api/staff/<public_id>/profile/` → `UserSerializer` del integrante, también inactivo.
+- `GET /api/staff/<public_id>/appointments/?from=&to=` → citas programadas o confirmadas aún no
+  empezadas (máx. 200), con `pet_name`, `owner_name`, `reason` y su `expected_state` (INV-A)
+  para reasignarlas. Fechas locales `AAAA-MM-DD`, incluidas.
+
+Ambos, solo para quien gestiona personal (`403`); otra clínica, `404`.
+
+**Ausencias** (`StaffAbsence`): días completos en fechas locales de la clínica, ambos extremos
+incluidos; tipo `vacation` · `training` · `leave` (Permiso, sin datos de salud) · `other`.
+
+| Método y ruta | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/staff/absences/?from=&to=&member=` | `staff.list` | Vigentes que se cruzan con el rango (por defecto, de hoy en adelante). Quien no gestiona personal recibe solo `{public_id, member, member_public_id, start_date, end_date}`: `member` es el PK con que la agenda identifica al veterinario |
+| `POST /api/staff/<public_id>/absences/` | `staff.manage_absences` | `{start_date, end_date, kind}` → `201 {absence, affected_appointments}`. **No mueve citas.** Integrante activo de la clínica (`404` si no) |
+| `DELETE /api/staff/absences/<public_id>/` | `staff.manage_absences` | Cancela (no borra); repetir no cambia nada |
+
+Validación: el último día no antes del primero, no terminada antes de hoy, como máximo 366 días
+(`400` en `end_date`). Dos ausencias vigentes que se cruzan → `409 absence_overlap`.
+Registrar bloquea la fila `User` del integrante (la misma de `lock_veterinarians`): una cita
+concurrente espera y, al confirmarse la ausencia, se rechaza. **Efecto en la agenda:** ver
+`appointments.md` § Ausencias y reasignación. Alta, cancelación y reasignación dejan su evento
+en el historial (`absence_added`, `absence_cancelled`, `appointments_reassigned`).
+
 ### Desactivar usuario
 
 ```
@@ -335,7 +360,8 @@ No elimina el usuario: marca `is_active = False`, revoca todos sus refresh token
 incrementa su versión de sesión (ADR p65), así que sus access tokens dejan de servir
 aunque después se le reactive. **Una caja abierta lo bloquea** (`409 open_cash_session`, ADR
 p66): se cierra antes desde Caja. Citas próximas y consultas abiertas no bloquean (la interfaz
-las avisa con `impact/`) y siguen asignadas: no se reasignan solas.
+las avisa con `impact/`) y siguen asignadas: no se reasignan solas; se reasignan desde la ficha
+(ADR p67).
 
 **Una clínica nunca queda sin un ADMIN activo** (plan Equipo, II.3.1). El servicio
 bloquea en una sola consulta ordenada por `pk` al actor, al objetivo y, si el objetivo es

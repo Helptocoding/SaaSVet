@@ -92,3 +92,22 @@ export const createAppointmentWithPatient = async (data) => {
     const res = await api.post("appointments/create-with-patient/", data);
     return res.data;
 };
+
+/**
+ * Reasigna en bloque citas por atender a otro veterinario (ADR p67).
+ *
+ * Cada cita viaja con el `expected_state` que trajo la lista (INV-A): nunca se
+ * relee antes de enviar. Responde `{ moved: [public_id], skipped: [{public_id,
+ * code, message}] }`: las que no se pudieron mover se quedan como estaban.
+ */
+export const reassignAppointments = async ({ sourcePublicId, targetPublicId, appointments }) => {
+    const res = await api.post("appointments/reassign/", {
+        source_public_id: sourcePublicId,
+        target_public_id: targetPublicId,
+        appointments: appointments.map((appt) => ({
+            public_id: appt.public_id,
+            expected_state: appt.expected_state,
+        })),
+    });
+    return res.data;
+};

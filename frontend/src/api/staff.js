@@ -85,3 +85,55 @@ export const getStaffHistory = async (publicId) => {
     const res = await api.get(`staff/${publicId}/history/`);
     return res.data;
 };
+
+// ── Ficha, ausencias y citas del integrante (ADR p67) ───────────────────────
+
+/** Datos del integrante para su ficha (también si está inactivo). */
+export const getStaffProfile = async (publicId) => {
+    const res = await api.get(`staff/${publicId}/profile/`);
+    return res.data;
+};
+
+/**
+ * Citas por atender del integrante (programadas o confirmadas, aún no
+ * empezadas). Cada una trae su `expected_state` para reasignarla (INV-A).
+ */
+export const getStaffAppointments = async (publicId, { from, to } = {}) => {
+    const params = {};
+    if (from) params.from = from;
+    if (to) params.to = to;
+    const res = await api.get(`staff/${publicId}/appointments/`, { params });
+    return res.data;
+};
+
+/**
+ * Ausencias vigentes que se cruzan con el rango (por defecto, de hoy en
+ * adelante). `member` = public_id para las de un solo integrante.
+ */
+export const getAbsences = async ({ from, to, member } = {}) => {
+    const params = {};
+    if (from) params.from = from;
+    if (to) params.to = to;
+    if (member) params.member = member;
+    const res = await api.get("staff/absences/", { params });
+    return res.data;
+};
+
+/**
+ * Registra una ausencia por días completos. Devuelve
+ * `{ absence, affected_appointments }`: las citas NO se mueven solas.
+ */
+export const createAbsence = async (publicId, { startDate, endDate, kind }) => {
+    const res = await api.post(`staff/${publicId}/absences/`, {
+        start_date: startDate,
+        end_date: endDate,
+        kind,
+    });
+    return res.data;
+};
+
+/** Cancela una ausencia (queda registrada quién y cuándo). */
+export const cancelAbsence = async (absencePublicId) => {
+    const res = await api.delete(`staff/absences/${absencePublicId}/`);
+    return res.data;
+};

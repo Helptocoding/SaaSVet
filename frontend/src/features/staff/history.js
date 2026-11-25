@@ -2,6 +2,7 @@
 // backend a una frase. Los eventos solo traen nombres de campo y roles; nunca
 // valores personales, así que aquí tampoco se muestran.
 import { roleLabel } from "./roles";
+import { absenceKindLabel, formatAbsenceRange } from "./absences";
 
 const FIELD_LABELS = {
     first_name: "nombre",
@@ -42,6 +43,17 @@ export function describeEvent(event) {
             return changes.source === "platform"
                 ? "Soporte de la plataforma restableció su contraseña"
                 : "Restableció su contraseña";
+        case "absence_added":
+            return `Registró ${absenceKindLabel(changes.kind).toLowerCase()}: ${formatAbsenceRange(changes.start_date, changes.end_date)}`;
+        case "absence_cancelled":
+            return `Canceló la ausencia del ${formatAbsenceRange(changes.start_date, changes.end_date)}`;
+        case "appointments_reassigned": {
+            const moved = Number(changes.moved) || 0;
+            const skipped = Number(changes.skipped) || 0;
+            let text = `Reasignó ${moved} ${moved === 1 ? "cita" : "citas"} a otro veterinario`;
+            if (skipped > 0) text += `; ${skipped} ${skipped === 1 ? "quedó" : "quedaron"} sin mover`;
+            return text;
+        }
         default:
             return event?.kind_label || "Cambio";
     }

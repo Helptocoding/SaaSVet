@@ -1,0 +1,51 @@
+/* Reasignación de citas (ADR p67). */
+
+.list {
+    display: grid;
+    gap: var(--space-2);
+    max-height: 240px;
+    margin: 0 0 var(--space-3);
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.item {
+    display: grid;
+    gap: 2px;
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--c-border);
+    color: var(--c-text);
+    font-size: 13px;
+}
+
+.item:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.meta {
+    color: var(--c-text-3);
+    font-size: 12px;
+}
+
+.reason {
+    color: var(--c-warning-text);
+    font-size: 12px;
+}
+
+.summary {
+    margin: 0 0 var(--space-2);
+    color: var(--c-text);
+    font-weight: 600;
+}
+
+.hint {
+    margin: var(--space-2) 0 0;
+    color: var(--c-text-3);
+    font-size: 12px;
+}
+
+.footerButton {
+    flex: 1;
+}

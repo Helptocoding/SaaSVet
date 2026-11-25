@@ -213,6 +213,9 @@ def validate_mutation(command):
             status=appointment.status)
         if slot_conflicts(slot, start, end, exclude_appointment_id=appointment.pk):
             raise MutationRejected('slot_unavailable')
+        from apps.users.absences import is_absent
+        if is_absent(org.pk, command.veterinarian_id, command.date):
+            raise MutationRejected('veterinarian_absent')
         if (appointment.date, appointment.start_time, appointment.end_time, appointment.veterinarian_id) == (
                 command.date, command.start_time, command.end_time, command.veterinarian_id):
             raise MutationRejected('appointment_no_change')

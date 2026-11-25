@@ -1117,6 +1117,18 @@ def _any_vet_free(vets, occupancy, hhmm):
     return any(_vet_free(vet.pk, occupancy, hhmm) for vet in vets)
 
 
+def _present_vets(org, vets, day):
+    """Los candidatos sin ausencia vigente ese día (ADR p67).
+
+    Un veterinario ausente no tiene huecos ese día: no se ofrece ni se le
+    asigna. La escritura lo vuelve a comprobar bajo lock (`validate_creation`,
+    `validate_mutation`); esto solo evita proponer algo que se va a rechazar.
+    """
+    from apps.users.absences import absent_member_ids
+    absent = absent_member_ids(org.pk, day, [vet.pk for vet in vets])
+    return [vet for vet in vets if vet.pk not in absent]
+
+
 def _vet_free(vet_pk, occupancy, hhmm):
     start = contracts.iso_time(hhmm)
     end = contracts.iso_time(_appt_end_time(hhmm))
@@ -1140,7 +1152,7 @@ def pick_free_vet(org, executor, date_str, hhmm, vets, *, triggered_by=None,
                                triggered_by=triggered_by)
     if occupancy.kind == 'ERROR':
         return None
-    for vet in vets:
+    for vet in _present_vets(org, vets, day):
         if _vet_free(vet.pk, occupancy.data, hhmm):
             return vet
     return None
@@ -1160,6 +1172,7 @@ def _free_slots_for_day(org, executor, day, vets, ranges, *, preferred='',
                                triggered_by=triggered_by, preferred=preferred)
     if occupancy.kind == 'ERROR':
         return occupancy
+    vets = _present_vets(org, vets, day)
     # Reloj de la ORGANIZACIÓN, no del proceso (settings.TIME_ZONE='UTC').
     # Con la zona del servidor, a las 10:00 en México se descartaban como
     # "pasados" todos los huecos anteriores a las 16:00 y a la 13:00 no quedaba
@@ -1318,7 +1331,7 @@ def _exact_slot_status(org, executor, date_str, time_str, vets, *,
     )
     if occupancy.kind == 'ERROR':
         return 'tool_failure', occupancy
-    for vet in vets:
+    for vet in _present_vets(org, vets, day):
         if _vet_free(vet.pk, occupancy.data, hhmm):
             return 'available', vet
     return 'slot_taken', None

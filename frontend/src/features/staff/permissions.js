@@ -5,4 +5,5 @@
 export const STAFF_MANAGEMENT_PERMS = [
     "staff.create", "staff.update", "staff.destroy", "staff.reset_password", "staff.reactivate",
     "staff.change_role",
+    "staff.manage_absences",
 ];

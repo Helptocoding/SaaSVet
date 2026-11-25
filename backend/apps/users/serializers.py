@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from apps.organizations.models import Organization
+from apps.users.models import StaffAbsence
 from apps.users.professional import (
     attends_for, is_clinician, license_required_message, normalize_license_number,
 )
@@ -386,3 +387,65 @@ class StaffAccessEventSerializer(serializers.Serializer):
     def get_actor_name(self, obj):
         actor = obj.actor
         return f'{actor.first_name} {actor.last_name}'.strip() or actor.username
+
+
+def _person_name(user):
+    if user is None:
+        return None
+    return f'{user.first_name} {user.last_name}'.strip() or user.username
+
+
+class StaffAbsenceDirectorySerializer(serializers.Serializer):
+    """Ausencia vista desde la agenda (ADR p67): solo quién y qué días. ``member``
+    es el PK con el que la agenda identifica al veterinario de cada cita."""
+    public_id = serializers.UUIDField()
+    member = serializers.IntegerField(source='member_id')
+    member_public_id = serializers.UUIDField(source='member.public_id')
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
+
+
+class StaffAbsenceSerializer(StaffAbsenceDirectorySerializer):
+    """Ausencia completa, para quien gestiona personal: además el tipo y quién la
+    registró."""
+    member_name = serializers.SerializerMethodField()
+    kind = serializers.CharField()
+    kind_label = serializers.CharField(source='get_kind_display')
+    created_at = serializers.DateTimeField()
+    created_by_name = serializers.SerializerMethodField()
+
+    def get_member_name(self, obj):
+        return _person_name(obj.member)
+
+    def get_created_by_name(self, obj):
+        return _person_name(obj.created_by)
+
+
+class CreateAbsenceSerializer(serializers.Serializer):
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
+    kind = serializers.ChoiceField(choices=StaffAbsence.KIND_CHOICES,
+                                   default=StaffAbsence.KIND_OTHER)
+
+    def validate(self, attrs):
+        from apps.users.absences import validate_absence_dates
+        validate_absence_dates(self.context['organization'], attrs['start_date'], attrs['end_date'])
+        return attrs
+
+
+class StaffAppointmentSerializer(serializers.Serializer):
+    """Cita por atender de un integrante, para avisar y reasignar (ADR p67).
+    Lleva su ``expected_state``: la reasignación la devuelve tal cual (INV-A)."""
+    public_id = serializers.UUIDField()
+    date = serializers.DateField()
+    start_time = serializers.TimeField(format='%H:%M')
+    end_time = serializers.TimeField(format='%H:%M')
+    status = serializers.CharField()
+    reason = serializers.CharField()
+    pet_name = serializers.CharField(source='pet.name')
+    owner_name = serializers.CharField(source='pet.owner.name')
+    expected_state = serializers.SerializerMethodField()
+
+    def get_expected_state(self, obj):
+        from apps.appointments.services import current_state
+        return current_state(obj)

@@ -30,7 +30,8 @@ GATE_REASONS = frozenset(('containment_closed', 'kind_disabled', 'flag_disabled'
     'beta_requirements_pending', 'beta_capability_not_approved', 'beta_operation_predates_approval'))
 PRECONDITION_REASONS = frozenset(('entity_inactive', 'entity_scope', 'appointment_changed',
     'appointment_not_mutable', 'schedule_elapsed', 'slot_unavailable', 'invalid_pet_data',
-    'domain_conflict', 'precondition_failed', 'schedule_closed', 'invalid_local_time', 'appointment_no_change'))
+    'domain_conflict', 'precondition_failed', 'schedule_closed', 'invalid_local_time', 'appointment_no_change',
+    'veterinarian_absent'))
 FAILURE_REASONS = PRECONDITION_REASONS | {'definitive_rejection', 'reconciled_no_effect'}
 
 
