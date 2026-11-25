@@ -194,7 +194,7 @@ def prescription_pdf(request, pk):
 
     if vet or prescription.medical_record.status == 'closed':
         specialty = (prescription.medical_record.vet_specialty_at_close
-                     if prescription.medical_record.status == 'closed' else vet.specialty)
+                     if prescription.medical_record.status == 'closed' else vet.specialty_label)
         # M01 (orden 7): cédula congelada al cierre; la del usuario mientras está abierta.
         license_number = (prescription.medical_record.vet_license_at_close
                           if prescription.medical_record.status == 'closed'

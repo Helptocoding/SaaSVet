@@ -16,7 +16,11 @@ export function LoginForm() {
     remember,
     setRemember,
     loading,
-    handleSubmit
+    handleSubmit,
+    mfaRequired,
+    mfaCode,
+    setMfaCode,
+    cancelMfa,
   } = useLoginForm();
 
   // No hay recuperación por correo: la contraseña la restablece un ADMIN de la
@@ -25,6 +29,42 @@ export function LoginForm() {
   const [showRecovery, setShowRecovery] = useState(false);
 
   const disabled = loading || !username || !password;
+
+  // ADR p68: la contraseña fue correcta y la cuenta tiene verificación en dos
+  // pasos; falta el código de la app (o uno de respaldo).
+  if (mfaRequired) {
+    return (
+      <form className="login-form" onSubmit={handleSubmit} noValidate>
+        <div className="field-group">
+          <p className="login-recovery-hint" role="status">
+            Escribe el código de 6 dígitos de tu app autenticadora, o uno de tus códigos de respaldo.
+          </p>
+          <Field
+            id="mfa-code"
+            label="Código de verificación"
+            value={mfaCode}
+            onChange={setMfaCode}
+            placeholder="123456"
+            autoComplete="one-time-code"
+            required
+            leadingIcon={<ShieldIcon size={18} />}
+            disabled={loading}
+          />
+        </div>
+        <button
+          type="submit"
+          className="btn-primary"
+          disabled={loading || !mfaCode.trim()}
+          data-testid="mfa-submit-button"
+        >
+          {loading ? "Verificando…" : "Verificar"}
+        </button>
+        <button type="button" className="forgot-password" onClick={cancelMfa} disabled={loading}>
+          Volver
+        </button>
+      </form>
+    );
+  }
 
   return (
     <form className="login-form" onSubmit={handleSubmit} noValidate>

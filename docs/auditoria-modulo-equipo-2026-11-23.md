@@ -405,3 +405,19 @@ Decisiones del PO (2026-11-24) y contratos: [ADR p67](decisions/2026-11-24-p67-a
 Migración aditiva `users.0016`. **Fuera de esta fase, a propósito**: ausencias por horas o
 recurrentes, solicitudes con aprobación, aviso al cliente cuando cambia su veterinario y el
 título profesional impreso en documentos (PO).
+
+---
+
+## Registro de implementación — Fase 4, piezas sin WhatsApp (2026-11-24)
+
+Decisiones del PO (2026-11-24) y contratos: [ADR p68](decisions/2026-11-24-p68-mfa-y-especialidades.md),
+[`modules/organizations.md`](modules/organizations.md) § Login y § Editar integrante.
+
+| Alcance | Resultado |
+|---|---|
+| MFA opcional para ADMIN | TOTP propio (RFC 6238), clave tecleada (sin QR), 10 códigos de respaldo; login en dos pasos con reto firmado; el restablecimiento lo quita |
+| Especialidad estructurada ligada a servicios | Catálogo cerrado de 16, varias por integrante, una opcional por servicio; el agente cruza por código |
+
+Migraciones `users.0017` (texto libre → códigos), `users.0018` (`UserMFA`), `billing.0044`.
+**Fuera, a propósito**: disponibilidad por veterinario para el agente y activación por enlace de
+WhatsApp (dependen de WhatsApp); exigir MFA por clínica y MFA para soporte de plataforma.

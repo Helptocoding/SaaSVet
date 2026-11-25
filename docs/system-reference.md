@@ -32,6 +32,9 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 | `409 last_active_admin` al desactivar o cambiar el rol | El objetivo es el último ADMIN activo de la clínica (INV-J). | Correcto: crear, ascender o reactivar otro ADMIN antes. Si el único ADMIN perdió el acceso, restablecimiento de plataforma (ADR p66, p45). |
 | `409 open_cash_session` al desactivar | El integrante tiene una caja abierta (ADR p66). | Correcto: cerrarla desde Caja (cierre administrativo) y desactivar después. |
 | `400 veterinarian_absent` al crear, mover, reactivar o atender sin cita | El veterinario tiene una ausencia vigente ese día (ADR p67). **No es un fallo.** | Elegir otro veterinario u otra fecha; si al final sí viene, cancelar la ausencia en su ficha. |
+| `401 mfa_code_invalid` en el segundo paso del login | Código de la app incorrecto, ya usado o fuera de la ventana de ±30 s (ADR p68). | Revisar que la hora del celular sea automática o usar un código de respaldo. Cinco fallos invalidan el reto. |
+| `401 mfa_challenge_invalid` | El reto del login venció (5 min), ya se usó, agotó sus intentos o la persona cambió de contraseña o fue desactivada. | Volver a escribir la contraseña. |
+| Un ADMIN perdió el celular y los códigos de respaldo | No hay otra vía por diseño (PO). | Otro ADMIN restablece su contraseña desde Equipo (o soporte, desde plataforma): eso quita el MFA y puede activarlo de nuevo. |
 | `409 absence_overlap` al registrar una ausencia | Ya hay una ausencia vigente de esa persona que se cruza con esas fechas. | Cancelar o ajustar la existente desde la ficha. |
 | Una reasignación devuelve citas en `skipped` | Cada una trae su motivo: cambió desde que se mostró, ya no está por atender, el destino está ausente u ocupado a esa hora (ADR p67). | Correcto: esas citas se quedaron como estaban; resolverlas en la agenda. |
 | Un ADMIN no aparece como veterinario en la agenda ni en el agente | No está marcado como que atiende pacientes (ADR p66). | Equipo → Editar → «Atiende pacientes» (requiere cédula). Los VET siempre atienden. |
@@ -233,6 +236,7 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 - Jamás borrar `Organization`, `Pet`, `Owner` o `MedicalRecord` que tengan dependencias (PROTECT + 409).
 - Jamás colocar `for_organization()` después de `select_related()` o `prefetch_related()` en la cadena del queryset.
 - Jamás leer `localStorage` directamente para obtener `access_token`, `refresh_token` o `user` fuera de `tokenStorage.js`.
+- **Jamás emitir tokens de una cuenta con verificación en dos pasos activa tras validar solo la contraseña** (ADR p68): `EmailOrUsernameTokenObtainPairSerializer.validate` devuelve el reto y solo `TokenMFAView` emite, con un código válido. El gate de emisión enumera ambos sitios.
 - **Jamás escribir `User.session_version` fuera de `bump_session_version`** (ADR p65): ni asignación, ni `update()`, ni `update_fields`. Una escritura que la baje revive tokens que debían estar muertos. Hay un gate estático.
 - **Jamás emitir un token para una persona sin estampar la versión de sesión** (`apps.core.authentication.stamp_session_version`). El gate de emisión enumera los sitios permitidos; uno nuevo debe clasificarse.
 - **Jamás mutar una cita sin lock de fila** (ADR p57). Toda vía que escriba sobre un `Appointment` existente entra en la matriz de mutaciones de `docs/modules/appointments.md` **antes** de mergear. Una vía nueva sin lock reintroduce el último-escritor-gana que INV-A cierra.

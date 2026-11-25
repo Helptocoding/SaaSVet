@@ -166,7 +166,33 @@ Una vez que el ADMIN tiene credenciales, todo lo demas es via API.
 POST /api/token/
 { "username": "<correo O username>", "password": "..." }
 → { "access": "...", "refresh": "..." }
+→ { "mfa_required": true, "mfa_token": "..." }   # con verificación en dos pasos (ADR p68)
+
+POST /api/token/mfa/
+{ "mfa_token": "...", "code": "123456 | código de respaldo" }
+→ { "access": "...", "refresh": "...", "recovery_codes_remaining"?: n }
 ```
+
+**Verificación en dos pasos (ADR p68).** Opcional y solo para ADMIN (fuera de la demo).
+Con ella activa, la contraseña correcta **no emite tokens**: devuelve un reto firmado de 5
+minutos, de un solo uso, que acepta cinco códigos y muere si cambia la versión de sesión.
+`token/mfa/` emite los tokens tras las mismas compuertas del login (clínica desactivada,
+contraseña temporal vencida). Errores: `401 mfa_code_invalid` (código mal escrito; se puede
+volver a intentar) y `401 mfa_challenge_invalid` (reto vencido, usado o agotado: volver a la
+contraseña). Throttle `login_mfa` (10/15 min por IP). Gestión de la propia cuenta, con throttle
+`mfa` (20/hora):
+
+| Ruta | Body | Resultado |
+|---|---|---|
+| `GET /api/users/mfa/` | — | `{available, enabled, enabled_at, recovery_codes_remaining}` |
+| `POST /api/users/mfa/setup/` | `{password}` | `{secret, otpauth_uri}` (vale 30 min); `403 mfa_not_available` si no es ADMIN o es la demo; `409 mfa_already_enabled` |
+| `POST /api/users/mfa/enable/` | `{code}` | activa y devuelve 10 `recovery_codes`, que no se vuelven a mostrar |
+| `POST /api/users/mfa/disable/` | `{password, code}` | desactiva (código de la app o de respaldo) |
+| `POST /api/users/mfa/recovery-codes/` | `{password, code}` | 10 códigos nuevos; los anteriores dejan de servir |
+
+Secreto cifrado (Fernet, `MFA_ENCRYPTION_KEY` o `SECRET_KEY`); códigos de respaldo como HMAC.
+**Restablecer la contraseña** (de clínica o de plataforma) **y reactivar quitan el MFA**: es la
+salida para quien perdió celular y códigos (PO); el evento lleva `mfa_removed: true`.
 
 **Identidad de login (ADR p48).** El campo `username` del request acepta **el
 correo O el username**. Si contiene `@`, el backend lo resuelve por correo
@@ -209,7 +235,7 @@ Authorization: Bearer <token ADMIN>
   "first_name": "Laura",
   "last_name": "Garcia",
   "role": "VET",
-  "specialty": "Cirugia",
+  "specialties": ["surgery"],
   "license_number": "1234567"
 }
 ```
@@ -229,7 +255,7 @@ La contraseña tiene la misma fuerza que la temporal del restablecimiento
 registra (`STAFF_CREATED` se emite con `on_commit(robust=True)` y no la lleva). Si la
 respuesta se pierde, la vía es Restablecer contraseña.
 
-`first_name` es **obligatorio** también en el backend (plan Equipo, D4). Nombre y apellido siguen la regla de nombres de abajo (§ Editar integrante). `username` es único **sin distinguir mayúsculas**, con el mensaje genérico «Este nombre de usuario no está disponible.» (antes un repetido terminaba en `500`). `specialty`, como máximo 100 caracteres.
+`first_name` es **obligatorio** también en el backend (plan Equipo, D4). Nombre y apellido siguen la regla de nombres de abajo (§ Editar integrante). `username` es único **sin distinguir mayúsculas**, con el mensaje genérico «Este nombre de usuario no está disponible.» (antes un repetido terminaba en `500`). `specialties`, lista de códigos del catálogo cerrado (ADR p68; ver § Editar integrante).
 
 `license_number` es la cédula profesional (M01, orden 7; ADR p64): solo dígitos, de 5 a 10, sin verificar contra la SEP. Es **obligatoria para `VET`** y opcional para los demás roles. Hay además un CHECK en base de datos (`user_license_number_digits`). Los errores de validación del serializer vuelven sin el sobre `{code, errors}`; los de una carrera con la restricción de base (usuario o correo tomado entre la validación y la escritura) vuelven con el sobre estándar, en el campo correspondiente y nunca como `500`.
 
@@ -384,8 +410,14 @@ PATCH /api/staff/<public_id>/
 Authorization: Bearer <token ADMIN>
 
 { "first_name": "Laura", "last_name": "de la Cruz", "email": "laura@clinica.com",
-  "specialty": "Cirugia", "license_number": "1234567" }
+  "specialties": ["surgery"], "license_number": "1234567" }
 ```
+
+**Especialidades (ADR p68).** `specialties` es una lista de códigos del catálogo cerrado
+`apps.users.specialties` (16; copia en `frontend/src/features/staff/specialties.json`). Se
+guardan sin repetir y en el orden del catálogo; un código desconocido o un texto es `400`. La
+API devuelve además `specialty_label` («Cirugía, Dermatología»), que es lo que se muestra e
+imprime. Sustituye al antiguo `specialty` de texto libre.
 
 Permiso `staff.update` (sensible, solo ADMIN; ADR p63 y p64). Acepta solo esas cinco claves:
 cualquier otra (rol, username, contraseña, estado) es `400` con «Solo se pueden editar nombre,
@@ -448,6 +480,9 @@ o una acción de admin futuros tendrán que llamarlo fuera de cualquier transacc
 revertida y un fallo del aviso no convierte en error una reactivación ya confirmada.
 
 ### Restablecer contraseña (ADR p21)
+
+**Quita la verificación en dos pasos** si la tenía (ADR p68, decisión del PO); el evento
+`password_reset` lleva `mfa_removed: true`. Lo mismo al reactivar.
 
 `POST /api/staff/<public_id>/reset-password/` responde con `Cache-Control: no-store` (plan
 Equipo, D11): el cuerpo lleva una contraseña temporal. Además de revocar los refresh tokens,

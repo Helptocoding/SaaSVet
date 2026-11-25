@@ -306,11 +306,11 @@ class ToolsThroughRealApiTests(TestCase):
         self.assertNotIn("stock", product_data)
 
     def test_specialty_is_offered_only_with_active_service_and_staff(self):
-        self.vet.specialty = "Dermatología"
-        self.vet.save(update_fields=["specialty"])
+        self.vet.specialties = ["dermatology"]
+        self.vet.save(update_fields=["specialties"])
         Service.objects.create(
             organization=self.org, name="Consulta de dermatología",
-            base_price="500.00",
+            base_price="500.00", specialty="dermatology",
         )
 
         outcome = self._run("get_offered_specialties", {"query": "dermatologia"})

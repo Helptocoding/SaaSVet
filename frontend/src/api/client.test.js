@@ -132,6 +132,17 @@ describe("reintento único tras un 401 con un token ya renovado (D14)", () => {
         expect(access()).toBe("new");
     });
 
+    it("el segundo paso con MFA tampoco reintenta ni cierra la sesión (ADR p68)", async () => {
+        respond = () => {
+            tokenStorage.setAccessToken("new");
+            return 401;
+        };
+        await expect(api.post("token/mfa/", { mfa_token: "t", code: "000000" })).rejects.toBeTruthy();
+
+        expect(calls).toHaveLength(1);
+        expect(access()).toBe("new");
+    });
+
     it.each(["token/refresh/", "token/logout/"])("no reintenta %s", async (url) => {
         respond = () => {
             tokenStorage.setAccessToken("new");

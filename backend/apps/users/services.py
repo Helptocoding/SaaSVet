@@ -482,8 +482,13 @@ def reset_password_for_staff(
     # an admin reset has no current session of the target to spare — the
     # target was not in the loop. Refresh AND access tokens die (ADR p65).
     temp_password, revoked_count = _issue_temporary_password(target_user)
+    # ADR p68 (PO): el restablecimiento también quita la verificación en dos
+    # pasos; es la salida para quien perdió el celular y sus códigos.
+    from apps.users.mfa import remove_for_reset
+    mfa_removed = remove_for_reset(target_user)
     record_staff_event(
         member=target_user, actor=admin, kind='password_reset', request_id=request_id,
+        changes={'mfa_removed': True} if mfa_removed else None,
     )
 
     # --- 5. Audit log -------------------------------------------------------
@@ -733,8 +738,11 @@ def reactivate_staff(
     target.is_active = True
     target.save(update_fields=['is_active'])
     temp_password, revoked_count = _issue_temporary_password(target)
+    from apps.users.mfa import remove_for_reset
+    mfa_removed = remove_for_reset(target)
     record_staff_event(
         member=target, actor=admin, kind='reactivated', request_id=request_id,
+        changes={'mfa_removed': True} if mfa_removed else None,
     )
 
     duration_ms = int((time.monotonic() - started_at) * 1000)
@@ -998,7 +1006,7 @@ def create_staff_member(*, admin, data, request_id: str | None = None) -> Create
                 password=temp_password,
                 first_name=data.get('first_name', ''),
                 last_name=data.get('last_name', ''),
-                specialty=data.get('specialty', ''),
+                specialties=data.get('specialties', []),
                 license_number=data.get('license_number', ''),
                 role=role,
                 # ADR p66: VET siempre, ASSISTANT nunca, ADMIN según el alta.
