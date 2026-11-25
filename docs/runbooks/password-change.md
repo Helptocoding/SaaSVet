@@ -24,7 +24,7 @@
 
 **Si soporte recibe un ticket "después de cambiar password me sigue funcionando el viejo token":** es comportamiento esperado para el access token, max 15 min. El refresh token sí está invalidado.
 
-**Persistencia del nuevo token (frontend):** el nuevo refresh+access se guardan en el store que el usuario eligió originalmente al hacer login (sessionStorage si `Recordarme=false`, localStorage si `true`). `useAuth().login()` delega en `auth/tokenStorage.js:setAccessToken/setUser` que escriben en el `activeStore()` actual sin forzar cambio de store. Ver ADR p22 para detalles del módulo + invariantes.
+**Persistencia del nuevo token (frontend):** el nuevo refresh+access se guardan en el store que el usuario eligió originalmente al hacer login (sessionStorage si `Recordarme=false`, localStorage si `true`). `ChangePasswordForm` obtiene esa decisión con `getRemember()` (flag `auth_persist`) y la pasa a `useAuth().login(access, refresh, remember)`, que delega en `auth/tokenStorage.js:setTokens()`. Sin ese tercer argumento, `login()` defaulta a `true` y migraba una sesión temporal a `localStorage`. Ver ADR p22 para detalles del módulo + invariantes.
 
 ## Eventos de log a monitorear
 

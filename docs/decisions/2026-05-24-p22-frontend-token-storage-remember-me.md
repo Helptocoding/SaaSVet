@@ -68,6 +68,9 @@ bypassa redirect para requests al endpoint de login.**
 API pública:
 - `getItem(key)` — lee preferentemente `sessionStorage`, fallback
   `localStorage`.
+- `getRemember()` — reconstruye la decisión del checkbox desde `auth_persist`
+  (default `true` si el flag no existe). La usan la restauración de sesión y
+  `ChangePasswordForm` antes de `login()`.
 - `setTokens({ access, refresh, remember })` — escribe al store target
   (`localStorage` si `remember=true`, `sessionStorage` si `false`) y
   **wipea el otro store** para preservar el invariante.

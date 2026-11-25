@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { getItem, setTokens, setAccessToken, setRefreshToken, setUser as storeUser, clearTokens, isLoggingOut } from "./tokenStorage";
+import { getItem, getRemember, setTokens, setAccessToken, setRefreshToken, setUser as storeUser, clearTokens, isLoggingOut } from "./tokenStorage";
 import { AuthContext } from "./authContext";
 
 const rawBase = import.meta.env.VITE_API_URL || "";
@@ -176,7 +176,7 @@ export const AuthProvider = ({ children }) => {
 
         // Reconstruct `remember` from the explicit flag written by
         // setTokens() at login time — never inferred from store choice.
-        const remember = getItem("auth_persist") !== "0";
+        const remember = getRemember();
 
         // Async session restoration. No React state is mutated until
         // the refresh succeeds AND /me/ validates the new token.

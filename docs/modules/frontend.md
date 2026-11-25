@@ -978,11 +978,12 @@ Módulo único que centraliza acceso a auth storage. **Todo acceso a `access_tok
 
 1. **No coexistencia**: tokens válidos NUNCA en `localStorage` y `sessionStorage` simultáneamente. `setTokens()` enforce wipe del other store.
 2. **Read priority**: `sessionStorage > localStorage`. Sesión temporal de tab gana sobre persistente vieja.
-3. **Source of truth**: presencia del `access_token` en algún store. El `auth_persist` flag registra la decisión explícita del checkbox "Recordarme" y se usa para reconstruir `remember` durante la restauración de sesión (`getItem("auth_persist") !== "0"`). No se infiere el store activo de la presencia física de los tokens en localStorage/sessionStorage — el flag es la fuente autoritativa de esa decisión.
+3. **Source of truth**: presencia del `access_token` en algún store. El `auth_persist` flag registra la decisión explícita del checkbox "Recordarme" y se usa para reconstruir `remember` durante la restauración de sesión y al cambiar contraseña (`getRemember()`). No se infiere el store activo de la presencia física de los tokens en localStorage/sessionStorage — el flag es la fuente autoritativa de esa decisión.
 4. **Logout flag**: `clearTokens()` levanta `loggingOut=true`; `setTokens()` lo limpia. Async callbacks (refresh) chequean `isLoggingOut()` antes de mutar estado.
 
 **API:**
 - `getItem(key)` — lectura con prioridad session > local.
+- `getRemember()` — reconstruye la decisión del checkbox desde `auth_persist` (`true` si el flag no existe). La usan la restauración de sesión y `ChangePasswordForm` antes de llamar a `login()`.
 - `setTokens({ access, refresh, remember })` — escribe ambos tokens al store correcto + wipea el otro + escribe flag `auth_persist`.
 - `setAccessToken(access)` — actualiza solo el access token en el `activeStore()` actual. Usado por el refresh periódico.
 - `setRefreshToken(refresh)` — actualiza solo el refresh token en el `activeStore()` actual. Usado por el refresh periódico para persistir el token rotado (el backend emite un refresh nuevo con `ROTATE_REFRESH_TOKENS=True`; sin esta función el token viejo blacklisteado seguía en storage y el siguiente refresh fallaba con 401).
@@ -999,7 +1000,7 @@ Módulo único que centraliza acceso a auth storage. **Todo acceso a `access_tok
 
 **Anti-patterns prohibidos:**
 - ❌ `localStorage.getItem("access_token"|"refresh_token"|"user")` fuera de `tokenStorage.js`.
-- ❌ Leer `PERSIST_FLAG` para decisiones de routing — solo se lee durante la restauración de sesión vía `getItem("auth_persist")` para reconstruir `remember`.
+- ❌ Leer `PERSIST_FLAG` para decisiones de routing — solo se lee vía `getRemember()` para reconstruir `remember` en la restauración de sesión y en el cambio de contraseña.
 - ❌ Bypass de `isLoggingOut()` en callbacks async que mutan estado de auth.
 
 Grep gate sugerido (post-beta, vía ESLint custom rule): bloquear `(localStorage|sessionStorage)\.(getItem|setItem|removeItem)\(['"](access_token|refresh_token|user|auth_persist)` en archivos != `auth/tokenStorage.js`.
