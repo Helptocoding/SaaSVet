@@ -563,12 +563,11 @@ class StaffAbsenceDetailView(APIView):
     permission_classes = [make_permission('staff.manage_absences')]
 
     def delete(self, request, pk):
-        from apps.users.absences import cancel_absence
-        from apps.users.models import StaffAbsence
+        from apps.users.absences import cancel_absence, organization_absences
         from apps.users.serializers import StaffAbsenceSerializer
 
         absence = resolve_public_id(
-            StaffAbsence.objects.filter(organization=request.user.organization)
+            organization_absences(request.user.organization_id)
             .select_related('member', 'created_by'),
             pk,
         )

@@ -34,9 +34,15 @@ class AbsenceOverlap(APIException):
     default_code = 'absence_overlap'
 
 
-def active_absences(organization_id):
+def organization_absences(organization_id):
+    """Todas las ausencias de la clínica, vigentes o canceladas. Único punto de
+    entrada al modelo: siempre acotado por organización."""
     from apps.users.models import StaffAbsence
-    return StaffAbsence.objects.filter(organization_id=organization_id, cancelled_at__isnull=True)
+    return StaffAbsence.objects.filter(organization_id=organization_id)
+
+
+def active_absences(organization_id):
+    return organization_absences(organization_id).filter(cancelled_at__isnull=True)
 
 
 def absent_member_ids(organization_id, day, member_ids=None) -> set:
