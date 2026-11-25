@@ -978,11 +978,12 @@ Módulo único que centraliza acceso a auth storage. **Todo acceso a `access_tok
 
 1. **No coexistencia**: tokens válidos NUNCA en `localStorage` y `sessionStorage` simultáneamente. `setTokens()` enforce wipe del other store.
 2. **Read priority**: `sessionStorage > localStorage`. Sesión temporal de tab gana sobre persistente vieja.
-3. **Source of truth**: presencia del `access_token` en algún store. El `auth_persist` flag registra la decisión explícita del checkbox "Recordarme" y se usa para reconstruir `remember` durante la restauración de sesión (`getItem("auth_persist") !== "0"`). No se infiere el store activo de la presencia física de los tokens en localStorage/sessionStorage — el flag es la fuente autoritativa de esa decisión.
+3. **Source of truth**: presencia del `access_token` en algún store. El `auth_persist` flag registra la decisión explícita del checkbox "Recordarme" y se usa para reconstruir `remember` durante la restauración de sesión y al cambiar contraseña (`getRemember()`). No se infiere el store activo de la presencia física de los tokens en localStorage/sessionStorage — el flag es la fuente autoritativa de esa decisión.
 4. **Logout flag**: `clearTokens()` levanta `loggingOut=true`; `setTokens()` lo limpia. Async callbacks (refresh) chequean `isLoggingOut()` antes de mutar estado.
 
 **API:**
 - `getItem(key)` — lectura con prioridad session > local.
+- `getRemember()` — reconstruye la decisión del checkbox desde `auth_persist` (`true` si el flag no existe). La usan la restauración de sesión y `ChangePasswordForm` antes de llamar a `login()`.
 - `setTokens({ access, refresh, remember })` — escribe ambos tokens al store correcto + wipea el otro + escribe flag `auth_persist`.
 - `setAccessToken(access)` — actualiza solo el access token en el `activeStore()` actual. Usado por el refresh periódico.
 - `setRefreshToken(refresh)` — actualiza solo el refresh token en el `activeStore()` actual. Usado por el refresh periódico para persistir el token rotado (el backend emite un refresh nuevo con `ROTATE_REFRESH_TOKENS=True`; sin esta función el token viejo blacklisteado seguía en storage y el siguiente refresh fallaba con 401).
@@ -999,7 +1000,7 @@ Módulo único que centraliza acceso a auth storage. **Todo acceso a `access_tok
 
 **Anti-patterns prohibidos:**
 - ❌ `localStorage.getItem("access_token"|"refresh_token"|"user")` fuera de `tokenStorage.js`.
-- ❌ Leer `PERSIST_FLAG` para decisiones de routing — solo se lee durante la restauración de sesión vía `getItem("auth_persist")` para reconstruir `remember`.
+- ❌ Leer `PERSIST_FLAG` para decisiones de routing — solo se lee vía `getRemember()` para reconstruir `remember` en la restauración de sesión y en el cambio de contraseña.
 - ❌ Bypass de `isLoggingOut()` en callbacks async que mutan estado de auth.
 
 Grep gate sugerido (post-beta, vía ESLint custom rule): bloquear `(localStorage|sessionStorage)\.(getItem|setItem|removeItem)\(['"](access_token|refresh_token|user|auth_persist)` en archivos != `auth/tokenStorage.js`.
@@ -1109,7 +1110,7 @@ modal/wizard o `navigate`) — router-agnóstico.
 
 Aplicado en: **Mascotas** (Importar Excel `import.create` + Agregar paciente
 `patient.create`), **Agenda** (empty complementario sobre el calendario, no lo
-reemplaza; "Registrar atención sin cita" `appointment.create_walkin`),
+reemplaza; "Registrar atención sin cita" `appointment.create`, el permiso que el endpoint exige a quien registra),
 **Inventario** (`inventory.create`), **Config·Servicios** (`service.create`).
 **NO** crear empty states por página — usar este componente. Estilos:
 `.empty-state*` en `global.css` (`.empty-state-icon`, `.empty-state-actions`,
@@ -1676,27 +1677,31 @@ Pantalla de **gestión** de integrantes (`pages/staff.jsx`). Contrato backend en
 
 **Rediseño (2026-11-25)** — lo vigente; las viñetas de abajo cuentan cómo se llegó aquí:
 
-- **Encabezado**: «N integrantes · X activos · Y invitaciones pendientes · Z desactivados».
-- **«Requiere atención»**: quienes no pueden firmar recetas por falta de cédula (una línea; con
-  una sola persona, «Completar cédula» abre su ficha en ese campo) y cada invitación vencida
-  («Reenviar invitación» = restablecer contraseña). Sin pendientes no se muestra.
-- **Pestañas** (`role="tablist"`, flechas/Inicio/Fin): Todos (el equipo actual, sin
-  desactivados) · Activos · Pendientes (invitación pendiente o vencida) · Requieren atención ·
-  Desactivados (solo con `staff.reactivate`). Buscador por nombre o correo sin acentos y filtro
-  por rol; «Sin coincidencias» ofrece limpiar.
-- **Tabla**: Integrante (avatar, nombre que abre la ficha, «Tú», correo) · Rol (+ especialidades)
-  · Acceso por área (una pastilla por área con algún permiso; `components/Popover.jsx` muestra
-  grupos y acciones; «Todas las áreas»; «Ajustado a esta persona») · Firma de recetas
-  (`prescription.create` + cédula: Habilitada / Falta cédula / No aplica) · Estado (Activo,
-  Invitación pendiente, Invitación vencida, Desactivado) · Último acceso («Ahora», «Nunca»,
-  «hace 2 d») · acciones (Editar + ⋯: Ver ficha, Cambiar rol, Restablecer contraseña o Reenviar
-  invitación, Desactivar; Reactivar en desactivados). Por debajo de 960 px, tarjetas con rótulo.
-  Toda la presentación sale de `features/staff/teamView.js` (pruebas propias).
+- **Encabezado**: solo «N integrantes»; los conteos por estado viven en el filtro.
+- **Una sola barra**: `SegmentedControl` (Todos · Activos · Pendientes · Requieren atención ·
+  Desactivados, este último solo con `staff.reactivate`), cada opción con su conteo; a la derecha,
+  en la misma línea, `.searchBar` acotada (nombre o correo, sin acentos, con «Limpiar búsqueda»)
+  y el filtro por rol. «Sin coincidencias» ofrece limpiar.
+- **Lo que requiere atención no es un bloque aparte** (competía con la tabla): se señala donde
+  está —«Falta cédula» en su celda, que lleva al campo; «Invitación vencida» en Estado— y en el
+  contador de «Requieren atención», que solo toma color de aviso cuando es mayor que cero. La
+  acción que lo resuelve encabeza el menú ⋯ de la fila («Completar cédula», «Reenviar
+  invitación»).
+- **Tabla** (D6: lo normal neutro, color solo para lo que pide acción): Integrante (avatar,
+  nombre, «Tú», correo) · Rol (segunda línea solo con especialidades o «Atiende pacientes») ·
+  Acceso por área (pastillas con `components/Popover.jsx`; quien tiene todo, «Todas las áreas»;
+  ajustes como ícono con texto `.sr-only`) · Firma de recetas (✓ Habilitada / ⚠ Falta cédula /
+  «—») · Estado («Activo» en texto atenuado; insignia solo para invitación o desactivado) · Último
+  acceso. **La fila entera abre la ficha** (`table-row-clickable`); el nombre es la vía de
+  teclado y lo interactivo de dentro detiene la propagación. Sin botón «Editar»: ⋯ trae Ver ficha,
+  Cambiar rol, Restablecer/Reenviar y Desactivar; Reactivar en desactivados. Por debajo de 960 px,
+  tarjetas con rótulo. La presentación sale de `features/staff/teamView.js` (pruebas propias).
 - **Ficha = panel lateral** (`features/staff/MemberDrawer.jsx`), abierto con
   `?member=<uuid>[&section=role|license]`; `/staff/:publicId` redirige ahí. Secciones: avisos,
-  Rol (+ Atiende pacientes), Permisos, Datos, Seguridad y acceso (estado, último acceso, usuario,
-  MFA en ADMIN, restablecer/reenviar), Citas por atender (reasignar), Ausencias
-  (`MemberAbsences.jsx`) e Historial. Pie: Desactivar o Reactivar · Cancelar · Guardar cambios.
+  Rol (`RolePicker compact`: tres opciones en una línea y solo el alcance de la elegida; + Atiende
+  pacientes), Permisos, Datos, Seguridad y acceso (estado, último acceso, usuario, MFA en ADMIN,
+  restablecer/reenviar), Citas por atender (reasignar), Ausencias (`MemberAbsences.jsx`) e
+  Historial. Encabezado en una línea (rol, especialidades, estado); el correo vive en Datos. Pie: Desactivar o Reactivar · Cancelar · Guardar cambios.
   Escape y clic fuera cierran (con cambios, `useConfirm` pregunta). **Un solo guardado**: un
   PATCH con datos, rol y permisos; el backend lo aplica en una transacción.
 - **Permisos** (`PermissionEditor.jsx` + `permissionDraft.js`): acordeón por área con una casilla

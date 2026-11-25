@@ -178,7 +178,7 @@ describe("Ficha lateral: lo operativo (ADR p67)", () => {
     it("reúne rol, datos, acceso, citas, ausencias e historial", async () => {
         renderDrawer();
         const dialog = await openDrawer();
-        expect(within(dialog).getByText("ana@vet.mx")).toBeInTheDocument();
+        expect(within(dialog).queryByText("ana@vet.mx")).not.toBeInTheDocument(); // el correo vive en Datos, no en el encabezado
         expect(within(dialog).getByLabelText("CORREO ELECTRÓNICO *")).toHaveValue("ana@vet.mx");
         const citas = within(dialog).getByRole("list", { name: "Citas por atender" });
         expect(within(citas).getAllByRole("listitem")).toHaveLength(2);
@@ -540,11 +540,11 @@ describe("Ficha lateral: permisos por integrante (ADR p69)", () => {
         renderDrawer();
         const dialog = await openDrawer();
         await user.click(within(dialog).getByRole("radio", { name: /Asistente/ }));
-        expect(within(dialog).getByText(/Tiene permisos personalizados/)).toBeInTheDocument();
+        expect(within(dialog).getByText(/Tiene permisos ajustados/)).toBeInTheDocument();
         await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
         expect(toast.error).toHaveBeenCalledWith("Elige qué pasa con sus permisos personalizados.");
         expect(patch).not.toHaveBeenCalled();
-        await user.click(within(dialog).getByRole("radio", { name: "Conservar sus ajustes" }));
+        await user.click(within(dialog).getByRole("radio", { name: "Conservar ajustes" }));
         await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
         await waitFor(() => expect(patch).toHaveBeenCalledWith("staff/vet-uuid/", {
             specialties: [], role: "ASSISTANT", keep_custom_permissions: true,
@@ -559,7 +559,7 @@ describe("Ficha lateral: permisos por integrante (ADR p69)", () => {
         renderDrawer();
         const dialog = await openDrawer();
         await user.click(within(dialog).getByRole("radio", { name: /Asistente/ }));
-        await user.click(within(dialog).getByRole("radio", { name: "Usar solo los permisos de Asistente" }));
+        await user.click(within(dialog).getByRole("radio", { name: "Usar los de Asistente" }));
         expect(within(dialog).getByText("Los permisos de Asistente, sin ajustes.")).toBeInTheDocument();
     });
 

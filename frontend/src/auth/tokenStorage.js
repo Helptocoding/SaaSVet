@@ -50,6 +50,10 @@ export function getItem(key) {
     return localStorage.getItem(key);
 }
 
+export function getRemember() {
+    return getItem(PERSIST_FLAG) !== "0";
+}
+
 export function setTokens({ access, refresh, remember }) {
     const target = remember ? localStorage : sessionStorage;
     const other = remember ? sessionStorage : localStorage;

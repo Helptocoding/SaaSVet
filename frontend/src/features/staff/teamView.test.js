@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
-    accountState, attentionItems, filterMembers, groupsSummary, hasAllAreas, isCustomized,
+    accountState, filterMembers, groupsSummary, hasAllAreas, isCustomized,
     lastAccessShort, memberAlerts, memberAreas, signingState, tabCounts,
 } from "./teamView";
 
@@ -67,19 +67,13 @@ describe("áreas", () => {
 });
 
 describe("alertas", () => {
-    it("agrupa a quienes no pueden firmar y separa cada invitación vencida", () => {
-        const rows = [
-            member({ public_id: "a", first_name: "Ana", license_number: "" }),
-            member({ public_id: "b", first_name: "Beto", last_name: "Ruiz", license_number: "" }),
-            member({ public_id: "c", first_name: "Caro", access: { status: "temp_password_expired", temp_password_expires_at: "2026-11-22T10:00:00Z" } }),
-            member({ public_id: "d", is_active: false, license_number: "", access: { status: "inactive" } }),
-        ];
-        const items = attentionItems(rows, CATALOG, NOW);
-        expect(items.map((i) => i.text)).toEqual([
-            "2 veterinarios sin cédula no pueden firmar recetas: Ana Galeno, Beto Ruiz",
-            "La invitación de Caro Galeno venció hace 3 días",
-        ]);
-        expect(memberAlerts(rows[3], CATALOG, NOW)).toEqual([]);
+    it("falta de cédula e invitación vencida piden atención; un desactivado, no", () => {
+        expect(memberAlerts(member({ license_number: "" }), CATALOG, NOW)).toEqual([{ kind: "missing_license" }]);
+        expect(memberAlerts(member({
+            access: { status: "temp_password_expired", temp_password_expires_at: "2026-11-22T10:00:00Z" },
+        }), CATALOG, NOW)).toEqual([{ kind: "expired_invite", days: 3 }]);
+        expect(memberAlerts(member({ is_active: false, license_number: "", access: { status: "inactive" } }), CATALOG, NOW)).toEqual([]);
+        expect(memberAlerts(member(), CATALOG, NOW)).toEqual([]);
     });
 });
 

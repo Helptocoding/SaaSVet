@@ -100,8 +100,32 @@ export function CredentialsModal({ result, onClose }) {
     );
 }
 
-// Elección del rol (alta y ficha), con lo que permite cada uno.
-export function RolePicker({ value, onChange, name = "create-role", disabled = false }) {
+// Elección del rol (alta y ficha), con lo que permite cada uno. `compact` (ficha):
+// las tres opciones en una línea y solo el alcance de la elegida, para no leer
+// tres párrafos cada vez que se abre.
+export function RolePicker({ value, onChange, name = "create-role", disabled = false, compact = false }) {
+    if (compact) {
+        return (
+            <fieldset className={styles.roleCompact} disabled={disabled}>
+                <legend className="sr-only">Rol</legend>
+                <div className={styles.roleCompactOptions}>
+                    {STAFF_ROLE_ORDER.map((role) => (
+                        <label key={role} className={`${styles.roleChip}${value === role ? ` ${styles.roleChipSelected}` : ""}`}>
+                            <input
+                                type="radio"
+                                name={name}
+                                value={role}
+                                checked={value === role}
+                                onChange={() => onChange(role)}
+                            />
+                            {roleLabel(role)}
+                        </label>
+                    ))}
+                </div>
+                <p className={styles.roleHint}>{roleSummary(value)}</p>
+            </fieldset>
+        );
+    }
     return (
         <fieldset className={styles.roleOptions} disabled={disabled}>
             <legend className="form-label">ROL *</legend>
@@ -125,9 +149,9 @@ export function RolePicker({ value, onChange, name = "create-role", disabled = f
 }
 
 // ADR p66: solo en ADMIN se elige si atiende pacientes (VET siempre, ASSISTANT nunca).
-export function AttendsField({ id, checked, onChange, disabled = false }) {
+export function AttendsField({ id, checked, onChange, disabled = false, compact = false }) {
     return (
-        <label className={styles.attendsField} htmlFor={id}>
+        <label className={`${styles.attendsField}${compact ? ` ${styles.attendsCompact}` : ""}`} htmlFor={id}>
             <input
                 id={id}
                 type="checkbox"
@@ -138,7 +162,9 @@ export function AttendsField({ id, checked, onChange, disabled = false }) {
             <span>
                 <span className={styles.roleName}>Atiende pacientes</span>
                 <span className={styles.roleDescription}>
-                    Aparece como veterinario en la agenda y puede recibir citas. Requiere cédula profesional.
+                    {compact
+                        ? "Recibe citas como veterinario. Requiere cédula."
+                        : "Aparece como veterinario en la agenda y puede recibir citas. Requiere cédula profesional."}
                 </span>
             </span>
         </label>

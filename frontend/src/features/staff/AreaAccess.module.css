@@ -1,13 +1,9 @@
 /* Acceso por área (tabla de Equipo). Solo tokens globales. */
 
-.cell {
-    display: grid;
-    gap: 4px;
-}
-
 .chips {
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 4px;
 }
 
@@ -35,15 +31,21 @@
     outline-offset: 2px;
 }
 
-.all,
-.custom,
 .muted {
     font-size: 12px;
     color: var(--c-text-3);
 }
 
+.all {
+    color: var(--c-text-2);
+}
+
+/* Informativo, no pide acción (D6): ícono neutro con su texto accesible. */
 .custom {
-    color: var(--c-purple-text);
+    display: inline-flex;
+    align-items: center;
+    margin-left: 2px;
+    color: var(--c-text-3);
 }
 
 .title {

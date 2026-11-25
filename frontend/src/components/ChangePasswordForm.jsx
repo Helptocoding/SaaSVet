@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { changePassword } from "../api/users";
 import { useAuth } from "../auth/authContext";
+import { getRemember } from "../auth/tokenStorage";
 import handleFormError from "../utils/handleFormError";
 
 
@@ -19,10 +20,10 @@ const MIN_PASSWORD_LENGTH = 8;
  * Self-service password change form.
  *
  * On success, replaces the stored access + refresh tokens via the
- * central `useAuth().login(access, refresh)` — do NOT write directly
- * to localStorage. The server has blacklisted every previous refresh
- * token; using the central manager ensures the in-flight session
- * picks up the new pair atomically.
+ * central `useAuth().login(access, refresh, remember)` — do NOT write
+ * directly to storage. The server has blacklisted every previous refresh
+ * token; passing the persisted `remember` flag keeps the new pair in the
+ * store the user originally chose.
  */
 const ChangePasswordForm = () => {
     const { login, refreshUser, user } = useAuth();
@@ -69,8 +70,8 @@ const ChangePasswordForm = () => {
         setSaving(true);
         try {
             const data = await changePassword(form);
-            // Reemplazo de tokens via central manager — NO localStorage directo.
-            login(data.access, data.refresh);
+            // Reemplazo de tokens via central manager — NO storage directo.
+            login(data.access, data.refresh, getRemember());
             // El backend limpió must_change_password, pero el user en React state
             // todavía lo tiene en true (login solo intercambia tokens). Re-leer /me/
             // sincroniza el flag → el MustChangePasswordGate deja de rebotar.

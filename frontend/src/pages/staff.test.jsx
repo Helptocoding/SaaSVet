@@ -141,9 +141,23 @@ describe("Equipo: tabla nueva", () => {
         expect(within(row).getByRole("button", { name: /^Operación: Citas/ })).toBeInTheDocument();
         expect(within(row).queryByRole("button", { name: /^Administración/ })).not.toBeInTheDocument();
         expect(within(row).getByText("Habilitada")).toBeInTheDocument();
-        expect(within(row).getByText("1234567")).toBeInTheDocument();
-        expect(within(row).getByText("Activo")).toBeInTheDocument();
         expect(within(row).getByText("Nunca")).toBeInTheDocument();
+        // D6: lo normal no lleva color; la cédula se consulta en la ficha.
+        expect(within(row).getByText("Activo")).not.toHaveClass("badge");
+        expect(within(row).queryByText("1234567")).not.toBeInTheDocument();
+        expect(within(row).queryByRole("button", { name: /editar/i })).not.toBeInTheDocument();
+    });
+
+    it("clic en la fila abre la ficha; el menú de acciones no la abre", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderStaff();
+        await loaded();
+        await user.click(within(rowOf("Ana Galeno")).getByText("Veterinario"));
+        expect(screen.getByTestId("where")).toHaveTextContent("/staff?member=vet-uuid");
+        await user.keyboard("{Escape}");
+        await waitFor(() => expect(screen.getByTestId("where")).toHaveTextContent(/^\/staff$/));
+        await openRowMenu(user);
+        expect(screen.getByTestId("where")).toHaveTextContent(/^\/staff$/);
     });
 
     it("las celdas llevan su rótulo para la vista en tarjetas en pantallas angostas", async () => {
@@ -166,7 +180,9 @@ describe("Equipo: tabla nueva", () => {
         expect(within(panel).getByText("Ver la agenda")).toBeInTheDocument();
         expect(within(panel).getByText("Hacer devoluciones")).toBeInTheDocument();
         expect(chip).toHaveAttribute("aria-expanded", "true");
-        expect(screen.getByText("Ajustado a esta persona")).toBeInTheDocument();
+        expect(screen.getByText("Permisos ajustados para esta persona")).toBeInTheDocument();
+        // Abrir el detalle de un área no abre la ficha.
+        expect(screen.getByTestId("where")).toHaveTextContent(/^\/staff$/);
         await user.keyboard("{Escape}");
         expect(screen.queryByRole("dialog", { name: /Operación: permisos/ })).not.toBeInTheDocument();
         expect(chip).toHaveFocus();
@@ -186,49 +202,68 @@ describe("Equipo: tabla nueva", () => {
     });
 });
 
-describe("Equipo: requiere atención y alertas", () => {
-    it("avisa al veterinario que no puede firmar y lleva a completar su cédula", async () => {
+// Lo pendiente se señala donde está (su celda) y en el contador del filtro; no
+// hay un bloque aparte que compita con la tabla.
+describe("Equipo: lo que requiere atención", () => {
+    it("sin cédula: la celda lo dice, lleva al campo y el filtro lo cuenta en aviso", async () => {
         const user = userEvent.setup({ delay: null });
         activeRows = [{ ...VET, license_number: "" }];
         renderStaff();
         await loaded();
-        expect(within(rowOf("Ana Galeno")).getByText("Falta cédula")).toBeInTheDocument();
-        const block = screen.getByRole("region", { name: /Requiere atención/ });
-        expect(within(block).getByText("1 veterinario sin cédula no puede firmar recetas: Ana Galeno")).toBeInTheDocument();
-        await user.click(within(block).getByRole("button", { name: "Completar cédula" }));
+        expect(screen.queryByRole("region", { name: /Requiere atención/ })).not.toBeInTheDocument();
+        const segment = screen.getByRole("button", { name: "Requieren atención 1" });
+        expect(segment.querySelector(".segmented-count-attention")).not.toBeNull();
+        await user.click(within(rowOf("Ana Galeno")).getByRole("button", { name: "Falta cédula: completar la de Ana Galeno" }));
         expect(screen.getByTestId("where")).toHaveTextContent("/staff?member=vet-uuid&section=license");
     });
 
-    it("una invitación vencida se reenvía desde el bloque", async () => {
+    it("«Completar cédula» encabeza su menú", async () => {
         const user = userEvent.setup({ delay: null });
-        vi.useFakeTimers({ toFake: ["Date"] });
-        vi.setSystemTime(new Date("2026-11-25T12:00:00Z"));
+        activeRows = [{ ...VET, license_number: "" }];
+        renderStaff();
+        await loaded();
+        const menu = await openRowMenu(user);
+        expect(within(menu).getAllByRole("menuitem")[0]).toHaveTextContent("Completar cédula");
+    });
+
+    it("una invitación vencida se marca en Estado y se reenvía desde su menú", async () => {
+        const user = userEvent.setup({ delay: null });
         granted.add("staff.reset_password");
         activeRows = [{ ...VET, access: { status: "temp_password_expired", last_login: null, temp_password_expires_at: "2026-11-22T10:00:00Z" } }];
         post.mockResolvedValueOnce({ data: { temp_password: "Tmp-5", expires_in_seconds: 86400 } });
         renderStaff();
         await loaded();
-        const block = screen.getByRole("region", { name: /Requiere atención/ });
-        expect(within(block).getByText("La invitación de Ana Galeno venció hace 3 días")).toBeInTheDocument();
-        await user.click(within(block).getByRole("button", { name: "Reenviar invitación" }));
+        expect(within(rowOf("Ana Galeno")).getByText("Invitación vencida")).toHaveClass("badge-warning");
+        const menu = await openRowMenu(user);
+        const first = within(menu).getAllByRole("menuitem")[0];
+        expect(first).toHaveTextContent("Reenviar invitación");
+        await user.click(first);
         await waitFor(() => expect(post.mock.calls[0][0]).toBe("staff/vet-uuid/reset-password/"));
         expect(confirmMock.mock.calls[0][0]).toMatchObject({ title: "Reenviar invitación", dangerMode: false });
         expect(await screen.findByRole("dialog", { name: "Contraseña temporal generada" })).toBeInTheDocument();
-        vi.useRealTimers();
     });
 
-    it("sin pendientes no hay bloque", async () => {
+    it("sin pendientes el contador no avisa", async () => {
         renderStaff();
         await loaded();
-        expect(screen.queryByRole("region", { name: /Requiere atención/ })).not.toBeInTheDocument();
+        const segment = screen.getByRole("button", { name: "Requieren atención 0" });
+        expect(segment.querySelector(".segmented-count-attention")).toBeNull();
+    });
+
+    it("sin staff.update la falta de cédula se informa sin enlace", async () => {
+        granted.delete("staff.update");
+        activeRows = [{ ...VET, license_number: "" }];
+        renderStaff();
+        await loaded();
+        expect(within(rowOf("Ana Galeno")).getByText("Falta cédula")).toBeInTheDocument();
+        expect(within(rowOf("Ana Galeno")).queryByRole("button", { name: /Falta cédula/ })).not.toBeInTheDocument();
     });
 
     it("un ADMIN que atiende se distingue en la tabla y su falta de cédula se avisa", async () => {
         activeRows = [{ ...VET, role: "ADMIN", attends_patients: true, license_number: "", specialties: [], permissions: CATALOG.roles.ADMIN }];
         renderStaff();
-        expect(await screen.findByText(/· Atiende pacientes/)).toBeInTheDocument();
-        expect(screen.getByText("Falta cédula")).toBeInTheDocument();
-        expect(screen.getByText(/1 integrante sin cédula no puede firmar recetas/)).toBeInTheDocument();
+        expect(await screen.findByText("Atiende pacientes")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Falta cédula/ })).toBeInTheDocument();
     });
 });
 
@@ -240,22 +275,33 @@ describe("Equipo: pestañas, búsqueda y filtro por rol", () => {
         activeRows = [VET, ASSISTANT, PENDING];
         renderStaff();
         await loaded();
-        expect(screen.getByRole("tab", { name: "Todos 3" })).toHaveAttribute("aria-selected", "true");
-        expect(screen.getByRole("tab", { name: "Activos 2" })).toBeInTheDocument();
-        await user.click(screen.getByRole("tab", { name: "Pendientes 1" }));
+        const filter = screen.getByRole("group", { name: "Mostrar integrantes" });
+        expect(within(filter).getByRole("button", { name: "Todos 3" })).toHaveAttribute("aria-pressed", "true");
+        expect(within(filter).getByRole("button", { name: "Activos 2" })).toHaveAttribute("aria-pressed", "false");
+        await user.click(within(filter).getByRole("button", { name: "Pendientes 1" }));
+        expect(within(filter).getByRole("button", { name: "Pendientes 1" })).toHaveAttribute("aria-pressed", "true");
         expect(screen.getByRole("button", { name: "Nico Ruiz" })).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: "Ana Galeno" })).not.toBeInTheDocument();
         expect(within(rowOf("Nico Ruiz")).getByText("Invitación pendiente")).toBeInTheDocument();
     });
 
-    it("las pestañas se recorren con las flechas", async () => {
+    it("filtro, búsqueda y rol comparten una sola barra", async () => {
+        renderStaff();
+        await loaded();
+        const filter = screen.getByRole("group", { name: "Mostrar integrantes" });
+        const toolbar = filter.parentElement;
+        expect(within(toolbar).getByRole("searchbox", { name: "Buscar por nombre o correo" })).toBeInTheDocument();
+        expect(within(toolbar).getByRole("combobox", { name: "Filtrar por rol" })).toBeInTheDocument();
+    });
+
+    it("la búsqueda se limpia con su botón", async () => {
         const user = userEvent.setup({ delay: null });
         renderStaff();
         await loaded();
-        screen.getByRole("tab", { name: /^Todos/ }).focus();
-        await user.keyboard("{ArrowRight}");
-        expect(screen.getByRole("tab", { name: /^Activos/ })).toHaveFocus();
-        expect(screen.getByRole("tab", { name: /^Activos/ })).toHaveAttribute("aria-selected", "true");
+        await user.type(screen.getByRole("searchbox"), "zzz");
+        await user.click(screen.getByRole("button", { name: "Limpiar búsqueda" }));
+        expect(screen.getByRole("searchbox")).toHaveValue("");
+        expect(screen.getByRole("button", { name: "Ana Galeno" })).toBeInTheDocument();
     });
 
     it("busca por nombre o correo sin acentos y filtra por rol", async () => {
@@ -282,12 +328,15 @@ describe("Equipo: pestañas, búsqueda y filtro por rol", () => {
         expect(screen.getByRole("button", { name: "Ana Galeno" })).toBeInTheDocument();
     });
 
-    it("resume integrantes, activos, invitaciones y desactivados con datos reales", async () => {
+    it("el encabezado dice el tamaño del equipo; los conteos por estado viven en el filtro", async () => {
         granted.add("staff.reactivate");
         activeRows = [VET, PENDING];
         inactiveRows = [{ ...ASSISTANT, id: 7, public_id: "z", is_active: false, access: { status: "inactive", last_login: null, temp_password_expires_at: null } }];
         renderStaff();
-        expect(await screen.findByText("2 integrantes · 1 activo · 1 invitación pendiente · 1 desactivado")).toBeInTheDocument();
+        expect(await screen.findByText("2 integrantes")).toBeInTheDocument();
+        const filter = screen.getByRole("group", { name: "Mostrar integrantes" });
+        expect(within(filter).getByRole("button", { name: "Pendientes 1" })).toBeInTheDocument();
+        expect(within(filter).getByRole("button", { name: "Desactivados 1" })).toBeInTheDocument();
     });
 });
 
@@ -332,11 +381,13 @@ describe("Equipo: estado y último acceso", () => {
 
 describe("Equipo: permisos por capacidad, ruta y fila propia (F4, Fase 1)", () => {
     it("decide por can() y no por rol", async () => {
+        const user = userEvent.setup({ delay: null });
         currentUser = { role: "VET", id: 99 };
         renderStaff();
         await loaded();
         expect(screen.getByRole("button", { name: /agregar miembro/i })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /editar a ana galeno/i })).toBeInTheDocument();
+        const menu = await openRowMenu(user);
+        expect(within(menu).getByRole("menuitem", { name: "Desactivar acceso" })).toBeInTheDocument();
     });
 
     it("sin permisos de gestión, /staff redirige al inicio y no pide el equipo", async () => {
@@ -352,20 +403,22 @@ describe("Equipo: permisos por capacidad, ruta y fila propia (F4, Fase 1)", () =
         granted = new Set(["staff.list", "staff.update"]);
         renderStaff();
         await loaded();
-        expect(screen.getByRole("button", { name: /editar a ana galeno/i })).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /agregar miembro/i })).not.toBeInTheDocument();
         const menu = await openRowMenu(user);
         expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(["Ver ficha"]);
     });
 
-    it("sin staff.update no ofrece editar", async () => {
+    it("sin staff.update la ficha se abre solo para consultar", async () => {
+        const user = userEvent.setup({ delay: null });
         granted.delete("staff.update");
         renderStaff();
         await loaded();
-        expect(screen.queryByRole("button", { name: /editar a/i })).not.toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: "Ana Galeno" }));
+        const dialog = await screen.findByRole("dialog", { name: /Ana Galeno/ }, { timeout: 4000 });
+        expect(await within(dialog).findByLabelText("NOMBRE *")).toBeDisabled();
     });
 
-    it("la fila propia muestra «Tú» y Editar, y su menú solo la ficha", async () => {
+    it("la fila propia muestra «Tú» y su menú solo la ficha", async () => {
         const user = userEvent.setup({ delay: null });
         granted.add("staff.reset_password");
         granted.add("staff.change_role");
@@ -374,7 +427,6 @@ describe("Equipo: permisos por capacidad, ruta y fila propia (F4, Fase 1)", () =
         await loaded();
         const row = rowOf("Ana Galeno");
         expect(within(row).getByText("Tú")).toBeInTheDocument();
-        expect(within(row).getByRole("button", { name: /editar a/i })).toBeInTheDocument();
         const menu = await openRowMenu(user);
         expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(["Ver ficha"]);
     });
@@ -385,12 +437,11 @@ describe("Equipo: permisos por capacidad, ruta y fila propia (F4, Fase 1)", () =
         activeRows = [{ ...VET, demo_protected: true }];
         renderStaff();
         await loaded();
-        expect(within(rowOf("Ana Galeno")).queryByRole("button", { name: /editar a/i })).not.toBeInTheDocument();
         const menu = await openRowMenu(user);
         expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(["Ver ficha"]);
     });
 
-    it("el nombre, Editar y «Ver ficha» abren la ficha lateral (ADR p67)", async () => {
+    it("el nombre (vía de teclado) abre la ficha lateral (ADR p67)", async () => {
         const user = userEvent.setup({ delay: null });
         renderStaff();
         await loaded();
@@ -510,6 +561,7 @@ describe("Equipo: desactivar y restablecer", () => {
         granted.add("staff.reset_password");
         let finish;
         post.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+        activeRows = [VET, ASSISTANT];
         renderStaff();
         await loaded();
         const menu = await openRowMenu(user);
@@ -518,7 +570,7 @@ describe("Equipo: desactivar y restablecer", () => {
         const trigger = await screen.findByRole("button", { name: "Más acciones para Ana Galeno" });
         await waitFor(() => expect(trigger).toBeDisabled());
         expect(trigger).toHaveAttribute("aria-busy", "true");
-        expect(screen.getByRole("button", { name: /editar a ana galeno/i })).toBeDisabled();
+        expect(screen.getByRole("button", { name: "Más acciones para Rosa Mora" })).toBeDisabled();
 
         finish({ data: { temp_password: "Tmp-1", expires_in_seconds: 86400 } });
         await screen.findByRole("dialog", { name: "Contraseña temporal generada" });
@@ -688,8 +740,8 @@ const NAME_EXAMPLES = [
 describe("Equipo: edición desde la ficha (F5, ADR p68)", () => {
     const openEdit = async (user, name = "Ana Galeno") => {
         await loaded(name);
-        await user.click(screen.getByRole("button", { name: new RegExp(`editar a ${name}`, "i") }));
-        await screen.findByRole("heading", { name: new RegExp(name) });
+        await user.click(screen.getByRole("button", { name }));
+        await screen.findByRole("heading", { name: new RegExp(name) }, { timeout: 4000 });
         return screen.getByRole("dialog", { name: new RegExp(name) });
     };
 
@@ -719,11 +771,13 @@ describe("Equipo: edición desde la ficha (F5, ADR p68)", () => {
         expect(toast.error).not.toHaveBeenCalled();
     });
 
-    it("muestra el rol con su alcance", async () => {
+    it("muestra el rol elegido y solo su alcance", async () => {
         const user = userEvent.setup({ delay: null });
         renderStaff();
         const dialog = await openEdit(user);
-        expect(within(dialog).getByRole("radio", { name: /^Veterinario.*Atiende consultas, emite recetas y registra vacunas/ })).toBeChecked();
+        expect(within(dialog).getByRole("radio", { name: "Veterinario" })).toBeChecked();
+        expect(within(dialog).getByText(/Atiende consultas, emite recetas y registra vacunas/)).toBeInTheDocument();
+        expect(within(dialog).queryByText(/Consulta expedientes sin modificarlos/)).not.toBeInTheDocument();
     });
 
     it("editar envía solo la lista nueva de especialidades cuando cambia", async () => {
@@ -768,10 +822,10 @@ describe("Equipo: desactivados y reactivación (F6)", () => {
         access: { status: "inactive", last_login: null, temp_password_expires_at: null },
     };
 
-    it("sin staff.reactivate no hay pestaña Desactivados ni se piden", async () => {
+    it("sin staff.reactivate no hay filtro Desactivados ni se piden", async () => {
         renderStaff();
         await loaded();
-        expect(screen.queryByRole("tab", { name: /Desactivados/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /^Desactivados/ })).not.toBeInTheDocument();
         expect(get.mock.calls.some(([url]) => url.includes("archived=true"))).toBe(false);
     });
 
@@ -781,7 +835,7 @@ describe("Equipo: desactivados y reactivación (F6)", () => {
         renderStaff();
         await loaded();
         expect(screen.queryByRole("button", { name: "Luis Pardo" })).not.toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: "Desactivados 1" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Desactivados 1" })).toBeInTheDocument();
     });
 
     it("reactiva, muestra la temporal y recarga ambas listas", async () => {
@@ -793,7 +847,7 @@ describe("Equipo: desactivados y reactivación (F6)", () => {
         });
         renderStaff();
         await loaded();
-        await user.click(screen.getByRole("tab", { name: /Desactivados/ }));
+        await user.click(screen.getByRole("button", { name: /^Desactivados/ }));
         expect(within(rowOf("Luis Pardo")).getByText("Desactivado")).toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: "Reactivar acceso de Luis Pardo" }));
 
@@ -817,7 +871,7 @@ describe("Equipo: desactivados y reactivación (F6)", () => {
         post.mockRejectedValueOnce({ response: { status: 409, data: { code: "already_active", message } } });
         renderStaff();
         await loaded();
-        await user.click(screen.getByRole("tab", { name: /Desactivados/ }));
+        await user.click(screen.getByRole("button", { name: /^Desactivados/ }));
         await user.click(screen.getByRole("button", { name: "Reactivar acceso de Luis Pardo" }));
         await waitFor(() => expect(toast.error).toHaveBeenCalledWith(message));
         await waitFor(() => expect(get.mock.calls.filter(([u]) => u.includes("archived=true")).length).toBe(2));
@@ -830,7 +884,7 @@ describe("Equipo: desactivados y reactivación (F6)", () => {
         post.mockResolvedValueOnce({ data: { temp_password: "x", expires_in_seconds: 86400 } });
         renderStaff();
         await loaded();
-        await user.click(screen.getByRole("tab", { name: /Desactivados/ }));
+        await user.click(screen.getByRole("button", { name: /^Desactivados/ }));
         await user.click(screen.getByRole("button", { name: "Reactivar acceso de Luis Pardo" }));
         expect(confirmMock.mock.calls[0][0].message).toMatch(/No tiene cédula profesional registrada/);
     });
@@ -840,7 +894,7 @@ describe("Equipo: desactivados y reactivación (F6)", () => {
         granted.add("staff.reactivate");
         renderStaff();
         await loaded();
-        await user.click(screen.getByRole("tab", { name: /Desactivados/ }));
+        await user.click(screen.getByRole("button", { name: /^Desactivados/ }));
         expect(screen.getByText("Sin integrantes en «Desactivados»")).toBeInTheDocument();
     });
 

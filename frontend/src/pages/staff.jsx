@@ -1,7 +1,12 @@
 // Equipo (rediseño 2026-11-25, ADR p69): quién está en la clínica, qué puede
 // hacer y qué hay que resolver. La ficha de cada persona se abre en un panel
 // lateral (`?member=<uuid>`); `/staff/:publicId` redirige ahí.
-import { useEffect, useRef, useState } from "react";
+//
+// Jerarquía (design-system §2, D6): el color marca solo lo que pide una acción
+// (falta de cédula, invitación vencida); lo normal va neutro. Lo pendiente se
+// señala en su celda y en el contador del filtro «Requieren atención», no en un
+// bloque aparte que compita con la tabla.
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
@@ -13,12 +18,13 @@ import { useAuth } from "../auth/authContext";
 import ActionMenu from "../components/ActionMenu";
 import EmptyState from "../components/EmptyState";
 import { Icon } from "../components/icons";
+import SegmentedControl from "../components/SegmentedControl";
 import TableSkeleton from "../components/TableSkeleton";
 import { useConfirm } from "../components/useConfirm";
 import AreaAccess from "../features/staff/AreaAccess";
 import MemberDrawer from "../features/staff/MemberDrawer";
 import { STAFF_MANAGEMENT_PERMS } from "../features/staff/permissions";
-import { STAFF_ROLE_ORDER, roleLabel, roleShort } from "../features/staff/roles";
+import { STAFF_ROLE_ORDER, roleLabel } from "../features/staff/roles";
 import SpecialtyPicker from "../features/staff/SpecialtyPicker";
 import { specialtiesLabel } from "../features/staff/specialties";
 import {
@@ -28,8 +34,8 @@ import {
     DEMO_EMAIL_HINT, attendsFor, createErrors, fullName, impactSentence, inputClass, normalizeName, plural,
 } from "../features/staff/staffForm";
 import {
-    ACCOUNT_STATE_LABELS, SIGNING_LABELS, TABS, accountState, attentionItems, filterMembers,
-    lastAccessShort, signingState, tabCounts,
+    ACCOUNT_STATE_LABELS, TABS, accountState, filterMembers, lastAccessShort, memberAlerts, signingState,
+    tabCounts,
 } from "../features/staff/teamView";
 import { apiError } from "../utils/apiError";
 import { formatDateTime, orgTz } from "../utils/datetime";
@@ -64,10 +70,11 @@ const EMPTY_FORM = {
     license_number: "",
 };
 
+// D6: «Activo» es lo normal y va como texto neutro; solo la invitación vencida
+// pide una acción y lleva color.
 const STATE_BADGE = {
-    active: "badge-success",
-    pending: "badge-warning",
-    expired: "badge-danger",
+    pending: "badge-default",
+    expired: "badge-warning",
     inactive: "badge-default",
 };
 
@@ -77,49 +84,11 @@ export function StaffMemberRedirect() {
     return <Navigate to={`/staff?member=${encodeURIComponent(publicId)}`} replace />;
 }
 
-function teamSummary(team, inactive, showInactive) {
-    const parts = [plural(team.length, "integrante", "integrantes")];
-    const active = team.filter((m) => accountState(m) === "active").length;
-    const pending = team.length - active;
-    parts.push(plural(active, "activo", "activos"));
-    if (pending > 0) parts.push(plural(pending, "invitación pendiente", "invitaciones pendientes"));
-    if (showInactive && inactive.length > 0) parts.push(plural(inactive.length, "desactivado", "desactivados"));
-    return parts.join(" · ");
-}
+// Los conteos por estado ya están en el filtro: aquí solo el tamaño del equipo.
+const teamSummary = (team) => plural(team.length, "integrante", "integrantes");
 
-function TeamTabs({ tabs, value, counts, onChange, controls }) {
-    const refs = useRef({});
-    const onKeyDown = (event, index) => {
-        const keys = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: tabs.length - 1 };
-        if (!(event.key in keys)) return;
-        event.preventDefault();
-        const next = tabs[(keys[event.key] + tabs.length) % tabs.length];
-        onChange(next.id);
-        refs.current[next.id]?.focus();
-    };
-    return (
-        <div className={styles.tabs} role="tablist" aria-label="Integrantes">
-            {tabs.map((tab, index) => (
-                <button
-                    key={tab.id}
-                    ref={(node) => { refs.current[tab.id] = node; }}
-                    type="button"
-                    role="tab"
-                    id={`staff-tab-${tab.id}`}
-                    aria-selected={value === tab.id}
-                    aria-controls={controls}
-                    tabIndex={value === tab.id ? 0 : -1}
-                    className={styles.tab}
-                    onClick={() => onChange(tab.id)}
-                    onKeyDown={(event) => onKeyDown(event, index)}
-                >
-                    {tab.label}{" "}
-                    <span className={styles.tabCount}>{counts[tab.id] ?? 0}</span>
-                </button>
-            ))}
-        </div>
-    );
-}
+// El que pide atención lleva su contador en aviso; los demás, neutros.
+const segmentTone = (tab) => (tab === "attention" ? "attention" : undefined);
 
 const Staff = () => {
     const { user, initializing, can, canAny } = useAuth();
@@ -200,7 +169,6 @@ const Staff = () => {
     const everyone = [...staff, ...inactive];
     const counts = tabCounts(everyone, catalog);
     const rows = filterMembers(everyone, { tab, query, role: roleFilter }, catalog);
-    const attention = attentionItems(staff, catalog);
     const filtering = Boolean(query.trim() || roleFilter);
 
     const openMember = (member, section = null) => {
@@ -372,25 +340,29 @@ const Staff = () => {
         });
     };
 
+    // Lo que resuelve un pendiente va primero; después, lo de siempre.
     const rowMenuItems = (member) => {
         const self = isSelf(member);
         const state = accountState(member);
-        if (state === "inactive") {
-            return [{ id: "profile", label: "Ver ficha", onSelect: () => openMember(member) }];
+        const profile = { id: "profile", label: "Ver ficha", onSelect: () => openMember(member) };
+        if (state === "inactive" || member.demo_protected) return [profile];
+        const missingLicense = memberAlerts(member, catalog).some((alert) => alert.kind === "missing_license");
+        const items = [];
+        if (missingLicense && canUpdate) {
+            items.push({ id: "license", label: "Completar cédula", onSelect: () => openMember(member, "license") });
         }
-        const items = [{ id: "profile", label: "Ver ficha", onSelect: () => openMember(member) }];
-        if (member.demo_protected) return items;
+        const invite = state === "pending" || state === "expired";
+        const reset = canReset && !self ? {
+            id: "reset",
+            label: invite ? "Reenviar invitación" : "Restablecer contraseña",
+            onSelect: () => handleResetPassword(member),
+        } : null;
+        if (reset && state === "expired") items.push(reset);
+        items.push(profile);
         if (canChangeRole && !self) {
             items.push({ id: "role", label: "Cambiar rol", onSelect: () => openMember(member, "role") });
         }
-        if (canReset && !self) {
-            const invite = state === "pending" || state === "expired";
-            items.push({
-                id: "reset",
-                label: invite ? "Reenviar invitación" : "Restablecer contraseña",
-                onSelect: () => handleResetPassword(member),
-            });
-        }
+        if (reset && state !== "expired") items.push(reset);
         if (canDestroy && !self) {
             items.push({ id: "deactivate", label: "Desactivar acceso", danger: true, onSelect: () => handleDeactivate(member) });
         }
@@ -413,30 +385,52 @@ const Staff = () => {
         );
     }
 
-    const renderRole = (member) => (
-        <>
-            <div className={styles.primaryText}>{roleLabel(member.role)}</div>
-            <div className={styles.secondaryText}>
-                {member.specialties?.length > 0 ? specialtiesLabel(member.specialties) : roleShort(member.role)}
-                {member.role === "ADMIN" && member.attends_patients && " · Atiende pacientes"}
-            </div>
-        </>
-    );
+    // Una línea por dato; la segunda solo si dice algo que la primera no.
+    const renderRole = (member) => {
+        const detail = [
+            member.specialties?.length > 0 ? specialtiesLabel(member.specialties) : null,
+            member.role === "ADMIN" && member.attends_patients ? "Atiende pacientes" : null,
+        ].filter(Boolean).join(" · ");
+        return (
+            <>
+                <div className={styles.primaryText}>{roleLabel(member.role)}</div>
+                {detail && <div className={styles.secondaryText}>{detail}</div>}
+            </>
+        );
+    };
 
     const renderSigning = (member) => {
         const signing = signingState(member, catalog);
+        if (signing === "enabled") {
+            return <span className={styles.neutralText}><Icon.Check s={14} /> Habilitada</span>;
+        }
+        if (signing === "not_applicable") {
+            return (
+                <span className={styles.mutedText} title="No aplica">
+                    <span aria-hidden="true">—</span><span className="sr-only">No aplica</span>
+                </span>
+            );
+        }
+        // Falta cédula: lo único de la columna que pide una acción, y la lleva a ella.
+        if (!canUpdate || member.demo_protected || accountState(member) === "inactive") {
+            return <span className={styles.attentionText}><Icon.AlertTriangle s={14} /> Falta cédula</span>;
+        }
         return (
-            <>
-                <div className={signing === "missing_license" ? styles.attentionText : signing === "enabled" ? styles.primaryText : styles.secondaryText}>
-                    {SIGNING_LABELS[signing]}
-                </div>
-                {signing === "enabled" && (
-                    <div className={styles.secondaryText}>
-                        Cédula <span className={styles.mono}>{member.license_number}</span>
-                    </div>
-                )}
-            </>
+            <button
+                type="button"
+                className={styles.attentionLink}
+                onClick={(event) => { event.stopPropagation(); openMember(member, "license"); }}
+                aria-label={`Falta cédula: completar la de ${fullName(member)}`}
+            >
+                <Icon.AlertTriangle s={14} /> Falta cédula
+            </button>
         );
+    };
+
+    const renderState = (member) => {
+        const state = accountState(member);
+        if (state === "active") return <span className={styles.mutedText}>{ACCOUNT_STATE_LABELS.active}</span>;
+        return <span className={`badge ${STATE_BADGE[state]}`}>{ACCOUNT_STATE_LABELS[state]}</span>;
     };
 
     const renderActions = (member) => {
@@ -445,31 +439,17 @@ const Staff = () => {
         const inactiveRow = accountState(member) === "inactive";
         return (
             <>
-                {inactiveRow ? (
-                    canReactivate && (
-                        <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleReactivate(member)}
-                            disabled={rowBusy}
-                            aria-busy={busyHere || undefined}
-                            aria-label={`Reactivar acceso de ${name}`}
-                        >
-                            {busyHere ? <><Icon.Loader s={14} /> Reactivando…</> : <><Icon.UserCheck s={14} /> Reactivar</>}
-                        </button>
-                    )
-                ) : (
-                    canUpdate && !member.demo_protected && (
-                        <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => openMember(member)}
-                            disabled={rowBusy}
-                            aria-label={`Editar a ${name}`}
-                        >
-                            <Icon.Edit s={14} /> Editar
-                        </button>
-                    )
+                {inactiveRow && canReactivate && (
+                    <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleReactivate(member)}
+                        disabled={rowBusy}
+                        aria-busy={busyHere || undefined}
+                        aria-label={`Reactivar acceso de ${name}`}
+                    >
+                        {busyHere ? <><Icon.Loader s={14} /> Reactivando…</> : <><Icon.UserCheck s={14} /> Reactivar</>}
+                    </button>
                 )}
                 <ActionMenu
                     label={`Más acciones para ${name}`}
@@ -481,41 +461,24 @@ const Staff = () => {
         );
     };
 
-    const attentionAction = (item) => {
-        if (item.kind === "missing_license") {
-            if (!canUpdate) return null;
-            return item.members.length === 1 ? (
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => openMember(item.members[0], "license")}>
-                    Completar cédula
-                </button>
-            ) : (
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setTab("attention")}>
-                    Revisar
-                </button>
-            );
-        }
-        if (!canReset) return null;
-        return (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleResetPassword(item.members[0])} disabled={rowBusy}>
-                Reenviar invitación
-            </button>
-        );
+    const emptyTabBody = {
+        all: "Agrega a tu equipo: cada persona entra con su propia cuenta.",
+        active: "Aparece aquí quien ya entró por primera vez.",
+        pending: "Nadie tiene una invitación por usar.",
+        attention: "Nada por resolver.",
+        inactive: "Aquí aparece quien desactives.",
     };
 
-    const emptyTabBody = {
-        all: "Agrega a tu equipo para que cada persona entre con su propia cuenta y su propio rol.",
-        active: "Aquí aparece quien ya entró y completó su acceso.",
-        pending: "Nadie tiene una invitación por usar.",
-        attention: "Nada por resolver: todos pueden firmar lo que su rol permite y no hay invitaciones vencidas.",
-        inactive: "Quien desactives aparecerá aquí y podrás reactivar su acceso.",
-    };
+    // Clic en la fila abre la ficha (design-system §5, tabla); lo interactivo de
+    // dentro detiene la propagación para no abrirla dos veces.
+    const stop = (event) => event.stopPropagation();
 
     return (
         <div>
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Equipo</h1>
-                    <p className="page-subtitle">{teamSummary(staff, inactive, canReactivate)}</p>
+                    <p className="page-subtitle">{teamSummary(staff)}</p>
                 </div>
                 {canCreate && (
                     <button type="button" className="btn btn-primary btn-md" onClick={openCreate}>
@@ -533,48 +496,48 @@ const Staff = () => {
                 />
             )}
 
-            {attention.length > 0 && (
-                <section className={styles.attention} aria-labelledby="staff-attention-title">
-                    <h2 id="staff-attention-title" className={styles.attentionTitle}>
-                        <Icon.AlertTriangle s={16} /> Requiere atención
-                    </h2>
-                    <ul className={styles.attentionList}>
-                        {attention.map((item) => (
-                            <li key={item.key} className={styles.attentionItem}>
-                                <span>{item.text}</span>
-                                {attentionAction(item)}
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
-
-            <TeamTabs tabs={tabs} value={tab} counts={counts} onChange={setTab} controls="staff-panel" />
-
+            {/* Una sola línea: qué grupo ver (filtro excluyente) y, a la derecha, cómo acotarlo. */}
             <div className={styles.toolbar}>
-                <div className={styles.search}>
-                    <Icon.Search s={16} />
-                    <input
-                        type="search"
-                        className="input"
-                        aria-label="Buscar por nombre o correo"
-                        placeholder="Buscar por nombre o correo"
-                        value={query}
-                        onChange={(event) => setQuery(event.target.value)}
-                    />
+                <SegmentedControl
+                    ariaLabel="Mostrar integrantes"
+                    value={tab}
+                    onChange={setTab}
+                    options={tabs.map((item) => ({
+                        id: item.id,
+                        label: item.label,
+                        count: counts[item.id] ?? 0,
+                        tone: segmentTone(item.id),
+                    }))}
+                />
+                <div className={styles.filters}>
+                    <div className={`searchBar ${styles.search}`}>
+                        <span className="search-icon" aria-hidden="true"><Icon.Search s={15} /></span>
+                        <input
+                            type="search"
+                            aria-label="Buscar por nombre o correo"
+                            placeholder="Buscar…"
+                            value={query}
+                            onChange={(event) => setQuery(event.target.value)}
+                        />
+                        {query && (
+                            <button type="button" className="search-clear" aria-label="Limpiar búsqueda" onClick={() => setQuery("")}>
+                                <Icon.X s={14} />
+                            </button>
+                        )}
+                    </div>
+                    <select
+                        className={`select-input ${styles.roleSelect}`}
+                        aria-label="Filtrar por rol"
+                        value={roleFilter}
+                        onChange={(event) => setRoleFilter(event.target.value)}
+                    >
+                        <option value="">Todos los roles</option>
+                        {STAFF_ROLE_ORDER.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}
+                    </select>
                 </div>
-                <select
-                    className="select-input"
-                    aria-label="Filtrar por rol"
-                    value={roleFilter}
-                    onChange={(event) => setRoleFilter(event.target.value)}
-                >
-                    <option value="">Todos los roles</option>
-                    {STAFF_ROLE_ORDER.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}
-                </select>
             </div>
 
-            <div id="staff-panel" role="tabpanel" aria-labelledby={`staff-tab-${tab}`}>
+            <div>
                 {rows.length === 0 ? (
                     filtering ? (
                         <EmptyState
@@ -606,41 +569,50 @@ const Staff = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {rows.map((member) => {
-                                    const state = accountState(member);
-                                    return (
-                                        <tr key={member.public_id}>
-                                            <td className={styles.memberCell}>
-                                                <div className={styles.member}>
-                                                    <MemberAvatar member={member} />
-                                                    <div className={styles.memberText}>
-                                                        <div className={styles.memberName}>
-                                                            <button type="button" className={styles.memberLink} onClick={() => openMember(member)}>
-                                                                {fullName(member)}
-                                                            </button>
-                                                            {isSelf(member) && <span className="badge badge-default">Tú</span>}
-                                                        </div>
-                                                        <div className={styles.secondaryText}>{member.email}</div>
+                                {rows.map((member) => (
+                                    <tr
+                                        key={member.public_id}
+                                        className="table-row-clickable"
+                                        onClick={() => openMember(member)}
+                                    >
+                                        <td className={styles.memberCell}>
+                                            <div className={styles.member}>
+                                                <MemberAvatar member={member} />
+                                                <div className={styles.memberText}>
+                                                    <div className={styles.memberName}>
+                                                        {/* Vía de teclado a la ficha; con el ratón basta la fila. */}
+                                                        <button
+                                                            type="button"
+                                                            className={styles.memberLink}
+                                                            onClick={(event) => { stop(event); openMember(member); }}
+                                                        >
+                                                            {fullName(member)}
+                                                        </button>
+                                                        {isSelf(member) && <span className="badge badge-default">Tú</span>}
                                                     </div>
+                                                    <div className={styles.secondaryText}>{member.email}</div>
                                                 </div>
-                                            </td>
-                                            <td data-label="Rol">{renderRole(member)}</td>
-                                            <td data-label="Acceso por área"><AreaAccess member={member} catalog={catalog} /></td>
-                                            <td data-label="Firma de recetas">{renderSigning(member)}</td>
-                                            <td data-label="Estado">
-                                                <span className={`badge ${STATE_BADGE[state]}`}>{ACCOUNT_STATE_LABELS[state]}</span>
-                                            </td>
-                                            <td data-label="Último acceso">
-                                                <span title={member.access?.last_login ? formatDateTime(member.access.last_login, tz, "es-MX") : undefined}>
-                                                    {lastAccessShort(member, { isSelf: isSelf(member) })}
-                                                </span>
-                                            </td>
-                                            <td className={styles.actionsCell}>
-                                                <div className={styles.actions}>{renderActions(member)}</div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
+                                            </div>
+                                        </td>
+                                        <td data-label="Rol">{renderRole(member)}</td>
+                                        <td data-label="Acceso por área" onClick={stop}>
+                                            <AreaAccess member={member} catalog={catalog} />
+                                        </td>
+                                        <td data-label="Firma de recetas">{renderSigning(member)}</td>
+                                        <td data-label="Estado">{renderState(member)}</td>
+                                        <td data-label="Último acceso">
+                                            <span
+                                                className={styles.mutedText}
+                                                title={member.access?.last_login ? formatDateTime(member.access.last_login, tz, "es-MX") : undefined}
+                                            >
+                                                {lastAccessShort(member, { isSelf: isSelf(member) })}
+                                            </span>
+                                        </td>
+                                        <td className={styles.actionsCell} onClick={stop}>
+                                            <div className={styles.actions}>{renderActions(member)}</div>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>

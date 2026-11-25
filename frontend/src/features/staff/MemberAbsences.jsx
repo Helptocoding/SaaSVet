@@ -109,7 +109,7 @@ export default function MemberAbsences({ member, absences, today, canManage, onC
                 <div className={styles.subForm}>
                     <h4 className={styles.subTitle}>Registrar ausencia</h4>
                     <p className={styles.muted}>
-                        Días completos. Mientras dure, nadie podrá agendarle citas esos días y el asistente de WhatsApp no ofrecerá sus horarios.
+                        Días completos. Esos días no recibe citas, tampoco por WhatsApp.
                     </p>
                     <div className={styles.formRow}>
                         <div className="form-group">

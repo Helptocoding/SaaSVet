@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { LoginForm } from "./LoginForm";
 
@@ -9,6 +9,8 @@ import { LoginForm } from "./LoginForm";
 //
 // `useLoginForm` toca auth context, router y red — fuera del alcance de un test
 // de presentación. Se mockea a un stub estable para aislar el render de LoginForm.
+const { setRememberMock } = vi.hoisted(() => ({ setRememberMock: vi.fn() }));
+
 vi.mock("../hooks/useLoginForm", () => ({
   useLoginForm: () => ({
     username: "",
@@ -16,7 +18,7 @@ vi.mock("../hooks/useLoginForm", () => ({
     password: "",
     setPassword: () => {},
     remember: true,
-    setRemember: () => {},
+    setRemember: setRememberMock,
     loading: false,
     handleSubmit: () => {},
   }),
@@ -61,5 +63,18 @@ describe("LoginForm — ¿Olvidaste tu contraseña?", () => {
     render(<LoginForm />);
     const trigger = screen.getByRole("button", { name: "¿Olvidaste tu contraseña?" });
     expect(trigger).toHaveAttribute("type", "button");
+  });
+});
+
+describe("LoginForm — Recordarme", () => {
+  beforeEach(() => setRememberMock.mockClear());
+
+  it("el checkbox propaga su estado al hook", () => {
+    render(<LoginForm />);
+    const checkbox = screen.getByTestId("remember-checkbox");
+
+    expect(checkbox).toBeChecked();
+    fireEvent.click(checkbox);
+    expect(setRememberMock).toHaveBeenCalledWith(false);
   });
 });

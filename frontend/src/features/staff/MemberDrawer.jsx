@@ -31,7 +31,7 @@ import SpecialtyPicker from "./SpecialtyPicker";
 import { specialtiesLabel } from "./specialties";
 import { AttendsField, FieldError, MemberAvatar, RolePicker } from "./StaffParts";
 import {
-    DEMO_EMAIL_HINT, EMAIL_CHANGE_NOTICE, attendsFor, fullName, impactSentence, inputClass, licenseError,
+    DEMO_EMAIL_HINT, EMAIL_CHANGE_NOTICE, attendsFor, fullName, impactSentence, inputClass,
     plural, profileChanges, profileErrors,
 } from "./staffForm";
 import { ACCOUNT_STATE_LABELS, accountState, lastAccessShort, memberAlerts } from "./teamView";
@@ -317,15 +317,16 @@ export default function MemberDrawer({
                             {fullName(member)}
                             {isSelf && <span className="badge badge-default">Tú</span>}
                         </h2>
+                        {/* Una línea: rol, especialidades y estado. El correo vive en Datos. */}
                         <p className={styles.meta}>
-                            {roleLabel(member.role)}
-                            {member.specialties?.length > 0 && ` · ${specialtiesLabel(member.specialties)}`}
-                        </p>
-                        <p className={styles.meta}>
-                            <span className={`badge ${state === "active" ? "badge-success" : state === "inactive" ? "badge-danger" : "badge-warning"}`}>
+                            <span>
+                                {roleLabel(member.role)}
+                                {member.specialties?.length > 0 && ` · ${specialtiesLabel(member.specialties)}`}
+                            </span>
+                            {/* D6: «Activo» es lo normal y no lleva color. */}
+                            <span className={`badge ${state === "expired" ? "badge-warning" : "badge-default"}`}>
                                 {ACCOUNT_STATE_LABELS[state]}
                             </span>
-                            <span>{member.email}</span>
                         </p>
                     </div>
                 </div>
@@ -402,9 +403,10 @@ export default function MemberDrawer({
                     <p className={styles.notice}>Cuenta de la demo: se puede consultar, no editar.</p>
                 )}
 
-                <Section id={`${titleId}-role`} title="Rol" description="Define sus permisos de partida.">
+                <Section id={`${titleId}-role`} title="Rol">
                     <div ref={roleRef} tabIndex={-1} className={styles.focusTarget}>
                         <RolePicker
+                            compact
                             name="member-role"
                             value={draft.role}
                             onChange={onRoleChange}
@@ -414,6 +416,7 @@ export default function MemberDrawer({
                     {roleLock && editable && <p className={styles.muted}>{roleLock}</p>}
                     {draft.role === "ADMIN" && (
                         <AttendsField
+                            compact
                             id="member-attends"
                             checked={draft.attends_patients}
                             onChange={(value) => setField("attends_patients", value)}
@@ -427,26 +430,22 @@ export default function MemberDrawer({
                     {decisionShown && (
                         <fieldset className={styles.decision}>
                             <legend className={styles.decisionTitle}>
-                                Tiene permisos personalizados. ¿Qué hacemos con ellos en el rol nuevo?
+                                Tiene permisos ajustados. ¿Los conserva con el rol nuevo?
                             </legend>
                             <label className={styles.decisionOption}>
                                 <input type="radio" name="keep-custom" checked={keepCustom === true} onChange={() => setKeepCustom(true)} />
-                                Conservar sus ajustes
+                                Conservar ajustes
                             </label>
                             <label className={styles.decisionOption}>
                                 <input type="radio" name="keep-custom" checked={keepCustom === false} onChange={() => setKeepCustom(false)} />
-                                Usar solo los permisos de {roleLabel(draft.role)}
+                                Usar los de {roleLabel(draft.role)}
                             </label>
                             <FieldError message={errors.keep_custom_permissions} />
                         </fieldset>
                     )}
                 </Section>
 
-                <Section
-                    id={`${titleId}-permissions`}
-                    title="Permisos"
-                    description="Lo que puede hacer en cada área. Parte de su rol; aquí se ajusta solo para esta persona."
-                >
+                <Section id={`${titleId}-permissions`} title="Permisos">
                     {catalog ? (
                         <PermissionEditor
                             catalog={catalog}
@@ -516,9 +515,6 @@ export default function MemberDrawer({
                                 onChange={(e) => setField("license_number", e.target.value)}
                             />
                             <FieldError message={errors.license_number} />
-                            {!errors.license_number && nextAttends && licenseError(draft.role, draft.license_number, draft.attends_patients) && (
-                                <p className={styles.muted}>Sin cédula no podrá firmar consultas ni recetas.</p>
-                            )}
                         </div>
                         {nextAttends && (
                             <div className={`form-group ${styles.fullRow}`}>
@@ -563,11 +559,6 @@ export default function MemberDrawer({
                             </div>
                         )}
                     </dl>
-                    {pending && (
-                        <p className={styles.muted}>
-                            Reenviar genera una contraseña temporal nueva (válida 24 h) que se muestra una sola vez.
-                        </p>
-                    )}
                 </Section>
 
                 <Section
