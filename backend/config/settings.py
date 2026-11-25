@@ -113,6 +113,12 @@ if ENVIRONMENT == 'production' and not AGENT_TOKEN_ENC_KEY:
     )
     _warnings.warn(_enc_msg, RuntimeWarning)
     _sys.stderr.write("[SEC] " + _enc_msg + "\n")
+# ADR p68: verificación en dos pasos. Clave propia para cifrar los secretos TOTP
+# y firmar los códigos de respaldo; vacía = se deriva de SECRET_KEY. Cambiarla
+# invalida los MFA activos (la salida es restablecer la contraseña). El emisor es
+# el nombre que muestra la app autenticadora.
+MFA_ENCRYPTION_KEY = config('MFA_ENCRYPTION_KEY', default='')
+MFA_ISSUER = config('MFA_ISSUER', default='SaaslyVet')
 # Base de la Graph API (overridable: sandbox/tests/bump de versión sin release).
 WHATSAPP_API_BASE_URL = config(
     'WHATSAPP_API_BASE_URL', default='https://graph.facebook.com/v20.0',

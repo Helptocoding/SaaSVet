@@ -78,7 +78,7 @@ def group_secret(secret):
 
 
 def provisioning_uri(secret, account):
-    issuer = getattr(settings, 'MFA_ISSUER', 'SaaslyVet')
+    issuer = settings.MFA_ISSUER
     label = quote(f'{issuer}:{account}')
     query = urlencode({'secret': secret, 'issuer': issuer, 'algorithm': 'SHA1',
                        'digits': DIGITS, 'period': STEP_SECONDS})
@@ -101,7 +101,7 @@ def normalize_recovery_code(code):
 
 
 def _derived_key(purpose):
-    base = getattr(settings, 'MFA_ENCRYPTION_KEY', '') or settings.SECRET_KEY
+    base = settings.MFA_ENCRYPTION_KEY or settings.SECRET_KEY
     return hashlib.sha256(f'users.mfa.{purpose}.v1|{base}'.encode()).digest()
 
 
