@@ -165,7 +165,8 @@ function localTodayStr() {
 }
 
 // ── Detail Modal ───────────────────────────────────────────────────────────────
-function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, onAttendNow, onEdit, onNewFromAppt, navigate, canEdit, showHistory, onRefresh }) {
+// `perms`: { update, attend, createRecord, create } ya calculados por capacidad en la página.
+function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, onAttendNow, onEdit, onNewFromAppt, navigate, perms, showHistory, onRefresh }) {
     const confirm = useConfirm();
     const [history,          setHistory]          = useState([]);
     const [historyOpen,      setHistoryOpen]      = useState(false);
@@ -249,7 +250,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                     )}
 
                     {/* Banner: paciente genérico — vincular a real */}
-                    {appt.pet_is_generic && canEdit && (
+                    {appt.pet_is_generic && perms.update && (
                         <div style={{
                             marginTop:"12px", padding:"12px 14px",
                             background:"var(--c-warning-bg)", border:"1px solid var(--c-warning-border)",
@@ -348,20 +349,22 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                 <div className="modal-footer modal-footer-stacked">
 
                     {/* scheduled / confirmed → Atender ahora */}
-                    {(appt.status === "scheduled" || appt.status === "confirmed") && canEdit && (
+                    {(appt.status === "scheduled" || appt.status === "confirmed") && (perms.attend || perms.update) && (
                         <>
-                            <button
-                                className="btn btn-attention btn-lg"
-                                data-tour="agenda-attend"
-                                style={{ width: "100%" }}
-                                disabled={attending}
-                                onClick={async () => {
-                                    setAttending(true);
-                                    try { await onAttendNow?.(appt); } finally { setAttending(false); }
-                                }}>
-                                ▶ Atender ahora
-                            </button>
-                            {appt.status === "scheduled" && (
+                            {perms.attend && (
+                                <button
+                                    className="btn btn-attention btn-lg"
+                                    data-tour="agenda-attend"
+                                    style={{ width: "100%" }}
+                                    disabled={attending}
+                                    onClick={async () => {
+                                        setAttending(true);
+                                        try { await onAttendNow?.(appt); } finally { setAttending(false); }
+                                    }}>
+                                    ▶ Atender ahora
+                                </button>
+                            )}
+                            {appt.status === "scheduled" && perms.update && (
                                 <div style={{ display: "flex", gap: "6px", width: "100%" }}>
                                     <button className="btn btn-info btn-md" style={{ flex: 1 }}
                                         onClick={() => onEdit(appt)}>Editar</button>
@@ -369,7 +372,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                         onClick={() => onStatusChange(appt.public_id, "confirmed", appt)}>Confirmar</button>
                                 </div>
                             )}
-                            <div style={{ display: "flex", gap: "6px", width: "100%" }}>
+                            {perms.update && <div style={{ display: "flex", gap: "6px", width: "100%" }}>
                                 <button className="btn btn-secondary btn-md" style={{ flex: 1 }}
                                     onClick={async () => {
                                         if (await confirm({ message: "¿Marcar como no presentado?", confirmText: "No se presentó" }))
@@ -380,24 +383,26 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                         if (await confirm({ message: "¿Cancelar esta cita?", confirmText: "Cancelar cita", dangerMode: true }))
                                             onStatusChange(appt.public_id, "canceled", appt);
                                     }}>Cancelar</button>
-                            </div>
+                            </div>}
                         </>
                     )}
 
                     {/* in_progress → continuar / completar / cancelar */}
-                    {appt.status === "in_progress" && canEdit && (
+                    {appt.status === "in_progress" && (perms.attend || perms.update) && (
                         <>
-                            <button
-                                className="btn btn-attention btn-lg"
-                                style={{ width: "100%" }}
-                                disabled={attending}
-                                onClick={async () => {
-                                    setAttending(true);
-                                    try { await onAttendNow?.(appt); } finally { setAttending(false); }
-                                }}>
-                                Continuar consulta
-                            </button>
-                            <div style={{display:"flex",gap:"6px",width:"100%"}}>
+                            {perms.attend && (
+                                <button
+                                    className="btn btn-attention btn-lg"
+                                    style={{ width: "100%" }}
+                                    disabled={attending}
+                                    onClick={async () => {
+                                        setAttending(true);
+                                        try { await onAttendNow?.(appt); } finally { setAttending(false); }
+                                    }}>
+                                    Continuar consulta
+                                </button>
+                            )}
+                            {perms.update && <div style={{display:"flex",gap:"6px",width:"100%"}}>
                                 <button className="btn btn-success btn-md" style={{flex:2}}
                                     onClick={async ()=>{
                                         const ok = await confirm({
@@ -412,7 +417,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                         if(await confirm({ message:"¿Cancelar esta consulta en progreso?", confirmText:"Cancelar", dangerMode:true }))
                                             onStatusChange(appt.public_id, "canceled", appt);
                                     }}>Cancelar</button>
-                            </div>
+                            </div>}
                         </>
                     )}
 
@@ -424,7 +429,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                     onClick={()=>{onClose(); navigate(`/medical-records?record=${appt.medical_record_public_ids[0]}`); }}>
                                     Ver Consulta
                                 </button>
-                            ) : canEdit && (
+                            ) : perms.createRecord && (
                                 <button className="btn btn-purple btn-md" style={{width:"100%"}}
                                     onClick={()=>{onClose(); navigate(`/medical-records?pet=${petId}&appointment=${appt.public_id}`); }}>
                                     + Crear Consulta Médica
@@ -441,11 +446,11 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                     )}
 
                     {/* canceled → reschedule (if date still valid) or new appt */}
-                    {canReschedule && canEdit && (
+                    {canReschedule && perms.update && (
                         <button className="btn btn-info btn-md" style={{width:"100%"}}
                             onClick={()=>onStatusChange(appt.public_id, "scheduled", appt)}>Reprogramar</button>
                     )}
-                    {showNewAppt && canEdit && (
+                    {showNewAppt && perms.create && (
                         <button className="btn btn-info btn-md" style={{width:"100%"}}
                             onClick={()=>{ onClose(); onNewFromAppt(appt); }}>
                             + Crear nueva cita
@@ -1037,11 +1042,19 @@ function EventManagerAppointments() {
     }), []);
     const tour = useAgendaTour(tourActions);
     const tourStartedRef = useRef(false);
-    // Crear citas se decide por capacidad (ADR p63): recepción (ASSISTANT) tiene
-    // `appointment.create` y antes quedaba en «Modo lectura» por su nombre de rol.
-    // `canEdit` sigue por rol: pendiente aparte (Fase 1 Equipo, §7).
+    // Todo por capacidad, nunca por rol (ADR p63; con ADR p69 los permisos son además
+    // por persona). Cada acción pide lo mismo que su endpoint:
+    // - crear cita y atención sin cita: `appointment.create` (el backend exige además
+    //   `appointment.create_walkin` al veterinario asignado, no a quien registra);
+    // - editar, confirmar, cancelar, completar, reprogramar, vincular paciente y
+    //   mover en el calendario: `appointment.update`;
+    // - atender (pasa a en curso y abre la consulta): también `medicalrecord.create`.
+    // Antes `canEdit` era «ADMIN o VET»: recepción veía la agenda en solo lectura
+    // aunque su rol puede gestionar citas (Fase 1 Equipo, §7).
     const canCreate = can("appointment.create");
-    const canEdit = user?.role === "ADMIN" || user?.role === "VET";
+    const canUpdate = can("appointment.update");
+    const canCreateRecord = can("medicalrecord.create");
+    const canAttend = canUpdate && canCreateRecord;
 
     const loadAll = async () => {
         try {
@@ -1074,10 +1087,10 @@ function EventManagerAppointments() {
         const calendar = calendarRef.current?.getApi();
         if (!calendar) return;
         calendar.setOption("selectAllow", (selection) => !isPastCalendarDate(selection.start, today));
-        calendar.setOption("eventAllow", (dropInfo, draggedEvent) => canEdit && !isPastCalendarDate(dropInfo.start, today) && ["scheduled", "confirmed"].includes(draggedEvent.extendedProps.appointment.status));
+        calendar.setOption("eventAllow", (dropInfo, draggedEvent) => canUpdate && !isPastCalendarDate(dropInfo.start, today) && ["scheduled", "confirmed"].includes(draggedEvent.extendedProps.appointment.status));
         calendar.setOption("fixedWeekCount", false);
         calendar.setOption("dayMaxEvents", 2);
-    }, [calendarView, canEdit, today]);
+    }, [calendarView, canUpdate, today]);
     const startTour = tour.start;
     useEffect(() => { if (tourStartedRef.current || !canCreate) return; let seen = true; try { seen = localStorage.getItem(AGENDA_TOUR_KEY) === "true"; } catch { /* localStorage no disponible: se asume visto */ } if (!seen) { tourStartedRef.current = true; startTour(); } }, [canCreate, startTour]);
 
@@ -1168,15 +1181,15 @@ function EventManagerAppointments() {
     if (initializing || loading) return <AppointmentsSkeleton />;
 
     return <div className={`appointments-event-manager${canCreate ? " can-create" : ""} view-${calendarView}`}>
-        <div className="page-header"><div><h1 className="page-title">Citas</h1><p className="page-subtitle">Agenda clínica · {visibleAppointments.length} citas visibles</p></div><div className="agenda-header-actions"><button className="btn btn-ghost btn-md" onClick={tour.start}><Icon.Help s={15} /> Cómo funciona</button>{canEdit && <button className="btn btn-secondary btn-md" data-tour="agenda-walkin" onClick={() => setWalkInOpen(true)}>Atención sin cita</button>}{canCreate && <button className="btn btn-primary btn-md" onClick={() => selectSlot(today, 9)}><Icon.Plus s={15} /> Nueva cita</button>}</div></div>
-        {appointments.length === 0 && <div className="card" style={{ marginBottom:"16px" }}><EmptyState compact icon={Icon.CalendarClock} title="Tu agenda está vacía" body="Selecciona un horario para agendar tu primera cita, o registra un paciente sin cita previa." actions={[can("appointment.create_walkin") ? { label:"Registrar atención sin cita", onClick:() => setWalkInOpen(true), variant:"primary" } : null]} /></div>}
+        <div className="page-header"><div><h1 className="page-title">Citas</h1><p className="page-subtitle">Agenda clínica · {visibleAppointments.length} citas visibles</p></div><div className="agenda-header-actions"><button className="btn btn-ghost btn-md" onClick={tour.start}><Icon.Help s={15} /> Cómo funciona</button>{canCreate && <button className="btn btn-secondary btn-md" data-tour="agenda-walkin" onClick={() => setWalkInOpen(true)}>Atención sin cita</button>}{canCreate && <button className="btn btn-primary btn-md" onClick={() => selectSlot(today, 9)}><Icon.Plus s={15} /> Nueva cita</button>}</div></div>
+        {appointments.length === 0 && <div className="card" style={{ marginBottom:"16px" }}><EmptyState compact icon={Icon.CalendarClock} title="Tu agenda está vacía" body="Selecciona un horario para agendar tu primera cita, o registra un paciente sin cita previa." actions={[canCreate ? { label:"Registrar atención sin cita", onClick:() => setWalkInOpen(true), variant:"primary" } : null]} /></div>}
         <CalendarControls search={search} onSearchChange={setSearch} staff={staff} filterVetId={filterVetId} onVetChange={setFilterVetId} categoryFilter={categoryFilter} onCategoryChange={setCategoryFilter} statusFilter={statusFilter} onStatusChange={setStatusFilter} />
         <div className="agenda-global-view-switcher"><ViewModeButtonGroup value={calendarView} onChange={changeView} /></div>
         {calendarView === "day" && <DayPlanner selectedDate={dayAnchor} appointments={visibleAppointments} today={today} canCreate={canCreate} onSelectSlot={selectSlot} onViewAppointment={setViewAppt} onNavigate={navigateDay} calendarView={calendarView} onChangeView={changeView} />}
         {calendarView === "list" && <AppointmentList key={`${search}|${filterVetId}|${statusFilter}|${categoryFilter}`} appointments={visibleAppointments} onViewAppointment={setViewAppt} />}
-        <div className="agenda-grid"><div className="agenda-shell" data-tour="agenda-calendar"><div className="agenda-toolbar"><div><div className="agenda-toolbar-title">{calendarView === "list" ? "Lista de citas" : calendarTitle}</div>{calendarView !== "list" && <div className="agenda-nav"><button type="button" className="agenda-nav-btn" aria-label="Anterior" onClick={() => navigateCalendar("prev")}>‹</button><button type="button" className="agenda-nav-btn agenda-nav-today" onClick={() => navigateCalendar("today")}>Hoy</button><button type="button" className="agenda-nav-btn" aria-label="Siguiente" onClick={() => navigateCalendar("next")}>›</button><span className="agenda-past-note" data-tour="agenda-past-dates" role="note">No se permiten fechas pasadas</span></div>}</div><ViewModeButtonGroup value={calendarView} onChange={changeView} dataTour="agenda-view-switcher" /></div>{calendarView === "list" ? <div className="agenda-list">{visibleAppointments.length === 0 ? <p style={{ color:"var(--c-text-3)", padding:"16px", textAlign:"center" }}>No hay citas que coincidan con los filtros.</p> : [...visibleAppointments].sort((a,b) => `${a.date}${a.start_time}`.localeCompare(`${b.date}${b.start_time}`)).map((appointment) => { const tone = categoryTone(appointment.category); return <button key={appointment.id} className="agenda-list-item" style={{ borderLeftColor:tone.accent }} onClick={() => setViewAppt(appointment)}><strong>{appointment.pet_name || "Paciente"} · {appointment.reason || "Cita"}</strong><span className="agenda-list-meta">{appointment.date} · {String(appointment.start_time).slice(0,5)} · {appointment.owner_name || "Sin propietario"}</span><StatusBadge status={appointment.status} /></button>; })}</div> : <div className="agenda-calendar"><FullCalendar ref={calendarRef} plugins={[dayGridPlugin,timeGridPlugin,interactionPlugin]} locale={esLocale} firstDay={1} eventTimeFormat={TIME_24H} slotLabelFormat={TIME_24H} initialView={EVENT_VIEWS.week} initialDate={today} headerToolbar={false} allDaySlot={false} slotMinTime="07:00:00" slotMaxTime="20:00:00" slotDuration="00:30:00" nowIndicator height="auto" weekends events={calendarEvents} selectable={canCreate} selectMirror editable={canEdit} eventStartEditable={canEdit} eventDurationEditable={canEdit} dateClick={(info) => selectSlot(info.date, info.allDay ? 9 : info.date.getHours())} select={handleCalendarSelect} eventClick={(info) => setViewAppt(info.event.extendedProps.appointment)} eventDrop={saveCalendarMutation} eventResize={saveCalendarMutation} eventAllow={(dropInfo, draggedEvent) => canEdit && ["scheduled","confirmed"].includes(draggedEvent.extendedProps.appointment.status)} eventDidMount={(info) => { if (info.event.extendedProps.appointment.public_id === "__demo__") info.el.dataset.tour = "agenda-appt-demo"; }} datesSet={(info) => setCalendarTitle(calendarRangeLabel(info.view))} /></div>}</div>
+        <div className="agenda-grid"><div className="agenda-shell" data-tour="agenda-calendar"><div className="agenda-toolbar"><div><div className="agenda-toolbar-title">{calendarView === "list" ? "Lista de citas" : calendarTitle}</div>{calendarView !== "list" && <div className="agenda-nav"><button type="button" className="agenda-nav-btn" aria-label="Anterior" onClick={() => navigateCalendar("prev")}>‹</button><button type="button" className="agenda-nav-btn agenda-nav-today" onClick={() => navigateCalendar("today")}>Hoy</button><button type="button" className="agenda-nav-btn" aria-label="Siguiente" onClick={() => navigateCalendar("next")}>›</button><span className="agenda-past-note" data-tour="agenda-past-dates" role="note">No se permiten fechas pasadas</span></div>}</div><ViewModeButtonGroup value={calendarView} onChange={changeView} dataTour="agenda-view-switcher" /></div>{calendarView === "list" ? <div className="agenda-list">{visibleAppointments.length === 0 ? <p style={{ color:"var(--c-text-3)", padding:"16px", textAlign:"center" }}>No hay citas que coincidan con los filtros.</p> : [...visibleAppointments].sort((a,b) => `${a.date}${a.start_time}`.localeCompare(`${b.date}${b.start_time}`)).map((appointment) => { const tone = categoryTone(appointment.category); return <button key={appointment.id} className="agenda-list-item" style={{ borderLeftColor:tone.accent }} onClick={() => setViewAppt(appointment)}><strong>{appointment.pet_name || "Paciente"} · {appointment.reason || "Cita"}</strong><span className="agenda-list-meta">{appointment.date} · {String(appointment.start_time).slice(0,5)} · {appointment.owner_name || "Sin propietario"}</span><StatusBadge status={appointment.status} /></button>; })}</div> : <div className="agenda-calendar"><FullCalendar ref={calendarRef} plugins={[dayGridPlugin,timeGridPlugin,interactionPlugin]} locale={esLocale} firstDay={1} eventTimeFormat={TIME_24H} slotLabelFormat={TIME_24H} initialView={EVENT_VIEWS.week} initialDate={today} headerToolbar={false} allDaySlot={false} slotMinTime="07:00:00" slotMaxTime="20:00:00" slotDuration="00:30:00" nowIndicator height="auto" weekends events={calendarEvents} selectable={canCreate} selectMirror editable={canUpdate} eventStartEditable={canUpdate} eventDurationEditable={canUpdate} dateClick={(info) => selectSlot(info.date, info.allDay ? 9 : info.date.getHours())} select={handleCalendarSelect} eventClick={(info) => setViewAppt(info.event.extendedProps.appointment)} eventDrop={saveCalendarMutation} eventResize={saveCalendarMutation} eventAllow={(dropInfo, draggedEvent) => canUpdate && ["scheduled","confirmed"].includes(draggedEvent.extendedProps.appointment.status)} eventDidMount={(info) => { if (info.event.extendedProps.appointment.public_id === "__demo__") info.el.dataset.tour = "agenda-appt-demo"; }} datesSet={(info) => setCalendarTitle(calendarRangeLabel(info.view))} /></div>}</div>
         <aside className="agenda-sidebar"><div className="agenda-sidebar-card"><input className="agenda-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar mascota, cliente o motivo…" aria-label="Buscar citas" /><div style={{ borderTop:"1px solid var(--c-border)", marginTop:"14px", paddingTop:"14px" }}><p className="agenda-section-label">Estado</p><div className="agenda-filters">{STATUS_FILTERS.map(([value,label]) => <button key={value || "all"} className={`agenda-filter${statusFilter === value ? " is-active" : ""}`} onClick={() => setStatusFilter(value)}>{label}</button>)}</div></div><div style={{ borderTop:"1px solid var(--c-border)", marginTop:"14px", paddingTop:"14px" }}><p className="agenda-section-label">Veterinarios</p><div className="agenda-staff"><button className={`agenda-staff-button${filterVetId === "" ? " is-active" : ""}`} onClick={() => setFilterVetId("")}>Todos</button>{staff.map((member) => { const active = filterVetId === String(member.id); return <button key={member.id} className={`agenda-staff-button${active ? " is-active" : ""}`} onClick={() => setFilterVetId((current) => current === String(member.id) ? "" : String(member.id))}>{member.first_name} {member.last_name}</button>; })}</div></div></div><div className="agenda-sidebar-card"><MiniCalendar today={today} selectedDate={selectedSlot?.date} onSelect={(date) => { setWeekOffset(0); calendarRef.current?.getApi().gotoDate(date); }} /></div><div className="agenda-sidebar-card" data-tour="agenda-form">{canCreate ? <SidebarForm slot={selectedSlot} onSave={handleFormSave} onSaveWithPatient={handleSaveWithPatient} onClear={() => setSelectedSlot(null)} staff={staff} user={user} formRef={formRef} /> : <p style={{ color:"var(--c-text-3)", fontSize:"12.5px", fontStyle:"italic", textAlign:"center" }}>Modo lectura — sin permiso para crear citas</p>}</div><div className="agenda-stats">{[["Hoy",todayCount],["Esta semana",weekCount]].map(([label,count]) => <div key={label}><div style={{ color:"var(--c-primary-dark)", fontSize:"11px" }}>{label}</div><div style={{ color:"var(--c-primary-dark)", fontSize:"24px", fontWeight:700, lineHeight:1.15 }}>{count}</div><div style={{ color:"var(--c-primary-dark)", fontSize:"11px", opacity:.7 }}>cita{count !== 1 ? "s" : ""}</div></div>)}</div></aside></div>
-        {viewAppt && <DetailModal appt={viewAppt} petName={viewAppt.pet_name || "—"} vetName={getVetName(viewAppt.veterinarian) || viewAppt.veterinarian_name} petId={viewAppt.pet_public_id} onClose={() => setViewAppt(null)} onStatusChange={handleStatusChange} onAttendNow={handleAttendNow} onEdit={(appointment) => { setEditingAppt(appointment); setViewAppt(null); }} onNewFromAppt={(appointment) => { setViewAppt(null); selectSlot(new Date(`${appointment.date}T${appointment.start_time}`), parseInt(appointment.start_time,10)); }} navigate={navigate} canEdit={canEdit} showHistory={!!orgSettings?.show_status_change_history} onRefresh={(updated) => { setAppointments((previous) => previous.map((item) => item.id === updated.id ? updated : item)); setViewAppt(updated); }} />}
+        {viewAppt && <DetailModal appt={viewAppt} petName={viewAppt.pet_name || "—"} vetName={getVetName(viewAppt.veterinarian) || viewAppt.veterinarian_name} petId={viewAppt.pet_public_id} onClose={() => setViewAppt(null)} onStatusChange={handleStatusChange} onAttendNow={handleAttendNow} onEdit={(appointment) => { setEditingAppt(appointment); setViewAppt(null); }} onNewFromAppt={(appointment) => { setViewAppt(null); selectSlot(new Date(`${appointment.date}T${appointment.start_time}`), parseInt(appointment.start_time,10)); }} navigate={navigate} perms={{ update: canUpdate, attend: canAttend, createRecord: canCreateRecord, create: canCreate }} showHistory={!!orgSettings?.show_status_change_history} onRefresh={(updated) => { setAppointments((previous) => previous.map((item) => item.id === updated.id ? updated : item)); setViewAppt(updated); }} />}
         {createModalOpen && <AppointmentCreateModal slot={selectedSlot} onClose={() => { setCreateModalOpen(false); setSelectedSlot(null); }} onSave={handleFormSave} onSaveWithPatient={handleSaveWithPatient} staff={staff} user={user} formRef={formRef} />}
         {editingAppt && <EditModal appt={editingAppt} staff={staff} user={user} onClose={() => setEditingAppt(null)} onSave={handleEditSave} />}{walkInOpen && <WalkInModal staff={staff} user={user} allowAnonymousWalkIn={!!orgSettings?.allow_anonymous_walkin} onClose={() => setWalkInOpen(false)} onSave={handleWalkIn} />}{tour.active && <SpotlightTour steps={tour.steps} stepIdx={tour.stepIdx} onNext={tour.next} onPrev={tour.prev} onSkip={tour.skip} onFinish={tour.finish} />}
     </div>;

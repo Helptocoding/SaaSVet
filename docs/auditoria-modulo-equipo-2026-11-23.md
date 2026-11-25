@@ -350,7 +350,7 @@ Listar staff, [`modules/frontend.md`](modules/frontend.md) § Equipo y ActionMen
 
 | Hallazgo | Verificación | Resultado |
 |---|---|---|
-| D1 · Recepción en modo lectura en Citas | Confirmado: `canCreate` por rol contra `appointment.create` de ASSISTANT (ADR p63) y flujos documentados («recepción crea citas») | Corregido con `can("appointment.create")`. `canEdit` sigue por rol (pendiente) |
+| D1 · Recepción en modo lectura en Citas | Confirmado: `canCreate` por rol contra `appointment.create` de ASSISTANT (ADR p63) y flujos documentados («recepción crea citas») | Corregido con `can("appointment.create")`. `canEdit` por rol se corrigió el 2026-11-25 (abajo) |
 | D4 · Sin estado de acceso | Confirmado; derivable de campos existentes | `access` por integrante, solo para quien gestiona personal |
 | `last_login` nunca se actualiza | Confirmado. `UPDATE_LAST_LOGIN` descartado: escribe antes de las compuertas del login y no cubre el refresh | `record_user_access` en login y refresh, como máximo una vez por hora |
 | D5 · El ADMIN inventa la contraseña | Confirmado | Contraseña generada, devuelta una vez con `no-store` |
@@ -439,4 +439,12 @@ Decisiones del PO (2026-11-25) y contratos: [ADR p69](decisions/2026-11-25-p69-p
 Migraciones `core.0002` (tabla de ajustes) y `users.0019` (tipo de evento). **Fuera, a
 propósito**: eliminar integrantes (se mantiene Desactivar, PO), invitación por correo
 («Reenviar» genera otra temporal) y roles personalizados por clínica.
+
+**Citas por capacidad (2026-11-25).** `canEdit` («ADMIN o VET») se sustituyó por el permiso de
+cada endpoint: `appointment.update` para gestionar la cita, `appointment.create` para la atención
+sin cita (resuelve el hallazgo de la Fase 1: el endpoint ya lo aceptaba de recepción) y, para
+atender o crear la consulta, además `medicalrecord.create`. Recepción gestiona citas sin abrir
+consultas. Sigue por rol, a propósito y fuera de este arreglo, que el formulario de cita fije al
+veterinario que la crea a sí mismo (`user.role === "VET"`): es un valor por defecto, no una
+autorización.
 

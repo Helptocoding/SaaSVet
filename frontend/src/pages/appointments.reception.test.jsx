@@ -1,5 +1,6 @@
 /**
- * Citas: «puede crear» se decide por capacidad, no por rol (Fase 1 Equipo, §7).
+ * Citas: crear, gestionar y atender se deciden por capacidad, no por rol (Fase 1
+ * Equipo, §7; con ADR p69 los permisos son además por persona).
  *
  * Antes `canCreate = user.role !== "ASSISTANT"` dejaba a la recepción en
  * «Modo lectura» aunque el RBAC le concede `appointment.create` (ADR p63) y el
@@ -54,6 +55,7 @@ vi.mock("../components/useConfirm", () => ({ useConfirm: () => vi.fn(() => Promi
 vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), promise: vi.fn() }) }));
 
 import Appointments from "./appointments";
+import apiClient from "../api/client";
 import { AGENDA_TOUR_KEY } from "../features/appointments/tour/agendaSteps";
 
 // Permisos reales de ASSISTANT para la agenda (apps/core/permissions_codes.py).
@@ -93,9 +95,20 @@ describe("Citas: recepción puede agendar", { timeout: 20000 }, () => {
         expect(screen.queryByRole("button", { name: /nueva cita/i })).not.toBeInTheDocument();
     });
 
-    it("no habilita otras capacidades: la atención sin cita sigue oculta para recepción", async () => {
+    // Antes se ocultaba por rol (`canEdit` = ADMIN o VET) aunque el endpoint solo exige
+    // `appointment.create` a quien registra (el veterinario asignado necesita
+    // `appointment.create_walkin`, y eso lo valida el backend).
+    it("recepción registra atención sin cita: lo decide `appointment.create`", async () => {
         renderAgenda();
         await screen.findByRole("button", { name: /nueva cita/i });
+        expect(screen.getByRole("button", { name: "Atención sin cita" })).toBeInTheDocument();
+    });
+
+    it("sin appointment.create no hay atención sin cita, aunque el rol sea VET", async () => {
+        currentUser = { id: 11, role: "VET" };
+        granted = new Set(["appointment.list", "appointment.retrieve", "appointment.create_walkin"]);
+        renderAgenda();
+        await screen.findByText("Modo lectura — sin permiso para crear citas");
         expect(screen.queryByRole("button", { name: "Atención sin cita" })).not.toBeInTheDocument();
     });
 
@@ -128,5 +141,53 @@ describe("Citas: recepción puede agendar", { timeout: 20000 }, () => {
         renderAgenda();
         expect(await screen.findByRole("button", { name: /nueva cita/i })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Atención sin cita" })).toBeInTheDocument();
+    });
+});
+
+// Acciones del detalle de una cita: cada una pide el permiso de su endpoint, no un rol.
+describe("Citas: acciones del detalle por permiso", { timeout: 20000 }, () => {
+    const tomorrow = (() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    const APPT = {
+        id: 50, public_id: "appt-uuid", status: "scheduled", date: tomorrow, start_time: "10:00",
+        end_time: "10:30", pet: 7, pet_name: "Luna", pet_public_id: "pet-uuid", veterinarian: 3,
+        veterinarian_name: "Eva Galeno", reason: "Vacuna", category: "vaccination",
+    };
+
+    const openDetail = async (appointment = APPT) => {
+        apiClient.get.mockResolvedValue({ data: appointment });
+        render(
+            <MemoryRouter initialEntries={[`/appointments?appointment=${appointment.public_id}`]}>
+                <Appointments />
+            </MemoryRouter>,
+        );
+        return screen.findByRole("button", { name: "Cerrar" }, { timeout: 10000 });
+    };
+
+    it("recepción gestiona la cita pero no abre la consulta", async () => {
+        await openDetail();
+        expect(screen.getByRole("button", { name: "Editar" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Confirmar" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /Atender ahora/ })).not.toBeInTheDocument();
+    });
+
+    it("quien puede crear consultas atiende", async () => {
+        currentUser = { id: 3, role: "VET" };
+        granted = new Set([...ASSISTANT_GRANTS, "medicalrecord.create"]);
+        await openDetail();
+        expect(screen.getByRole("button", { name: /Atender ahora/ })).toBeInTheDocument();
+    });
+
+    it("sin appointment.update solo se consulta, aunque el rol sea VET (ADR p69)", async () => {
+        currentUser = { id: 3, role: "VET" };
+        granted = new Set(["appointment.list", "appointment.retrieve", "appointment.create", "medicalrecord.create"]);
+        await openDetail();
+        expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Cancelar" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /Atender ahora/ })).not.toBeInTheDocument();
     });
 });

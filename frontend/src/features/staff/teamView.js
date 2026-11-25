@@ -37,12 +37,6 @@ export function signingState(member, catalog) {
     return member.license_number ? "enabled" : "missing_license";
 }
 
-export const SIGNING_LABELS = {
-    enabled: "Habilitada",
-    missing_license: "Falta cédula",
-    not_applicable: "No aplica",
-};
-
 const lowerFirst = (text, index) => (index === 0 ? text : text.charAt(0).toLowerCase() + text.slice(1));
 
 /** «Consultas, recetas, vacunas»: los grupos con al menos un permiso. */
@@ -94,38 +88,6 @@ export function memberAlerts(member, catalog, now = new Date()) {
 }
 
 const fullName = (member) => `${member.first_name || ""} ${member.last_name || ""}`.trim() || member.username;
-const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
-
-/**
- * Líneas del bloque «Requiere atención»: quienes no pueden firmar por falta de
- * cédula, en una sola línea; cada invitación vencida, en la suya.
- */
-export function attentionItems(members, catalog, now = new Date()) {
-    const missing = members.filter((m) => memberAlerts(m, catalog, now).some((a) => a.kind === "missing_license"));
-    const items = [];
-    if (missing.length > 0) {
-        const vets = missing.every((m) => m.role === "VET");
-        const who = vets ? plural(missing.length, "veterinario", "veterinarios") : plural(missing.length, "integrante", "integrantes");
-        items.push({
-            key: "missing_license",
-            kind: "missing_license",
-            members: missing,
-            text: `${who} sin cédula ${missing.length === 1 ? "no puede" : "no pueden"} firmar recetas: ${missing.map(fullName).join(", ")}`,
-        });
-    }
-    for (const member of members) {
-        const alert = memberAlerts(member, catalog, now).find((a) => a.kind === "expired_invite");
-        if (!alert) continue;
-        const ago = alert.days === 0 ? "hoy" : `hace ${plural(alert.days, "día", "días")}`;
-        items.push({
-            key: `expired-${member.public_id}`,
-            kind: "expired_invite",
-            members: [member],
-            text: `La invitación de ${fullName(member)} venció ${ago}`,
-        });
-    }
-    return items;
-}
 
 /** «Ahora» para la sesión actual, «Nunca» sin accesos, si no «hace 2 d». */
 export function lastAccessShort(member, { isSelf = false, now = new Date() } = {}) {

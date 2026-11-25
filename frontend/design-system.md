@@ -223,6 +223,14 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 
 ### Filtros y resultados
 - Para filtros mutuamente excluyentes de la misma vista usa `SegmentedControl` / `.segmented-control`; los `.tabs` quedan reservados para navegación entre secciones.
+- Cada opción puede llevar `count` (`.segmented-count`, neutro). Con `tone: "attention"` y un
+  conteo mayor que cero, el contador toma el trío `--c-warning-*` y un ícono (D6: color solo para
+  lo que pide acción, y nunca como única señal). Es la forma de decir «hay N por resolver» sin un
+  bloque de aviso que compita con la tabla (Equipo).
+- Barra de lista: filtro segmentado a la izquierda y, en la misma línea a la derecha, `.searchBar`
+  acotada (~220px) y los `select` de filtro; en pantallas angostas la búsqueda ocupa la fila.
+- Texto solo para lectores de pantalla: clase global `.sr-only` (lo que un ícono o un «—» dicen
+  a la vista).
 - Los autocompletados usan `.result-popover` y `.result-popover-item`, siempre con estados de foco/selección visibles.
 
 ### Menú de acciones de fila — `components/ActionMenu`

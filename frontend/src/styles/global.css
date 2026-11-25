@@ -357,6 +357,13 @@ button, input, select, textarea { font-family: inherit; }
 .segmented-control button:hover { color: var(--c-text); background: var(--c-surface); }
 .segmented-control button[aria-pressed="true"] { background: var(--c-surface); border-color: var(--c-border-2); color: var(--c-primary-dark); box-shadow: var(--shadow-xs); }
 .segmented-control button:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+/* Texto solo para lectores de pantalla: lo que un ícono o un «—» dicen a la vista. */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Conteo opcional por opción; color de aviso solo cuando hay algo que atender (D6). */
+.segmented-control .segmented-count { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 20px; height: 18px; padding: 0 6px; border-radius: var(--r-full); background: var(--c-surface-2); color: var(--c-text-3); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.segmented-control button[aria-pressed="true"] .segmented-count { background: var(--c-subtle); color: var(--c-text-2); }
+.segmented-control .segmented-count-attention,
+.segmented-control button[aria-pressed="true"] .segmented-count-attention { background: var(--c-warning-bg); color: var(--c-warning-text); }
 
 /* ── Page Layout ─────────────────────────────────────────── */
 .page-header {
