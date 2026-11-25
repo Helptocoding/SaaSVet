@@ -46894,3 +46894,7 @@ f051c27002986193772ced0fb1e00e19822d26ef:docs/evals/w1-mono/targeted.results.sou
 8886604ff77bd86649c12dee695a4742a3fe44f5:docs/evals/inbox-win-01-2026-10-21/browser.json:generic-api-key:44
 8886604ff77bd86649c12dee695a4742a3fe44f5:docs/evals/inbox-win-01-2026-10-21/browser.json:generic-api-key:52
 8886604ff77bd86649c12dee695a4742a3fe44f5:docs/evals/inbox-win-01-2026-10-21/browser.log:generic-api-key:1
+# PR #14 (ADR p68): test password and the public RFC 6238 test-vector secret in
+# backend/apps/users/tests/test_mfa.py; not credentials. Later lines carry gitleaks:allow.
+11e60da17e50617fef2db03c7ed4bc43646cf30c:backend/apps/users/tests/test_mfa.py:generic-api-key:29
+11e60da17e50617fef2db03c7ed4bc43646cf30c:backend/apps/users/tests/test_mfa.py:generic-api-key:34
