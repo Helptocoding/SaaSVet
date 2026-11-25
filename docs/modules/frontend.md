@@ -183,6 +183,7 @@ el cuerpo HTTP completo. Para depurar usar siempre `console.error(apiError(err))
 - Conflicto de estado/integridad (409): `{code: 'resource_has_dependencies', message, protected_count: int, protected_count_truncated: bool, protected_sample: [{type, id, public_id}]}` (cuando el backend bloquea por FK PROTECT)
 - Conflicto de recurso genérico (409): `{code: 'generic_resource_protected', message}` (cuando se intenta borrar Owner/Pet genérico)
 - **Precondición de cita vencida (409)**: `{code: 'appointment_changed', message, current: {status, date, start_time}}` (INV-A, ADR p57). La cita cambió desde que se leyó. **No es un error técnico**: la UI recarga la cita, muestra qué cambió y deja al usuario decidir. **Nunca** auto-reintentar ni reenviar sin `expected_state`. **Desde F5 Fase 2 el frontend SÍ la envía** — ver § Precondición de estado en citas
+- **Permisos cambiados (409)**: `{code: 'permissions_changed', message, current: [códigos]}` (ADR p69 §12). Otro ADMIN cambió los permisos de esa persona desde que se abrió su ficha. **No es un error técnico**: la ficha recarga los permisos y se vuelve a decidir; **nunca** reintentar. Sin `expected_permissions` el backend responde `400 precondition_required`
 - **Cliente ya existente (409)**: `{code: 'owner_exists', message, candidate: {public_id, name}}` (INV-B/INV-C, ADR p57). El teléfono ya tiene expediente y ese camino no puede reutilizarlo. **No es un error técnico.** El **registro rápido de citas** (`create-with-patient`) solo lo produce si envía `require_new_owner` — hoy el frontend **no** lo envía, así que su comportamiento no cambia: sigue reutilizando el expediente del cliente que vuelve. En el **alta de mascota** (`POST /api/pets/`) la UI debe preguntar «¿es este cliente?» con `candidate.name` y, si el usuario confirma, **reenviar en modo referencia** (`{owner_public_id: candidate.public_id}` en vez de `{owner: {name, phone}}`); si no, corregir el teléfono. Al **cambiar un teléfono** significa que ese número ya es de otro cliente: cero escrituras (tampoco los campos de la mascota, si venía por `PATCH /api/pets/`). **Nunca** reintentar el mismo payload
 - **Cliente ambiguo (409)**: `{code: 'owner_ambiguous', message, candidate_count: int}` (INV-C, ADR p57). Ese teléfono tiene **dos o más** expedientes y el sistema **no elige**. **No hay candidato en el cuerpo a propósito** — ofrecerlo sería sugerir la elección prohibida. La UI muestra que el dato está por ordenar y no ofrece ninguna acción de «continuar igual»; la salida es corregir los expedientes duplicados desde Clientes
 - **Caso de identidad (409)**: `{code, message}` con `code` ∈ `no_identity_case` · `verification_required` · `owner_changed` · `already_linked` (FLUJO-C, ADR p57 §5.5). Los produce la bandeja al **verificar** o **autorizar**. `verification_required` es el más frecuente y **no es un error del usuario**: falta registrar una verificación aprobada *de ese mismo caso y candidato* antes de poder vincular — por eso el botón «Autorizar vínculo» sale deshabilitado hasta que la haya
@@ -1668,10 +1669,51 @@ hooks/usePOSCart.js      — estado del carrito (solo UI)
   `buildPaymentLines()` (regla de sobrepago/cambio ADR p30 rev, única fuente).
 - `utils/idempotency.js` — `newIdempotencyKey()`.
 
-## Equipo (`/staff`) — Fase 1 Equipo
+## Equipo (`/staff`) — Fase 1 Equipo; rediseño 2026-11-25 (ADR p69)
 
 Pantalla de **gestión** de integrantes (`pages/staff.jsx`). Contrato backend en
-[`organizations.md`](organizations.md) § Crear / Listar staff.
+[`organizations.md`](organizations.md) § Crear / Listar staff y § Permisos por integrante.
+
+**Rediseño (2026-11-25)** — lo vigente; las viñetas de abajo cuentan cómo se llegó aquí:
+
+- **Encabezado**: «N integrantes · X activos · Y invitaciones pendientes · Z desactivados».
+- **«Requiere atención»**: quienes no pueden firmar recetas por falta de cédula (una línea; con
+  una sola persona, «Completar cédula» abre su ficha en ese campo) y cada invitación vencida
+  («Reenviar invitación» = restablecer contraseña). Sin pendientes no se muestra.
+- **Pestañas** (`role="tablist"`, flechas/Inicio/Fin): Todos (el equipo actual, sin
+  desactivados) · Activos · Pendientes (invitación pendiente o vencida) · Requieren atención ·
+  Desactivados (solo con `staff.reactivate`). Buscador por nombre o correo sin acentos y filtro
+  por rol; «Sin coincidencias» ofrece limpiar.
+- **Tabla**: Integrante (avatar, nombre que abre la ficha, «Tú», correo) · Rol (+ especialidades)
+  · Acceso por área (una pastilla por área con algún permiso; `components/Popover.jsx` muestra
+  grupos y acciones; «Todas las áreas»; «Ajustado a esta persona») · Firma de recetas
+  (`prescription.create` + cédula: Habilitada / Falta cédula / No aplica) · Estado (Activo,
+  Invitación pendiente, Invitación vencida, Desactivado) · Último acceso («Ahora», «Nunca»,
+  «hace 2 d») · acciones (Editar + ⋯: Ver ficha, Cambiar rol, Restablecer contraseña o Reenviar
+  invitación, Desactivar; Reactivar en desactivados). Por debajo de 960 px, tarjetas con rótulo.
+  Toda la presentación sale de `features/staff/teamView.js` (pruebas propias).
+- **Ficha = panel lateral** (`features/staff/MemberDrawer.jsx`), abierto con
+  `?member=<uuid>[&section=role|license]`; `/staff/:publicId` redirige ahí. Secciones: avisos,
+  Rol (+ Atiende pacientes), Permisos, Datos, Seguridad y acceso (estado, último acceso, usuario,
+  MFA en ADMIN, restablecer/reenviar), Citas por atender (reasignar), Ausencias
+  (`MemberAbsences.jsx`) e Historial. Pie: Desactivar o Reactivar · Cancelar · Guardar cambios.
+  Escape y clic fuera cierran (con cambios, `useConfirm` pregunta). **Un solo guardado**: un
+  PATCH con datos, rol y permisos; el backend lo aplica en una transacción.
+- **Permisos** (`PermissionEditor.jsx` + `permissionDraft.js`): acordeón por área con una casilla
+  por acción, «Extra al rol» / «Quitado del rol» y «Restaurar valores del rol». El borrador
+  guarda la diferencia con el rol, igual que el backend. Reservados: deshabilitados («Solo
+  administradores» / «Siempre incluido en Administrador»); los propios de Administración, también
+  («No puedes quitarte…»). Sin `staff.manage_permissions`, solo lectura. Cambiar el rol de quien
+  tiene ajustes pide elegir «Conservar sus ajustes» o «Usar solo los permisos de…» antes de
+  guardar.
+- **Precondición** (ADR p69 §12): con `permissions` viaja `expected_permissions` = los que llegaron
+  con la ficha. `409 permissions_changed` → aviso, se recargan los permisos (los datos tecleados
+  se conservan) y se vuelve a decidir; nunca se reintenta.
+- Piezas compartidas: `StaffParts.jsx` (credenciales de un solo uso, selector de rol, «Atiende
+  pacientes», avatar) y `staffForm.js` (validación previa, diferencias, avisos). El catálogo de
+  permisos viene de `GET /api/staff/permission-catalog/`; el frontend no tiene copia.
+
+Historia (fases anteriores, ya sustituidas donde el rediseño lo dice):
 
 - **Acceso por capacidad**: la abre quien tiene algún permiso de gestión
   (`features/staff/permissions.js`, `STAFF_MANAGEMENT_PERMS`; el mismo que usa el menú).
@@ -1707,7 +1749,7 @@ Pantalla de **gestión** de integrantes (`pages/staff.jsx`). Contrato backend en
   de un ADMIN; la cédula se marca obligatoria para quien atiende.
 - **Agenda (`pages/appointments.jsx`)**: lista como veterinarios a quienes `attends_patients`
   (del directorio), no a `VET`/`ADMIN` por nombre de rol.
-- **Fase 3 (ADR p67) — ficha `/staff/:publicId`** (`pages/staffMember.jsx`): datos, pendientes,
+- **Fase 3 (ADR p67) — ficha `/staff/:publicId`** (antes `pages/staffMember.jsx`, hoy el panel lateral): datos, pendientes,
   citas por atender con «Reasignar citas», ausencias (registrar con `DateField`, cancelar con
   `useConfirm`) e historial. Sustituye al modal «Historial»: el nombre de la fila y «Ver ficha»
   la abren. Misma guarda que Equipo. `features/staff/ReassignModal.jsx` envía todas las citas
@@ -1735,7 +1777,7 @@ Pantalla de **gestión** de integrantes (`pages/staff.jsx`). Contrato backend en
 | `/cash`             | Caja (turnos + Z)   | Privada      |
 | `/prescriptions`    | Recetas             | Privada      |
 | `/staff`            | Equipo              | Por capacidad de gestión (`staff.*`); sin ella redirige a `/` (Fase 1 Equipo) |
-| `/staff/:publicId`  | Ficha del integrante | Misma guarda que Equipo (ADR p67) |
+| `/staff/:publicId`  | Redirige a `/staff?member=<uuid>` (ficha lateral) | Misma guarda que Equipo (ADR p67; rediseño 2026-11-25) |
 
 **Verificación en dos pasos (ADR p68).** `useLoginForm`: si `token/` responde
 `mfa_required`, guarda el reto y `LoginForm` pide «Código de verificación» (de la app o de

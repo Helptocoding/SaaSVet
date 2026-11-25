@@ -323,3 +323,53 @@ class UserRole(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.role}"
+
+
+class UserPermissionOverride(models.Model):
+    """Permiso concedido o quitado a una persona sobre los de su rol (ADR p69).
+
+    Solo se guarda la diferencia con el rol: los permisos efectivos son
+    (permisos de sus roles ∪ concedidos) − quitados. Vive fuera de ``Role``
+    para que ``seed_permissions``, que reescribe los roles de sistema en cada
+    despliegue, no lo borre. Lo escribe solo
+    ``apps.users.member_permissions.apply_member_permissions``.
+    """
+    EFFECT_GRANT = "grant"
+    EFFECT_REVOKE = "revoke"
+    EFFECT_CHOICES = (
+        (EFFECT_GRANT, "Concedido"),
+        (EFFECT_REVOKE, "Quitado"),
+    )
+
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        related_name="permission_overrides",
+    )
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="permission_overrides",
+    )
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
+    effect = models.CharField(max_length=10, choices=EFFECT_CHOICES)
+    granted_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="permission_overrides_granted",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "permission"], name="user_permission_override_unique",
+            ),
+        ]
+        verbose_name = "UserPermissionOverride"
+        verbose_name_plural = "UserPermissionOverrides"
+
+    def __str__(self):
+        return f"{self.user} {self.effect} {self.permission}"

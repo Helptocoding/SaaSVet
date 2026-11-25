@@ -31,9 +31,16 @@ CLASSIFIED = {
     ('apps/users/services.py', 'deactivate_staff', 'is_active=False'):
         'User: protegido por el bloqueo y la regla del último ADMIN',
     ('apps/users/services.py', 'change_staff_role', 'role'):
-        'User: protegido por el bloqueo y la regla del último ADMIN (ADR p66)',
+        'pasa el rol pedido a update_staff_member (ADR p69)',
+    ('apps/users/services.py', 'update_staff_member', 'role'):
+        'User: bloquea actor, objetivo y, si deja de ser ADMIN, todos los ADMIN activos '
+        '(ADR p66/p69); pasa el rol a _apply_role_change con las filas bloqueadas',
+    ('apps/users/services.py', '_apply_role_change', 'role'):
+        'User: escribe con las filas ya bloqueadas y aplica la regla del último ADMIN',
     ('apps/users/views.py', 'StaffRoleView.post', 'role'):
         'pasa el rol pedido a change_staff_role, que aplica el bloqueo',
+    ('apps/users/views.py', 'StaffDetailView.patch', 'role'):
+        'pasa el rol pedido a update_staff_member, que aplica el bloqueo (ADR p69)',
     ('apps/billing/models.py', 'CheckoutItem.delete', 'is_active=False'): 'otro modelo',
     ('apps/patients/archive.py', 'change_archive_state', 'is_active=False'):
         'otro modelo (Pet/Owner)',

@@ -35,6 +35,9 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 | `401 mfa_code_invalid` en el segundo paso del login | Código de la app incorrecto, ya usado o fuera de la ventana de ±30 s (ADR p68). | Revisar que la hora del celular sea automática o usar un código de respaldo. Cinco fallos invalidan el reto. |
 | `401 mfa_challenge_invalid` | El reto del login venció (5 min), ya se usó, agotó sus intentos o la persona cambió de contraseña o fue desactivada. | Volver a escribir la contraseña. |
 | Un ADMIN perdió el celular y los códigos de respaldo | No hay otra vía por diseño (PO). | Otro ADMIN restablece su contraseña desde Equipo (o soporte, desde plataforma): eso quita el MFA y puede activarlo de nuevo. |
+| `409 permissions_changed` al guardar la ficha | Otro ADMIN cambió los permisos de esa persona (o su rol) desde que se abrió la ficha (ADR p69 §12). **No es un fallo.** | La ficha recarga los permisos: revisar y volver a guardar. Nunca reintentar con los mismos datos. |
+| `400 precondition_required` al cambiar permisos | El llamador envió `permissions` sin `expected_permissions` (ADR p69 §12). | Enviar los efectivos con que se cargó la ficha, tal como llegaron. |
+| `400` en `permissions`: «Solo un administrador puede tener…» / «Un administrador siempre conserva…» / «No puedes quitarte permisos de administración…» | Reglas de ADR p69 §5–6: los reservados son del rol ADMIN y nadie se quita a sí mismo permisos de Administración. | Correcto. Para delegar la gestión del equipo, el rol es ADMIN. |
 | `409 absence_overlap` al registrar una ausencia | Ya hay una ausencia vigente de esa persona que se cruza con esas fechas. | Cancelar o ajustar la existente desde la ficha. |
 | Una reasignación devuelve citas en `skipped` | Cada una trae su motivo: cambió desde que se mostró, ya no está por atender, el destino está ausente u ocupado a esa hora (ADR p67). | Correcto: esas citas se quedaron como estaban; resolverlas en la agenda. |
 | Un ADMIN no aparece como veterinario en la agenda ni en el agente | No está marcado como que atiende pacientes (ADR p66). | Equipo → Editar → «Atiende pacientes» (requiere cédula). Los VET siempre atienden. |
@@ -213,7 +216,14 @@ invariantes del sistema y el resumen ejecutivo del negocio.
     (`apps/users/tests/test_staff_lifecycle_writers_gate.py`) enumera los escritores de `is_active=False`, `role` e
     `is_service_account`. Fuera del invariante, a propósito: el admin de Django y la shell (operadores) y la
     desactivación de la organización completa. Recuperación si el único ADMIN olvida su contraseña: restablecimiento
-    de plataforma (ADR p45).
+    de plataforma (ADR p45). Con permisos por integrante (ADR p69) sigue igual: los permisos de gestión del equipo
+    están reservados al rol ADMIN y no se conceden a otro rol ni se le quitan a un ADMIN.
+
+30. **INV-K — permisos efectivos = (los de sus roles ∪ concedidos) − quitados** (ADR p69), calculados en un solo
+    punto (`_get_cached_permissions`) que usan todas las comprobaciones. Los ajustes (`UserPermissionOverride`) se
+    escriben solo en `apps.users.member_permissions.write_overrides`, dentro de `update_staff_member`, con la fila de
+    la persona bloqueada y la precondición `expected_permissions` (409 si cambió). Los reservados a ADMIN nunca
+    entran a otro rol ni salen de un ADMIN.
 
 ---
 

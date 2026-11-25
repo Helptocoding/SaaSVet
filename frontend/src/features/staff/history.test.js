@@ -38,3 +38,25 @@ describe("describeEvent", () => {
         expect(describeEvent({ kind: "otro", kind_label: "Algo nuevo" })).toBe("Algo nuevo");
     });
 });
+
+describe("permisos por integrante (ADR p69)", () => {
+    const catalog = { areas: [{ groups: [{ permissions: [
+        { code: "billing.refund", label: "Hacer devoluciones" },
+        { code: "appointment.destroy", label: "Eliminar citas" },
+    ] }] }] };
+
+    it("nombra lo concedido y lo quitado con el catálogo", () => {
+        expect(describeEvent({ kind: "permissions_changed", changes: {
+            granted: ["billing.refund"], revoked: ["appointment.destroy"], restored: [],
+        } }, catalog)).toBe("Le concedió hacer devoluciones y le quitó eliminar citas");
+        expect(describeEvent({ kind: "permissions_changed", changes: {
+            granted: [], revoked: [], restored: ["billing.refund"],
+        } }, catalog)).toBe("Devolvió 1 permiso a lo de su rol");
+    });
+
+    it("el cambio de rol dice qué pasó con los ajustes", () => {
+        expect(describeEvent({ kind: "role_changed", changes: {
+            role: { from: "ASSISTANT", to: "VET" }, custom_permissions: "kept",
+        } })).toBe("Cambió el rol de asistente a veterinario; conservó sus permisos personalizados");
+    });
+});

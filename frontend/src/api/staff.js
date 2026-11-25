@@ -13,9 +13,11 @@ export const createStaff = async (data) => {
 };
 
 /**
- * Edita nombre, apellido, correo (plan Equipo A1), especialidad y cédula
- * profesional (M01, orden 7). Enviar solo lo que cambió: el backend rechaza
- * cualquier otra clave.
+ * Guarda la ficha de un integrante en una transacción (ADR p69): nombre,
+ * apellido, correo, especialidades y cédula; `role` (y `attends_patients`);
+ * `permissions` (lista efectiva deseada) y `keep_custom_permissions` cuando
+ * cambia el rol de alguien con permisos personalizados. Enviar solo lo que
+ * cambió: el backend rechaza cualquier otra clave.
  */
 export const updateStaff = async (publicId, data) => {
     const res = await api.patch(`staff/${publicId}/`, data);
@@ -64,13 +66,12 @@ export const reactivateStaff = async (publicId) => {
 };
 
 /**
- * Cambia el rol (y, en ADMIN, si atiende pacientes) de un integrante (ADR p66).
- * Devuelve el integrante actualizado. No cierra sus sesiones.
+ * Catálogo de permisos (ADR p69): `{areas, roles, reserved, signing_permission}`.
+ * Las áreas traen grupos y acciones con su nombre; `roles`, los permisos de cada
+ * rol en esta clínica. Es la única fuente: el frontend no tiene copia.
  */
-export const changeStaffRole = async (publicId, { role, attendsPatients } = {}) => {
-    const body = { role };
-    if (attendsPatients !== undefined) body.attends_patients = attendsPatients;
-    const res = await api.post(`staff/${publicId}/role/`, body);
+export const getPermissionCatalog = async () => {
+    const res = await api.get("staff/permission-catalog/");
     return res.data;
 };
 

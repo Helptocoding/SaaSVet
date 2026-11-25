@@ -2,7 +2,7 @@
 import logging
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 from rest_framework.exceptions import NotFound, ValidationError
 
@@ -18,12 +18,21 @@ logger = logging.getLogger('agent.events')
 def assignable_users(organization):
     # Same DB grants/wildcards as strict RBAC, without a query per employee or
     # the legacy role fallback. The POST independently revalidates the target.
+    # ADR p69: a per-member revoke wins over the role and a grant adds it.
+    from apps.core.models import UserPermissionOverride
+
+    def override(effect):
+        return Exists(UserPermissionOverride.objects.filter(
+            user=OuterRef('pk'), permission__code='agentinbox.send', effect=effect))
+
     return User.objects.filter(
         organization=organization, is_active=True, is_service_account=False,
     ).exclude(role='ADMIN_SAAS').filter(
-        Q(is_superuser=True) | Q(user_roles__role__permissions__code__in=(
+        Q(is_superuser=True)
+        | (Q(user_roles__role__permissions__code__in=(
             'agentinbox.send', 'agentinbox.*', '*.*',
-        )),
+        )) & ~override(UserPermissionOverride.EFFECT_REVOKE))
+        | override(UserPermissionOverride.EFFECT_GRANT),
     ).distinct().order_by('first_name', 'last_name', 'username', 'public_id')
 
 

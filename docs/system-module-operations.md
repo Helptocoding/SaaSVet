@@ -190,9 +190,25 @@ negocio dentro del SaaS** para cada dominio.
 - Si el objetivo deja de ser ADMIN, debe quedar otro ADMIN activo (`409 last_active_admin`, INV-J).
 - Cédula si el nuevo rol atiende pacientes (VET, o ADMIN marcado).
 
+- Si tiene permisos personalizados, decidir si se conservan (`keep_custom_permissions`, ADR p69).
+
 **Resultado**
 - `User.role`, `attends_patients` y el `UserRole` de sistema cambian juntos; evento `role_changed` en el historial.
 - No se cierran sesiones: los permisos nuevos aplican en la siguiente petición.
+
+---
+
+### Acción: Ajustar los permisos de un integrante (ADR p69)
+
+**Requiere**
+- Permiso `staff.manage_permissions` (sensible, solo ADMIN). Integrante activo de la clínica (no cuenta de servicio ni `ADMIN_SAAS`).
+- El conjunto efectivo deseado y `expected_permissions` (los que se veían). Sin ellos `400 precondition_required`; si cambiaron, `409 permissions_changed`.
+- Los reservados a ADMIN no se conceden a otro rol ni se quitan a un ADMIN; nadie se quita a sí mismo permisos de Administración.
+
+**Resultado**
+- Se guarda solo la diferencia con el rol (`UserPermissionOverride`); evento `permissions_changed` con códigos.
+- Aplica en la siguiente petición, en todas las comprobaciones (también `/me/` y los asignables del Inbox), sin cerrar sesiones.
+- Se puede guardar junto con datos y rol en el mismo `PATCH`: todo o nada.
 
 ---
 

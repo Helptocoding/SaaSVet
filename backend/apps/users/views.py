@@ -117,10 +117,14 @@ class StaffListView(APIView):
                 raise ValidationError(f"Rol inválido. Opciones válidas: {', '.join(VALID_ROLES)}")
             qs = qs.filter(role=role)
 
-        serializer_class = (
-            UserSerializer if can_manage_staff(request.user) else StaffDirectorySerializer
-        )
-        return Response(serializer_class(qs, many=True).data)
+        if not can_manage_staff(request.user):
+            return Response(StaffDirectorySerializer(qs, many=True).data)
+        # ADR p69: permisos efectivos y ajustes de todos en dos consultas.
+        from apps.users.member_permissions import bulk_permissions
+        members = list(qs)
+        return Response(UserSerializer(
+            members, many=True, context={'permissions_by_user': bulk_permissions(members)},
+        ).data)
 
 
 class StaffCreateView(NoStoreResponseMixin, APIView):
@@ -160,9 +164,11 @@ class StaffCreateView(NoStoreResponseMixin, APIView):
 
 
 class StaffDetailView(APIView):
-    """DELETE desactiva (`staff.destroy`); PATCH edita nombre, apellido, correo
-    (A1, plan Equipo), especialidad y cédula (`staff.update`, M01 orden 7).
-    HybridPermission deriva el código del método."""
+    """DELETE desactiva (`staff.destroy`); PATCH guarda de una vez lo que cambió
+    la ficha (ADR p69 §9): datos (`staff.update`), y además `role` /
+    `attends_patients` (`staff.change_role`) y `permissions` /
+    `keep_custom_permissions` (`staff.manage_permissions`). Todo en una
+    transacción. HybridPermission exige `staff.update` para el PATCH."""
     permission_classes = [HybridPermission]
     resource_name = "staff"
     http_method_names = ['patch', 'delete', 'options']
@@ -175,14 +181,38 @@ class StaffDetailView(APIView):
             ).exclude(role='ADMIN_SAAS').exclude(is_service_account=True),
             pk,
         )
-        serializer = UpdateEmployeeSerializer(
-            data=request.data,
-            context={'request': request, 'target': target},
+        from apps.users.serializers import MemberChangeSerializer
+        from apps.users.services import update_staff_member
+
+        raw = request.data
+        data = raw.dict() if hasattr(raw, 'dict') else (dict(raw) if hasattr(raw, 'keys') else {})
+        member_keys = {'role', 'permissions', 'expected_permissions', 'keep_custom_permissions'}
+        if 'role' in data:
+            # Con cambio de rol, «atiende pacientes» se valida contra el rol nuevo.
+            member_keys.add('attends_patients')
+        member_data = {key: data.pop(key) for key in list(data) if key in member_keys}
+        if not data and not member_data:
+            raise ValidationError({'non_field_errors': ['Indica al menos un dato para editar.']})
+        member = MemberChangeSerializer(data=member_data)
+        member.is_valid(raise_exception=True)
+        profile = {}
+        if data:
+            serializer = UpdateEmployeeSerializer(
+                data=data, context={'request': request, 'target': target},
+            )
+            serializer.is_valid(raise_exception=True)
+            profile = serializer.validated_data
+        changes = member.validated_data
+        user = update_staff_member(
+            admin=request.user, target_user=target, profile=profile,
+            role=changes.get('role'),
+            attends_patients=changes.get('attends_patients') if 'role' in changes else None,
+            permissions=changes.get('permissions'),
+            expected_permissions=changes.get('expected_permissions'),
+            keep_custom_permissions=changes.get('keep_custom_permissions'),
+            request_id=_request_id(request),
         )
-        serializer.is_valid(raise_exception=True)
-        user = update_staff_profile(
-            admin=request.user, target_user=target, changes=serializer.validated_data,
-        )
+        user.refresh_from_db()
         return Response(UserSerializer(user).data)
 
     def delete(self, request, pk):
@@ -401,6 +431,7 @@ class StaffRoleView(APIView):
             target_user=target,
             role=serializer.validated_data['role'],
             attends_patients=serializer.validated_data.get('attends_patients'),
+            keep_custom_permissions=serializer.validated_data.get('keep_custom_permissions'),
             request_id=request.META.get('HTTP_X_REQUEST_ID') or str(uuid.uuid4()),
         )
         return Response(UserSerializer(user).data)
@@ -467,9 +498,14 @@ class StaffProfileView(APIView):
     permission_classes = [make_permission('staff.list')]
 
     def get(self, request, pk):
+        from apps.users.mfa import is_mfa_enabled
         _require_staff_manager(request)
         target = resolve_public_id(_clinic_members(request, active_only=False), pk)
-        return Response(UserSerializer(target).data)
+        data = UserSerializer(target).data
+        # Seguridad y acceso de la ficha (rediseño Equipo): solo si la tiene activa,
+        # nunca el secreto ni los códigos (ADR p68).
+        data['mfa_enabled'] = is_mfa_enabled(target)
+        return Response(data)
 
 
 class StaffAppointmentsView(APIView):
@@ -642,3 +678,21 @@ class MyMFARecoveryCodesView(NoStoreResponseMixin, _MFAChangeView):
         codes = regenerate_recovery_codes(
             request.user, _body_str(request, 'password'), _body_str(request, 'code'))
         return Response({**mfa_status(request.user), 'recovery_codes': codes})
+
+
+class StaffPermissionCatalogView(APIView):
+    """GET /api/staff/permission-catalog/ — áreas, grupos y permisos con su nombre,
+    y los permisos de cada rol en esta clínica (ADR p69 §8). Es la fuente que usa
+    la ficha: el frontend no tiene copia. Solo para quien gestiona personal."""
+    permission_classes = [make_permission('staff.list')]
+
+    def get(self, request):
+        from apps.core.permission_catalog import ADMIN_RESERVED, SIGNING_PERMISSION, catalog_payload
+        from apps.users.member_permissions import role_defaults
+        _require_staff_manager(request)
+        return Response({
+            'areas': catalog_payload(),
+            'roles': role_defaults(request.user.organization_id),
+            'reserved': sorted(ADMIN_RESERVED),
+            'signing_permission': SIGNING_PERMISSION,
+        })

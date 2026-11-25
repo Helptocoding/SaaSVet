@@ -421,3 +421,22 @@ Decisiones del PO (2026-11-24) y contratos: [ADR p68](decisions/2026-11-24-p68-m
 Migraciones `users.0017` (texto libre → códigos), `users.0018` (`UserMFA`), `billing.0044`.
 **Fuera, a propósito**: disponibilidad por veterinario para el agente y activación por enlace de
 WhatsApp (dependen de WhatsApp); exigir MFA por clínica y MFA para soporte de plataforma.
+
+---
+
+## Registro de implementación — Rediseño del módulo y permisos por integrante (2026-11-25)
+
+Decisiones del PO (2026-11-25) y contratos: [ADR p69](decisions/2026-11-25-p69-permisos-por-integrante.md),
+[plan](plan-equipo-rediseno-2026-11-25.md), [`modules/organizations.md`](modules/organizations.md)
+§ Permisos por integrante y [`modules/frontend.md`](modules/frontend.md) § Equipo.
+
+| Alcance | Resultado |
+|---|---|
+| Editor de permisos (§10, antes aplazado) | Ajustes por persona sobre el rol; solo ADMIN; reservados del rol ADMIN; nadie se quita Administración; precondición con 409 |
+| Lista profesional | Encabezado con conteos, «Requiere atención», pestañas, búsqueda, filtro por rol, acceso por área con popover, firma de recetas, estado y último acceso; tarjetas en pantallas angostas |
+| Ficha | Panel lateral sobre Equipo con guardado único (datos, rol, permisos) en una transacción; `/staff/:publicId` redirige |
+
+Migraciones `core.0002` (tabla de ajustes) y `users.0019` (tipo de evento). **Fuera, a
+propósito**: eliminar integrantes (se mantiene Desactivar, PO), invitación por correo
+(«Reenviar» genera otra temporal) y roles personalizados por clínica.
+

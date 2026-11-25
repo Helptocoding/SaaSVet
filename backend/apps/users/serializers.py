@@ -169,6 +169,8 @@ class UserSerializer(serializers.ModelSerializer):
     access = serializers.SerializerMethodField()
     # ADR p66: función clínica efectiva (VET siempre; ADMIN si se marcó).
     attends_patients = serializers.SerializerMethodField()
+    permissions = serializers.SerializerMethodField()
+    permission_overrides = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -177,11 +179,28 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'public_id', 'username', 'email', 'first_name', 'last_name',
                   'role', 'attends_patients', 'specialties', 'specialty_label',
                   'license_number', 'is_active',
-                  'organization', 'organization_name', 'demo_protected', 'access']
+                  'organization', 'organization_name', 'demo_protected', 'access',
+                  'permissions', 'permission_overrides']
         read_only_fields = ['id', 'public_id', 'specialty_label']
 
     def get_attends_patients(self, obj):
         return is_clinician(obj)
+
+    def _permissions_entry(self, obj):
+        # ADR p69: la lista los calcula en bloque (``bulk_permissions``) y los pasa
+        # en el contexto; una sola persona los calcula aquí.
+        bulk = self.context.get('permissions_by_user')
+        if bulk is not None and obj.pk in bulk:
+            return bulk[obj.pk]
+        from apps.users.member_permissions import bulk_permissions
+        return bulk_permissions([obj])[obj.pk]
+
+    def get_permissions(self, obj):
+        return self._permissions_entry(obj)['permissions']
+
+    def get_permission_overrides(self, obj):
+        entry = self._permissions_entry(obj)
+        return {'granted': entry['granted'], 'revoked': entry['revoked']}
 
     def get_demo_protected(self, obj):
         from apps.users.services import is_demo_seed_account
@@ -404,6 +423,23 @@ class ChangeRoleSerializer(serializers.Serializer):
     """
     role = serializers.ChoiceField(choices=['ADMIN', 'VET', 'ASSISTANT'])
     attends_patients = serializers.BooleanField(required=False, allow_null=True, default=None)
+    # ADR p69: con permisos personalizados hay que decidir si se conservan.
+    keep_custom_permissions = serializers.BooleanField(required=False, allow_null=True, default=None)
+
+
+class MemberChangeSerializer(serializers.Serializer):
+    """La parte de ``PATCH /api/staff/<uuid>/`` que no son datos personales
+    (ADR p69 §9): rol, función clínica al cambiar de rol, permisos efectivos
+    deseados y la decisión sobre los personalizados. Las reglas las aplica
+    ``services.update_staff_member``."""
+    role = serializers.ChoiceField(choices=['ADMIN', 'VET', 'ASSISTANT'], required=False)
+    attends_patients = serializers.BooleanField(required=False, allow_null=True, default=None)
+    permissions = serializers.ListField(child=serializers.CharField(), required=False,
+                                        allow_empty=True)
+    # ADR p69 §12: los permisos efectivos que el llamador veía al abrir la ficha.
+    expected_permissions = serializers.ListField(child=serializers.CharField(), required=False,
+                                                 allow_empty=True)
+    keep_custom_permissions = serializers.BooleanField(required=False, allow_null=True, default=None)
 
 
 class StaffAccessEventSerializer(serializers.Serializer):
