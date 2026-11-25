@@ -805,7 +805,7 @@ def _swap_system_role(user):
 
 @transaction.atomic
 def change_staff_role(*, admin, target_user, role, attends_patients=None,
-                      request_id: str | None = None):
+                      keep_custom_permissions=None, request_id: str | None = None):
     """Change the role (and clinical function) of a clinic member (ADR p66).
 
     Rules:
@@ -824,31 +824,19 @@ def change_staff_role(*, admin, target_user, role, attends_patients=None,
       - Sessions are NOT revoked (PO decision): permissions are read from the
         database on every request, so the change applies on the next one.
     """
-    from django.http import Http404
-
-    request_id = request_id or str(uuid.uuid4())
-    if role not in STAFF_ROLES:
-        raise ValidationError({'role': ['Rol no válido.']})
-    if target_user.pk == admin.pk:
-        raise SelfRoleChange()
-    _assert_manageable_target(admin, target_user)
-    _assert_not_demo_seed_account(target_user)
-
-    demoting_admin = target_user.role == 'ADMIN' and role != 'ADMIN'
-    locked = _lock_users(
-        pks=[admin.pk, target_user.pk],
-        active_admins_of=target_user.organization_id if demoting_admin else None,
+    update_staff_member(
+        admin=admin, target_user=target_user, role=role,
+        attends_patients=attends_patients,
+        keep_custom_permissions=keep_custom_permissions, request_id=request_id,
     )
-    actor = locked.get(admin.pk)
-    target = locked.get(target_user.pk)
-    if actor is None or not actor.is_active:
-        raise ActorInactive()
-    # Another ADMIN may have changed the actor's own role while we waited.
-    from apps.core.permissions import user_has_permission
-    if not user_has_permission(actor, 'staff.change_role'):
-        raise PermissionDenied('Ya no tienes permiso para cambiar roles.')
-    if target is None or not target.is_active:
-        raise Http404("Usuario no encontrado.")
+    target_user.refresh_from_db()
+    return target_user
+
+
+def _apply_role_change(*, actor, target, locked, role, attends_patients,
+                       custom_permissions, request_id):
+    """Aplica el cambio de rol con las filas ya bloqueadas. Devuelve si cambió
+    algo. Reglas: ver ``change_staff_role``."""
     # Re-check with the row locked: the role may have changed meanwhile.
     if target.role == 'ADMIN' and role != 'ADMIN':
         others = [
@@ -873,7 +861,7 @@ def change_staff_role(*, admin, target_user, role, attends_patients=None,
 
     old_role = target.role
     if old_role == role and target.attends_patients == new_attends:
-        return target
+        return False
 
     target.role = role
     target.attends_patients = new_attends
@@ -882,17 +870,19 @@ def change_staff_role(*, admin, target_user, role, attends_patients=None,
         _swap_system_role(target)
 
     changes = {'role': {'from': old_role, 'to': role}}
+    if custom_permissions is not None:
+        changes['custom_permissions'] = custom_permissions
     if previous_attends != new_attends:
         changes['attends_patients'] = {'from': previous_attends, 'to': new_attends}
     record_staff_event(
-        member=target, actor=admin, kind='role_changed', changes=changes,
+        member=target, actor=actor, kind='role_changed', changes=changes,
         request_id=request_id,
     )
     log = {
         "event": "STAFF_ROLE_CHANGED",
         "request_id": request_id,
-        "actor_id": admin.pk,
-        "organization_id": admin.organization_id,
+        "actor_id": actor.pk,
+        "organization_id": actor.organization_id,
         "target_user_id": target.pk,
         "target_public_id": str(target.public_id),
         "from_role": old_role,
@@ -900,6 +890,148 @@ def change_staff_role(*, admin, target_user, role, attends_patients=None,
         "attends_patients": new_attends,
     }
     transaction.on_commit(lambda: logger.info("STAFF_ROLE_CHANGED", extra=log), robust=True)
+    return True
+
+
+class CustomPermissionsDecisionRequired(ValidationError):
+    """400: al cambiar el rol de alguien con permisos personalizados hay que
+    decidir si se conservan (ADR p69 §7)."""
+    default_detail = {'keep_custom_permissions': [
+        'Tiene permisos personalizados: indica si se conservan con el rol nuevo.']}
+
+
+class PermissionsPreconditionRequired(APIException):
+    """400: cambiar permisos exige declarar cuáles se veían (ADR p69 §12).
+
+    El PATCH envía el conjunto efectivo completo; sin saber de qué conjunto
+    partió el llamador, una ficha abierta hace rato pisaría en silencio lo que
+    otro ADMIN acaba de conceder o quitar.
+    """
+    status_code = 400
+    default_detail = 'Indica los permisos que veías (expected_permissions) para poder cambiarlos.'
+    default_code = 'precondition_required'
+
+
+class PermissionsChanged(APIException):
+    """409: los permisos efectivos cambiaron desde que se cargó la ficha (ADR p69 §12).
+    No es un error técnico: se recarga y se vuelve a decidir; nunca se reintenta."""
+    status_code = 409
+    default_detail = (
+        'Sus permisos cambiaron mientras los editabas. Revisa los actuales y vuelve a guardar.'
+    )
+    default_code = 'permissions_changed'
+
+    def __init__(self, current):
+        super().__init__()
+        self.error_payload = {'current': sorted(current)}
+
+
+@transaction.atomic
+def update_staff_member(*, admin, target_user, profile=None, role=None, attends_patients=None,
+                        permissions=None, keep_custom_permissions=None, expected_permissions=None,
+                        request_id=None):
+    """Guarda de una vez lo que la ficha de Equipo cambió (ADR p69 §9).
+
+    ``profile``: campos ya validados por ``UpdateEmployeeSerializer`` (exige
+    ``staff.update``). ``role``/``attends_patients``: cambio de rol (exige
+    ``staff.change_role``; reglas en ``change_staff_role``). ``permissions``:
+    conjunto efectivo deseado (exige ``staff.manage_permissions``; reglas en
+    ``member_permissions``). Todo en una transacción: si una parte falla, no se
+    guarda ninguna. Las filas ``User`` se bloquean una vez, ordenadas por pk, con
+    todos los ADMIN activos si el objetivo deja de serlo (INV-J).
+    """
+    from django.http import Http404
+    from apps.core.permissions import user_has_permission
+    from apps.users import member_permissions
+
+    request_id = request_id or str(uuid.uuid4())
+    profile = dict(profile or {})
+    if role is not None and role not in STAFF_ROLES:
+        raise ValidationError({'role': ['Rol no válido.']})
+    if role is not None and target_user.pk == admin.pk:
+        raise SelfRoleChange()
+    _assert_manageable_target(admin, target_user)
+    _assert_not_demo_seed_account(target_user)
+
+    demoting_admin = role is not None and target_user.role == 'ADMIN' and role != 'ADMIN'
+    locked = _lock_users(
+        pks=[admin.pk, target_user.pk],
+        active_admins_of=target_user.organization_id if demoting_admin else None,
+    )
+    actor = locked.get(admin.pk)
+    target = locked.get(target_user.pk)
+    if actor is None or not actor.is_active:
+        raise ActorInactive()
+    if target is None or not target.is_active:
+        raise Http404("Usuario no encontrado.")
+
+    had_overrides = any(member_permissions.overrides_of(target).values())
+    role_changes = role is not None and role != target.role
+    decide_overrides = role_changes and had_overrides and permissions is None
+    needed = []
+    if profile:
+        needed.append(('staff.update', 'Ya no tienes permiso para editar integrantes.'))
+    if role is not None:
+        needed.append(('staff.change_role', 'Ya no tienes permiso para cambiar roles.'))
+    if permissions is not None or decide_overrides:
+        needed.append((member_permissions.MANAGE_PERMISSIONS,
+                       'Solo un administrador puede conceder o quitar permisos.'))
+    for code, message in needed:
+        # Releído con la fila bloqueada: otro ADMIN pudo cambiarle el rol al actor.
+        if not user_has_permission(actor, code):
+            raise PermissionDenied(message)
+    if decide_overrides and keep_custom_permissions is None:
+        raise CustomPermissionsDecisionRequired()
+
+    previous_effective = member_permissions.effective_codes(target)
+    if permissions is not None:
+        # §12: se compara con la fila de la persona bloqueada, así que dos ADMIN
+        # que guardan a la vez se ordenan y el segundo ve el cambio del primero.
+        if expected_permissions is None:
+            raise PermissionsPreconditionRequired()
+        if set(expected_permissions) != previous_effective:
+            raise PermissionsChanged(previous_effective)
+    kept_desired = None
+    if decide_overrides and keep_custom_permissions:
+        kept_desired = member_permissions.kept_overrides_for_new_role(target, role)
+
+    # Datos antes que el rol: el rol nuevo puede exigir la cédula que llega aquí.
+    if profile:
+        _apply_profile(admin=actor, target_user=target, changes=profile)
+    if role is not None:
+        _apply_role_change(
+            actor=actor, target=target, locked=locked, role=role,
+            attends_patients=attends_patients,
+            custom_permissions=(('kept' if keep_custom_permissions else 'discarded')
+                                if decide_overrides else None),
+            request_id=request_id,
+        )
+
+    desired = set(permissions) if permissions is not None else kept_desired
+    if desired is not None:
+        grants, revokes = member_permissions.plan_overrides(
+            actor=actor, target=target, role_name=target.role, desired=desired,
+            current_effective=previous_effective,
+        )
+        before, after = member_permissions.write_overrides(
+            target=target, grants=grants, revokes=revokes, actor=actor)
+        if permissions is not None and before != after:
+            changes = {
+                'granted': sorted(after['granted'] - before['granted']),
+                'revoked': sorted(after['revoked'] - before['revoked']),
+                'restored': sorted((before['granted'] | before['revoked'])
+                                   - (after['granted'] | after['revoked'])),
+            }
+            record_staff_event(member=target, actor=actor, kind='permissions_changed',
+                               changes=changes, request_id=request_id)
+            transaction.on_commit(lambda: logger.info('STAFF_PERMISSIONS_CHANGED', extra={
+                'event': 'STAFF_PERMISSIONS_CHANGED', 'request_id': request_id,
+                'actor_id': actor.pk, 'target_user_id': target.pk,
+                'organization_id': target.organization_id,
+                'granted': len(after['granted']), 'revoked': len(after['revoked']),
+            }), robust=True)
+    elif decide_overrides:
+        member_permissions.delete_overrides(target)
     return target
 
 
@@ -1085,13 +1217,18 @@ def update_staff_profile(*, admin, target_user, changes):
     cerrados. El log lleva nombres de campo, no valores (el correo es dato
     personal).
     """
+    update_staff_member(admin=admin, target_user=target_user, profile=changes)
+    target_user.refresh_from_db()
+    return target_user
+
+
+def _apply_profile(*, admin, target_user, changes):
+    """Guarda los campos de ``changes`` (ya validados) con la fila bloqueada."""
     from django.db import IntegrityError
 
-    _assert_manageable_target(admin, target_user)
-    _assert_not_demo_seed_account(target_user)
     fields = sorted(changes)
     if not fields:
-        return target_user
+        return True
     for field in fields:
         setattr(target_user, field, changes[field])
     try:
@@ -1114,7 +1251,7 @@ def update_staff_profile(*, admin, target_user, changes):
             'fields': fields,
         },
     )
-    return target_user
+    return True
 
 
 def ensure_agent_user(organization):

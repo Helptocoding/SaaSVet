@@ -278,8 +278,40 @@ def _get_cached_permissions(user) -> "set | None":
     perms: set[str] = set()
     for ur in user_roles:
         perms.update(ur.role.permissions.values_list("code", flat=True))
+    perms = apply_overrides(perms, _override_rows(user))
     user._cached_permissions = perms
     return perms
+
+
+def _override_rows(user):
+    from apps.core.models import UserPermissionOverride
+    return list(UserPermissionOverride.objects.filter(user=user).values_list(
+        "permission__code", "effect"))
+
+
+def expand_wildcards(codes) -> set:
+    """Comodines de un rol → códigos concretos del catálogo, para poder restarles
+    un permiso quitado (ADR p69). Los códigos concretos se conservan tal cual."""
+    codes = set(codes)
+    expanded = {code for code in codes if not code.endswith(".*")}
+    if "*.*" in codes:
+        return expanded | {c for c in PERMISSION_CODES if c not in WILDCARD_EXCLUDED}
+    for wildcard in (c for c in codes if c.endswith(".*")):
+        resource = wildcard[:-2]
+        expanded |= {c for c in PERMISSION_CODES
+                     if c.split(".")[0] == resource and c not in WILDCARD_EXCLUDED}
+    return expanded
+
+
+def apply_overrides(role_codes, override_rows) -> set:
+    """Permisos efectivos = (los del rol ∪ concedidos) − quitados (ADR p69).
+    Sin ajustes devuelve los del rol sin tocar (comodines incluidos)."""
+    if not override_rows:
+        return set(role_codes)
+    granted = {code for code, effect in override_rows if effect == "grant"}
+    revoked = {code for code, effect in override_rows if effect == "revoke"}
+    base = expand_wildcards(role_codes) if revoked else set(role_codes)
+    return (base | granted) - revoked
 
 
 # ---------------------------------------------------------------------------

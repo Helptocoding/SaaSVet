@@ -1,0 +1,160 @@
+/* Piezas compartidas de Equipo (página y ficha). Solo tokens globales. */
+
+.fieldError {
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: var(--c-danger-text);
+}
+
+.avatar {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-full);
+    background: var(--c-primary-light);
+    color: var(--c-primary-dark);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.avatarLg {
+    width: 48px;
+    height: 48px;
+    font-size: 16px;
+}
+
+/* ── Rol ───────────────────────────────────────────────────────── */
+
+.roleOptions {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 16px;
+    padding: 0;
+    border: 0;
+}
+
+.roleOption {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    cursor: pointer;
+    transition: border-color var(--t), background var(--t);
+}
+
+.roleOption:hover {
+    border-color: var(--c-border-2);
+}
+
+.roleOptions:disabled .roleOption {
+    cursor: not-allowed;
+}
+
+.roleOptionSelected,
+.roleOptionSelected:hover {
+    border-color: var(--c-primary);
+    background: var(--c-primary-light);
+}
+
+.roleOption input {
+    margin-top: 2px;
+    accent-color: var(--c-primary);
+}
+
+.roleName {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--c-text);
+}
+
+.roleDescription {
+    display: block;
+    margin-top: 2px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--c-text-2);
+}
+
+.attendsField {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    cursor: pointer;
+}
+
+.attendsField input {
+    margin-top: 2px;
+    accent-color: var(--c-primary);
+}
+
+/* ── Credenciales de un solo uso ──────────────────────────────── */
+
+.credentialsIntro {
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--c-text-2);
+}
+
+.tempWarning {
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--c-warning-border);
+    border-radius: var(--r-md);
+    background: var(--c-warning-bg);
+    color: var(--c-warning-text);
+    font-size: 12.5px;
+}
+
+.credentials {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 8px 14px;
+    margin: 0;
+}
+
+.credentials dt {
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--c-text-3);
+}
+
+.credentials dd {
+    margin: 0;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+.credentialMono {
+    font-family: var(--font-mono);
+}
+
+.tempPassword {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    word-break: break-all;
+    color: var(--c-warning-text);
+}
+
+.tempNote {
+    margin-top: 14px;
+    font-size: 11.5px;
+    color: var(--c-text-3);
+}
+
+.modalActions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}

@@ -1,13 +1,137 @@
-/* Equipo (plan Equipo F4; Fase 1 Equipo): estilos de la página con tokens globales. */
+/* Equipo (rediseño 2026-11-25): estilos de la página con tokens globales. Las
+   piezas compartidas con la ficha viven en features/staff/StaffParts.module.css. */
 
-.segment {
+/* ── Requiere atención ────────────────────────────────────────── */
+
+.attention {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--c-warning-border);
+    border-radius: var(--r-lg);
+    background: var(--c-warning-bg);
+}
+
+.attentionTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--c-warning-text);
+}
+
+.attentionList {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.attentionItem {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    font-size: 13px;
+    color: var(--c-text);
+}
+
+/* ── Pestañas y filtros ───────────────────────────────────────── */
+
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--c-border);
+}
+
+.tab {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--c-text-2);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.tab:hover {
+    color: var(--c-text);
+}
+
+.tab[aria-selected="true"] {
+    border-bottom-color: var(--c-primary);
+    color: var(--c-primary-dark);
+    font-weight: 600;
+}
+
+.tab:focus-visible {
+    outline: 2px solid var(--c-primary-ring);
+    outline-offset: -2px;
+}
+
+.tabCount {
+    min-width: 20px;
+    padding: 0 6px;
+    border-radius: var(--r-full);
+    background: var(--c-surface-2);
+    color: var(--c-text-3);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-bottom: 14px;
+}
+
+.search {
+    position: relative;
+    display: flex;
+    flex: 1 1 260px;
+    align-items: center;
+    color: var(--c-text-3);
+}
+
+.search svg {
+    position: absolute;
+    left: 10px;
+    pointer-events: none;
+}
+
+.search input {
+    width: 100%;
+    padding-left: 32px;
 }
 
 /* ── Tabla de integrantes ──────────────────────────────────────── */
 
 .teamTable tbody td {
     vertical-align: top;
+}
+
+.member {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.memberText {
+    min-width: 0;
 }
 
 .memberName {
@@ -18,10 +142,15 @@
     font-weight: 600;
 }
 
-/* El nombre abre la ficha (ADR p67). */
+/* El nombre abre la ficha. */
 .memberLink {
+    padding: 0;
+    border: 0;
+    background: none;
     color: inherit;
-    text-decoration: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
 }
 
 .memberLink:hover,
@@ -30,32 +159,23 @@
     text-decoration: underline;
 }
 
-.selfTag {
-    vertical-align: middle;
-}
-
 .primaryText {
     color: var(--c-text);
 }
 
-/* Segunda línea de cada celda: correo, alcance del rol, cédula, último acceso. */
+/* Segunda línea de cada celda: correo, especialidades, cédula. */
 .secondaryText {
     margin-top: 2px;
     font-size: 12.5px;
     color: var(--c-text-3);
+    overflow-wrap: anywhere;
 }
 
-/* Lo único que pide una acción: veterinario sin cédula, temporal vencida (D6). */
+/* Lo único que pide una acción: falta la cédula para firmar (D6). */
 .attentionText {
-    margin-top: 2px;
-    font-size: 12.5px;
+    font-size: 13.5px;
     font-weight: 600;
     color: var(--c-warning-text);
-}
-
-.attentionText:first-child {
-    margin-top: 0;
-    font-size: 13.5px;
 }
 
 .mono {
@@ -74,9 +194,9 @@
     gap: 8px;
 }
 
-/* Pantallas angostas: cada integrante es un bloque. La primera línea lleva el
+/* Pantallas angostas: cada integrante es una tarjeta. La primera línea lleva el
    nombre y las acciones; debajo, cada dato con su rótulo. Sin scroll horizontal. */
-@media (max-width: 720px) {
+@media (max-width: 960px) {
     .teamTable thead {
         display: none;
     }
@@ -124,7 +244,7 @@
     }
 }
 
-/* ── Formularios ───────────────────────────────────────────────── */
+/* ── Alta ──────────────────────────────────────────────────────── */
 
 .formGrid {
     display: grid;
@@ -142,171 +262,12 @@
     }
 }
 
-.fieldError {
-    margin-top: 4px;
-    font-size: 11.5px;
-    color: var(--c-danger-text);
-}
-
-.roleOptions {
-    display: grid;
-    gap: 8px;
-    margin: 0 0 16px;
-    padding: 0;
-    border: 0;
-}
-
-.roleOption {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 12px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--r-md);
-    cursor: pointer;
-    transition: border-color var(--t), background var(--t);
-}
-
-.roleOption:hover {
-    border-color: var(--c-border-2);
-}
-
-.roleOptionSelected,
-.roleOptionSelected:hover {
-    border-color: var(--c-primary);
-    background: var(--c-primary-light);
-}
-
-.roleOption input {
-    margin-top: 2px;
-    accent-color: var(--c-primary);
-}
-
-.roleName {
-    display: block;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--c-text);
-}
-
-.roleDescription {
-    display: block;
-    margin-top: 2px;
-    font-size: 12.5px;
-    line-height: 1.5;
-    color: var(--c-text-2);
-}
-
-.roleReadonly {
-    margin-bottom: 16px;
-    padding: 10px 12px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--r-md);
-    background: var(--c-surface-2);
-}
-
 .passwordHint {
     margin-top: 4px;
     font-size: 12.5px;
     color: var(--c-text-3);
 }
 
-.editHeading {
-    margin-bottom: 12px;
-    font-weight: 600;
-}
-
-.notice {
-    margin-top: 6px;
-    padding: 8px 10px;
-    border: 1px solid var(--c-warning-border);
-    border-radius: var(--r-md);
-    background: var(--c-warning-bg);
-    color: var(--c-warning-text);
-    font-size: 12px;
-    line-height: 1.5;
-}
-
-/* ── Credenciales de un solo uso ──────────────────────────────── */
-
-.credentialsIntro {
-    margin-bottom: 12px;
-    font-size: 13px;
-    color: var(--c-text-2);
-}
-
-.tempWarning {
-    margin-bottom: 14px;
-    padding: 10px 12px;
-    border: 1px solid var(--c-warning-border);
-    border-radius: var(--r-md);
-    background: var(--c-warning-bg);
-    color: var(--c-warning-text);
-    font-size: 12.5px;
-}
-
-.credentials {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: 8px 14px;
-    margin: 0;
-}
-
-.credentials dt {
-    font-size: 11.5px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--c-text-3);
-}
-
-.credentials dd {
-    margin: 0;
-    font-size: 13px;
-    word-break: break-all;
-}
-
-.credentialMono {
-    font-family: var(--font-mono);
-}
-
-.tempPassword {
-    font-family: var(--font-mono);
-    font-weight: 600;
-    word-break: break-all;
-    color: var(--c-warning-text);
-}
-
-.tempNote {
-    margin-top: 14px;
-    font-size: 11.5px;
-    color: var(--c-text-3);
-}
-
-.modalActions {
-    display: flex;
-    gap: 10px;
-    margin-top: 16px;
-}
-
 .footerButton {
     flex: 1;
-}
-
-/* ── Función clínica e historial (ADR p66) ─────────────────────── */
-
-.attendsField {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin: 0 0 16px;
-    padding: 10px 12px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--r-md);
-    cursor: pointer;
-}
-
-.attendsField input {
-    margin-top: 2px;
-    accent-color: var(--c-primary);
 }

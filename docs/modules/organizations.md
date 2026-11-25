@@ -280,7 +280,7 @@ inactivos de la clínica, sin `ADMIN_SAAS` ni cuentas de servicio, y exige adem�
 
 | Quién | Recibe |
 |---|---|
-| Quien gestiona personal (algún permiso `staff.create`, `staff.update`, `staff.destroy`, `staff.reset_password` o `staff.reactivate`; `apps.users.access.can_manage_staff`) | El integrante completo (`UserSerializer`) con su bloque `access` |
+| Quien gestiona personal (algún permiso de `STAFF_MANAGEMENT_PERMISSIONS`; `apps.users.access.can_manage_staff`) | El integrante completo (`UserSerializer`) con su bloque `access`, sus permisos efectivos (`permissions`) y sus ajustes (`permission_overrides: {granted, revoked}`, ADR p69), calculados para toda la lista en dos consultas |
 | Quien solo tiene `staff.list` (VET y ASSISTANT, para elegir veterinario en Citas) | El directorio mínimo `{id, public_id, first_name, last_name, role, attends_patients}`: sin correo, usuario, cédula, organización ni datos de acceso |
 
 Antes cualquier `staff.list` recibía correo, usuario y cédula de cada colega aunque la
@@ -320,8 +320,12 @@ como veterinarios a quienes atienden, el agente les ofrece huecos y Equipo les e
 
 ```
 POST /api/staff/<public_id>/role/
-{ "role": "ADMIN" | "VET" | "ASSISTANT", "attends_patients": true | false (solo ADMIN, opcional) }
+{ "role": "ADMIN" | "VET" | "ASSISTANT", "attends_patients": true | false (solo ADMIN, opcional),
+  "keep_custom_permissions": true | false (obligatorio si tiene permisos personalizados, ADR p69) }
 ```
+
+La ficha de Equipo ya no usa esta ruta: cambia el rol con el `PATCH` unificado (§ Editar
+integrante). Ambas pasan por el mismo servicio (`update_staff_member`).
 
 Permiso `staff.change_role` (sensible, solo ADMIN). Responde `200` con el integrante. Cambia
 `User.role` y el `UserRole` de sistema en una transacción (los roles personalizados de la base se
@@ -331,7 +335,7 @@ en la siguiente con el mismo token. Repetir el mismo rol no escribe nada.
 
 | Respuesta | Cuándo |
 |---|---|
-| `400` | A sí mismo; rol fuera de `ADMIN/VET/ASSISTANT`; `attends_patients` que contradice un rol no ADMIN; nuevo rol que atiende sin cédula |
+| `400` | A sí mismo; rol fuera de `ADMIN/VET/ASSISTANT`; `attends_patients` que contradice un rol no ADMIN; nuevo rol que atiende sin cédula; tiene permisos personalizados y falta `keep_custom_permissions` |
 | `403` | Sin `staff.change_role`, o el actor lo perdió mientras esperaba el bloqueo; cuenta semilla de la demo |
 | `404` | Otra clínica, inactivo, `ADMIN_SAAS` o cuenta de servicio |
 | `409 last_active_admin` | Quitaría el rol al último ADMIN activo (INV-J, mismo bloqueo que la desactivación) |
@@ -352,7 +356,9 @@ Ambos exigen ser quien gestiona personal (`403` si no); otra clínica, `404`.
 
 ### Ficha, ausencias y citas por atender (ADR p67)
 
-- `GET /api/staff/<public_id>/profile/` → `UserSerializer` del integrante, también inactivo.
+- `GET /api/staff/<public_id>/profile/` → `UserSerializer` del integrante, también inactivo, más
+  `mfa_enabled` (si tiene activa la verificación en dos pasos; nunca el secreto ni los códigos).
+  En la interfaz la ficha es un panel lateral sobre Equipo (`/staff?member=<uuid>`).
 - `GET /api/staff/<public_id>/appointments/?from=&to=` → citas programadas o confirmadas aún no
   empezadas (máx. 200), con `pet_name`, `owner_name`, `reason` y su `expected_state` (INV-A)
   para reasignarlas. Fechas locales `AAAA-MM-DD`, incluidas.
@@ -403,15 +409,27 @@ ADMIN, a todos los ADMIN activos de la clínica, y vuelve a comprobar con el blo
 Recuperación si el único ADMIN olvida su contraseña: restablecimiento de plataforma
 (ADR p45). El admin de Django y la shell quedan fuera de esta garantía (vía de operadores).
 
-### Editar integrante (plan Equipo A1; especialidad y cédula desde M01, orden 7)
+### Editar integrante (plan Equipo A1; especialidad y cédula desde M01, orden 7; ADR p69)
 
 ```
 PATCH /api/staff/<public_id>/
 Authorization: Bearer <token ADMIN>
 
 { "first_name": "Laura", "last_name": "de la Cruz", "email": "laura@clinica.com",
-  "specialties": ["surgery"], "license_number": "1234567" }
+  "specialties": ["surgery"], "license_number": "1234567",
+  "role": "VET", "attends_patients": true,                       # opcional, ADR p66/p69
+  "permissions": ["appointment.list", ...],                       # opcional, ADR p69
+  "expected_permissions": ["appointment.list", ...],              # obligatorio con permissions
+  "keep_custom_permissions": true }                               # si cambia el rol con ajustes
 ```
+
+**Guardado único (ADR p69 §9).** La ficha guarda todo lo que cambió en una sola petición y el
+backend lo aplica en una transacción (`apps.users.services.update_staff_member`): si una parte
+falla, no se guarda ninguna. Cada parte exige su permiso, releído con la fila del actor
+bloqueada: datos `staff.update`; `role` (y `attends_patients` junto a él) `staff.change_role`
+con las reglas de § Cambiar rol; `permissions` `staff.manage_permissions` (§ Permisos por
+integrante). Los datos se aplican antes que el rol: el rol nuevo puede exigir la cédula que llega
+en la misma petición. Un cuerpo vacío es `400`.
 
 **Especialidades (ADR p68).** `specialties` es una lista de códigos del catálogo cerrado
 `apps.users.specialties` (16; copia en `frontend/src/features/staff/specialties.json`). Se
@@ -419,9 +437,10 @@ guardan sin repetir y en el orden del catálogo; un código desconocido o un tex
 API devuelve además `specialty_label` («Cirugía, Dermatología»), que es lo que se muestra e
 imprime. Sustituye al antiguo `specialty` de texto libre.
 
-Permiso `staff.update` (sensible, solo ADMIN; ADR p63 y p64). Acepta solo esas cinco claves:
-cualquier otra (rol, username, contraseña, estado) es `400` con «Solo se pueden editar nombre,
-apellido, correo, especialidad y cédula profesional.». Solo se guarda lo que cambia; un valor
+Datos personales: permiso `staff.update` (sensible, solo ADMIN; ADR p63 y p64). Además de las
+claves de rol y permisos de arriba, acepta solo esas cinco (y `attends_patients` en un ADMIN):
+cualquier otra (username, contraseña, estado) es `400` con «Solo se pueden editar nombre,
+apellido, correo, especialidades, cédula profesional y si atiende pacientes.». Solo se guarda lo que cambia; un valor
 igual al actual (el mismo correo con otras mayúsculas) no se guarda ni se registra. Un `VET`
 no puede quedar sin cédula. Alcance: la misma organización, usuarios activos, sin `ADMIN_SAAS`
 ni cuentas de servicio (fuera de eso, `404`). El ADMIN puede editar también los suyos.
@@ -451,6 +470,45 @@ Registra `STAFF_PROFILE_UPDATED` con los nombres de los campos, nunca sus valore
   especialidad y la cédula congelados al cierre; las abiertas muestran los datos vivos.
 
 La misma ruta con `DELETE` sigue desactivando (`staff.destroy`): `StaffDetailView` deriva el permiso del método.
+
+### Permisos por integrante (ADR p69)
+
+Los permisos de una persona parten de su rol y se pueden ajustar uno a uno:
+**efectivos = (los de sus roles ∪ concedidos) − quitados**. Los ajustes viven en
+`core.UserPermissionOverride` (organización, persona, permiso, `grant` | `revoke`, quién y
+cuándo), fuera de `Role`, así que `seed_permissions` no los toca. Se guarda solo la diferencia
+con el rol. `_get_cached_permissions` es el único punto de cálculo: lo usan
+`user_has_permission`, `user_has_permission_strict`, `/me/` y la lista de asignables del Inbox;
+el cambio aplica en la siguiente petición sin cerrar sesiones. Un quitado gana también a un
+comodín (`recurso.*`) del rol.
+
+```
+GET /api/staff/permission-catalog/        # quien gestiona personal
+→ { "areas": [{key, label, groups: [{key, label, permissions: [{code, label, reserved}]}]}],
+    "roles": {"ADMIN": [...], "VET": [...], "ASSISTANT": [...]},   # los de esta clínica
+    "reserved": [...], "signing_permission": "prescription.create" }
+```
+
+El catálogo (`apps.core.permission_catalog`) nombra en español cada código de
+`PERMISSION_CODES` y lo sitúa en Clínica, Operación o Administración; una prueba exige que los
+cubra todos. El frontend no tiene copia.
+
+| Regla | Respuesta si no se cumple |
+|---|---|
+| Solo `staff.manage_permissions` (solo ADMIN) concede o quita | `403` |
+| Los reservados (`staff.create`, `staff.update`, `staff.destroy`, `staff.reset_password`, `staff.reactivate`, `staff.change_role`, `staff.manage_permissions`) no se conceden a otro rol ni se quitan a un ADMIN: «administrador» sigue siendo el rol ADMIN e INV-J no cambia | `400` en `permissions` |
+| Nadie se quita a sí mismo permisos del área Administración | `400` en `permissions` |
+| Código desconocido | `400` en `permissions` |
+| Enviar `permissions` exige `expected_permissions`: los efectivos que se veían al abrir la ficha | `400 precondition_required` |
+| `expected_permissions` difiere de los efectivos actuales (otro ADMIN los cambió) | `409 permissions_changed` con `current`; nada se escribe. Recargar y volver a decidir, **nunca reintentar** |
+| Cambiar el rol de quien tiene ajustes sin decidir `keep_custom_permissions` | `400` en `keep_custom_permissions` |
+
+La comparación de §12 ocurre con la fila de la persona bloqueada (`_lock_users`): dos ADMIN que
+guardan a la vez se ordenan y el segundo recibe el `409`. Conservar los ajustes al cambiar de
+rol los recalcula contra el rol nuevo (sin los reservados que ese rol no admite). Historial:
+`permissions_changed` con códigos `granted`, `revoked` y `restored` (nunca datos personales) y,
+en `role_changed`, `custom_permissions: kept | discarded`. Log `STAFF_PERMISSIONS_CHANGED` con
+conteos. Las cuentas de servicio y `ADMIN_SAAS` no admiten ajustes.
 
 ### Reactivar integrante (plan Equipo A2)
 
@@ -721,6 +779,8 @@ es normal. `/api/me/` expone `is_demo` para que el frontend oculte esas opciones
 ## RBAC — como funciona
 
 El sistema usa `HybridPermission`: primero busca permisos en DB, si no encuentra usa fallback estatico.
+Los permisos en DB de una persona son los de sus roles más sus ajustes individuales (ADR p69,
+§ Permisos por integrante).
 
 ```
 POST /api/token/ → JWT

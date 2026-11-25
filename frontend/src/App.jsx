@@ -8,8 +8,7 @@ import Layout from "./components/Layout";
 import { useAuth } from "./auth/authContext";
 import { AuthProvider } from "./auth/AuthProvider";
 import { ActivationProvider } from "./hooks/ActivationProvider";
-import Staff from "./pages/staff";
-import StaffMember from "./pages/staffMember";
+import Staff, { StaffMemberRedirect } from "./pages/staff";
 import Appointments from "./pages/appointments";
 import MedicalRecords from "./pages/medicalRecords/index";
 import Inventory from "./pages/inventory";
@@ -132,7 +131,8 @@ const router = createBrowserRouter([
       { path: "/pets", element: wrap(Pets) },
       { path: "/pets/:id", element: wrap(PetDetail) },
       { path: "/staff", element: wrap(Staff) },
-      { path: "/staff/:publicId", element: wrap(StaffMember) },
+      // ADR p67 → rediseño 2026-11-25: la ficha es un panel lateral sobre Equipo.
+      { path: "/staff/:publicId", element: wrap(StaffMemberRedirect) },
       { path: "/appointments", element: wrap(Appointments) },
       {
         path: "/medical-records",

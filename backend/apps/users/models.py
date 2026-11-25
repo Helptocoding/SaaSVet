@@ -166,6 +166,8 @@ class StaffAccessEvent(models.Model):
     # ADR p68: verificación en dos pasos.
     KIND_MFA_ENABLED = 'mfa_enabled'
     KIND_MFA_DISABLED = 'mfa_disabled'
+    # ADR p69: permisos concedidos o quitados sobre los del rol.
+    KIND_PERMISSIONS_CHANGED = 'permissions_changed'
     KIND_CHOICES = (
         (KIND_CREATED, 'Alta'),
         (KIND_PROFILE_UPDATED, 'Edición de datos'),
@@ -178,6 +180,7 @@ class StaffAccessEvent(models.Model):
         (KIND_APPOINTMENTS_REASSIGNED, 'Citas reasignadas'),
         (KIND_MFA_ENABLED, 'Verificación en dos pasos activada'),
         (KIND_MFA_DISABLED, 'Verificación en dos pasos desactivada'),
+        (KIND_PERMISSIONS_CHANGED, 'Cambio de permisos'),
     )
 
     organization = models.ForeignKey(

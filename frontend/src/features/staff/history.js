@@ -19,7 +19,28 @@ const listOf = (items) => {
     return `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
 };
 
-export function describeEvent(event) {
+// ADR p69: el evento trae códigos; el nombre de cada uno sale del catálogo del
+// backend. Sin catálogo se cuenta cuántos.
+const permissionNames = (codes, catalog) => {
+    const labels = new Map((catalog?.areas || []).flatMap((area) =>
+        area.groups.flatMap((group) => group.permissions.map((p) => [p.code, p.label]))));
+    return (codes || []).map((code) => (labels.get(code) || code).toLowerCase());
+};
+
+function describePermissions(changes, catalog) {
+    const parts = [];
+    const granted = permissionNames(changes.granted, catalog);
+    const revoked = permissionNames(changes.revoked, catalog);
+    const restored = changes.restored || [];
+    if (granted.length) parts.push(`le concedió ${listOf(granted)}`);
+    if (revoked.length) parts.push(`le quitó ${listOf(revoked)}`);
+    if (restored.length) parts.push(`devolvió ${restored.length} ${restored.length === 1 ? "permiso" : "permisos"} a lo de su rol`);
+    if (!parts.length) return "Ajustó sus permisos";
+    const text = listOf(parts);
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+export function describeEvent(event, catalog = null) {
     const changes = event?.changes || {};
     switch (event?.kind) {
         case "created":
@@ -34,8 +55,12 @@ export function describeEvent(event) {
             if (changes.attends_patients) {
                 text += changes.attends_patients.to ? "; ahora atiende pacientes" : "; ya no atiende pacientes";
             }
+            if (changes.custom_permissions === "kept") text += "; conservó sus permisos personalizados";
+            if (changes.custom_permissions === "discarded") text += "; volvió a los permisos del rol";
             return text;
         }
+        case "permissions_changed":
+            return describePermissions(changes, catalog);
         case "deactivated":
             return "Desactivó su acceso";
         case "reactivated":

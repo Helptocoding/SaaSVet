@@ -117,12 +117,15 @@ class StaffLicenseTests(APITestCase):
         self.assertEqual(self.admin.license_number, '')
 
     def test_patch_rejects_other_fields(self):
+        # ADR p69 §9: `role` ya es parte del PATCH (con sus propias reglas); el
+        # usuario, la contraseña y el estado siguen teniendo su propio camino.
         self.client.force_authenticate(self.admin)
         r = self.client.patch(staff_url(self.assistant), {
-            'role': 'ADMIN', 'license_number': '12345'}, format='json')
+            'username': 'otro', 'license_number': '12345'}, format='json')
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.content)
         self.assistant.refresh_from_db()
-        self.assertEqual((self.assistant.role, self.assistant.license_number), ('ASSISTANT', ''))
+        self.assertEqual((self.assistant.username, self.assistant.license_number),
+                         ('asst_ced', ''))
 
     def test_patch_rejects_empty_body(self):
         self.client.force_authenticate(self.admin)

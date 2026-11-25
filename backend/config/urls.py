@@ -38,6 +38,7 @@ from apps.users.views import (
     StaffAbsenceListView,
     StaffMemberAbsencesView,
     StaffAbsenceDetailView,
+    StaffPermissionCatalogView,
     MyMFAView,
     MyMFASetupView,
     MyMFAEnableView,
@@ -310,6 +311,8 @@ urlpatterns = [
     path('api/staff/create/', StaffCreateView.as_view(), name='staff-create'),
     # ADR p67: rutas fijas de ausencias ANTES de `<str:pk>/`.
     path('api/staff/absences/', StaffAbsenceListView.as_view(), name='staff-absences'),
+    path('api/staff/permission-catalog/', StaffPermissionCatalogView.as_view(),
+         name='staff-permission-catalog'),
     path('api/staff/absences/<str:pk>/', StaffAbsenceDetailView.as_view(),
          name='staff-absence-detail'),
     path('api/staff/<str:pk>/', StaffDetailView.as_view(), name='staff-detail'),

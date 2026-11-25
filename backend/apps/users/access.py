@@ -42,6 +42,7 @@ STAFF_MANAGEMENT_PERMISSIONS = (
     'staff.reactivate',
     'staff.change_role',
     'staff.manage_absences',
+    'staff.manage_permissions',
 )
 
 ACCESS_INACTIVE = 'inactive'

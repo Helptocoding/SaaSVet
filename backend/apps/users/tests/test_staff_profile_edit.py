@@ -139,8 +139,10 @@ class EditIdentityTests(_Fixtures):
         self.assertEqual(self.vet.email, 'ed_vet@example.com')
 
     def test_other_fields_are_rejected_without_changes(self):
+        # ADR p69: `role` ya no se rechaza aquí; el PATCH lo acepta y lo aplica con
+        # sus propias reglas (test_member_permissions).
         for field, value in (
-            ('role', 'ADMIN'), ('username', 'otro'), ('password', 'Otra12345'),
+            ('username', 'otro'), ('password', 'Otra12345'),
             ('is_active', False), ('session_version', 9),
         ):
             with self.subTest(field=field):
