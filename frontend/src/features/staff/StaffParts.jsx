@@ -15,6 +15,20 @@ const initials = (member) => {
     return `${first}${last}`.toUpperCase();
 };
 
+const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+/** Día y mes de una fecha local `AAAA-MM-DD` en un bloque; decorativo (la fecha completa va en texto). */
+export function DateTile({ iso }) {
+    const [, month, day] = (iso || "").split("-");
+    if (!month || !day) return null;
+    return (
+        <span className={styles.dateTile} aria-hidden="true">
+            <span className={styles.dateDay}>{Number(day)}</span>
+            <span className={styles.dateMonth}>{MONTHS[Number(month) - 1]}</span>
+        </span>
+    );
+}
+
 /** Iniciales sobre un círculo; decorativo (el nombre va al lado). */
 export function MemberAvatar({ member, size = "md" }) {
     return (
@@ -102,8 +116,11 @@ export function CredentialsModal({ result, onClose }) {
 
 // Elección del rol (alta y ficha), con lo que permite cada uno. `compact` (ficha):
 // las tres opciones en una línea y solo el alcance de la elegida, para no leer
-// tres párrafos cada vez que se abre.
-export function RolePicker({ value, onChange, name = "create-role", disabled = false, compact = false }) {
+// tres párrafos cada vez que se abre. `showHint` (ficha): ese alcance solo
+// aparece al elegir otro rol; el actual ya se ve completo en Permisos.
+export function RolePicker({
+    value, onChange, name = "create-role", disabled = false, compact = false, showHint = true,
+}) {
     if (compact) {
         return (
             <fieldset className={styles.roleCompact} disabled={disabled}>
@@ -122,7 +139,7 @@ export function RolePicker({ value, onChange, name = "create-role", disabled = f
                         </label>
                     ))}
                 </div>
-                <p className={styles.roleHint}>{roleSummary(value)}</p>
+                {showHint && <p className={styles.roleHint}>{roleSummary(value)}</p>}
             </fieldset>
         );
     }

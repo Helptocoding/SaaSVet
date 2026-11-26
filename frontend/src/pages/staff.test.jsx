@@ -771,19 +771,24 @@ describe("Equipo: edición desde la ficha (F5, ADR p68)", () => {
         expect(toast.error).not.toHaveBeenCalled();
     });
 
-    it("muestra el rol elegido y solo su alcance", async () => {
+    it("muestra el rol elegido y, al cambiarlo, solo el alcance del nuevo", async () => {
         const user = userEvent.setup({ delay: null });
+        granted.add("staff.change_role");
         renderStaff();
         const dialog = await openEdit(user);
         expect(within(dialog).getByRole("radio", { name: "Veterinario" })).toBeChecked();
-        expect(within(dialog).getByText(/Atiende consultas, emite recetas y registra vacunas/)).toBeInTheDocument();
-        expect(within(dialog).queryByText(/Consulta expedientes sin modificarlos/)).not.toBeInTheDocument();
+        // El alcance del rol actual ya se ve en Permisos: no se repite.
+        expect(within(dialog).queryByText(/Atiende consultas, emite recetas y registra vacunas/)).not.toBeInTheDocument();
+        await user.click(within(dialog).getByRole("radio", { name: "Asistente" }));
+        expect(within(dialog).getByText(/Consulta expedientes sin modificarlos/)).toBeInTheDocument();
+        expect(within(dialog).queryByText(/Atiende consultas, emite recetas y registra vacunas/)).not.toBeInTheDocument();
     });
 
     it("editar envía solo la lista nueva de especialidades cuando cambia", async () => {
         const user = userEvent.setup({ delay: null });
         renderStaff();
         const dialog = await openEdit(user);
+        await user.click(within(dialog).getByRole("button", { name: "Cambiar especialidades" }));
         expect(within(dialog).getByRole("checkbox", { name: "Cirugía" })).toBeChecked();
         await user.click(within(dialog).getByRole("checkbox", { name: "Oncología" }));
         await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));

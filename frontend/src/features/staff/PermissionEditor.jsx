@@ -77,7 +77,11 @@ function AreaPanel({ area, catalog, draft, onToggle, readOnly, isSelf, initial, 
     );
 }
 
-export default function PermissionEditor({ catalog, draft, onToggle, onRestore, readOnly = false, isSelf = false, initial }) {
+const READ_ONLY_NOTE = "Solo un administrador puede conceder o quitar permisos.";
+
+export default function PermissionEditor({
+    catalog, draft, onToggle, onRestore, readOnly = false, readOnlyNote = READ_ONLY_NOTE, isSelf = false, initial,
+}) {
     const [openAreas, setOpenAreas] = useState(() => new Set());
     if (!catalog) return null;
     const { extra, removed } = customCounts(catalog, draft);
@@ -98,7 +102,10 @@ export default function PermissionEditor({ catalog, draft, onToggle, onRestore, 
     return (
         <div className={styles.editor}>
             <div className={styles.toolbar}>
-                <p className={styles.summary} aria-live="polite">{summary}</p>
+                <div>
+                    <p className={styles.summary} aria-live="polite">{summary}</p>
+                    {readOnly && readOnlyNote && <p className={styles.readOnly}>{readOnlyNote}</p>}
+                </div>
                 {!readOnly && (
                     <button
                         type="button"
@@ -110,9 +117,6 @@ export default function PermissionEditor({ catalog, draft, onToggle, onRestore, 
                     </button>
                 )}
             </div>
-            {readOnly && (
-                <p className={styles.readOnly}>Solo un administrador puede conceder o quitar permisos.</p>
-            )}
             {catalog.areas.map((area) => (
                 <AreaPanel
                     key={area.key}

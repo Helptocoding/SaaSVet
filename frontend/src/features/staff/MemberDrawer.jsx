@@ -5,6 +5,10 @@
 // lo aplica en una transacción (`update_staff_member`). Restablecer, desactivar y
 // reactivar son acciones inmediatas con su propia confirmación: las ejecuta la
 // página, que muestra las credenciales de un solo uso.
+//
+// Pestañas (2026-11-25): Perfil · Permisos · Agenda · Historial. Los paneles
+// inactivos siguen montados con `hidden` para no perder lo que se está editando;
+// una marca en la pestaña dice dónde hay cambios sin guardar.
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
@@ -29,7 +33,7 @@ import ReassignModal from "./ReassignModal";
 import { roleLabel } from "./roles";
 import SpecialtyPicker from "./SpecialtyPicker";
 import { specialtiesLabel } from "./specialties";
-import { AttendsField, FieldError, MemberAvatar, RolePicker } from "./StaffParts";
+import { AttendsField, DateTile, FieldError, MemberAvatar, RolePicker } from "./StaffParts";
 import {
     DEMO_EMAIL_HINT, EMAIL_CHANGE_NOTICE, attendsFor, fullName, impactSentence, inputClass,
     plural, profileChanges, profileErrors,
@@ -38,6 +42,12 @@ import { ACCOUNT_STATE_LABELS, accountState, lastAccessShort, memberAlerts } fro
 import styles from "./MemberDrawer.module.css";
 
 const EMPTY_OVERRIDES = { granted: new Set(), revoked: new Set() };
+
+// Campos que viven en la pestaña Perfil: un error en ellos la vuelve a mostrar.
+const PROFILE_FIELDS = new Set([
+    "first_name", "last_name", "email", "license_number", "specialties", "role", "attends_patients",
+    "keep_custom_permissions",
+]);
 
 const profileDraftFrom = (member) => ({
     first_name: member.first_name || "",
@@ -49,18 +59,130 @@ const profileDraftFrom = (member) => ({
     attends_patients: Boolean(member.attends_patients),
 });
 
-function Section({ id, title, description, action, children }) {
+// Tarjeta de sección sobre el fondo gris del panel: el ícono da un ancla visual
+// para recorrer la ficha de un vistazo (neutro: el color queda para lo que pide acción).
+function Section({ id, title, icon: SectionIcon, action, children }) {
     return (
         <section className={styles.section} aria-labelledby={id}>
             <div className={styles.sectionHeader}>
-                <div>
-                    <h3 id={id} className={styles.sectionTitle}>{title}</h3>
-                    {description && <p className={styles.sectionDescription}>{description}</p>}
-                </div>
+                <h3 id={id} className={styles.sectionTitle}>
+                    {SectionIcon && (
+                        <span className={styles.sectionIcon} aria-hidden="true"><SectionIcon s={15} /></span>
+                    )}
+                    {title}
+                </h3>
                 {action}
             </div>
             {children}
         </section>
+    );
+}
+
+// Pestañas con el patrón de ARIA: flechas, Inicio y Fin recorren; solo la activa
+// está en el orden de tabulación.
+function DrawerTabs({ idBase, tabs, active, onChange }) {
+    const refs = useRef({});
+    const onKeyDown = (event) => {
+        const index = tabs.findIndex((tab) => tab.id === active);
+        const moves = {
+            ArrowRight: tabs[(index + 1) % tabs.length],
+            ArrowLeft: tabs[(index - 1 + tabs.length) % tabs.length],
+            Home: tabs[0],
+            End: tabs[tabs.length - 1],
+        };
+        const next = moves[event.key];
+        if (!next) return;
+        event.preventDefault();
+        onChange(next.id);
+        refs.current[next.id]?.focus();
+    };
+    return (
+        <div className={`tabs ${styles.tabs}`} role="tablist" aria-label="Secciones de la ficha" onKeyDown={onKeyDown}>
+            {tabs.map((tab) => {
+                const selected = tab.id === active;
+                return (
+                    <button
+                        key={tab.id}
+                        ref={(node) => { refs.current[tab.id] = node; }}
+                        type="button"
+                        role="tab"
+                        id={`${idBase}-tab-${tab.id}`}
+                        aria-selected={selected}
+                        aria-controls={`${idBase}-panel-${tab.id}`}
+                        tabIndex={selected ? 0 : -1}
+                        className={`tab-btn${selected ? " active" : ""} ${styles.tab}`}
+                        onClick={() => onChange(tab.id)}
+                    >
+                        {tab.label}
+                        {tab.count > 0 && <>{" "}<span className={styles.tabCount}>{tab.count}</span></>}
+                        {tab.dirty && (
+                            <>
+                                <span className={styles.tabDot} aria-hidden="true" />
+                                <span className="sr-only">, con cambios sin guardar</span>
+                            </>
+                        )}
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
+function TabPanel({ idBase, id, active, children }) {
+    return (
+        <div
+            role="tabpanel"
+            id={`${idBase}-panel-${id}`}
+            aria-labelledby={`${idBase}-tab-${id}`}
+            hidden={active !== id}
+            className={styles.panel}
+        >
+            {children}
+        </div>
+    );
+}
+
+// Especialidades: se muestran en una línea y el catálogo (16 casillas) solo se
+// despliega al pedirlo o si trae un error.
+function SpecialtiesField({ value, onChange, disabled, error }) {
+    const [open, setOpen] = useState(false);
+    if (open || error) {
+        return (
+            <div className={`form-group ${styles.fullRow}`}>
+                <SpecialtyPicker
+                    idPrefix="member-specialty"
+                    value={value}
+                    onChange={onChange}
+                    disabled={disabled}
+                    error={error}
+                />
+                {open && (
+                    <button type="button" className={`btn btn-ghost btn-sm ${styles.inlineAction}`} onClick={() => setOpen(false)}>
+                        Listo
+                    </button>
+                )}
+            </div>
+        );
+    }
+    return (
+        <div className={`form-group ${styles.fullRow}`}>
+            <span className="form-label">ESPECIALIDADES</span>
+            <div className={styles.inlineValue}>
+                <span className={value.length ? styles.valueText : styles.valueEmpty}>
+                    {value.length ? specialtiesLabel(value) : "Sin especialidades"}
+                </span>
+                {!disabled && (
+                    <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => setOpen(true)}
+                        aria-label={value.length ? "Cambiar especialidades" : "Elegir especialidades"}
+                    >
+                        {value.length ? "Cambiar" : "Elegir"}
+                    </button>
+                )}
+            </div>
+        </div>
     );
 }
 
@@ -74,6 +196,7 @@ export default function MemberDrawer({
     const headingRef = useRef(null);
     const licenseRef = useRef(null);
     const roleRef = useRef(null);
+    const bodyRef = useRef(null);
     const returnFocusRef = useRef(typeof document !== "undefined" ? document.activeElement : null);
     const tz = orgTz(user);
 
@@ -92,6 +215,7 @@ export default function MemberDrawer({
     const [errors, setErrors] = useState({});
     const [saving, setSaving] = useState(false);
     const [reassign, setReassign] = useState(null);
+    const [tab, setTab] = useState("profile");
 
     const resetDraft = (member) => {
         setDraft(profileDraftFrom(member));
@@ -153,7 +277,8 @@ export default function MemberDrawer({
         && draft.attends_patients !== Boolean(member.attends_patients));
     const permissionsChanged = Boolean(catalog && viewDraft && permsTouched
         && (overridesChanged(viewDraft, original) || roleChanged));
-    const dirty = Object.keys(changes).length > 0 || roleChanged || attendsChanged || permissionsChanged;
+    const profileDirty = Object.keys(changes).length > 0 || roleChanged || attendsChanged;
+    const dirty = profileDirty || permissionsChanged;
 
     const requestClose = useCallback(async () => {
         if (saving) return;
@@ -180,6 +305,11 @@ export default function MemberDrawer({
         document.addEventListener("keydown", onKey);
         return () => document.removeEventListener("keydown", onKey);
     }, [requestClose, reassign]);
+
+    const showTab = (next) => {
+        setTab(next);
+        if (bodyRef.current) bodyRef.current.scrollTop = 0;
+    };
 
     if (loadError) {
         return (
@@ -212,7 +342,8 @@ export default function MemberDrawer({
     const state = accountState(member);
     const editable = active && !member.demo_protected;
     const access = describeAccess(member.access, tz);
-    const alerts = memberAlerts(member, catalog);
+    // La invitación vencida ya se ve en el encabezado y se resuelve en Acceso.
+    const missingLicense = memberAlerts(member, catalog).some((alert) => alert.kind === "missing_license");
     const nextAttends = attendsFor(draft.role, draft.attends_patients);
     const activeAdmins = (team || []).filter((m) => m.role === "ADMIN" && m.is_active !== false).length;
     const lastAdmin = member.role === "ADMIN" && activeAdmins <= 1;
@@ -241,6 +372,12 @@ export default function MemberDrawer({
         setPermsTouched(true);
     };
 
+    // Lleva a la pestaña donde está el error, para que no quede escondido.
+    const showErrorsTab = (fields) => {
+        if (fields.some((field) => PROFILE_FIELDS.has(field))) showTab("profile");
+        else if (fields.includes("permissions")) showTab("permissions");
+    };
+
     const save = async () => {
         if (!dirty || saving) return;
         const found = profileErrors(draft);
@@ -250,8 +387,12 @@ export default function MemberDrawer({
             delete found.email;
         }
         setErrors(found);
-        if (Object.keys(found).length > 0) return;
+        if (Object.keys(found).length > 0) {
+            showErrorsTab(Object.keys(found));
+            return;
+        }
         if (decisionShown && keepCustom === null) {
+            showTab("profile");
             toast.error("Elige qué pasa con sus permisos personalizados.");
             return;
         }
@@ -279,6 +420,7 @@ export default function MemberDrawer({
             onSaved?.();
         } catch (err) {
             handleFormError(err, setErrors);
+            showErrorsTab(Object.keys(err?.response?.data?.errors || {}));
             // 409 permissions_changed: otro administrador cambió sus permisos.
             // Se recargan y se vuelve a decidir sobre ellos; nunca se reintenta.
             // Los datos que se estaban editando se conservan.
@@ -288,6 +430,7 @@ export default function MemberDrawer({
                     setOverrides(draftFromMember(fresh));
                     setPermsTouched(false);
                     setKeepCustom(null);
+                    showTab("permissions");
                 }
             }
         } finally {
@@ -303,12 +446,20 @@ export default function MemberDrawer({
         }
     };
 
+    const tabs = [
+        { id: "profile", label: "Perfil", dirty: profileDirty },
+        { id: "permissions", label: "Permisos", dirty: permissionsChanged },
+        { id: "agenda", label: "Agenda", count: appointments.length },
+        { id: "history", label: "Historial" },
+    ];
+
     return (
         <DrawerShell
             titleId={titleId}
             onClose={requestClose}
             closeDisabled={saving}
             title={fullName(member)}
+            bodyRef={bodyRef}
             header={(
                 <div className={styles.identity}>
                     <MemberAvatar member={member} size="lg" />
@@ -317,7 +468,7 @@ export default function MemberDrawer({
                             {fullName(member)}
                             {isSelf && <span className="badge badge-default">Tú</span>}
                         </h2>
-                        {/* Una línea: rol, especialidades y estado. El correo vive en Datos. */}
+                        {/* Una línea: rol, especialidades y estado. El correo vive en Perfil. */}
                         <p className={styles.meta}>
                             <span>
                                 {roleLabel(member.role)}
@@ -331,6 +482,7 @@ export default function MemberDrawer({
                     </div>
                 </div>
             )}
+            tabs={<DrawerTabs idBase={titleId} tabs={tabs} active={tab} onChange={showTab} />}
             footer={(
                 <>
                     {active && can("staff.destroy") && !isSelf && !member.demo_protected && (
@@ -353,6 +505,9 @@ export default function MemberDrawer({
                             <Icon.UserCheck s={14} /> Reactivar acceso
                         </button>
                     )}
+                    {member.demo_protected && (
+                        <span className={styles.footerNote}>Cuenta de la demo: solo consulta.</span>
+                    )}
                     <span className={styles.footerSpacer} />
                     <button type="button" className="btn btn-secondary btn-md" onClick={requestClose} disabled={saving}>
                         {dirty ? "Cancelar" : "Cerrar"}
@@ -370,43 +525,24 @@ export default function MemberDrawer({
                 </>
             )}
         >
-            <div className={styles.body}>
-                {alerts.length > 0 && (
-                    <div className={styles.alerts} role="status">
-                        {alerts.map((alert) => (
-                            <div key={alert.kind} className={styles.alert}>
-                                <Icon.AlertTriangle s={16} />
-                                {alert.kind === "missing_license" ? (
-                                    <>
-                                        <span>No puede firmar recetas: falta su cédula profesional.</span>
-                                        {canUpdate && editable && (
-                                            <button type="button" className="btn btn-ghost btn-sm" onClick={() => licenseRef.current?.focus()}>
-                                                Completar cédula
-                                            </button>
-                                        )}
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>Su invitación venció sin que entrara.</span>
-                                        {can("staff.reset_password") && (
-                                            <button type="button" className="btn btn-ghost btn-sm" onClick={() => afterAction(onResetPassword)} disabled={busy}>
-                                                Reenviar invitación
-                                            </button>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-                        ))}
+            <TabPanel idBase={titleId} id="profile" active={tab}>
+                {missingLicense && (
+                    <div className={styles.alert} role="status">
+                        <Icon.AlertTriangle s={16} />
+                        <span>No puede firmar recetas: falta su cédula profesional.</span>
+                        {canUpdate && editable && (
+                            <button type="button" className="btn btn-ghost btn-sm" onClick={() => licenseRef.current?.focus()}>
+                                Completar cédula
+                            </button>
+                        )}
                     </div>
                 )}
-                {member.demo_protected && (
-                    <p className={styles.notice}>Cuenta de la demo: se puede consultar, no editar.</p>
-                )}
 
-                <Section id={`${titleId}-role`} title="Rol">
+                <Section id={`${titleId}-role`} title="Rol" icon={Icon.Users}>
                     <div ref={roleRef} tabIndex={-1} className={styles.focusTarget}>
                         <RolePicker
                             compact
+                            showHint={roleChanged}
                             name="member-role"
                             value={draft.role}
                             onChange={onRoleChange}
@@ -445,24 +581,7 @@ export default function MemberDrawer({
                     )}
                 </Section>
 
-                <Section id={`${titleId}-permissions`} title="Permisos">
-                    {catalog ? (
-                        <PermissionEditor
-                            catalog={catalog}
-                            draft={viewDraft}
-                            onToggle={onToggle}
-                            onRestore={onRestore}
-                            readOnly={!canManagePermissions || !editable}
-                            isSelf={isSelf}
-                            initial={new Set(member.permissions || [])}
-                        />
-                    ) : (
-                        <p className={styles.muted}>No se pudo cargar el catálogo de permisos.</p>
-                    )}
-                    <FieldError message={errors.permissions} />
-                </Section>
-
-                <Section id={`${titleId}-data`} title="Datos">
+                <Section id={`${titleId}-data`} title="Datos" icon={Icon.User}>
                     <div className={styles.formGrid}>
                         <div className="form-group">
                             <label className="form-label" htmlFor="member-first-name">NOMBRE *</label>
@@ -486,7 +605,7 @@ export default function MemberDrawer({
                             />
                             <FieldError message={errors.last_name} />
                         </div>
-                        <div className={`form-group ${styles.fullRow}`}>
+                        <div className="form-group">
                             <label className="form-label" htmlFor="member-email">CORREO ELECTRÓNICO *</label>
                             <input
                                 id="member-email"
@@ -497,10 +616,8 @@ export default function MemberDrawer({
                                 onChange={(e) => setField("email", e.target.value)}
                             />
                             <FieldError message={errors.email} />
-                            {"email" in changes && <p className={styles.notice}>{EMAIL_CHANGE_NOTICE}</p>}
-                            {user?.is_demo && <p className="form-hint">{DEMO_EMAIL_HINT}</p>}
                         </div>
-                        <div className={`form-group ${styles.fullRow}`}>
+                        <div className="form-group">
                             <label className="form-label" htmlFor="member-license">
                                 CÉDULA PROFESIONAL{nextAttends ? " *" : ""}
                             </label>
@@ -516,82 +633,115 @@ export default function MemberDrawer({
                             />
                             <FieldError message={errors.license_number} />
                         </div>
-                        {nextAttends && (
-                            <div className={`form-group ${styles.fullRow}`}>
-                                <SpecialtyPicker
-                                    idPrefix="member-specialty"
-                                    value={draft.specialties}
-                                    onChange={(next) => setField("specialties", next)}
-                                    disabled={!editable || !canUpdate}
-                                    error={errors.specialties}
-                                />
+                        {("email" in changes || user?.is_demo) && (
+                            <div className={styles.fullRow}>
+                                {"email" in changes && <p className="form-hint">{EMAIL_CHANGE_NOTICE}</p>}
+                                {user?.is_demo && <p className="form-hint">{DEMO_EMAIL_HINT}</p>}
                             </div>
+                        )}
+                        {nextAttends && (
+                            <SpecialtiesField
+                                value={draft.specialties}
+                                onChange={(next) => setField("specialties", next)}
+                                disabled={!editable || !canUpdate}
+                                error={errors.specialties}
+                            />
                         )}
                     </div>
                 </Section>
 
                 <Section
-                    id={`${titleId}-security`}
-                    title="Seguridad y acceso"
-                    action={active && can("staff.reset_password") && !isSelf && (
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => afterAction(onResetPassword)} disabled={busy || saving}>
-                            {pending ? "Reenviar invitación" : "Restablecer contraseña"}
+                    id={`${titleId}-access`}
+                    title="Acceso"
+                    icon={Icon.Lock}
+                    action={active && can("staff.reset_password") && !isSelf && !member.demo_protected && (
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => afterAction(onResetPassword)} disabled={busy || saving}>
+                            <Icon.Refresh s={14} /> {pending ? "Reenviar invitación" : "Restablecer contraseña"}
                         </button>
                     )}
                 >
-                    <dl className={styles.fields}>
-                        <div className={styles.field}>
+                    <dl className={styles.facts}>
+                        <div className={styles.fact}>
                             <dt>Estado</dt>
-                            <dd>{access.label}{access.detail && state !== "active" ? ` · ${access.detail}` : ""}</dd>
+                            <dd className={state === "expired" ? styles.attention : undefined}>
+                                {access.label}{access.detail && state !== "active" ? ` · ${access.detail}` : ""}
+                            </dd>
                         </div>
-                        <div className={styles.field}>
+                        <div className={styles.fact}>
                             <dt>Último acceso</dt>
                             <dd title={access.title || undefined}>{lastAccessShort(member, { isSelf })}</dd>
                         </div>
-                        <div className={styles.field}>
+                        <div className={styles.fact}>
                             <dt>Usuario</dt>
                             <dd className={styles.mono}>{member.username}</dd>
                         </div>
                         {member.role === "ADMIN" && (
-                            <div className={styles.field}>
+                            <div className={styles.fact}>
                                 <dt>Verificación en dos pasos</dt>
                                 <dd>{member.mfa_enabled ? "Activada" : "No activada"}</dd>
                             </div>
                         )}
                     </dl>
                 </Section>
+            </TabPanel>
 
+            <TabPanel idBase={titleId} id="permissions" active={tab}>
+                {catalog ? (
+                    <PermissionEditor
+                        catalog={catalog}
+                        draft={viewDraft}
+                        onToggle={onToggle}
+                        onRestore={onRestore}
+                        readOnly={!canManagePermissions || !editable}
+                        // Solo se explica la falta de permiso; la demo y el desactivado ya se dicen en el pie y el encabezado.
+                        readOnlyNote={canManagePermissions ? null : undefined}
+                        isSelf={isSelf}
+                        initial={new Set(member.permissions || [])}
+                    />
+                ) : (
+                    <p className={styles.muted}>No se pudo cargar el catálogo de permisos.</p>
+                )}
+                <FieldError message={errors.permissions} />
+            </TabPanel>
+
+            <TabPanel idBase={titleId} id="agenda" active={tab}>
                 <Section
                     id={`${titleId}-appointments`}
                     title="Citas por atender"
+                    icon={Icon.CalendarClock}
                     action={canReassign && appointments.length > 0 && (
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setReassign({ appointments })}>
-                            Reasignar citas
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReassign({ appointments })}>
+                            <Icon.Users s={14} /> Reasignar citas
                         </button>
                     )}
                 >
                     {appointments.length === 0 ? (
-                        <p className={styles.muted}>No tiene citas programadas ni confirmadas por atender.</p>
+                        <p className={styles.muted}>Sin citas por atender.</p>
                     ) : (
                         <ul className={styles.list} aria-label="Citas por atender">
                             {appointments.map((appt) => (
-                                <li key={appt.public_id} className={styles.item}>
-                                    <span className={styles.itemTitle}>
-                                        {formatLocalDate(appt.date)} · {appt.start_time} · {appt.pet_name}
+                                <li key={appt.public_id} className={`${styles.item} ${styles.itemWithTile}`}>
+                                    <DateTile iso={appt.date} />
+                                    <span className={styles.itemText}>
+                                        <span className={styles.itemTitle}>
+                                            <span className="sr-only">{formatLocalDate(appt.date)} · </span>
+                                            {appt.start_time} · {appt.pet_name}
+                                        </span>
+                                        <span className={styles.itemMeta}>{appt.owner_name} · {appt.reason}</span>
                                     </span>
-                                    <span className={styles.muted}>{appt.owner_name} · {appt.reason}</span>
                                 </li>
                             ))}
                         </ul>
                     )}
                     {impact.open_medical_records > 0 && (
                         <p className={styles.muted}>
-                            Además tiene {plural(impact.open_medical_records, "consulta abierta", "consultas abiertas")}.
+                            {appointments.length > 0 ? "Además tiene" : "Tiene"}{" "}
+                            {plural(impact.open_medical_records, "consulta abierta", "consultas abiertas")}.
                         </p>
                     )}
                 </Section>
 
-                <Section id={`${titleId}-absences`} title="Ausencias">
+                <Section id={`${titleId}-absences`} title="Ausencias" icon={Icon.Calendar}>
                     <MemberAbsences
                         member={member}
                         absences={absences}
@@ -605,24 +755,26 @@ export default function MemberDrawer({
                         }}
                     />
                 </Section>
+            </TabPanel>
 
-                <Section id={`${titleId}-history`} title="Historial">
-                    {history.length === 0 ? (
-                        <p className={styles.muted}>Sin cambios registrados. El historial empezó a guardarse con esta versión.</p>
-                    ) : (
-                        <ol className={styles.list} aria-label="Historial">
-                            {history.map((event, index) => (
-                                <li key={`${event.created_at}-${index}`} className={styles.item}>
-                                    <span className={styles.itemTitle}>{describeEvent(event, catalog)}</span>
-                                    <span className={styles.muted}>
-                                        {formatDateTime(event.created_at, tz, "es-MX")} · {event.actor_name}
-                                    </span>
-                                </li>
-                            ))}
-                        </ol>
-                    )}
+            <TabPanel idBase={titleId} id="history" active={tab}>
+                <Section id={`${titleId}-history`} title="Cambios registrados" icon={Icon.Clock}>
+                {history.length === 0 ? (
+                    <p className={styles.muted}>Sin cambios registrados.</p>
+                ) : (
+                    <ol className={styles.timeline} aria-label="Historial">
+                        {history.map((event, index) => (
+                            <li key={`${event.created_at}-${index}`} className={styles.timelineItem}>
+                                <span className={styles.itemTitle}>{describeEvent(event, catalog)}</span>
+                                <span className={styles.itemMeta}>
+                                    {formatDateTime(event.created_at, tz, "es-MX")} · {event.actor_name}
+                                </span>
+                            </li>
+                        ))}
+                    </ol>
+                )}
                 </Section>
-            </div>
+            </TabPanel>
 
             {reassign && (
                 <ReassignModal
@@ -637,17 +789,20 @@ export default function MemberDrawer({
     );
 }
 
-function DrawerShell({ titleId, title, header, footer, onClose, closeDisabled = false, children }) {
+function DrawerShell({ titleId, title, header, tabs, footer, onClose, closeDisabled = false, bodyRef, children }) {
     return (
         <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
             <div className={styles.drawer} role="dialog" aria-modal="true" aria-labelledby={header ? titleId : undefined} aria-label={header ? undefined : title}>
-                <div className={styles.header}>
-                    {header || <h2 className={styles.name}>{title}</h2>}
-                    <button type="button" className="modal-close" onClick={onClose} disabled={closeDisabled} aria-label="Cerrar ficha">
-                        <Icon.X s={16} />
-                    </button>
+                <div className={`${styles.header}${tabs ? ` ${styles.headerWithTabs}` : ""}`}>
+                    <div className={styles.headerRow}>
+                        {header || <h2 className={styles.name}>{title}</h2>}
+                        <button type="button" className="modal-close" onClick={onClose} disabled={closeDisabled} aria-label="Cerrar ficha">
+                            <Icon.X s={16} />
+                        </button>
+                    </div>
+                    {tabs}
                 </div>
-                {children}
+                {tabs ? <div ref={bodyRef} className={styles.body}>{children}</div> : children}
                 {footer && <div className={styles.footer}>{footer}</div>}
             </div>
         </div>

@@ -1697,11 +1697,22 @@ Pantalla de **gestión** de integrantes (`pages/staff.jsx`). Contrato backend en
   Cambiar rol, Restablecer/Reenviar y Desactivar; Reactivar en desactivados. Por debajo de 960 px,
   tarjetas con rótulo. La presentación sale de `features/staff/teamView.js` (pruebas propias).
 - **Ficha = panel lateral** (`features/staff/MemberDrawer.jsx`), abierto con
-  `?member=<uuid>[&section=role|license]`; `/staff/:publicId` redirige ahí. Secciones: avisos,
-  Rol (`RolePicker compact`: tres opciones en una línea y solo el alcance de la elegida; + Atiende
-  pacientes), Permisos, Datos, Seguridad y acceso (estado, último acceso, usuario, MFA en ADMIN,
-  restablecer/reenviar), Citas por atender (reasignar), Ausencias (`MemberAbsences.jsx`) e
-  Historial. Encabezado en una línea (rol, especialidades, estado); el correo vive en Datos. Pie: Desactivar o Reactivar · Cancelar · Guardar cambios.
+  `?member=<uuid>[&section=role|license]`; `/staff/:publicId` redirige ahí. **Pestañas** (`.tabs`
+  globales con el patrón ARIA: flechas, Inicio/Fin, solo la activa en el orden de tabulación):
+  - **Perfil**: aviso «falta cédula» (lleva al campo), Rol (`RolePicker compact`: tres opciones en
+    una línea; el alcance solo aparece al elegir otro rol; + Atiende pacientes), Datos (nombre,
+    apellido, correo y cédula en dos columnas; especialidades en una línea y el catálogo se abre con
+    «Cambiar/Elegir») y Acceso (estado, último acceso, usuario, MFA en ADMIN, restablecer/reenviar).
+  - **Permisos**: el editor (abajo). **Agenda** (con el número de citas por atender): citas
+    (reasignar) y ausencias (`MemberAbsences.jsx`; el formulario se abre con «Nueva ausencia»).
+    **Historial**.
+  Los paneles inactivos siguen montados con `hidden` (no se pierde lo tecleado) y la pestaña con
+  cambios sin guardar lleva un punto (y texto para lectores de pantalla). Un error al guardar
+  lleva a la pestaña de su campo. Encabezado blanco y lienzo gris con 2–3 tarjetas por pestaña,
+  cada una con un ícono neutro (D6: el color queda para lo que pide acción); citas y ausencias
+  llevan un bloque de fecha (`DateTile` de `StaffParts`) y el historial es una línea de tiempo.
+  Encabezado en una línea (rol, especialidades, estado). Pie: Desactivar o Reactivar (o
+  «Cuenta de la demo: solo consulta») · Cancelar · Guardar cambios.
   Escape y clic fuera cierran (con cambios, `useConfirm` pregunta). **Un solo guardado**: un
   PATCH con datos, rol y permisos; el backend lo aplica en una transacción.
 - **Permisos** (`PermissionEditor.jsx` + `permissionDraft.js`): acordeón por área con una casilla

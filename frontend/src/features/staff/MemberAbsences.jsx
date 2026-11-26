@@ -1,15 +1,16 @@
 // Ausencias del integrante dentro de su ficha (ADR p67): lista vigente, cancelar
 // y registrar. Al registrar una con citas en esos días, avisa al padre para
-// ofrecer la reasignación.
+// ofrecer la reasignación. El formulario se abre con «Nueva ausencia».
 import { useState } from "react";
 import { toast } from "sonner";
 import { cancelAbsence, createAbsence } from "../../api/staff";
 import DateField from "../../components/DateField";
+import { Icon } from "../../components/icons";
 import { useConfirm } from "../../components/useConfirm";
 import { apiError } from "../../utils/apiError";
 import handleFormError from "../../utils/handleFormError";
 import { ABSENCE_KINDS, absenceKindLabel, formatAbsenceRange } from "./absences";
-import { FieldError } from "./StaffParts";
+import { DateTile, FieldError } from "./StaffParts";
 import styles from "./MemberDrawer.module.css";
 
 const EMPTY_ABSENCE = { start_date: "", end_date: "", kind: "vacation" };
@@ -30,6 +31,13 @@ export default function MemberAbsences({ member, absences, today, canManage, onC
     const [errors, setErrors] = useState({});
     const [saving, setSaving] = useState(false);
     const [cancellingId, setCancellingId] = useState(null);
+    const [adding, setAdding] = useState(false);
+
+    const closeForm = () => {
+        setForm(EMPTY_ABSENCE);
+        setErrors({});
+        setAdding(false);
+    };
 
     const register = async () => {
         if (saving) return;
@@ -44,8 +52,7 @@ export default function MemberAbsences({ member, absences, today, canManage, onC
                 kind: form.kind,
             });
             toast.success("Ausencia registrada");
-            setForm(EMPTY_ABSENCE);
-            setErrors({});
+            closeForm();
             await onChanged();
             onAffected(result.affected_appointments || []);
         } catch (err) {
@@ -79,21 +86,22 @@ export default function MemberAbsences({ member, absences, today, canManage, onC
     return (
         <>
             {absences.length === 0 ? (
-                <p className={styles.muted}>Sin ausencias registradas de hoy en adelante.</p>
+                <p className={styles.muted}>Sin ausencias próximas.</p>
             ) : (
                 <ul className={styles.list} aria-label="Ausencias">
                     {absences.map((absence) => (
-                        <li key={absence.public_id} className={`${styles.item} ${styles.itemRow}`}>
-                            <div>
+                        <li key={absence.public_id} className={`${styles.item} ${styles.itemWithTile} ${styles.itemRow}`}>
+                            <DateTile iso={absence.start_date} />
+                            <div className={styles.itemText}>
                                 <span className={styles.itemTitle}>
                                     {absenceKindLabel(absence.kind)} · {formatAbsenceRange(absence.start_date, absence.end_date)}
                                 </span>
-                                <span className={styles.muted}>Registró {absence.created_by_name}</span>
+                                <span className={styles.itemMeta}>Registró {absence.created_by_name}</span>
                             </div>
                             {canManage && (
                                 <button
                                     type="button"
-                                    className="btn btn-secondary btn-sm"
+                                    className="btn btn-ghost btn-sm"
                                     onClick={() => cancel(absence)}
                                     disabled={Boolean(cancellingId)}
                                     aria-label={`Cancelar ausencia del ${formatAbsenceRange(absence.start_date, absence.end_date)}`}
@@ -105,12 +113,14 @@ export default function MemberAbsences({ member, absences, today, canManage, onC
                     ))}
                 </ul>
             )}
-            {canManage && member.is_active && (
+            {canManage && member.is_active && !adding && (
+                <button type="button" className={`btn btn-ghost btn-sm ${styles.addButton}`} onClick={() => setAdding(true)}>
+                    <Icon.Plus s={14} /> Nueva ausencia
+                </button>
+            )}
+            {canManage && member.is_active && adding && (
                 <div className={styles.subForm}>
-                    <h4 className={styles.subTitle}>Registrar ausencia</h4>
-                    <p className={styles.muted}>
-                        Días completos. Esos días no recibe citas, tampoco por WhatsApp.
-                    </p>
+                    <p className={styles.formHint}>Días completos. Esos días no recibe citas, tampoco por WhatsApp.</p>
                     <div className={styles.formRow}>
                         <div className="form-group">
                             <label htmlFor="absence-start">Primer día</label>
@@ -147,9 +157,14 @@ export default function MemberAbsences({ member, absences, today, canManage, onC
                             </select>
                         </div>
                     </div>
-                    <button type="button" className="btn btn-secondary btn-md" onClick={register} disabled={saving}>
-                        {saving ? "Registrando..." : "Registrar ausencia"}
-                    </button>
+                    <div className={styles.subFormActions}>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={closeForm} disabled={saving}>
+                            Cancelar
+                        </button>
+                        <button type="button" className="btn btn-primary btn-sm" onClick={register} disabled={saving}>
+                            {saving ? "Registrando..." : "Registrar ausencia"}
+                        </button>
+                    </div>
                 </div>
             )}
         </>

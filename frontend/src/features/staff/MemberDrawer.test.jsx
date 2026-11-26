@@ -138,6 +138,13 @@ const openDrawer = async (name = "Ana Galeno") => {
 const openArea = async (user, dialog, area) => {
     await user.click(within(dialog).getByRole("button", { name: new RegExp(`^${area}`) }));
 };
+const showTab = async (user, dialog, name) => {
+    await user.click(within(dialog).getByRole("tab", { name: new RegExp(`^${name}`) }));
+};
+const openAbsenceForm = async (user, dialog) => {
+    await showTab(user, dialog, "Agenda");
+    await user.click(within(dialog).getByRole("button", { name: "Nueva ausencia" }));
+};
 
 beforeEach(() => {
     vi.clearAllMocks();
@@ -175,11 +182,19 @@ beforeEach(() => {
 });
 
 describe("Ficha lateral: lo operativo (ADR p67)", () => {
-    it("reúne rol, datos, acceso, citas, ausencias e historial", async () => {
+    it("reúne rol, datos, acceso, citas, ausencias e historial en pestañas", async () => {
+        const user = userEvent.setup({ delay: null });
         renderDrawer();
         const dialog = await openDrawer();
+        expect(within(dialog).getAllByRole("tab").map((tab) => tab.textContent))
+            .toEqual(["Perfil", "Permisos", "Agenda 2", "Historial"]);
+        expect(within(dialog).getByRole("tab", { name: "Perfil" })).toHaveAttribute("aria-selected", "true");
         expect(within(dialog).queryByText("ana@vet.mx")).not.toBeInTheDocument(); // el correo vive en Datos, no en el encabezado
         expect(within(dialog).getByLabelText("CORREO ELECTRÓNICO *")).toHaveValue("ana@vet.mx");
+        // Lo de otras pestañas no se ve hasta abrirlas.
+        expect(within(dialog).queryByRole("list", { name: "Citas por atender" })).not.toBeInTheDocument();
+        await showTab(user, dialog, "Agenda");
+        expect(within(dialog).getByLabelText("CORREO ELECTRÓNICO *")).not.toBeVisible();
         const citas = within(dialog).getByRole("list", { name: "Citas por atender" });
         expect(within(citas).getAllByRole("listitem")).toHaveLength(2);
         expect(within(citas).getByText(/Luna/)).toBeInTheDocument();
@@ -187,7 +202,9 @@ describe("Ficha lateral: lo operativo (ADR p67)", () => {
         const ausencias = within(dialog).getByRole("list", { name: "Ausencias" });
         expect(within(ausencias).getByText(/^Vacaciones ·/)).toBeInTheDocument();
         expect(within(ausencias).getByText("Registró Ada Admin")).toBeInTheDocument();
-        expect(within(dialog).getByText("Alta como veterinario")).toBeInTheDocument();
+        await showTab(user, dialog, "Historial");
+        const historial = within(dialog).getByRole("list", { name: "Historial" });
+        expect(within(historial).getByText("Alta como veterinario")).toBeInTheDocument();
         expect(get).toHaveBeenCalledWith("staff/absences/", { params: { member: "vet-uuid" } });
     });
 
@@ -205,6 +222,7 @@ describe("Ficha lateral: lo operativo (ADR p67)", () => {
         } });
         renderDrawer();
         const dialog = await openDrawer();
+        await showTab(user, dialog, "Agenda");
         await user.click(within(dialog).getByRole("button", { name: "Reasignar citas" }));
         const reassign = screen.getByRole("dialog", { name: "Reasignar citas de Ana Galeno" });
         const select = within(reassign).getByLabelText("Las atenderá");
@@ -230,6 +248,7 @@ describe("Ficha lateral: lo operativo (ADR p67)", () => {
         const user = userEvent.setup({ delay: null });
         renderDrawer();
         const dialog = await openDrawer();
+        await showTab(user, dialog, "Agenda");
         await user.click(within(dialog).getByRole("button", { name: "Reasignar citas" }));
         await user.click(screen.getByRole("button", { name: "Reasignar 2 citas" }));
         expect(post).not.toHaveBeenCalled();
@@ -241,6 +260,7 @@ describe("Ficha lateral: lo operativo (ADR p67)", () => {
         post.mockResolvedValueOnce({ data: { absence: { ...ABSENCE, public_id: "abs-2" }, affected_appointments: [A1] } });
         renderDrawer();
         const dialog = await openDrawer();
+        await openAbsenceForm(user, dialog);
         await user.type(within(dialog).getByLabelText("Primer día"), "2026-12-01");
         await user.type(within(dialog).getByLabelText("Último día"), "2026-12-01");
         await user.selectOptions(within(dialog).getByLabelText("Tipo"), "training");
@@ -257,6 +277,7 @@ describe("Ficha lateral: lo operativo (ADR p67)", () => {
         const user = userEvent.setup({ delay: null });
         renderDrawer();
         const dialog = await openDrawer();
+        await openAbsenceForm(user, dialog);
         await user.type(within(dialog).getByLabelText("Primer día"), "2026-12-05");
         await user.type(within(dialog).getByLabelText("Último día"), "2026-12-01");
         await user.click(within(dialog).getByRole("button", { name: "Registrar ausencia" }));
@@ -270,6 +291,7 @@ describe("Ficha lateral: lo operativo (ADR p67)", () => {
             code: "absence_overlap", message: "Ya hay una ausencia registrada que se cruza con esas fechas." } } });
         renderDrawer();
         const dialog = await openDrawer();
+        await openAbsenceForm(user, dialog);
         await user.type(within(dialog).getByLabelText("Primer día"), "2026-12-11");
         await user.type(within(dialog).getByLabelText("Último día"), "2026-12-11");
         await user.click(within(dialog).getByRole("button", { name: "Registrar ausencia" }));
@@ -282,6 +304,7 @@ describe("Ficha lateral: lo operativo (ADR p67)", () => {
         const user = userEvent.setup({ delay: null });
         renderDrawer();
         const dialog = await openDrawer();
+        await showTab(user, dialog, "Agenda");
         await user.click(within(dialog).getByRole("button", { name: /Cancelar ausencia del/ }));
         await waitFor(() => expect(del).toHaveBeenCalledWith("staff/absences/abs-1/"));
         expect(confirmMock.mock.calls[0][0]).toMatchObject({ title: "Cancelar ausencia", dangerMode: true });
@@ -289,21 +312,26 @@ describe("Ficha lateral: lo operativo (ADR p67)", () => {
     });
 
     it("sin permisos de ausencias ni de citas no ofrece esas acciones", async () => {
+        const user = userEvent.setup({ delay: null });
         granted = new Set(["staff.list", "staff.update"]);
         renderDrawer();
         const dialog = await openDrawer();
+        await showTab(user, dialog, "Agenda");
+        expect(within(dialog).queryByRole("button", { name: "Nueva ausencia" })).not.toBeInTheDocument();
         expect(within(dialog).queryByRole("button", { name: "Registrar ausencia" })).not.toBeInTheDocument();
         expect(within(dialog).queryByRole("button", { name: /Cancelar ausencia del/ })).not.toBeInTheDocument();
         expect(within(dialog).queryByRole("button", { name: "Reasignar citas" })).not.toBeInTheDocument();
     });
 
     it("de un desactivado se pueden reasignar citas pero no registrar ausencias ni editar", async () => {
+        const user = userEvent.setup({ delay: null });
         responses.profiles["vet-uuid"] = { ...VET, is_active: false, access: { ...ACCESS, status: "inactive" } };
         renderDrawer();
         const dialog = await openDrawer();
         expect(within(dialog).getAllByText("Desactivado").length).toBeGreaterThan(0);
+        await showTab(user, dialog, "Agenda");
         expect(within(dialog).getByRole("button", { name: "Reasignar citas" })).toBeInTheDocument();
-        expect(within(dialog).queryByRole("button", { name: "Registrar ausencia" })).not.toBeInTheDocument();
+        expect(within(dialog).queryByRole("button", { name: "Nueva ausencia" })).not.toBeInTheDocument();
         expect(within(dialog).queryByRole("button", { name: "Guardar cambios" })).not.toBeInTheDocument();
         expect(within(dialog).getByRole("button", { name: "Reactivar acceso" })).toBeInTheDocument();
     });
@@ -458,7 +486,8 @@ describe("Ficha lateral: permisos por integrante (ADR p69)", () => {
         const user = userEvent.setup({ delay: null });
         renderDrawer();
         const dialog = await openDrawer();
-        expect(within(dialog).getByText("Los permisos de Veterinario, sin ajustes.")).toBeInTheDocument();
+        await showTab(user, dialog, "Permisos");
+        expect(within(dialog).getByText("Los permisos de Veterinario, sin ajustes.")).toBeVisible();
         await openArea(user, dialog, "Operación");
         await user.click(within(dialog).getByRole("checkbox", { name: "Hacer devoluciones" }));
         expect(within(dialog).getByText("Extra al rol")).toBeInTheDocument();
@@ -478,6 +507,7 @@ describe("Ficha lateral: permisos por integrante (ADR p69)", () => {
             code: "permissions_changed", message, current: ["appointment.list", "billing.refund", "prescription.create"] } } });
         renderDrawer();
         const dialog = await openDrawer();
+        await showTab(user, dialog, "Permisos");
         await openArea(user, dialog, "Operación");
         await user.click(within(dialog).getByRole("checkbox", { name: "Hacer devoluciones" }));
         responses.profiles["vet-uuid"] = {
@@ -500,7 +530,8 @@ describe("Ficha lateral: permisos por integrante (ADR p69)", () => {
         };
         renderDrawer();
         const dialog = await openDrawer();
-        expect(within(dialog).getByText("Permisos de Veterinario con 1 quitado.")).toBeInTheDocument();
+        await showTab(user, dialog, "Permisos");
+        expect(within(dialog).getByText("Permisos de Veterinario con 1 quitado.")).toBeVisible();
         await user.click(within(dialog).getByRole("button", { name: /Restaurar valores del rol/ }));
         await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
         await waitFor(() => expect(patch).toHaveBeenCalledWith("staff/vet-uuid/", {
@@ -513,6 +544,7 @@ describe("Ficha lateral: permisos por integrante (ADR p69)", () => {
         const user = userEvent.setup({ delay: null });
         renderDrawer();
         const dialog = await openDrawer();
+        await showTab(user, dialog, "Permisos");
         await openArea(user, dialog, "Administración");
         const reserved = within(dialog).getByRole("checkbox", { name: "Dar de alta integrantes" });
         expect(reserved).toBeDisabled();
@@ -524,6 +556,7 @@ describe("Ficha lateral: permisos por integrante (ADR p69)", () => {
         const user = userEvent.setup({ delay: null });
         renderDrawer("/staff?member=admin-uuid");
         const dialog = await openDrawer("Ada Admin");
+        await showTab(user, dialog, "Permisos");
         await openArea(user, dialog, "Administración");
         const own = within(dialog).getByRole("checkbox", { name: "Editar datos de la clínica" });
         expect(own).toBeDisabled();
@@ -560,7 +593,8 @@ describe("Ficha lateral: permisos por integrante (ADR p69)", () => {
         const dialog = await openDrawer();
         await user.click(within(dialog).getByRole("radio", { name: /Asistente/ }));
         await user.click(within(dialog).getByRole("radio", { name: "Usar los de Asistente" }));
-        expect(within(dialog).getByText("Los permisos de Asistente, sin ajustes.")).toBeInTheDocument();
+        await showTab(user, dialog, "Permisos");
+        expect(within(dialog).getByText("Los permisos de Asistente, sin ajustes.")).toBeVisible();
     });
 
     it("sin staff.manage_permissions los permisos se ven pero no se cambian", async () => {
@@ -568,19 +602,107 @@ describe("Ficha lateral: permisos por integrante (ADR p69)", () => {
         granted = new Set(["staff.list", "staff.update"]);
         renderDrawer();
         const dialog = await openDrawer();
-        expect(within(dialog).getByText("Solo un administrador puede conceder o quitar permisos.")).toBeInTheDocument();
+        await showTab(user, dialog, "Permisos");
+        expect(within(dialog).getByText("Solo un administrador puede conceder o quitar permisos.")).toBeVisible();
         await openArea(user, dialog, "Clínica");
         expect(within(dialog).getByRole("checkbox", { name: "Emitir y firmar recetas" })).toBeDisabled();
         expect(within(dialog).queryByRole("button", { name: /Restaurar valores del rol/ })).not.toBeInTheDocument();
     });
 
     it("el historial nombra los permisos concedidos con el catálogo", async () => {
+        const user = userEvent.setup({ delay: null });
         responses.history = [{
             kind: "permissions_changed", kind_label: "Cambio de permisos", created_at: "2026-11-25T10:00:00Z",
             actor_name: "Ada Admin", changes: { granted: ["billing.refund"], revoked: [], restored: [] },
         }];
         renderDrawer();
         const dialog = await openDrawer();
-        expect(within(dialog).getByText("Le concedió hacer devoluciones")).toBeInTheDocument();
+        await showTab(user, dialog, "Historial");
+        expect(within(dialog).getByText("Le concedió hacer devoluciones")).toBeVisible();
+    });
+});
+
+describe("Ficha lateral: pestañas y menos ruido (2026-11-25)", () => {
+    it("las flechas recorren las pestañas y solo la activa está en el orden de tabulación", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderDrawer();
+        const dialog = await openDrawer();
+        const perfil = within(dialog).getByRole("tab", { name: "Perfil" });
+        expect(perfil).toHaveAttribute("tabindex", "0");
+        expect(within(dialog).getByRole("tab", { name: "Permisos" })).toHaveAttribute("tabindex", "-1");
+        perfil.focus();
+        await user.keyboard("{ArrowRight}");
+        const permisos = within(dialog).getByRole("tab", { name: "Permisos" });
+        expect(permisos).toHaveFocus();
+        expect(permisos).toHaveAttribute("aria-selected", "true");
+        await user.keyboard("{End}");
+        expect(within(dialog).getByRole("tab", { name: "Historial" })).toHaveFocus();
+        await user.keyboard("{ArrowRight}");
+        expect(within(dialog).getByRole("tab", { name: "Perfil" })).toHaveFocus();
+        expect(within(dialog).getByRole("tabpanel", { name: "Perfil" })).toBeVisible();
+    });
+
+    it("marca la pestaña con cambios sin guardar", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderDrawer();
+        const dialog = await openDrawer();
+        expect(within(dialog).queryByRole("tab", { name: /cambios sin guardar/ })).not.toBeInTheDocument();
+        await user.type(within(dialog).getByLabelText("NOMBRE *"), "x");
+        expect(within(dialog).getByRole("tab", { name: "Perfil, con cambios sin guardar" })).toBeInTheDocument();
+        await showTab(user, dialog, "Permisos");
+        await openArea(user, dialog, "Operación");
+        await user.click(within(dialog).getByRole("checkbox", { name: "Hacer devoluciones" }));
+        expect(within(dialog).getByRole("tab", { name: "Permisos, con cambios sin guardar" })).toBeInTheDocument();
+    });
+
+    it("un error de un dato del perfil vuelve a esa pestaña al guardar desde otra", async () => {
+        const user = userEvent.setup({ delay: null });
+        patch.mockRejectedValueOnce({ response: { status: 400, data: {
+            code: "validation_error", errors: { email: ["No se pudo usar ese correo."] } } } });
+        renderDrawer();
+        const dialog = await openDrawer();
+        const email = within(dialog).getByLabelText("CORREO ELECTRÓNICO *");
+        await user.clear(email);
+        await user.type(email, "otra@vet.mx");
+        await showTab(user, dialog, "Historial");
+        await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+        expect(await within(dialog).findByText("No se pudo usar ese correo.")).toBeVisible();
+        expect(within(dialog).getByRole("tab", { name: /^Perfil/ })).toHaveAttribute("aria-selected", "true");
+    });
+
+    it("el alcance del rol solo aparece al elegir otro", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderDrawer("/staff?member=rosa-uuid");
+        const dialog = await openDrawer("Rosa Mora");
+        expect(within(dialog).queryByText(/No cobra ni administra/)).not.toBeInTheDocument();
+        await user.click(within(dialog).getByRole("radio", { name: /Veterinario/ }));
+        expect(within(dialog).getByText(/No cobra ni administra/)).toBeInTheDocument();
+    });
+
+    it("las especialidades se ven en una línea y el catálogo se abre al pedirlo", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderDrawer();
+        const dialog = await openDrawer();
+        expect(within(dialog).getByText("Cirugía", { selector: "span" })).toBeInTheDocument();
+        expect(within(dialog).queryByRole("checkbox", { name: "Dermatología" })).not.toBeInTheDocument();
+        await user.click(within(dialog).getByRole("button", { name: "Cambiar especialidades" }));
+        await user.click(within(dialog).getByRole("checkbox", { name: "Dermatología" }));
+        await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+        await waitFor(() => expect(patch).toHaveBeenCalledWith("staff/vet-uuid/", {
+            specialties: ["surgery", "dermatology"],
+        }));
+    });
+
+    it("el formulario de ausencia se abre con «Nueva ausencia» y se cierra sin enviar", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderDrawer();
+        const dialog = await openDrawer();
+        await showTab(user, dialog, "Agenda");
+        expect(within(dialog).queryByLabelText("Primer día")).not.toBeInTheDocument();
+        await user.click(within(dialog).getByRole("button", { name: "Nueva ausencia" }));
+        await user.type(within(dialog).getByLabelText("Primer día"), "2026-12-01");
+        await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+        expect(within(dialog).queryByLabelText("Primer día")).not.toBeInTheDocument();
+        expect(post).not.toHaveBeenCalled();
     });
 });
