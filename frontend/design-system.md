@@ -220,6 +220,7 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 - Tamaños: `.modal-sm 400` · `.modal-md 520` · `.modal-lg 640`.
 - radio `--r-xl`, `--shadow-modal`. Header `h3` 16px/700. `.modal-body` padding `20px 24px`. `.modal-footer` gap 8px.
 - El marco es compartido; el tamaño (`sm/md/lg`) y la distribución interior son contextuales. Para acciones verticales usa `.modal-footer-stacked`.
+- **Scroll de fondo bloqueado:** mientras hay un `.modal-overlay` en la página, `global.css` oculta el scroll de `html` (y conserva el hueco de la barra para que nada salte). Un modal con fondo propio (panel lateral, selector) declara `data-scroll-lock` en su capa. `src/test/modalScrollLock.test.js` falla si un diálogo `aria-modal` no usa ninguno de los dos.
 
 ### Filtros y resultados
 - Para filtros mutuamente excluyentes de la misma vista usa `SegmentedControl` / `.segmented-control`; los `.tabs` quedan reservados para navegación entre secciones.

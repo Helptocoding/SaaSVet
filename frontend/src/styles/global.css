@@ -295,6 +295,15 @@ button, input, select, textarea { font-family: inherit; }
   backdrop-filter: blur(2px);
   animation: fadeIn var(--t);
 }
+/* Bloqueo del scroll de fondo (fuente única): mientras haya un modal abierto
+   la página de atrás no se mueve. Cubre todo `.modal-overlay` y cualquier
+   ventana modal con su propio fondo que declare `data-scroll-lock` (ficha
+   lateral de Equipo, selector del importador). `scrollbar-gutter` conserva el
+   hueco de la barra para que el contenido no salte al ocultarla. */
+html:has(.modal-overlay, [data-scroll-lock]) {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
 .modal {
   background: var(--c-surface);
   border-radius: var(--r-xl);

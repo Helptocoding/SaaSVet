@@ -791,7 +791,7 @@ export default function MemberDrawer({
 
 function DrawerShell({ titleId, title, header, tabs, footer, onClose, closeDisabled = false, bodyRef, children }) {
     return (
-        <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+        <div className={styles.overlay} data-scroll-lock onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
             <div className={styles.drawer} role="dialog" aria-modal="true" aria-labelledby={header ? titleId : undefined} aria-label={header ? undefined : title}>
                 <div className={`${styles.header}${tabs ? ` ${styles.headerWithTabs}` : ""}`}>
                     <div className={styles.headerRow}>

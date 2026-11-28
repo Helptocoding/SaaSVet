@@ -100,7 +100,7 @@ const DestinationPicker = ({
     }, [onClose]);
 
     return (
-        <div className={s.pickerOverlay} onClick={onClose}>
+        <div className={s.pickerOverlay} data-scroll-lock onClick={onClose}>
             <div
                 className={`modal modal-sm ${s.pickerModal}`}
                 onClick={(e) => e.stopPropagation()}
