@@ -2,7 +2,6 @@
 import json
 import os
 import sys
-from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 def main():
@@ -29,7 +28,8 @@ def main():
         from django.db import connection
         from apps.agent import planner
         from apps.agent.llm import LLMError, StubLLMClient
-        from apps.agent.models import AgentSettings
+        # Después de django.setup(): importar modelos antes rompe el arranque del proceso.
+        from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
         from apps.users.services import ensure_agent_user
         conv = worker.Conversation.objects.get(pk=conv_id)
         actor, _ = ensure_agent_user(conv.organization)
