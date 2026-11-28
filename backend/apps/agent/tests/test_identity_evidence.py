@@ -25,6 +25,7 @@ from apps.channels.models import ChannelAccount, Message
 from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
 from apps.platform.deletion_guards import authorize_physical_deletion
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 class EvidenceTestCase(TestCase):
@@ -49,7 +50,7 @@ class EvidenceTestCase(TestCase):
             organization=self.org, channel_account=self.channel,
             contact=self.contact,
         )
-        AgentSettings.objects.create(organization=self.org, enabled=True)
+        create_enabled_agent_settings(self.org)
 
     def _in(self, text, **extra):
         return Message.objects.create(

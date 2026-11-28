@@ -46,7 +46,7 @@ READ_METHODS = {
 # Modelos NO scoped por organización (o raíz del tenant): lookups legítimos sin
 # for_organization. No son OrganizationalModel-por-org o son el root del tenant.
 NON_TENANT_MODELS = {
-    'User', 'Organization', 'OrganizationSettings', 'OrganizationTimezoneAudit',
+    'User', 'Organization', 'OrganizationSettings', 'OrganizationConfigEvent', 'OrganizationClosure',
     'Permission', 'Role', 'UserRole',
     'OutstandingToken', 'BlacklistedToken',
     # ADR p46: LegalDocument es GLOBAL (sin FK a organization) — el texto legal
@@ -127,8 +127,9 @@ BASELINE = {
     # en la view) se filtra siempre con organization=request.user.organization
     # inline (PUT/GET del horario) — tenant-scoped por construcción, mismo
     # patrón que OrganizationSettings (en NON_TENANT_MODELS). El horario es hijo
-    # 1:N de Organization; nunca se accede sin el filtro org.
-    ('organizations', 'views.py', 'Schedule', 'filter'),
+    # 1:N de Organization; nunca se accede sin el filtro org. Desde ADR p70
+    # D9 lo escribe `services.replace_schedule` (misma consulta, movida).
+    ('organizations', 'services.py', 'OrganizationSchedule', 'filter'),
     ('medical_records', 'views.py', 'Invoice', 'filter'),
     ('medical_records', 'views.py', 'MedicalRecordService', 'filter'),
     # Revisado 2026-07-15 (medical_records/services.py:136): scoped por FK padre

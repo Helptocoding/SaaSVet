@@ -78,3 +78,34 @@ class OrganizationPhoneValidationTests(APITestCase):
         self.org.refresh_from_db()
         self.assertEqual(self.org.phone, '')
         self.assertEqual(self.org.city, 'Monterrey')
+
+    # ---- INV-L (ADR p70 D2): una vez capturado, no se vacía -----------------
+
+    def test_a_captured_phone_cannot_be_blanked(self):
+        self.assertEqual(self.client.patch(ME_URL, {'phone': '5512345678'}, format='json').status_code,
+                         status.HTTP_200_OK)
+        r = self.client.patch(ME_URL, {'phone': ''}, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.data)
+        self.assertIn('phone', r.data['errors'])
+        self.org.refresh_from_db()
+        self.assertEqual(self.org.phone, '5512345678')
+
+    def test_a_captured_phone_can_be_replaced_by_another_valid_one(self):
+        self.client.patch(ME_URL, {'phone': '5512345678'}, format='json')
+        r = self.client.patch(ME_URL, {'phone': '5587654321'}, format='json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK, r.data)
+        self.org.refresh_from_db()
+        self.assertEqual(self.org.phone, '5587654321')
+
+    def test_the_model_guarantee_answers_400_when_the_request_saw_a_stale_phone(self):
+        """La garantía es `Organization.save` contra el valor persistido: si otro
+        guardado capturó el teléfono después de que esta petición cargara la
+        organización, el vaciado se rechaza con 400 en el campo, no con 500."""
+        Organization.objects.filter(pk=self.org.pk).update(phone='5512345678')
+        # La petición usa la organización de la sesión, cargada antes (phone='').
+        self.admin.organization.phone = ''
+        r = self.client.patch(ME_URL, {'phone': '', 'city': 'Puebla'}, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.data)
+        self.assertIn('phone', r.data['errors'])
+        self.org.refresh_from_db()
+        self.assertEqual(self.org.phone, '5512345678')

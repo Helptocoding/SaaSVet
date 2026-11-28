@@ -98,8 +98,20 @@ class B8CMutationTests(MutationFixtures, TestCase):
         from rest_framework.test import APIRequestFactory, force_authenticate
         a.refresh_from_db()
         human = User.objects.create(organization=self.org, username='history-human', role='ADMIN', is_staff=True)
+        if a.status in ('canceled', 'no_show'):
+            # Una persona revive la cita que el agente canceló. Reactivar es una
+            # transición: solo por `/status/`; en el PATCH de detalle `status`
+            # es de solo lectura (decisión del PO, 2026-11-27).
+            from apps.appointments.views import update_status
+            request = APIRequestFactory().patch(
+                '/api/appointments/' + str(a.public_id) + '/status/',
+                {'status': 'scheduled', 'expected_state': current_state(a)}, format='json')
+            force_authenticate(request, user=human)
+            response = update_status(request, pk=str(a.public_id))
+            self.assertEqual(response.status_code, 200, response.data)
+            a.refresh_from_db()
         request = APIRequestFactory().patch('/api/appointments/' + str(a.public_id) + '/',
-            {'expected_state': current_state(a), 'status': 'scheduled',
+            {'expected_state': current_state(a),
              'start_time': '12:00', 'end_time': '12:30'}, format='json')
         force_authenticate(request, user=human)
         response = AppointmentDetailView.as_view()(request, pk=str(a.public_id))

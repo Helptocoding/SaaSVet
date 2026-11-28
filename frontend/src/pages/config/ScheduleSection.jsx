@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { replaceSchedule } from "../../api/organizations";
-import { apiError } from "../../utils/apiError";
+import { validateWeek } from "../../features/config/schedule";
+import handleFormError from "../../utils/handleFormError";
 import SettingsPanel from "./SettingsPanel";
 import styles from "./config.module.css";
 
@@ -13,8 +14,19 @@ const WEEKDAY_LABELS = {
 const toHM = (t) => (t ? t.slice(0, 5) : "");
 const toHMS = (v) => (v ? `${v}:00` : null);
 
-const ScheduleSection = ({ schedule, onScheduleChange }) => {
+/**
+ * `schedule` es el borrador (plan F1.3). Antes de guardar se valida cada día con
+ * los mismos mensajes que el servidor; los errores, propios o del servidor
+ * (`day_N`), se pintan en la fila de su día.
+ */
+const ScheduleSection = ({ schedule, onScheduleChange, onSaved }) => {
   const [saving, setSaving] = useState(false);
+  const [clientErrors, setClientErrors] = useState({});
+  const [serverErrors, setServerErrors] = useState({});
+
+  const dayError = (weekday) => clientErrors[weekday]
+    || serverErrors[`day_${weekday}.non_field_errors`]
+    || serverErrors[`day_${weekday}`];
 
   const updateDay = (weekday, patch) => {
     onScheduleChange(prev =>
@@ -36,22 +48,31 @@ const ScheduleSection = ({ schedule, onScheduleChange }) => {
   };
 
   const handleSave = async () => {
+    const found = validateWeek(schedule);
+    setClientErrors(found);
+    setServerErrors({});
+    if (Object.keys(found).length > 0) {
+      toast.error("Revisa el horario de los días marcados.");
+      return;
+    }
     setSaving(true);
+    const toastId = toast.loading("Guardando...");
     try {
-      const req = replaceSchedule(schedule);
-      toast.promise(req, { loading: "Guardando...", success: "Horario guardado", error: (e) => apiError(e) });
-      const updated = await req;   // sonner: await la promesa REAL, no toast.promise
-      if (Array.isArray(updated)) onScheduleChange(updated);
-    } catch {
-      /* toast.promise ya mostró el error */
+      const updated = await replaceSchedule(schedule);
+      toast.success("Horario guardado", { id: toastId });
+      if (Array.isArray(updated)) onSaved(updated);
+    } catch (err) {
+      toast.dismiss(toastId);
+      handleFormError(err, setServerErrors);
     } finally {
       setSaving(false);
     }
   };
 
-  const timeCell = (day, field, fallback, enabled) => (
+  const timeCell = (day, field, fallback, enabled, label) => (
     <input
       type="time"
+      aria-label={`${label} del ${WEEKDAY_LABELS[day.weekday].toLowerCase()}`}
       className={styles.scheduleTimeInput}
       value={enabled ? (toHM(day[field]) || fallback) : ""}
       disabled={!enabled}
@@ -61,7 +82,7 @@ const ScheduleSection = ({ schedule, onScheduleChange }) => {
 
   return (
     <SettingsPanel
-      title="Horarios"
+      title="Horario"
       description="Cuándo atiende la clínica. El asistente solo ofrece citas dentro de este horario; el descanso parte el día en dos."
       padded={false}
       footerNote="Días completos, una franja + descanso opcional."
@@ -87,24 +108,29 @@ const ScheduleSection = ({ schedule, onScheduleChange }) => {
           {schedule.map((day) => {
             const open = !day.is_closed;
             const brk = open && day.has_break;
+            const name = WEEKDAY_LABELS[day.weekday];
+            const error = dayError(day.weekday);
+            const rowClass = [day.is_closed && styles.scheduleRowClosed, error && styles.scheduleRowError]
+              .filter(Boolean).join(" ");
             return (
-              <tr key={day.weekday} className={day.is_closed ? styles.scheduleRowClosed : ""}>
-                <td className={styles.scheduleTd}>
-                  <span className={styles.scheduleDayName}>{WEEKDAY_LABELS[day.weekday]}</span>
+              <tr key={day.weekday} className={rowClass}>
+                <td className={styles.scheduleTd} data-label="Día">
+                  <span className={styles.scheduleDayName}>{name}</span>
+                  {error && <p className={styles.scheduleDayError} role="alert">{error}</p>}
                 </td>
-                <td className={styles.scheduleTd}>
-                  <input type="checkbox" className={styles.scheduleCheckbox}
+                <td className={styles.scheduleTd} data-label="Abierto">
+                  <input type="checkbox" className={styles.scheduleCheckbox} aria-label={`${name} abierto`}
                     checked={open} onChange={(e) => setOpen(day.weekday, e.target.checked)} />
                 </td>
-                <td className={styles.scheduleTd}>{timeCell(day, "opens_at", "09:00", open)}</td>
-                <td className={styles.scheduleTd}>{timeCell(day, "closes_at", "18:00", open)}</td>
-                <td className={styles.scheduleTd}>
-                  <input type="checkbox" className={styles.scheduleCheckbox}
+                <td className={styles.scheduleTd} data-label="Entrada">{timeCell(day, "opens_at", "09:00", open, "Entrada")}</td>
+                <td className={styles.scheduleTd} data-label="Salida">{timeCell(day, "closes_at", "18:00", open, "Salida")}</td>
+                <td className={styles.scheduleTd} data-label="Descanso">
+                  <input type="checkbox" className={styles.scheduleCheckbox} aria-label={`${name} con descanso`}
                     checked={!!day.has_break} disabled={!open}
                     onChange={(e) => setBreak(day.weekday, e.target.checked)} />
                 </td>
-                <td className={styles.scheduleTd}>{timeCell(day, "break_start", "13:00", brk)}</td>
-                <td className={styles.scheduleTd}>{timeCell(day, "break_end", "14:00", brk)}</td>
+                <td className={styles.scheduleTd} data-label="Desde">{timeCell(day, "break_start", "13:00", brk, "Inicio del descanso")}</td>
+                <td className={styles.scheduleTd} data-label="Hasta">{timeCell(day, "break_end", "14:00", brk, "Fin del descanso")}</td>
               </tr>
             );
           })}

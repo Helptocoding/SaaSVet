@@ -3,6 +3,7 @@ import { Icon } from "../../components/icons";
 import { getSummary } from "../../api/vitals";
 import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
+import { formatMoney } from "../../utils/money";
 import styles from "./panel.module.css";
 
 const CONSULTATION_TYPE_LABELS = {
@@ -31,11 +32,6 @@ const getAge = (birthDate) => {
     months += 12;
   }
   return `${years} años, ${months} meses`;
-};
-
-const formatCurrency = (num) => {
-  if (num == null) return "$0.00";
-  return `$${Number(num).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const formatDate = (ds) => {
@@ -274,16 +270,16 @@ const SidePanel = ({ recordId, pet, refreshKey = 0, compact = false }) => {
         {totals ? (
           <>
             <div className={styles.panelVitalRow}>
-              <span className={styles.panelVitalLabel}>Subtotal</span>
-              <span className={styles.panelVitalValue}>{formatCurrency(totals.subtotal)}</span>
+              <span className={styles.panelVitalLabel}>Subtotal sin IVA</span>
+              <span className={styles.panelVitalValue}>{formatMoney(totals.subtotal)}</span>
             </div>
             <div className={styles.panelVitalRow}>
-              <span className={styles.panelVitalLabel}>Impuesto</span>
-              <span className={styles.panelVitalValue}>{formatCurrency(totals.tax_amount)}</span>
+              <span className={styles.panelVitalLabel}>IVA</span>
+              <span className={styles.panelVitalValue}>{formatMoney(totals.tax_amount)}</span>
             </div>
             <div className={styles.panelVitalRow}>
               <span className={styles.panelVitalLabel}>Total</span>
-              <span className={styles.panelVitalValue}>{formatCurrency(totals.total)}</span>
+              <span className={styles.panelVitalValue}>{formatMoney(totals.total)}</span>
             </div>
             <div style={{ marginTop: 4 }}>
               <span className={styles.panelBadge} style={getInvoiceStatusBadgeStyle(totals.status)}>

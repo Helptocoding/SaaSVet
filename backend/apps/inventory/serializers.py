@@ -4,6 +4,7 @@ from uuid import uuid4
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
+from apps.billing.money import context_tax_rate, unit_price_with_tax
 from apps.core.sanitize import sanitize_text
 from apps.core.tenant_validation import require_same_organization
 
@@ -68,14 +69,18 @@ class PresentationSerializer(PresentationAliasMixin, serializers.ModelSerializer
         source='product.stock_quantity', max_digits=14, decimal_places=4, read_only=True,
     )
     product_base_unit = serializers.CharField(source='product.base_unit', read_only=True)
+    # ADR p70 D4: precio de venta sin IVA + tasa y precio con IVA calculados en
+    # backend (mismo cálculo que billing), para que nadie los deduzca en pantalla.
+    tax_rate = serializers.SerializerMethodField()
+    sale_price_with_tax = serializers.SerializerMethodField()
 
     class Meta:
         model = Presentation
         fields = [
             'id', 'public_id', 'product', 'product_public_id', 'name', 'product_name',
             'base_unit', 'base_unit_display', 'quantity', 'conversion_factor',
-            'sale_price', 'purchase_price', 'stock', 'min_stock', 'is_low_stock',
-            'stock_quantity', 'product_base_unit',
+            'sale_price', 'tax_rate', 'sale_price_with_tax', 'purchase_price', 'stock',
+            'min_stock', 'is_low_stock', 'stock_quantity', 'product_base_unit',
             'barcode', 'requires_prescription', 'tracks_lots',
         ]
         read_only_fields = [
@@ -87,6 +92,13 @@ class PresentationSerializer(PresentationAliasMixin, serializers.ModelSerializer
         if value <= 0:
             raise serializers.ValidationError("El precio de venta debe ser mayor a 0.")
         return value
+
+    def get_tax_rate(self, obj):
+        return str(context_tax_rate(self.context, obj))
+
+    def get_sale_price_with_tax(self, obj):
+        value = unit_price_with_tax(obj.sale_price, context_tax_rate(self.context, obj))
+        return None if value is None else str(value)
 
     def validate_conversion_factor(self, value):
         from .units import validated_conversion_factor
@@ -181,7 +193,8 @@ class ProductSerializer(serializers.ModelSerializer):
         first = obj.presentations.first() if hasattr(obj, '_prefetched_objects_cache') else obj.presentations.first()
         if first is None:
             return None
-        return PresentationSerializer(first).data
+        # Con el contexto, la tasa de IVA sale de la sesión: sin consulta por fila.
+        return PresentationSerializer(first, context=self.context).data
 
     def validate_name(self, value):
         if not value or not value.strip():

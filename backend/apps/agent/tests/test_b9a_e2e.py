@@ -20,6 +20,7 @@ from apps.patients.models import Owner, Pet, PetRegistrationEffect
 from apps.users.models import User
 from apps.users.services import ensure_agent_user
 from .b9a_harness import ApplicationHarness, answer, tool, response, write_gates
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 @transaction.atomic
@@ -32,7 +33,7 @@ def seed_domain(label='A'):
     role.permissions.set([Permission.objects.get_or_create(code=c)[0] for c in PERMISSIONS['AGENT']])
     agent, _ = ensure_agent_user(org)
     vet = User.objects.create(organization=org, username='b9a-vet-' + label, role='VET')
-    AgentSettings.objects.create(organization=org, enabled=True, agent_user=agent, default_veterinarian=vet)
+    create_enabled_agent_settings(org, agent_user=agent, default_veterinarian=vet)
     for day in range(1, 8):
         OrganizationSchedule.objects.update_or_create(organization=org, weekday=day,
             defaults={'opens_at': '00:00', 'closes_at': '23:59', 'is_closed': False})

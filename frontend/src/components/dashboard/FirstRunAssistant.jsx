@@ -33,16 +33,16 @@ const STEPS = [
     // "acude de inmediato a la clínica" sin a dónde llamar.
     key: "has_clinic_contact",
     title: "¿Cómo pueden encontrarte tus clientes?",
-    lead: "El teléfono al que te llaman, el WhatsApp por el que te escriben y la dirección a la que llegan. Es lo que el asistente les comparte cuando preguntan cómo llegar — y el número que da si hay una emergencia.",
+    lead: "El teléfono al que te llaman, el WhatsApp por el que te escriben y la dirección a la que llegan. Es lo que el asistente les comparte cuando preguntan cómo llegar — y el número que da si hay una emergencia. Confirma también la zona horaria: es la hora con la que se agenda.",
     done: "Datos de tu clínica listos",
-    actions: [{ label: "Capturar datos de la clínica", to: "/config", section: "clinic", variant: "primary" }],
+    actions: [{ label: "Capturar datos de la clínica", to: "/config/clinic", variant: "primary" }],
   },
   {
     key: "has_services",
     title: "Configura tus servicios",
     lead: "Consulta, vacunación, estética… lo que ofrece tu clínica.",
     done: "Servicios configurados",
-    actions: [{ label: "Configurar servicios", to: "/config", section: "services", variant: "primary" }],
+    actions: [{ label: "Configurar servicios", to: "/config/services", variant: "primary" }],
   },
 ];
 
@@ -65,6 +65,7 @@ const PV_CLINIC = [
   { label: "Teléfono", value: "55 1234 5678" },
   { label: "WhatsApp", value: "55 1234 5678" },
   { label: "Dirección", value: "Av. Reforma 120, Centro" },
+  { label: "Zona horaria", value: "Centro — Ciudad de México" },
 ];
 
 const PreviewPatients = () => (
@@ -242,10 +243,9 @@ const FirstRunAssistant = ({ onComplete }) => {
   if (current) sawStepRef.current = true;
 
   const orgName = user?.organization_name;
-  // `section` deep-linkea dentro de /config (Clínica vs Servicios): sin esto ambos
-  // CTAs caían en la sección por defecto y el usuario tenía que buscar la correcta.
-  const go = ({ to, section }) =>
-    navigate(to, { state: { fromOnboarding: true, ...(section ? { section } : {}) } });
+  // Los CTAs de Configuración llevan a su apartado por ruta (`/config/clinic`,
+  // `/config/services`, ADR p70 F1.2); `fromOnboarding` activa la vuelta al panel.
+  const go = ({ to }) => navigate(to, { state: { fromOnboarding: true } });
 
   // Entrada orquestada (escalonada). `useReducedMotion` desactiva todo el movimiento.
   const ease = [0.22, 0.61, 0.36, 1];

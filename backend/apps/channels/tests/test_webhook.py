@@ -14,6 +14,7 @@ from django.test import TestCase, override_settings
 from apps.agent.models import Conversation
 from apps.channels.models import ChannelAccount, Message
 from apps.organizations.models import Organization
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 SECRET = "test-app-secret"
 VERIFY = "test-verify-token"
@@ -391,7 +392,7 @@ class B1ChannelEventTests(TestCase):
                          reference)
         self.assertFalse(current.conversation.flow.get('pending_action'))
         self.assertFalse(current.conversation.goals.exists())
-        settings = AgentSettings.objects.create(organization=self.org, enabled=True)
+        settings = create_enabled_agent_settings(self.org)
         result = planner.handle_inbound(current.conversation, agent_settings=settings,
                                         turn_context=turn)
         self.assertEqual(result['reason'], 'orphan_affirmative')
@@ -451,7 +452,7 @@ class B1ChannelEventTests(TestCase):
         from unittest.mock import patch
         from apps.agent import planner, safety
         from apps.agent.models import AgentSettings, HumanHandoff
-        settings = AgentSettings.objects.create(organization=self.org, enabled=True)
+        settings = create_enabled_agent_settings(self.org)
         message, _ = self._event('image', {'id': 'media-only-reference', 'caption': 'mi perro convulsiona'})
         with (patch.object(safety, 'assess_context', wraps=safety.assess_context) as assessment,
               patch.object(planner, '_run_planner') as llm):
@@ -471,7 +472,7 @@ class B1ChannelEventTests(TestCase):
         from unittest.mock import patch
         from apps.agent import planner
         from apps.agent.models import AgentSettings
-        settings = AgentSettings.objects.create(organization=self.org, enabled=True)
+        settings = create_enabled_agent_settings(self.org)
         message, _ = self._event('audio', {'id': 'audio-reference'})
         conversation = message.conversation
         conversation.flow['pending_action'] = {

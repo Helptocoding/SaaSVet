@@ -7,7 +7,7 @@ from .models import (
     Service, Invoice, InvoiceItem, CreditNote, Checkout, CheckoutEstimate,
     CheckoutItem, ReplacementWaiver, CheckoutDispute,
 )
-from .money import discount_amount, money
+from .money import context_tax_rate, discount_amount, money, unit_price_with_tax
 from apps.core.sanitize import sanitize_text
 
 SERVICE_NAME_REGEX = re.compile(r'^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ\s\-\(\)\/\%\+]+$')
@@ -65,10 +65,23 @@ class CheckoutItemMutationSerializer(serializers.Serializer):
 
 
 class ServiceSerializer(serializers.ModelSerializer):
+    # ADR p70 D4: el precio se captura sin IVA; la API entrega también la tasa y
+    # el precio con IVA para que ninguna pantalla ni el agente lo calculen.
+    tax_rate = serializers.SerializerMethodField()
+    price_with_tax = serializers.SerializerMethodField()
+
     class Meta:
         model = Service
-        fields = ['id', 'public_id', 'name', 'description', 'base_price', 'specialty', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'public_id', 'name', 'description', 'base_price', 'tax_rate',
+                  'price_with_tax', 'specialty', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['id', 'public_id', 'created_at', 'updated_at']
+
+    def get_tax_rate(self, obj):
+        return str(context_tax_rate(self.context, obj))
+
+    def get_price_with_tax(self, obj):
+        value = unit_price_with_tax(obj.base_price, context_tax_rate(self.context, obj))
+        return None if value is None else str(value)
 
     def validate_name(self, value):
         clean = sanitize_text(value or '', max_length=255)

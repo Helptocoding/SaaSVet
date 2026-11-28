@@ -17,6 +17,7 @@ from apps.agent.worker import (
 from apps.channels.models import ChannelAccount, Message
 from apps.channels.providers import SendResult
 from apps.organizations.models import Organization
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 class FakeProvider:
@@ -61,7 +62,7 @@ class ProcessPendingTests(TestCase):
         )
 
     def test_first_inbound_gets_greeting_when_enabled(self):
-        AgentSettings.objects.create(organization=self.org, enabled=True)
+        create_enabled_agent_settings(self.org)
         message = self._inbound("wamid.W1")
 
         n = process_pending_conversations(now=_later())
@@ -91,7 +92,7 @@ class ProcessPendingTests(TestCase):
         self.assertEqual(outbound.body, T0_DISABLED.format(clinic="Worker Org"))
 
     def test_second_inbound_does_not_duplicate_greeting(self):
-        AgentSettings.objects.create(organization=self.org, enabled=True)
+        create_enabled_agent_settings(self.org)
         self._inbound("wamid.W3a")
         process_pending_conversations(now=_later())
 
@@ -221,7 +222,7 @@ class B1WorkerContextTests(TestCase):
         self.channel = ChannelAccount.objects.create(
             organization=self.org, external_account_id='b1-worker')
         agent_user, _ = ensure_agent_user(self.org)
-        AgentSettings.objects.create(organization=self.org, enabled=True, agent_user=agent_user)
+        create_enabled_agent_settings(self.org, agent_user=agent_user)
 
     def test_claimed_burst_is_shared_and_first_contact_has_no_invented_history(self):
         import json

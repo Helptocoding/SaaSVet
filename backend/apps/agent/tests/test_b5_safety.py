@@ -15,6 +15,7 @@ from apps.channels.models import Message
 from apps.channels.providers import SendResult
 from . import test_b3_durable as fixtures
 from .test_inbox_api import _make_user
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 @override_settings(AGENT_SAFETY_AUTOMATION_ENABLED=True)
@@ -307,7 +308,7 @@ class B5SafetyTests(TestCase):
     def test_safe_fi_06_normal_input_does_not_resume_funnel(self):
         from apps.agent.models import AgentSettings
         actor, _ = self.staff()
-        AgentSettings.objects.create(organization=self.org, enabled=True, agent_user=actor)
+        create_enabled_agent_settings(self.org, agent_user=actor)
         self.signal()
         self.inbound('quiero una cita')
         with patch('apps.agent.planner._run_planner', side_effect=AssertionError('funnel resumed')):

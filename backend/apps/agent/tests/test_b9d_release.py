@@ -18,6 +18,7 @@ from apps.appointments.models import Appointment, AppointmentMutationEffect
 from apps.patients.models import PetRegistrationEffect
 from . import b8b_support as create, b8c_support as mutations, b8d_support as attendance, b8e_support as pets
 from .b9d_support import release_for, approval, TEST_DATE, TEST_ENVIRONMENT, CAPABILITIES
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 class ReleaseEvidenceTests(SimpleTestCase):
@@ -248,7 +249,7 @@ class BetaRegistrationTests(GateCases, pets.RegistrationFixtures, TestCase):
 class BetaInspectorTests(TestCase):
     def test_readonly_legacy_defaults_and_no_migration_activation(self):
         org = Organization.objects.create(name='Legacy configuration')
-        AgentSettings.objects.create(organization=org, enabled=True, faq_facts={'privacy_ready': 'true'})
+        create_enabled_agent_settings(org, faq_facts={'privacy_ready': 'true'})
         before = list(AgentSettings.objects.values())
         output = io.StringIO()
         call_command('agent_inspect_beta', organization_id=org.pk, stdout=output)

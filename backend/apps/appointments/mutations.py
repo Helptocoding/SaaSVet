@@ -18,7 +18,7 @@ from apps.core.sanitize import sanitize_text
 from apps.organizations.models import Organization, OrganizationSchedule
 from apps.patients.models import Owner, Pet
 from apps.users.models import User
-from .creation import (_share_rows, appointment_interval, schedule_windows, slot_conflicts,
+from .creation import (_share_rows, appointment_interval, opening_windows, slot_conflicts,
                        CreationRejected)
 from .models import Appointment, AppointmentStatusChange, AppointmentMutationEffect
 from .services import lock_veterinarians, NO_OVERLAP_EXCEPTIONS, is_no_overlap_violation
@@ -206,7 +206,8 @@ def validate_mutation(command):
         if start <= timezone.now():
             raise MutationRejected('schedule_elapsed')
         if not any(a <= command.start_time and command.end_time <= b
-                   for a, b in schedule_windows(schedules[0] if schedules else None)):
+                   for a, b in opening_windows(org.pk, command.date,
+                                               schedules[0] if schedules else None)):
             raise MutationRejected('schedule_closed')
         slot = SimpleNamespace(organization_id=org.pk, veterinarian_id=command.veterinarian_id,
             date=command.date, start_time=command.start_time, end_time=command.end_time,

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Search } from "lucide-react";
 import { getPresentations, getPresentationByBarcode } from "../../api/inventory";
 import { getServices } from "../../api/billing";
+import PriceLabel from "../PriceLabel";
 import s from "./pos.module.css";
 
 const INITIAL_PRODUCTS = 6;
@@ -198,7 +199,7 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
                                 {p.requires_prescription ? " · Rx" : ""}
                             </span>
                             <span className={s.resultMeta}>Stock {p.stock}</span>
-                            <span className={s.resultPrice}>${Number(p.sale_price).toFixed(2)}</span>
+                            <PriceLabel base={p.sale_price} withTax={p.sale_price_with_tax} className={s.resultPrice} />
                         </div>
                     ))}
                     {!loading && visibleServices.length > 0 && <div className={s.groupLabel}>Servicios</div>}
@@ -214,7 +215,7 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
                                 onMouseEnter={() => setHighlight(idx)}
                             >
                                 <span className={s.resultName}>{sv.name}</span>
-                                <span className={s.resultPrice}>${Number(sv.base_price).toFixed(2)}</span>
+                                <PriceLabel base={sv.base_price} withTax={sv.price_with_tax} className={s.resultPrice} />
                             </div>
                         );
                     })}

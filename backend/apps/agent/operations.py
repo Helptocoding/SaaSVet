@@ -73,8 +73,8 @@ def _slot_vet(conversation, parameters, *, exclude_appointment_id=None):
     from . import clinic_context
     day = datetime.fromisoformat(parameters['date']).date()
     start, end = parameters['start_time'], parameters['end_time']
-    if not any(a <= start and end <= b for a, b in clinic_context.weekday_ranges(
-            conversation.organization, day.weekday())):
+    if not any(a <= start and end <= b for a, b in clinic_context.day_ranges(
+            conversation.organization, day)):
         raise PreparationDenied('slot_unavailable')
     config = AgentSettings.objects.filter(organization_id=conversation.organization_id).first()
     for vet in _scheduling_vets(conversation.organization, config):

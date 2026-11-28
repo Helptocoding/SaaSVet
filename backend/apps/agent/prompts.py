@@ -302,7 +302,8 @@ _FACTOR_LABEL = {
 
 
 def build_persona_preamble(agent_settings, organization):
-    return f"Clínica: {organization.name}."
+    # ADR p70 D5: el nombre ante los clientes (comercial o, si falta, el legal).
+    return f"Clínica: {organization.public_name}."
 
 
 _ES_WEEKDAY = ('lunes', 'martes', 'miércoles', 'jueves',
@@ -558,7 +559,7 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None,
         context['asunto_actual'] = matter
 
     # ── 4 · LA CLÍNICA ──────────────────────────────────────────────────────
-    context['clinica'] = org.name
+    context['clinica'] = org.public_name
     context.update(_now_context(org, turn_context=turn_context))
 
     messages = [{

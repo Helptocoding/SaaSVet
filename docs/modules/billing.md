@@ -260,6 +260,35 @@ en `X-Idempotency-Key`. El frontend debe conservarlo durante retries.
 - Refund no reabre Invoice ni cambia `paid_at`; el neto se obtiene de Payments menos
   RefundPayments más RefundReversals.
 
+### Catálogo de servicios (ADR p70 D9, plan F1.7)
+
+- Las escrituras pasan por `apps/billing/catalog_services.py` (`create_service`,
+  `update_service`, `delete_service`), que registran el evento del historial de Configuración
+  (`service_created`, `service_updated`, `service_activated`, `service_deactivated`,
+  `service_deleted`) en la misma transacción; un `409` por dependencias no deja evento.
+- `GET /api/billing/services/` devuelve solo los activos (Cobros, consulta, POS y agente).
+  `?include_inactive=true` incluye los inactivos: lo usa Configuración para reactivarlos. El
+  detalle (`/billing/services/<public_id>/`) resuelve también los inactivos, para activarlos,
+  editarlos o borrarlos.
+- Borrar un servicio con historial (`PROTECT`) es `409 resource_has_dependencies`; la pantalla
+  ofrece desactivarlo en su lugar.
+
+### Precio mostrado y precio cobrado (ADR p70 D4)
+
+- `Service.base_price` y `Presentation.sale_price` se capturan **sin IVA**. La tasa es
+  `Organization.tax_rate` (la fija plataforma; la clínica solo la ve, D3).
+- `ServiceSerializer` y `PresentationSerializer` exponen, de solo lectura, `tax_rate` y
+  `price_with_tax` / `sale_price_with_tax`, calculados con
+  `apps.billing.money.unit_price_with_tax`: el mismo redondeo que `invoice_totals`, así
+  que coincide con el total de un Checkout de **un** artículo
+  (`apps/billing/tests/test_price_with_tax.py`). La tasa sale de la organización de la
+  sesión (`context_tax_rate`), sin consulta por fila.
+- Con varios artículos el Checkout redondea el impuesto sobre el subtotal: la suma de
+  precios unitarios con IVA puede diferir en centavos. Por eso nadie promete totales de
+  varios artículos a partir de precios unitarios.
+- El frontend solo da formato (`utils/money.js`, `components/PriceLabel.jsx`); nunca
+  calcula impuestos.
+
 ## 10. Schema contract y despliegue
 
 Migrations relevantes:

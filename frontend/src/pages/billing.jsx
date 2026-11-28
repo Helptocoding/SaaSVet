@@ -27,6 +27,7 @@ import Pagination from "../components/Pagination";
 import RefundModal from "../components/billing/RefundModal";
 import PrescriptionDispensePanel from "../components/billing/PrescriptionDispensePanel";
 import { REASON_LABELS } from "../components/billing/refundReasons";
+import { formatMoney, formatTaxRate } from "../utils/money";
 import Skeleton from "react-loading-skeleton";
 import TableSkeleton from "../components/TableSkeleton";
 import s from "./billing.module.css";
@@ -345,7 +346,7 @@ const Billing = () => {
     const handleReverseCreditNote = async (cn) => {
         const ok = await confirm({
             title: "Revertir devolución",
-            message: `Se revertirá la nota de crédito por $${Number(cn.total_refunded).toFixed(2)} con un contra-asiento (el registro no se borra). ¿Continuar?`,
+            message: `Se revertirá la nota de crédito por ${formatMoney(cn.total_refunded)} con un contra-asiento (el registro no se borra). ¿Continuar?`,
             confirmText: "Revertir",
             dangerMode: true,
         });
@@ -570,8 +571,6 @@ const Billing = () => {
         } catch (err) { toast.error(apiError(err, "No se pudo asignar la corrección")); }
     };
 
-    const formatCurrency = (amount) => Number(amount || 0).toFixed(2);
-
     if (initializing || loading) return <BillingSkeleton />;
 
     const isCheckout = !!selectedInvoice?._isCheckout;
@@ -664,7 +663,7 @@ const Billing = () => {
                                 </td>
                                 <td>{checkout.origin === "consultation" ? "Consulta" : "Venta directa"}</td>
                                 <td>{checkout.operational_hold === "dispute" ? "En disputa" : checkout.correction_status === "correction_overdue" ? "Corrección vencida" : "Por preparar"}</td>
-                                <td style={{ textAlign: "right" }}>${formatCurrency(checkout.total)}</td>
+                                <td style={{ textAlign: "right" }}>{formatMoney(checkout.total)}</td>
                                 <td style={{ textAlign: "right" }}>
                                     <button className="btn btn-ghost btn-icon" aria-label={`Abrir preparación ${checkout.id}`} onClick={(e) => { e.stopPropagation(); openCheckoutDetail(checkout); }}><Icon.Eye s={14} /></button>
                                 </td>
@@ -709,7 +708,7 @@ const Billing = () => {
                                         </div>
                                     </td>
                                     <td style={{ color: "var(--c-text-3)" }}>{formatDate(inv.created_at)}</td>
-                                    <td style={{ textAlign: "right" }}>${formatCurrency(inv.total)}</td>
+                                    <td style={{ textAlign: "right" }}>{formatMoney(inv.total)}</td>
                                     <td style={{ textAlign: "right" }}>
                                         <button className="btn btn-ghost btn-icon" aria-label={`Ver cobro ${inv.id}`} onClick={(e) => { e.stopPropagation(); openInvoiceDetail(inv); }}><Icon.Eye s={14} /></button>
                                     </td>
@@ -792,7 +791,7 @@ const Billing = () => {
                                                 )}
                                             </td>
                                             <td>{item.quantity}</td>
-                                            <td style={{ textAlign: "right" }}>${formatCurrency(item.subtotal)}</td>
+                                            <td style={{ textAlign: "right" }}>{formatMoney(item.subtotal)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -801,9 +800,9 @@ const Billing = () => {
                             <div className={s.totalsSection}>
                                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
                                     <div style={{ minWidth: "200px" }}>
-                                        <div className={s.totalRow}><span>Subtotal</span><span>${formatCurrency(selectedInvoice.subtotal)}</span></div>
-                                        <div className={s.totalRow}><span>IVA</span><span>${formatCurrency(selectedInvoice.tax_amount)}</span></div>
-                                        <div className={s.grandTotal}><span>Total</span><span>${formatCurrency(selectedInvoice.total)}</span></div>
+                                        <div className={s.totalRow}><span>Subtotal sin IVA</span><span>{formatMoney(selectedInvoice.subtotal)}</span></div>
+                                        <div className={s.totalRow}><span>{formatTaxRate(selectedInvoice.tax_rate) ? `IVA (${formatTaxRate(selectedInvoice.tax_rate)})` : "IVA"}</span><span>{formatMoney(selectedInvoice.tax_amount)}</span></div>
+                                        <div className={s.grandTotal}><span>Total</span><span>{formatMoney(selectedInvoice.total)}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -817,7 +816,7 @@ const Billing = () => {
                                         <div key={cn.public_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", padding: "8px 10px", border: "1px solid var(--c-border)", borderRadius: "6px", marginBottom: "6px" }}>
                                             <div>
                                                 <div style={{ fontSize: "13px", color: "var(--c-text)" }}>
-                                                    ${formatCurrency(cn.total_refunded)} · {REASON_LABELS[cn.reason_code] || cn.reason_code}
+                                                    {formatMoney(cn.total_refunded)} · {REASON_LABELS[cn.reason_code] || cn.reason_code}
                                                     {cn.reversed && <span style={{ marginLeft: "6px", fontSize: "11px", color: "var(--c-danger-text)" }}>(revertida)</span>}
                                                 </div>
                                                 {cn.reason_notes && <div style={{ fontSize: "11px", color: "var(--c-text-3)" }}>{cn.reason_notes}</div>}

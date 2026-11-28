@@ -39,6 +39,7 @@ from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
 from apps.users.models import User
 from apps.users.services import ensure_agent_user
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 def _seed_role(org, role_name):
@@ -101,8 +102,7 @@ class CommitPreconditionBase(TestCase):
         while d.weekday() > 4:
             d += timedelta(days=1)
         self.day = d
-        self.settings = AgentSettings.objects.create(
-            organization=self.org, enabled=True, agent_user=self.agent_user,
+        self.settings = create_enabled_agent_settings(self.org, agent_user=self.agent_user,
             default_veterinarian=self.vet)
         set_schedule_day(self.org, d.weekday(), "09:00", "13:00")
         self.channel = ChannelAccount.objects.create(

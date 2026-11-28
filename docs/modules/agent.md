@@ -1577,9 +1577,21 @@ solo hay **una** superficie donde se edita: `/config` (Configuración).
 | Horario (slots, "¿abierto ahora?", aviso de fuera de horario) | `OrganizationSchedule` — 7 filas sembradas al crear la org (`create_default_schedule`); respeta `is_closed` y descanso | Configuración → Horario (`ScheduleSection`) |
 | Teléfono (incluida la **plantilla de urgencia**), dirección, mapa, indicaciones, correo, sitio | `Organization` | Configuración → Clínica (`ClinicSection`) |
 | FAQ libre (estacionamiento, aviso de privacidad…) | `AgentSettings.faq_facts` | `PATCH /api/inbox/settings/` |
+| Nombre de la clínica (saludo, preámbulo, contexto `clinica`) | `Organization.public_name`: el comercial o, si falta, el legal (ADR p70 D5) | Configuración → Clínica |
+| Cierres excepcionales (días festivos) | `OrganizationClosure` (ADR p70 D6) | Configuración → Horario → Cierres |
 
 Puntos únicos de resolución: `effective_business_hours()`, `clinic_phone()`,
-`clinic_facts()`, `humanize_schedule()`. Cualquier superficie nueva que pregunte
+`clinic_facts()`, `humanize_schedule()`, y para una **fecha concreta** `day_ranges(org, day)`
+(las franjas del día de la semana, o ninguna si un cierre vigente cubre esa fecha) y
+`closed_today(org)`.
+
+**Cierres excepcionales (ADR p70 D6, plan F2.1):** un día cerrado no ofrece huecos
+(`find_available_slots`, `suggest_retention_slots` y la comprobación de una hora exacta usan
+`day_ranges`), la operación
+autorizada no agenda ni reagenda ahí (`schedule_closed`, revalidado bajo `FOR SHARE` de la fila
+del horario en `appointments.creation`/`mutations`) y, si el cierre es hoy, «¿abierto ahora?» es
+falso, así que se antepone el aviso de fuera de horario. `weekday_ranges` sigue describiendo el
+horario **semanal** (lo que el agente cuenta del horario). Al personal no lo bloquea. Cualquier superficie nueva que pregunte
 por horario o contacto pasa por ahí — no por `AgentSettings`.
 
 ### Gate del kill switch: `enabled=True` exige teléfono de clínica
@@ -1602,6 +1614,21 @@ independientemente de si el ADMIN pasó por el onboarding nuevo o venía de ante
   sobre una señal siempre verdadera no protege de nada.
 - La UI de `/inbox` muestra el motivo del backend + atajo "Ir a Configuración"
   (nunca un error crudo).
+- **INV-L, en los dos lados (ADR p70 D2).** El gate del serializer solo adelanta el
+  mensaje; la garantía vive en los modelos:
+  - `AgentSettings.save()` con `enabled=True` bloquea primero la fila de la
+    organización (`lock_organization_phone`, `FOR NO KEY UPDATE`) y relee el teléfono
+    persistido;
+  - `Organization.save()` impide que un teléfono válido se vacíe o se vuelva inválido,
+    comparando contra el persistido bajo el mismo bloqueo.
+
+  Escritores enumerados el 2026-11-26: API de Configuración, admin de Django,
+  `seed_demo_clinic`, `agent_eval` (ahora captura el teléfono antes de crear el agente
+  encendido), `provision_channel` y la vista del Inbox (ambos crean apagado). Un gate
+  estático (`apps/agent/tests/test_inv_l_clinic_phone.py`) impide `update()`/
+  `bulk_update` que eviten `save()`. Las fixtures usan
+  `apps/agent/tests/agent_settings_fixtures.py`. La migración `agent.0031` apagó los
+  agentes sin teléfono válido.
 
 **División de responsabilidades**: el onboarding (`FirstRunAssistant`, hito
 `has_clinic_contact`) **educa** — te lleva al dato cuando arrancas; este gate
@@ -1753,6 +1780,13 @@ Se exponen en `GET /api/inbox/metrics/` (bloque `calidad`) y en el comando
 lectura humana no hay ciclo de mejora, solo intuición.
 
 ## Catálogo, especialidades y escalación
+
+- **Precios citados con IVA (ADR p70 D4).** `get_service_catalog` y
+  `check_product_availability` proyectan `price_with_tax` / `sale_price_with_tax` de la
+  API, nunca el precio sin IVA. El renderer determinista dice
+  «$580.00 MXN, IVA incluido.». Si la API no trae el precio con IVA, es dato incompleto:
+  «el equipo puede confirmar su precio». El contrato (`endpoint_contracts.py`) valida los
+  campos cuando vienen.
 
 - `get_offered_specialties` solo devuelve una especialidad si hay un servicio
   activo y al menos un miembro activo del personal con la misma especialidad.

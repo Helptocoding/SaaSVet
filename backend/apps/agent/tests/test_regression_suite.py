@@ -33,6 +33,7 @@ from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
 from apps.users.models import User
 from apps.users.services import ensure_agent_user
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 DECOY = "SEÑUELO-CROSS-TENANT"
 DECOY_PET = "PerroDeOtraClinica"
@@ -96,8 +97,7 @@ class RegressionBase(TestCase):
         Organization.objects.filter(pk=self.org.pk).update(
             phone="55-1000-2000", address_line1="Av. Siempre Viva 123")
         self.org.refresh_from_db()
-        self.settings = AgentSettings.objects.create(
-            organization=self.org, enabled=True, agent_user=self.agent_user,
+        self.settings = create_enabled_agent_settings(self.org, agent_user=self.agent_user,
         )
         self.channel = ChannelAccount.objects.create(
             organization=self.org, external_account_id="920920920",
@@ -152,7 +152,8 @@ class ReadFlowTests(RegressionBase):
         )
         # Only the validated catalog result may supply service, price/currency.
         # The model's conflicting price and currency must never reach the user.
-        self.assertEqual(bodies[-1], "Consulta general: $350.00 MXN.")
+        # ADR p70 D4: lo que ve el cliente es el precio con IVA, dicho expresamente.
+        self.assertEqual(bodies[-1], "Consulta general: $350.00 MXN, IVA incluido.")
         self.assertNotIn("999", bodies[-1])
         self.assertNotIn("USD", bodies[-1])
 

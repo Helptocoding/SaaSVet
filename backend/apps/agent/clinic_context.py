@@ -47,6 +47,28 @@ def weekday_ranges(organization, weekday_index):
     return [[_hhmm(start), _hhmm(end)] for start, end in schedule_windows(row)]
 
 
+def is_closed_on(organization, day):
+    """¿Hay un cierre excepcional vigente ese día local? (ADR p70 D6, F2.1)."""
+    from apps.organizations.services import is_closed_on as closed
+    return closed(organization.pk, day)
+
+
+def day_ranges(organization, day):
+    """[[open, close]…] de una FECHA concreta: las del día de la semana, salvo
+    que un cierre excepcional vigente cubra esa fecha (entonces ninguna). Es lo
+    que el agente usa para ofrecer y validar huecos; `weekday_ranges` sigue
+    describiendo el horario semanal."""
+    if is_closed_on(organization, day):
+        return []
+    return weekday_ranges(organization, day.weekday())
+
+
+def closed_today(organization):
+    """Cierre excepcional hoy (día local de la clínica): el agente no está «abierto»."""
+    from apps.core.datetime_utils import org_today_local
+    return is_closed_on(organization, org_today_local(organization))
+
+
 _WD_KEY = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
 

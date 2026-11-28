@@ -8,12 +8,16 @@
  * La agenda real se renderiza; solo se sustituyen el calendario de FullCalendar
  * (no corre en jsdom), las llamadas HTTP y la sesión.
  */
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@fullcalendar/react", () => ({ default: () => <div data-testid="calendar" /> }));
+// El calendario se sustituye, pero se guardan sus props para ver qué recibe.
+const calendarState = vi.hoisted(() => ({ props: null }));
+vi.mock("@fullcalendar/react", () => ({
+    default: (props) => { calendarState.props = props; return <div data-testid="calendar" />; },
+}));
 vi.mock("@fullcalendar/daygrid", () => ({ default: {} }));
 vi.mock("@fullcalendar/timegrid", () => ({ default: {} }));
 vi.mock("@fullcalendar/interaction", () => ({ default: {} }));
@@ -28,8 +32,9 @@ vi.mock("../api/appointments", () => ({
     getAppointmentHistory: vi.fn(() => Promise.resolve([])),
     assignPatient: vi.fn(),
     createAppointmentWithPatient: vi.fn(),
+    getAgendaConfig: vi.fn(() => Promise.resolve(agendaState.config)),
 }));
-vi.mock("../api/organizations", () => ({ getOrgSettings: vi.fn(() => Promise.resolve({})) }));
+const agendaState = vi.hoisted(() => ({ config: null }));
 const absenceState = vi.hoisted(() => ({ rows: [] }));
 vi.mock("../api/staff", () => ({
     getAbsences: vi.fn(() => Promise.resolve(absenceState.rows)),
@@ -51,11 +56,13 @@ vi.mock("../auth/authContext", () => ({
         can: (code) => granted.has(code),
     }),
 }));
-vi.mock("../components/useConfirm", () => ({ useConfirm: () => vi.fn(() => Promise.resolve(true)) }));
+const confirmMock = vi.hoisted(() => vi.fn(() => Promise.resolve(true)));
+vi.mock("../components/useConfirm", () => ({ useConfirm: () => confirmMock }));
 vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), promise: vi.fn() }) }));
 
 import Appointments from "./appointments";
 import apiClient from "../api/client";
+import { createAppointmentWithPatient, updateAppointment } from "../api/appointments";
 import { AGENDA_TOUR_KEY } from "../features/appointments/tour/agendaSteps";
 
 // Permisos reales de ASSISTANT para la agenda (apps/core/permissions_codes.py).
@@ -76,6 +83,9 @@ beforeEach(() => {
     currentUser = { id: 10, role: "ASSISTANT" };
     granted = new Set(ASSISTANT_GRANTS);
     absenceState.rows = [];
+    agendaState.config = null;
+    calendarState.props = null;
+    confirmMock.mockImplementation(() => Promise.resolve(true));
 });
 
 // La agenda completa es pesada de montar en jsdom: la primera prueba paga el
@@ -189,5 +199,204 @@ describe("Citas: acciones del detalle por permiso", { timeout: 20000 }, () => {
         expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
         expect(screen.queryByRole("button", { name: "Cancelar" })).not.toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /Atender ahora/ })).not.toBeInTheDocument();
+    });
+});
+
+// ADR p70 D7, plan F2.2/F2.3: la agenda pinta el horario y los cierres de la clínica
+// (`GET /appointments/agenda-config/`, bajo `appointment.list`), advierte con
+// confirmación fuera de horario y calcula la hora de fin con la duración habitual.
+describe("Citas: horario de la clínica en la agenda", { timeout: 20000 }, () => {
+    const iso = (offset) => {
+        const d = new Date();
+        d.setDate(d.getDate() + offset);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    const tomorrow = iso(1);
+    // Todos los días 9–18: el resultado no depende de qué día sea mañana.
+    const WEEK = [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({
+        weekday, is_closed: false, opens_at: "09:00:00", closes_at: "18:00:00",
+        has_break: false, break_start: null, break_end: null,
+    }));
+    const CLOSURE = { public_id: "cl-1", start_date: iso(5), end_date: iso(5), reason: "Inventario" };
+    const CONFIG = {
+        schedule: WEEK,
+        closures: [CLOSURE],
+        settings: { default_appointment_duration_minutes: 45, show_status_change_history: true, allow_anonymous_walkin: false },
+    };
+    const APPT = {
+        id: 50, public_id: "appt-uuid", status: "scheduled", date: tomorrow, start_time: "10:00",
+        end_time: "10:30", pet: 7, pet_name: "Luna", pet_public_id: "pet-uuid", veterinarian: 3,
+        veterinarian_name: "Eva Galeno", reason: "Vacuna", category: "vaccination",
+    };
+
+    beforeEach(() => { agendaState.config = CONFIG; });
+
+    it("el calendario muestra el horario, una hora de margen y los cierres de fondo", async () => {
+        renderAgenda();
+        await waitFor(() => expect(calendarState.props?.businessHours).toHaveLength(7), { timeout: 10000 });
+        expect(calendarState.props.slotMinTime).toBe("08:00:00");
+        expect(calendarState.props.slotMaxTime).toBe("19:00:00");
+        expect(calendarState.props.events).toContainEqual(expect.objectContaining({
+            display: "background", title: "Cerrado: Inventario", start: `${CLOSURE.start_date}T00:00:00`,
+        }));
+    });
+
+    it("sin la configuración de la agenda, el calendario conserva 07:00–20:00", async () => {
+        agendaState.config = null;
+        renderAgenda();
+        await screen.findByRole("button", { name: /nueva cita/i }, { timeout: 10000 });
+        expect(calendarState.props.slotMinTime).toBe("07:00:00");
+        expect(calendarState.props.slotMaxTime).toBe("20:00:00");
+        expect(calendarState.props.businessHours).toBe(false);
+    });
+
+    it("una cita nueva termina según la duración habitual", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderAgenda();
+        await waitFor(() => expect(calendarState.props?.businessHours).toHaveLength(7), { timeout: 10000 });
+        await user.click(screen.getByRole("button", { name: /nueva cita/i }));
+        const modal = within(document.querySelector(".appointment-create-modal"));
+        await user.click(modal.getByRole("button", { name: /No encuentro la mascota/ }));
+        await user.type(modal.getByPlaceholderText("Ej: Juan Pérez"), "Ana López");
+        await user.type(modal.getByPlaceholderText("10 dígitos"), "5512345678");
+        await user.type(modal.getByPlaceholderText("Ej: Firulais"), "Kira");
+        await user.selectOptions(document.querySelector(".appointment-create-modal #new-appt-vet"), "3");
+        await user.type(document.querySelector(".appointment-create-modal #new-appt-reason"), "Revisión");
+        await user.click(modal.getByRole("button", { name: "Guardar cita" }));
+        await waitFor(() => expect(createAppointmentWithPatient).toHaveBeenCalledWith(
+            expect.objectContaining({ start_time: "09:00", end_time: "09:45" })));
+        expect(confirmMock).not.toHaveBeenCalled();
+    });
+
+    const openEdit = async () => {
+        const user = userEvent.setup({ delay: null });
+        apiClient.get.mockResolvedValue({ data: APPT });
+        render(
+            <MemoryRouter initialEntries={[`/appointments?appointment=${APPT.public_id}`]}>
+                <Appointments />
+            </MemoryRouter>,
+        );
+        await user.click(await screen.findByRole("button", { name: "Editar" }, { timeout: 10000 }));
+        return user;
+    };
+
+    it("mover fuera del horario pide confirmación; si no se confirma, no se guarda", async () => {
+        confirmMock.mockImplementation(() => Promise.resolve(false));
+        const user = await openEdit();
+        fireEvent.change(screen.getByLabelText("HORA INICIO *"), { target: { value: "07:00" } });
+        fireEvent.change(screen.getByLabelText(/HORA FIN/), { target: { value: "07:30" } });
+        await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+        await waitFor(() => expect(confirmMock).toHaveBeenCalledWith(expect.objectContaining({
+            message: expect.stringContaining("fuera del horario de la clínica (9:00–18:00)"),
+            confirmText: "Moverla de todos modos",
+        })));
+        expect(updateAppointment).not.toHaveBeenCalled();
+    });
+
+    it("confirmado, se guarda igual: no se bloquea (D7)", async () => {
+        const user = await openEdit();
+        fireEvent.change(screen.getByLabelText("FECHA *"), { target: { value: CLOSURE.start_date } });
+        await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+        await waitFor(() => expect(confirmMock).toHaveBeenCalledWith(expect.objectContaining({
+            message: expect.stringContaining("cerrada ese día (Inventario)"),
+        })));
+        await waitFor(() => expect(updateAppointment).toHaveBeenCalled());
+    });
+
+    it("editar sin mover la cita no pregunta", async () => {
+        const user = await openEdit();
+        await user.type(screen.getByLabelText("NOTAS"), " extra");
+        await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+        await waitFor(() => expect(updateAppointment).toHaveBeenCalled());
+        expect(confirmMock).not.toHaveBeenCalled();
+    });
+
+    it("arrastrar a un horario cerrado y no confirmar deshace el movimiento", async () => {
+        confirmMock.mockImplementation(() => Promise.resolve(false));
+        renderAgenda();
+        await waitFor(() => expect(calendarState.props?.businessHours).toHaveLength(7), { timeout: 10000 });
+        const revert = vi.fn();
+        await calendarState.props.eventDrop({
+            oldEvent: { extendedProps: { appointment: APPT } },
+            event: { start: new Date(`${tomorrow}T20:00:00`), end: new Date(`${tomorrow}T20:30:00`) },
+            revert,
+        });
+        expect(confirmMock).toHaveBeenCalled();
+        expect(revert).toHaveBeenCalled();
+        expect(updateAppointment).not.toHaveBeenCalled();
+    });
+
+    it("pulsar un cierre de fondo no abre nada", async () => {
+        renderAgenda();
+        await waitFor(() => expect(calendarState.props?.businessHours).toHaveLength(7), { timeout: 10000 });
+        calendarState.props.eventClick({ event: { extendedProps: { closure: CLOSURE } } });
+        expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
+    });
+
+    const hourButtons = (modal) => modal.getAllByRole("button", { pressed: false })
+        .concat(modal.getAllByRole("button", { pressed: true }))
+        .map((button) => button.textContent)
+        .filter((text) => /^\d{2}:00$/.test(text))
+        .sort();
+
+    it("los botones de hora siguen el horario del día y empiezan en la apertura", async () => {
+        const user = userEvent.setup({ delay: null });
+        agendaState.config = {
+            ...CONFIG,
+            schedule: WEEK.map((item) => ({ ...item, opens_at: "10:00:00", closes_at: "14:00:00" })),
+        };
+        renderAgenda();
+        await waitFor(() => expect(calendarState.props?.businessHours).toHaveLength(7), { timeout: 10000 });
+        await user.click(screen.getByRole("button", { name: /nueva cita/i }));
+        const modal = within(document.querySelector(".appointment-create-modal"));
+        expect(hourButtons(modal)).toEqual(["10:00", "11:00", "12:00", "13:00"]);
+        expect(modal.getByRole("button", { name: "10:00", pressed: true })).toBeInTheDocument();
+    });
+
+    it("sin la configuración de la agenda, 7:00–19:00 y la hora inicial 9:00", async () => {
+        const user = userEvent.setup({ delay: null });
+        agendaState.config = null;
+        renderAgenda();
+        await user.click(await screen.findByRole("button", { name: /nueva cita/i }, { timeout: 10000 }));
+        const modal = within(document.querySelector(".appointment-create-modal"));
+        expect(hourButtons(modal)).toHaveLength(13);
+        expect(modal.getByRole("button", { name: "09:00", pressed: true })).toBeInTheDocument();
+    });
+
+    const fillQuickPatient = async (user, modal) => {
+        await user.click(modal.getByRole("button", { name: /No encuentro la mascota/ }));
+        await user.type(modal.getByPlaceholderText("Ej: Juan Pérez"), "Ana López");
+        await user.type(modal.getByPlaceholderText("10 dígitos"), "5512345678");
+        await user.type(modal.getByPlaceholderText("Ej: Firulais"), "Kira");
+        await user.selectOptions(document.querySelector(".appointment-create-modal #new-appt-vet"), "3");
+        await user.type(document.querySelector(".appointment-create-modal #new-appt-reason"), "Revisión");
+    };
+
+    it("un clic en la casilla de las 10:30 empieza a las 10:30", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderAgenda();
+        await waitFor(() => expect(calendarState.props?.businessHours).toHaveLength(7), { timeout: 10000 });
+        act(() => calendarState.props.dateClick({ date: new Date(`${tomorrow}T10:30:00`), allDay: false }));
+        const modal = within(document.querySelector(".appointment-create-modal"));
+        expect(modal.getByRole("button", { name: "10:30", pressed: true })).toBeInTheDocument();
+        expect(modal.getByRole("button", { name: "10:00", pressed: false })).toBeInTheDocument();
+        await fillQuickPatient(user, modal);
+        await user.click(modal.getByRole("button", { name: "Guardar cita" }));
+        await waitFor(() => expect(createAppointmentWithPatient).toHaveBeenCalledWith(
+            expect.objectContaining({ date: tomorrow, start_time: "10:30", end_time: "11:15" })));
+    });
+
+    it("elegir otra hora después de la media hora vuelve a la hora en punto", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderAgenda();
+        await waitFor(() => expect(calendarState.props?.businessHours).toHaveLength(7), { timeout: 10000 });
+        act(() => calendarState.props.dateClick({ date: new Date(`${tomorrow}T10:30:00`), allDay: false }));
+        const modal = within(document.querySelector(".appointment-create-modal"));
+        await user.click(modal.getByRole("button", { name: "11:00" }));
+        expect(modal.getByRole("button", { name: "11:00", pressed: true })).toBeInTheDocument();
+        await fillQuickPatient(user, modal);
+        await user.click(modal.getByRole("button", { name: "Guardar cita" }));
+        await waitFor(() => expect(createAppointmentWithPatient).toHaveBeenCalledWith(
+            expect.objectContaining({ start_time: "11:00", end_time: "11:45" })));
     });
 });

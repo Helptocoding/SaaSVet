@@ -1053,7 +1053,7 @@ const Inbox = () => {
             // se acompaña del atajo para no dejar al ADMIN buscando dónde ir.
             const message = apiError(err, "No se pudo actualizar");
             toast.error(message, next ? {
-                action: { label: "Ir a Configuración", onClick: () => navigate("/config") },
+                action: { label: "Ir a Configuración", onClick: () => navigate("/config/clinic") },
                 duration: 8000,
             } : undefined);
         }

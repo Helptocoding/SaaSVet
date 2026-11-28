@@ -22,7 +22,7 @@ from apps.users.models import User
 
 from .models import Appointment, AppointmentStatusChange
 from .serializers import AppointmentSerializer, AppointmentStatusChangeSerializer
-from .creation import CreationRejected
+from .creation import CreationRejected, share_lock_organization
 from .services import (
     ACTIVE_STATUSES,
     NO_OVERLAP_EXCEPTIONS,
@@ -34,6 +34,7 @@ from .services import (
     lock_appointment_and_veterinarians,
     lock_veterinarians,
     reject_expected_state_on_create,
+    reject_if_timezone_changed,
     reject_if_veterinarian_absent,
     retry_on_vet_lock_race,
 )
@@ -125,6 +126,10 @@ class AppointmentListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
         vet = serializer.validated_data.get('veterinarian')
         try:
             with transaction.atomic():
+                # ADR p70 D1: orden organización (`FOR SHARE`) → veterinario, el
+                # mismo de `validate_creation`. Tomarla aquí primero evita que un
+                # cambio de zona y esta creación se esperen en sentidos opuestos.
+                share_lock_organization(org.pk)
                 # INV-D: serializar por veterinario ANTES de escribir. Sin esto,
                 # dos creaciones al mismo hueco hacen deadlock comprobando la
                 # exclusión y el perdedor se lleva un 500 en vez de slot_taken.
@@ -192,10 +197,19 @@ class AppointmentDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.Retr
                     # hay DOS veterinarios en juego; `lock_veterinarians` los
                     # toma por PK, así que dos PATCH cruzados (A→B y B→A) los
                     # piden en la misma secuencia y no hacen ABBA.
+                    # ADR p70 D1: reagendar calcula instantes con la zona, así
+                    # que la lee de la organización tomada con `FOR SHARE`, no
+                    # de la cargada con la sesión. Va antes que los
+                    # veterinarios: orden organización → veterinario → cita.
+                    locked_org = share_lock_organization(org.pk)
                     locked = lock_appointment_and_veterinarians(
                         instance, org.pk, requested_vet,
                     )
-                    serializer = self.get_serializer(locked, data=request.data, partial=partial)
+                    serializer = self.get_serializer(
+                        locked, data=request.data, partial=partial,
+                        context={**self.get_serializer_context(),
+                                 'locked_organization': locked_org},
+                    )
                     serializer.is_valid(raise_exception=True)
                     self.perform_update(serializer)
             except NO_OVERLAP_EXCEPTIONS as exc:
@@ -330,6 +344,13 @@ def update_status(request, pk):
                 # desde `appointment` (snapshot pre-atomic tomado por
                 # `resolve_public_id` antes de RBAC y de todo lo demás — ver
                 # `lock_appointment_and_veterinarians`).
+                # ADR p70 D1 (opción c): reactivar devuelve la cita al conjunto
+                # que bloquea el cambio de zona y compara su zona con la
+                # vigente. Por eso, solo hacia `scheduled`, toma antes la
+                # organización con `FOR SHARE`: orden organización →
+                # veterinario → cita, el mismo de alta y edición.
+                locked_org = (share_lock_organization(appointment.organization_id)
+                              if new_status == 'scheduled' else None)
                 locked = lock_appointment_and_veterinarians(
                     appointment, appointment.organization_id,
                 )
@@ -367,12 +388,15 @@ def update_status(request, pk):
                             })
 
                 if new_status == 'scheduled' and from_status in ('canceled', 'no_show'):
-                    today = org_today_local(request.user.organization)
+                    today = org_today_local(locked_org)
                     if locked.date < today:
                         return Response(
                             {'error': 'La fecha original ya pasó. Crea una nueva cita.'},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
+                    # ADR p70 D1, opción c: sus instantes se calcularon con
+                    # otra zona → 409 y la cita sigue cancelada/no presentada.
+                    reject_if_timezone_changed(locked, locked_org)
                     # INV-D — reactivación (§9.15, comportamiento APROBADO). Esta
                     # transición devuelve la cita al predicado de la restricción:
                     # si el hueco se reasignó mientras estaba cancelada, la base
@@ -392,8 +416,9 @@ def update_status(request, pk):
                     locked.cancellation_reason = cancellation_reason
                     update_fields.append('cancellation_reason')
 
-                # Toggle: auto_create_medical_record — debe ejecutarse ANTES de save()
-                # para que el signal create_draft_invoice_on_done encuentre el MR y lo linkee.
+                # Toggle: auto_create_medical_record — al completar la cita sin
+                # consulta, abre una vacía para llenarla después. No crea cobros:
+                # el Checkout nace al cerrar la consulta (ADR p62).
                 if new_status == 'done':
                     if get_org_setting(locked.organization, SETTING_AUTO_MEDICAL_RECORD):
                         from apps.medical_records.models import MedicalRecord
@@ -694,6 +719,9 @@ def create_with_patient(request):
                 name=owner_name,
                 require_new=require_new_owner,
             )
+            # ADR p70 D1: organización (`FOR SHARE`) antes que veterinario,
+            # el orden de `validate_creation`.
+            share_lock_organization(org.pk)
             # INV-D: serializar por veterinario antes de crear nada. Sigue
             # dentro del atomic, así que el rollback por cupo tampoco deja
             # Owner/Pet huérfanos.
@@ -788,23 +816,6 @@ def walk_in(request):
         # Keep message generic for security but clear enough for tests
         raise PermissionDenied('El veterinario asignado no tiene permiso para crear citas walk-in.')
 
-    now_local = org_now_local(org)
-    today = now_local.date()
-    start_time = now_local.time().replace(second=0, microsecond=0)
-    end_local = now_local + timedelta(minutes=30)
-    # Walk-in cerca de medianoche: si los 30 min nominales cruzan al día
-    # siguiente, end_time (00:0X) quedaría MENOR que start_time y violaría el
-    # CHECK appointment_end_after_start (500), además de un end_datetime ~24h
-    # antes del start. El schema es date + start/end del mismo día → se recorta
-    # al fin del día; la duración es nominal, la consulta real puede continuar.
-    if end_local.date() != today:
-        end_time = dt_time(23, 59, 59)
-    else:
-        end_time = end_local.time().replace(second=0, microsecond=0)
-
-    start_utc = local_date_time_to_utc(org, today, start_time)
-    end_utc = local_date_time_to_utc(org, today, end_time)
-
     # INV-D SIN EXCEPCIÓN (§9.14, comportamiento APROBADO): la atención sin
     # cita también reserva al veterinario. Si tiene una cita activa solapada, la
     # restricción rechaza, NO se crea nada y recepción escoge alternativa (otro
@@ -813,6 +824,11 @@ def walk_in(request):
     # múltiples recursos son una feature separada con su propio ADR.
     try:
         with transaction.atomic():
+            # ADR p70 D1: primero la organización con `FOR SHARE` (mismo orden
+            # que `validate_creation`: organización → veterinario). La zona se
+            # lee de esa fila bloqueada, no de la sesión: un cambio de zona en
+            # curso hace esperar aquí y se calcula con la nueva.
+            locked_org = share_lock_organization(org.pk)
             # Lock en la fila del vet: serializa walk-ins concurrentes del mismo
             # veterinario (ya existía) Y, desde INV-D, también contra las demás
             # vías de escritura de agenda. Ahora pasa por el helper compartido
@@ -830,6 +846,23 @@ def walk_in(request):
                 serializer = AppointmentSerializer(existing, context={'request': request})
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
+            now_local = org_now_local(locked_org)
+            today = now_local.date()
+            start_time = now_local.time().replace(second=0, microsecond=0)
+            end_local = now_local + timedelta(minutes=30)
+            # Walk-in cerca de medianoche: si los 30 min nominales cruzan al día
+            # siguiente, end_time (00:0X) quedaría MENOR que start_time y violaría
+            # el CHECK appointment_end_after_start (500), además de un
+            # end_datetime ~24h antes del start. El schema es date + start/end del
+            # mismo día → se recorta al fin del día; la duración es nominal, la
+            # consulta real puede continuar.
+            if end_local.date() != today:
+                end_time = dt_time(23, 59, 59)
+            else:
+                end_time = end_local.time().replace(second=0, microsecond=0)
+            start_utc = local_date_time_to_utc(locked_org, today, start_time)
+            end_utc = local_date_time_to_utc(locked_org, today, end_time)
+
             # ADR p67: un veterinario ausente hoy no recibe atenciones sin cita.
             reject_if_veterinarian_absent(org.pk, vet.pk, today)
 
@@ -842,7 +875,7 @@ def walk_in(request):
                 end_time=end_time,
                 start_datetime=start_utc,
                 end_datetime=end_utc,
-                timezone_at_creation=str(get_context_timezone(org)),
+                timezone_at_creation=str(get_context_timezone(locked_org)),
                 reason=reason,
                 category=category,
                 notes=notes,
@@ -857,6 +890,44 @@ def walk_in(request):
 
     serializer = AppointmentSerializer(appointment, context={'request': request})
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+# ── Configuración que lee la agenda (ADR p70, plan F2.2/F2.3) ───────────────
+# Lectura acotada bajo `appointment.list`: quien ve la agenda (VET, ASSISTANT)
+# no tiene `organization.retrieve`, y no hace falta dárselo para pintar el
+# horario. Solo lo que la agenda usa; nada del perfil de la clínica.
+
+AGENDA_SETTINGS = (
+    'default_appointment_duration_minutes',
+    'show_status_change_history',
+    'allow_anonymous_walkin',
+)
+
+
+@api_view(['GET'])
+@permission_classes([make_permission("appointment.list")])
+def agenda_config(request):
+    """GET /api/appointments/agenda-config/ — horario semanal, cierres vigentes
+    que no han terminado y los ajustes que usa la agenda."""
+    org = request.user.organization
+    if not org:
+        raise PermissionDenied("User has no organization assigned")
+    from apps.organizations.models import OrganizationSettings
+    from apps.organizations.serializers import (
+        AgendaClosureSerializer, OrganizationScheduleItemSerializer,
+    )
+    from apps.organizations.services import active_closures
+    from apps.organizations.utils import DEFAULT_ORG_SETTINGS, ensure_schedule_integrity
+    closures = (active_closures(org.pk).filter(end_date__gte=org_today_local(org))
+                .order_by('start_date', 'pk'))
+    # Se lee de la base, no de `org.settings` (relación cacheada en la instancia).
+    stored = (OrganizationSettings.objects.filter(organization=org)
+              .values(*AGENDA_SETTINGS).first()) or {}
+    return Response({
+        'schedule': OrganizationScheduleItemSerializer(ensure_schedule_integrity(org), many=True).data,
+        'closures': AgendaClosureSerializer(closures, many=True).data,
+        'settings': {key: stored.get(key, DEFAULT_ORG_SETTINGS[key]) for key in AGENDA_SETTINGS},
+    })
 
 
 # ── Dashboard status-breakdown ──────────────────────────────────────────────

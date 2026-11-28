@@ -661,7 +661,16 @@ class ServiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
     resource_name = "service"
 
     def get_queryset(self):
-        queryset = Service.objects.for_organization(self.request.user.organization)
+        org = self.request.user.organization
+        # ADR p70 F1.7: Configuración pide también los inactivos (`include_inactive`)
+        # para poder reactivarlos. Cobros, consulta y el agente siguen viendo
+        # solo los activos (el gestor por defecto los excluye).
+        if self.request.query_params.get('include_inactive') == 'true':
+            if org is None:
+                raise ValueError("Organization is required for Service queries")
+            queryset = Service.all_objects.filter(organization=org)
+        else:
+            queryset = Service.objects.for_organization(org)
         active_only = self.request.query_params.get('active')
         if active_only == 'true':
             queryset = queryset.filter(is_active=True)
@@ -671,7 +680,13 @@ class ServiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(organization=self.request.user.organization)
+        # ADR p70 D9: el catálogo se escribe por su servicio, que deja el evento
+        # del historial de Configuración.
+        from .catalog_services import create_service
+        serializer.instance = create_service(
+            actor=self.request.user, organization=self.request.user.organization,
+            data=serializer.validated_data,
+        )
 
 
 class ServiceDetailView(PublicIdLookupMixin, BillingOrganizationMixin, generics.RetrieveUpdateDestroyAPIView):
@@ -681,7 +696,22 @@ class ServiceDetailView(PublicIdLookupMixin, BillingOrganizationMixin, generics.
     lookup_url_kwarg = 'pk'
 
     def get_queryset(self):
-        return Service.objects.for_organization(self.request.user.organization)
+        # F1.7: también los inactivos, para activarlos, editarlos o borrarlos.
+        org = self.request.user.organization
+        if org is None:
+            raise ValueError("Organization is required for Service queries")
+        return Service.all_objects.filter(organization=org)
+
+    def perform_update(self, serializer):
+        from .catalog_services import update_service
+        serializer.instance = update_service(
+            actor=self.request.user, service=serializer.instance,
+            data=serializer.validated_data,
+        )
+
+    def perform_destroy(self, instance):
+        from .catalog_services import delete_service
+        delete_service(actor=self.request.user, service=instance)
 
 
 class InvoiceListCreateView(BillingOrganizationMixin, generics.ListAPIView):

@@ -65,7 +65,12 @@ class MeView(APIView):
             "organization": org.id if org else None,
             "organization_public_id": str(org.public_id) if org else None,
             "organization_name": org.name if org else None,
+            # ADR p70 D5: nombre ante los clientes (comercial o legal), para el menú.
+            "organization_public_name": org.public_name if org else None,
             "organization_timezone": org.timezone if org else "America/Mexico_City",
+            # ADR p70 D4: solo para rotular precios («IVA 16 %»); los montos con
+            # IVA los calcula el backend, nunca el frontend.
+            "organization_tax_rate": str(org.tax_rate) if org else None,
             # Demo tenant: el frontend oculta "cambiar contraseña" e "importar
             # datos" para los usuarios de la org demo; el backend además bloquea
             # esos endpoints vía NotDemoAccount (no se confía en el frontend).

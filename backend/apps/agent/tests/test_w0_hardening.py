@@ -49,6 +49,7 @@ from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
 from apps.users.models import User
 from apps.users.services import ensure_agent_user
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 MX = ZoneInfo("America/Mexico_City")
 _WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
@@ -107,8 +108,7 @@ class AgentFixture(TestCase):
         self.conv = Conversation.objects.create(
             organization=self.org, channel_account=self.channel,
             contact=self.contact)
-        self.settings = AgentSettings.objects.create(
-            organization=self.org, enabled=True, agent_user=self.agent_user,
+        self.settings = create_enabled_agent_settings(self.org, agent_user=self.agent_user,
             default_veterinarian=self.vet)
 
     def executor(self):

@@ -10,12 +10,8 @@ DEFAULT_ORG_SETTINGS = {
     'require_open_cash_session': False,
     'allow_post_unpaid': False,
     'credit_default_days': 30,
-    'locale': 'es-MX',
     'currency_code': 'MXN',
     'default_appointment_duration_minutes': 30,
-    'appointment_buffer_minutes': 0,
-    'allow_emergency_walkin': False,
-    'week_starts_on': 1,
 }
 
 

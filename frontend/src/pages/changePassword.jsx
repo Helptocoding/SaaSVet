@@ -5,8 +5,8 @@ import { useAuth } from "../auth/authContext";
 /**
  * Dedicated /change-password page.
  *
- * Used both for normal self-change (linked from /config) and as the
- * forced-redirect target when ``must_change_password=true``. The
+ * Forced-redirect target when ``must_change_password=true`` (the normal
+ * self-change lives in /account, ADR p70 F1.2). The
  * ``MustChangePasswordGate`` permission on the backend lets only this
  * endpoint (and a tiny whitelist of auth/me routes) through while the
  * flag is set — so even a curl client cannot bypass the redirect.

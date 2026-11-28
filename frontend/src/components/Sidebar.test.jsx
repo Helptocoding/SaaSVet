@@ -47,6 +47,25 @@ describe("Sidebar — permisos por capacidad", () => {
         expect(screen.queryByRole("link", { name: /Configuración/ })).toBeNull();
     });
 
+    it("quien gestiona el catálogo de servicios también ve Configuración (ADR p70 D8)", () => {
+        withPerms("ASSISTANT", ["service.update"]);
+        renderSidebar();
+        expect(screen.getByRole("link", { name: /Configuración/ })).toBeInTheDocument();
+    });
+
+    it("el encabezado lleva el nombre público de la clínica (ADR p70 D5)", () => {
+        withPerms("VET", []);
+        auth.user = { ...auth.user, organization_name: "Servicios Vet SA", organization_public_name: "Clínica Luna" };
+        renderSidebar();
+        expect(screen.getByText("Clínica Luna")).toBeInTheDocument();
+        expect(screen.queryByText("Servicios Vet SA")).toBeNull();
+    });
+
+    it("todos llegan a Mi cuenta desde su bloque de usuario", () => {
+        renderSidebar();
+        expect(screen.getByRole("link", { name: "Mi cuenta" })).toHaveAttribute("href", "/account");
+    });
+
     it("sin capacidades de administración no hay sección Admin", () => {
         renderSidebar();
         expect(screen.queryByText("Admin")).toBeNull();

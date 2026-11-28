@@ -113,6 +113,8 @@
   flex-direction: column;
   gap: 16px;
 }
+/* Dos apartados seguidos (Horario y Cierres) */
+.section + .section { margin-top: 32px; }
 
 .sectionHead {
   display: flex;
@@ -270,6 +272,16 @@
   margin: 4px 0 0;
 }
 
+/* Valor de solo lectura en una fila de ajuste (p. ej. el IVA, ADR p70 D3). */
+.readonlyValue {
+  margin: 0;
+  padding-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--p-text);
+  font-variant-numeric: tabular-nums;
+}
+
 .settingControl {
   min-width: 0;
   max-width: 420px;
@@ -396,6 +408,7 @@
 .scheduleTable tbody tr:last-child .scheduleTd { border-bottom: none; }
 
 .scheduleRowClosed .scheduleDayName { color: var(--p-text-3); }
+.scheduleRowError .scheduleDayName { color: var(--c-danger-text); }
 
 .scheduleDayName {
   font-weight: 600;
@@ -577,5 +590,112 @@
   .sidebarItemActive, .sidebarItemActive:hover { background: var(--p-accent); color: var(--c-on-primary); }
   .content { max-width: 100%; }
   .fieldGrid { grid-template-columns: 1fr; }
-  .scheduleTh:nth-child(n+5), .scheduleTd:nth-child(n+5) { display: none; }
+  /* Plan F1.3 (C15): un día por bloque, cada campo con su rótulo; antes se
+     ocultaban las columnas del descanso y no se podía editar. */
+  .scheduleTable thead { display: none; }
+  .scheduleTable, .scheduleTable tbody, .scheduleTable tr { display: block; }
+  .scheduleTable tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--p-border);
+  }
+  .scheduleTable tbody tr:last-child { border-bottom: none; }
+  .scheduleTd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0;
+    border-bottom: none;
+  }
+  .scheduleTd::before {
+    content: attr(data-label);
+    font-size: 12px;
+    color: var(--p-text-3);
+  }
+  .scheduleTd:first-child { grid-column: 1 / -1; flex-direction: column; align-items: flex-start; }
+  .scheduleTd:first-child::before { content: none; }
+}
+
+/* ── Historial de cambios (ADR p70 D9) ── */
+.historyList { list-style: none; margin: 0; padding: 0; }
+.historyItem { padding: 14px 16px; }
+.historyItem + .historyItem { border-top: 1px solid var(--p-border); }
+.historyTitle { font-size: 13.5px; font-weight: 600; color: var(--p-text); margin: 0; }
+.historyMeta { font-size: 12px; color: var(--p-text-3); margin: 2px 0 0; }
+.historyDetails { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.historyDetail { font-size: 12.5px; color: var(--p-text-2); overflow-wrap: anywhere; }
+.historyFooter { padding: 10px 16px; border-top: 1px solid var(--p-border); }
+
+/* ── Estados de guardado (plan F1.3) ── */
+.fieldError { margin: 6px 0 0; font-size: 12px; color: var(--c-danger-text); }
+.unsavedBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--c-warning-border);
+  border-radius: var(--r-lg);
+  background: var(--c-warning-bg);
+  color: var(--c-warning-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+.dirtyDot {
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--c-warning-text);
+  flex-shrink: 0;
+}
+/* Ajuste numérico bajo los interruptores: plazo de crédito, duración de una cita. */
+.numberSetting { padding: 14px 16px; border-top: 1px solid var(--c-border); }
+.numberSettingLabel { display: block; margin: 0 0 6px; font-size: 13px; font-weight: 600; }
+.numberSettingDesc { margin: -2px 0 8px; font-size: 12.5px; color: var(--c-text-3); }
+.numberSettingRow { display: flex; align-items: center; gap: 8px; }
+.numberSettingInput { width: 90px; }
+.numberSettingUnit { font-size: 13px; color: var(--c-text-3); }
+.scheduleDayError { margin: 4px 0 0; font-size: 12px; color: var(--c-danger-text); }
+
+/* ── Servicios: ciclo de vida (plan F1.7) ── */
+.serviceFilter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--p-border);
+  font-size: 13px;
+  color: var(--p-text-2);
+  cursor: pointer;
+}
+.serviceDescription { min-height: 60px; }
+.modalAction { flex: 1; }
+
+/* ── Cierres excepcionales (ADR p70 D6, plan F2.1) ── */
+.closureItem { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.closureEmpty { margin: 0; padding: 14px 16px; font-size: 13px; color: var(--p-text-3); }
+.closureForm { padding: 14px 16px; border-bottom: 1px solid var(--p-border); }
+.closureFormRow { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(200px, 2fr); gap: 12px; }
+.closureFormRow :global(.form-group) { margin-bottom: 0; }
+.closureFormActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.closureNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--c-warning-border);
+  background: var(--c-warning-bg);
+  color: var(--c-warning-text);
+  font-size: 13px;
+}
+.closureNoticeActions { display: flex; gap: 4px; flex-shrink: 0; }
+@media (max-width: 720px) {
+  .closureFormRow { grid-template-columns: 1fr; }
+  .closureNotice { flex-direction: column; align-items: flex-start; }
 }

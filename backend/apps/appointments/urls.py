@@ -2,11 +2,13 @@ from django.urls import path
 from .views import (
     AppointmentListCreateView, AppointmentDetailView, update_status, walk_in,
     appointment_history, assign_patient, create_with_patient, status_breakdown, reassign,
+    agenda_config,
 )
 
 urlpatterns = [
     path("", AppointmentListCreateView.as_view()),
     path("status-breakdown/", status_breakdown),
+    path("agenda-config/", agenda_config),
     path("create-with-patient/", create_with_patient),
     path("walk-in/", walk_in),
     path("reassign/", reassign),

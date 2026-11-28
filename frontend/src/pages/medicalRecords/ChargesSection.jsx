@@ -44,7 +44,7 @@ const ChargesSection = forwardRef(function ChargesSection({
     >
       <div className={styles.cardHead}>
         <h2 className={styles.cardTitle}>Cobros</h2>
-        <p className={styles.cardDesc}>Productos, servicios y total a cobrar</p>
+        <p className={styles.cardDesc}>Productos y servicios, sin IVA: se suma al cobrar</p>
       </div>
 
       {!recordReady && !disabled && (
@@ -185,7 +185,7 @@ const ChargesSection = forwardRef(function ChargesSection({
                     <th>Producto</th>
                     <th>Cant.</th>
                     <th>Modo</th>
-                    <th>Subtotal</th>
+                    <th>Subtotal sin IVA</th>
                     <th aria-label="acciones" />
                   </tr>
                 </thead>
@@ -302,7 +302,7 @@ const ChargesSection = forwardRef(function ChargesSection({
                         <th>Servicio</th>
                         <th>Cant.</th>
                         <th>P. unit.</th>
-                        <th>Subtotal</th>
+                        <th>Subtotal sin IVA</th>
                         <th aria-label="acciones" />
                       </tr>
                     </thead>

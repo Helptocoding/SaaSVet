@@ -230,11 +230,11 @@ negocio dentro del SaaS** para cada dominio.
 ### Acción: Configurar toggles operativos
 
 **Requiere**
-- Un `ADMIN` autenticado.
-- Un toggle válido entre los disponibles: `auto_create_medical_record`, `require_confirmation_before_start`, `allow_anonymous_walkin`, `show_status_change_history`, `require_open_cash_session` o `allow_post_unpaid`.
+- Permiso `organization.update` (ADMIN por defecto; delegable, ADR p69).
+- Un toggle válido entre los disponibles: `auto_create_medical_record`, `require_confirmation_before_start`, `allow_anonymous_walkin`, `show_status_change_history`, `require_open_cash_session`, `allow_post_unpaid` o `credit_default_days`. Los retirados (`locale`, `appointment_buffer_minutes`, `allow_emergency_walkin`, `week_starts_on`) dan `400` (ADR p70 D5).
 
 **Resultado**
-- Se actualiza `OrganizationSettings` para la organización.
+- Se actualizan en `OrganizationSettings` solo los ajustes que cambiaron, y se registra un evento `rules_updated` en el historial de Configuración (ADR p70 D9). Sin cambios no se escribe nada.
 
 **Efectos cruzados**
 - `allow_post_unpaid=True` → permite emitir una obligación pendiente con vencimiento y evidencia de aceptación; no habilita pagos parciales.
@@ -244,6 +244,25 @@ negocio dentro del SaaS** para cada dominio.
 - `require_open_cash_session=True` → `pay_checkout`, `pay_invoice`, refunds y reversals de efectivo exigen que el actor tenga una caja abierta.
 
 **Defaults actuales** — todos en `False`, excepto `show_status_change_history=True`. Esto privilegia un flujo de trabajo manual y explícito.
+
+---
+
+### Acción: Registrar o cancelar un cierre excepcional (ADR p70 D6)
+
+**Requiere**
+- Permiso `organization.update`.
+- Días completos (fechas locales): el último no antes del primero, no terminado antes de hoy, máximo 366 días, con motivo; sin cruzarse con otro cierre vigente (`409 closure_overlap`).
+
+**Resultado**
+- `OrganizationClosure` vigente y evento `closure_added` en el historial de Configuración. La respuesta trae `affected_appointments`: las citas por atender esos días, que **no se mueven**.
+- Cancelar deja `cancelled_at/by` y el evento `closure_cancelled`; no borra.
+
+**Bloquea**
+- Mientras esté vigente: que el agente de WhatsApp ofrezca, agende o reagende esos días (`schedule_closed`); si el cierre es hoy, el agente da la clínica por cerrada.
+- Al personal **no** lo bloquea: puede atender una urgencia un día cerrado.
+
+**Módulos involucrados**
+`organizations`, `appointments`, `agent`.
 
 ---
 
@@ -506,6 +525,9 @@ existe bandera de forzado**, y nada se desplaza automáticamente.
 
 ### Acción: Cambiar estado (PATCH `/status/`)
 
+Es la **única vía** para cambiar el estado de una cita existente: en el `PATCH` de detalle `status`
+es de solo lectura y se ignora (decisión del PO, 2026-11-27).
+
 **Requiere**
 - Permiso `appointment.update`.
 - Una transición válida según la máquina de estados.
@@ -530,6 +552,7 @@ existe bandera de forzado**, y nada se desplaza automáticamente.
 - Transiciones inválidas → 400 con `error` descriptivo.
 - `done` es terminal: no admite ninguna transición posterior.
 - `expected_state` desfasado → `409 appointment_changed` con `current`, sin transición y **sin** `AppointmentStatusChange`.
+- **Reactivación de una cita cuya zona (`timezone_at_creation`) ya no es la de la clínica → `409 appointment_timezone_changed`** (ADR p70 D1, opción c del PO). La cita sigue en su estado terminal; se crea una nueva. No se recalcula nada.
 - **Reactivación `canceled|no_show → scheduled` sobre un hueco ya reasignado → `400 slot_taken`** (cambio de comportamiento aprobado, ADR p57 / decisión §9.15). La cita **sigue** en su estado terminal y hay que programarla de nuevo; nada se desplaza ni se reubica automáticamente. Es coherente con el guard de fecha pasada que ya vivía en esta transición.
 
 **Módulos involucrados**
@@ -1328,7 +1351,9 @@ Todos los eventos se emiten a stdout en formato JSON (Docker stdout — `docker 
 - `Payment` / `RefundPayment` / `RefundReversal` / `CreditNote`: append-only (son la auditoría).
 - `ExternalPrescriptionAttestation`: append-only.
 - `CashMovement`: append-only (ADR p39 — corrección = contra-movimiento).
-- `OrganizationTimezoneAudit`: cada cambio de timezone de la org.
+- `OrganizationConfigEvent`: cada cambio guardado de Configuración (datos de la clínica, zona
+  horaria, reglas, horario, servicios), con quién y qué cambió (ADR p70 D9). Absorbió a
+  `OrganizationTimezoneAudit`.
 ## Operación REGISTER_PET B8E (2026-09-25)
 
 El alta autónoma individual usa exclusivamente una ConversationOperation autorizada

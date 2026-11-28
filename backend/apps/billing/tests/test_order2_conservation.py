@@ -5,7 +5,7 @@ from django.test import TestCase
 from apps.billing.models import Checkout, Invoice, InvoiceAuditLog
 from apps.inventory.models import Product, Presentation, StockMovement
 from apps.medical_records.models import MedicalRecord
-from apps.organizations.models import Organization, OrganizationTimezoneAudit
+from apps.organizations.models import Organization, OrganizationConfigEvent
 from apps.patients.models import Owner, Pet
 from apps.prescriptions.models import Prescription
 
@@ -55,13 +55,15 @@ class ConservationTests(TestCase):
             Product.all_objects.filter(pk=product.pk).delete()
         self.assertTrue(StockMovement.all_objects.filter(pk=movement.pk).exists())
 
-    def test_timezone_audit_protects_tenant(self):
-        event = OrganizationTimezoneAudit.objects.create(
-            organization=self.org, old_timezone='UTC', new_timezone='America/Mexico_City',
+    def test_config_history_protects_tenant(self):
+        # ADR p70 D9: el historial de Configuración absorbió al de la zona horaria.
+        event = OrganizationConfigEvent.objects.create(
+            organization=self.org, kind=OrganizationConfigEvent.KIND_TIMEZONE_CHANGED,
+            changes={'timezone': ['UTC', 'America/Mexico_City']},
         )
         with self.assertRaises(ProtectedError):
             self.org.delete()
-        self.assertTrue(OrganizationTimezoneAudit.objects.filter(pk=event.pk).exists())
+        self.assertTrue(OrganizationConfigEvent.objects.filter(pk=event.pk).exists())
 
     def test_invoice_and_checkout_cross_tenant_bypass_and_parent_reparent_rejected(self):
         other = Organization.objects.create(name='Otra clínica')

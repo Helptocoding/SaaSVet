@@ -866,6 +866,14 @@ class Command(BaseCommand):
         Presentation.all_objects.filter(**f).delete()
         Product.all_objects.filter(**f).delete()
         Service.all_objects.filter(**f).delete()
+        # ADR p70 D9: el historial de Configuración de la demo se reinicia con
+        # ella. Es de solo inserción por modelo; el borrado por queryset es la
+        # única vía, y solo aquí.
+        from apps.organizations.models import OrganizationClosure, OrganizationConfigEvent
+        OrganizationConfigEvent.objects.filter(**f).delete()
+        # ADR p70 D6: los cierres de la demo también se reinician (PROTECT sobre
+        # los usuarios: antes de borrarlos en el modo completo).
+        OrganizationClosure.objects.filter(**f).delete()
 
         # Pets/Owners: en reset conservar los genéricos; en delete borrar todo.
         Pet.all_objects.filter(organization=org, is_generic=False).delete()
@@ -878,8 +886,7 @@ class Command(BaseCommand):
             User.objects.filter(organization=org).delete()
             from apps.core.models import Role
             Role.objects.filter(organization=org).delete()
-            from apps.organizations.models import OrganizationTimezoneAudit, OrganizationSettings
-            OrganizationTimezoneAudit.objects.filter(organization=org).delete()
+            from apps.organizations.models import OrganizationSettings
             OrganizationSettings.objects.filter(organization=org).delete()
             org.delete()
 

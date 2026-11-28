@@ -15,6 +15,7 @@ from unittest.mock import patch
 from unittest.mock import Mock
 from types import SimpleNamespace
 from . import test_b3_durable as b3_fixtures
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 class B6ContractTests(TestCase):
@@ -242,7 +243,7 @@ class B6BindingTests(TestCase):
     def test_b3_real_planner_correction_and_side_question(self):
         from apps.agent import planner
         from apps.agent.llm import LLMResult, StubLLMClient
-        settings = AgentSettings.objects.create(organization=self.org, enabled=True)
+        settings = create_enabled_agent_settings(self.org)
         for text in ('Quiero una cita para Luna el viernes', '¿Cuánto cuesta?', 'No es Luna'):
             self.inbound(text)
             witness = self.claim()
@@ -390,7 +391,7 @@ class B6BindingTests(TestCase):
         self.start()
         old_context = self.ctx
         old = binding.snapshot(self.goal)
-        settings = AgentSettings.objects.create(organization=self.org, enabled=True)
+        settings = create_enabled_agent_settings(self.org)
         llm = StubLLMClient(scripted=[LLMResult(kind='tool_call', tool_name='get_vaccine_status', tool_args={})])
         def stale(*args, **kwargs):
             self.turn('Mejor Max')
@@ -442,7 +443,7 @@ class B6BindingTests(TestCase):
     def test_race_04_safety_precedes_correction(self):
         self.start()
         context = self.context('Mejor Max pero ahora no puede respirar')
-        settings = AgentSettings.objects.create(organization=self.org, enabled=True)
+        settings = create_enabled_agent_settings(self.org)
         with patch('apps.agent.matter_resolution.process_turn', side_effect=AssertionError('must not run')):
             result = policy.evaluate(self.conv, turn_context=context, agent_settings=settings)
         self.assertEqual(result.kind, policy.ESCALATE)
@@ -452,7 +453,7 @@ class B6BindingTests(TestCase):
         self.conv.state = Conversation.STATE_HUMAN_ACTIVE
         self.conv.save(update_fields=['state'])
         context = self.context('Mejor Max')
-        settings = AgentSettings.objects.create(organization=self.org, enabled=True)
+        settings = create_enabled_agent_settings(self.org)
         with patch('apps.agent.matter_resolution.process_turn', side_effect=AssertionError('must not run')):
             result = policy.evaluate(self.conv, turn_context=context, agent_settings=settings)
         self.assertEqual(result.kind, policy.SILENT)

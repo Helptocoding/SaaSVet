@@ -380,6 +380,60 @@ en ventana de deploy y re-auditar. PostgreSQL no admite exclusiones `NOT VALID`:
 con un solape histórico vivo, la migración falla. El comando queda como red de
 seguridad permanente.
 
+## Zona horaria y bloqueos (ADR p70 D1)
+
+Una cita guarda fecha y hora local (`date`, `start_time`, `end_time`) y el instante UTC
+calculado con la zona de la clínica (`start_datetime`, `end_datetime`, `timezone_at_creation`).
+Por eso **toda escritura que calcula ese instante toma antes la fila de la organización con
+`FOR SHARE`** (`creation.share_lock_organization`) y lee la zona **de esa fila**, nunca de la
+organización cargada con la sesión. El cambio de zona
+(`organizations.services.change_organization_timezone`) toma la misma fila con
+`FOR NO KEY UPDATE` y, si hay citas por atender, responde `409 timezone_change_blocked`
+([`organizations.md`](organizations.md)). Así, una cita y un cambio de zona simultáneos quedan
+serializados: la cita usa la zona nueva, o el cambio la ve y se rechaza.
+
+| Vía | Bloqueo de la organización |
+|---|---|
+| Alta de recepción (`POST /appointments/`) y registro rápido | en la vista, antes del veterinario; `validate_creation` lo vuelve a tomar |
+| Atención sin cita | en la vista, antes del veterinario; la hora local y los instantes se calculan **dentro** de la transacción (antes se calculaban fuera, con la organización de la sesión) |
+| Edición (`PATCH` de detalle) | en la vista, antes del veterinario; el serializer recibe la organización bloqueada en el contexto (`locked_organization`) para el pre-chequeo y para `set_schedule_fields` (antes usaba la de la sesión) |
+| Reactivación (`/status/`, `canceled\|no_show → scheduled`) | en la vista, solo cuando el destino es `scheduled`, antes del veterinario; compara la zona de la cita con la de esa fila |
+| Comandos del agente (B8B/B8C) | `validate_creation` / `validate_mutation`, que además comparan la zona esperada |
+
+**Orden de bloqueo: organización (`FOR SHARE`) → veterinario(s) → cita.** Es el de
+`validate_creation`. Tomar el veterinario primero dejaría un ciclo posible con el cambio de zona,
+cuyo registro de auditoría referencia al usuario que lo hace (`FOR KEY SHARE` sobre su fila, que
+el bloqueo del veterinario excluye).
+
+**Reactivar con otra zona → `409 appointment_timezone_changed`** (decisión del PO del
+2026-11-27, opción c del ADR p70 D1). Una cita cancelada o no presentada no bloquea el cambio de
+zona, y reactivarla reutiliza sus instantes guardados. Si su `timezone_at_creation` ya no es la
+zona vigente, se rechaza y la cita sigue como estaba, sin `AppointmentStatusChange`. No se
+recalcula nada: el recálculo sigue en espera. Es el mismo predicado que el reagendado del agente
+(`validate_mutation`): una fila sin instantes (legacy) no tiene nada que desalinear. El mensaje
+pide crear una cita nueva. Orden de las comprobaciones al reactivar: fecha pasada → zona →
+ausencia del veterinario → hueco ocupado.
+
+El resto de transiciones de `/status/`, `DELETE` y `assign-patient` no calculan instantes ni
+devuelven una cita al conjunto que bloquea el cambio de zona, así que no toman la organización.
+
+**El estado de una cita existente solo cambia por `PATCH /status/`** (decisión del PO,
+2026-11-27). En el `PATCH` de detalle `status` es de **solo lectura** (`AppointmentSerializer.get_fields`):
+si se envía se ignora, como cualquier campo de solo lectura de DRF, y la respuesta trae el estado
+real. Antes era escribible y esquivaba `ALLOWED_TRANSITIONS`, `AppointmentStatusChange` y las
+comprobaciones de cada transición: reactivaba una cancelada o reabría una `done`. La interfaz
+envía el estado que la cita ya tiene, así que no cambia nada para ella. El alta (`POST`) sigue
+aceptando `status`.
+
+**El `PATCH` de detalle solo recalcula el instante si mueve la cita** (decisión del PO,
+2026-11-27, opción A): al cambiar `date`, `start_time` o `end_time`, o si la fila aún no tiene
+instantes (legacy). Editar notas, motivo, categoría o veterinario conserva `start_datetime`,
+`end_datetime` y `timezone_at_creation`, y el pre-chequeo de solape usa esos instantes guardados.
+Antes cualquier edición los recalculaba con la zona vigente: en una cita cancelada tras un cambio
+de zona eso aplicaba el modo «corregir» (en espera) y después `/status/` ya no rechazaba la
+reactivación. Mover una cancelada a otra fecha u hora sí calcula con la zona vigente: es una hora
+nueva y queda alineada.
+
 ## Ausencias y reasignación (ADR p67)
 
 **Una ausencia vigente del veterinario bloquea** (decisión del PO) crear, mover, reasignar a,
@@ -410,6 +464,20 @@ reasignación. El origen puede estar inactivo; el destino debe ser un clínico a
 clínica (`400 target_public_id`). `400`: sin `expected_state` en un elemento
 (`precondition_required`), destino igual al origen, lista vacía, repetidos o más de 100.
 Origen de otra clínica → `404`.
+
+## Cierres excepcionales de la clínica (ADR p70 D6, plan F2.1)
+
+Un cierre vigente (`OrganizationClosure`, ver `organizations.md`) **bloquea solo al agente**:
+`validate_creation(require_schedule=True)` y `validate_mutation` comprueban el horario con
+`creation.opening_windows(organization_id, day, row)`, que devuelve las franjas del día de la
+semana o **ninguna** si un cierre cubre ese día → `schedule_closed`. La fila del horario se toma
+antes con `FOR SHARE` (`_share_rows`); registrar o cancelar un cierre la toma con `FOR UPDATE`,
+así que ambas operaciones se serializan.
+
+**Al personal no lo bloquea** (D6 a): alta, registro rápido, atención sin cita, edición y
+reactivación no miran los cierres, para poder atender una urgencia un día cerrado. Las citas que
+ya existían esos días no se mueven. La agenda los pinta de fondo y pide confirmación antes de
+agendar o mover una cita ahí (F2.2, ver abajo).
 
 ## Visibilidad
 
@@ -461,25 +529,57 @@ Ver ADR `2026-04-28-organization-settings-toggles.md`.
 | `auto_create_medical_record` | `False` | Al pasar a `done`, puede crear `MedicalRecord` vacio en estado `open` si la clinica lo habilita |
 | `require_confirmation_before_start` | `False` | Bloquea cualquier transición a `in_progress` si el estado previo no es `confirmed` |
 | `allow_anonymous_walkin` | `False` | Permite walk-in sin mascota; usa paciente genérico (`Pet.is_generic=True`) |
-| `allow_emergency_walkin` | `False` | Permite urgencias sin cita previa; toggle separado de `allow_anonymous_walkin` |
 | `show_status_change_history` | `True` | Controla visibilidad del panel de historial en la UI de detalle de cita |
 
 Los defaults actuales privilegian un flujo manual y explicito: completar la cita no crea automaticamente artefactos clinicos ni financieros salvo que la organizacion lo habilite.
 El fallback cuando no existe registro de settings está en `get_org_setting()` (`apps/organizations/utils.py`).
 
-## Duracion por defecto de slot en el formulario
+## Agenda del personal: horario, cierres y duración (ADR p70 D7, plan F2.2/F2.3)
 
-La duracion por defecto al crear una cita desde el formulario del calendario es el valor
-de `default_appointment_duration_minutes` en `OrganizationSettings` (default: **30 minutos**).
+`GET /api/appointments/agenda-config/` (`appointment.list`) devuelve lo que la agenda lee de la
+clínica:
 
-Este valor solo afecta citas nuevas; no modifica duraciones de citas existentes ni reorganiza slots.
-Se configura desde `/config` → Reglas operativas → "Duración predeterminada de cita".
+```json
+{ "schedule": [{"weekday": 1, "is_closed": false, "opens_at": "09:00:00", "closes_at": "18:00:00",
+                "has_break": false, "break_start": null, "break_end": null}, …],
+  "closures": [{"public_id": "uuid", "start_date": "2026-12-24", "end_date": "2026-12-25", "reason": "Navidad"}],
+  "settings": {"default_appointment_duration_minutes": 30, "show_status_change_history": true,
+               "allow_anonymous_walkin": false} }
+```
 
-- Hora inicio: la hora del slot seleccionado (en punto, ej: 10:00)
-- Hora fin: `default_appointment_duration_minutes` minutos despues (ej: 10:30), salvo en el ultimo slot del dia (20:00) donde se ajusta automaticamente
-- El backend acepta cualquier duracion siempre que `end_time > start_time`
+**Por qué existe (decisión del PO, 27-11-2026):** VET y ASSISTANT no tienen
+`organization.retrieve`, así que no pueden leer `/organizations/schedule/` ni
+`/organizations/settings/`, y los cierres exigen `organization.update`. Antes la agenda pedía los
+ajustes, recibía 403 y lo callaba: «historial de estados» y «atender sin registrar la mascota»
+salían apagados para ellos aunque la clínica los tuviera encendidos. Se eligió una **lectura
+acotada** en vez de ampliar los permisos de organización: solo horario semanal, cierres vigentes
+que no han terminado (sin autor) y esos tres ajustes; nada del perfil de la clínica. Solo lectura
+(otros métodos → 405).
 
-El walk-in tambien usa `default_appointment_duration_minutes` por defecto (comportamiento sin cambio).
+**Qué hace la agenda con eso:**
+
+- `businessHours` desde el horario (el descanso parte el día en dos franjas) y horas visibles de
+  una hora antes de la primera apertura a una hora después del último cierre, ampliadas para que
+  ninguna cita cargada quede fuera de la vista. Sin datos, 07:00–20:00 como antes.
+- Cierres como eventos de fondo, de las 00:00 del primer día a las 00:00 del siguiente al último.
+- **D7 (a): se advierte, no se bloquea.** Crear una cita, moverla desde «Editar» o arrastrarla
+  fuera del horario, en el descanso, en un día que no abre o en un cierre pide confirmación
+  («Agendarla/Moverla de todos modos»). Si no se confirma no se envía nada (el arrastre se
+  deshace). Editar sin cambiar fecha ni horas no pregunta. El backend no valida el horario para
+  el personal.
+- **Duración (F2.3):** la hora de fin de una cita nueva es la hora elegida más
+  `default_appointment_duration_minutes` (Configuración → Atención, 5–240 min), sin pasar de las
+  23:59. Antes era +30 fijo. Solo afecta citas nuevas; al editar se cambia a mano.
+- **Botones de hora del formulario (pedido del PO, 28-11):** las horas en punto en que ese día
+  atiende la clínica, sin el descanso. Si ese día no se atiende (día cerrado o cierre) o aún no hay
+  fecha, las de toda la semana, para poder agendar una urgencia con el aviso. La hora elegida
+  siempre aparece aunque quede fuera. Sin horario cargado, 7:00–19:00. Al abrir una cita sin hora
+  (botón «Nueva cita», clic en un día de la vista mensual) la hora inicial es la primera apertura
+  del día, no las 9:00 fijas.
+- **Media hora:** un clic en la casilla de las 10:30 crea la cita a las 10:30 (antes la etiqueta
+  decía 10:30 y la cita empezaba a las 10:00). Esa hora aparece como un botón más; elegir otro
+  vuelve a la hora en punto.
+- **Sin cambio:** el agente de WhatsApp y la atención sin cita siguen en 30 minutos.
 
 ## Relacion con otros modulos
 
@@ -537,6 +637,7 @@ Esto evita dos problemas:
 | `GET`    | `/api/appointments/<id>/history/` | Historial de cambios de estado |
 | `PATCH`  | `/api/appointments/<id>/assign-patient/` | Vincular paciente real a cita con paciente generico |
 | `POST`   | `/api/appointments/reassign/` | Reasignar en bloque citas por atender a otro veterinario (ADR p67) |
+| `GET`    | `/api/appointments/agenda-config/` | Horario, cierres y ajustes que usa la agenda (ADR p70, F2.2/F2.3) |
 
 ### Permisos RBAC de los nuevos endpoints
 
@@ -546,6 +647,7 @@ Esto evita dos problemas:
 | `GET <id>/history/` | `appointment.retrieve` |
 | `PATCH <id>/assign-patient/` | `appointment.update` |
 | `POST reassign/` | `appointment.update` (el agente no: B8A niega sus escrituras por API) |
+| `GET agenda-config/` | `appointment.list` |
 
 ### Filtros disponibles (GET /api/appointments/)
 

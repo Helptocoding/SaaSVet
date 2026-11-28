@@ -187,13 +187,13 @@ describe("FirstRunAssistant", () => {
     expect(screen.queryByText(/completa tus datos/i)).toBeNull();
   });
 
-  it("el CTA de clínica deep-linkea su sección de /config", async () => {
+  it("el CTA de clínica lleva a su apartado de /config por ruta", async () => {
     const user = userEvent.setup();
     activationImpl = A({ has_patients: true });
     render(<FirstRunAssistant />);
     await user.click(screen.getByRole("button", { name: /capturar datos de la clínica/i }));
-    expect(navigate).toHaveBeenCalledWith("/config", {
-      state: { fromOnboarding: true, section: "clinic" },
+    expect(navigate).toHaveBeenCalledWith("/config/clinic", {
+      state: { fromOnboarding: true },
     });
   });
 
@@ -202,8 +202,8 @@ describe("FirstRunAssistant", () => {
     activationImpl = A({ has_patients: true, has_clinic_contact: true });
     render(<FirstRunAssistant />);
     await user.click(screen.getByRole("button", { name: /configurar servicios/i }));
-    expect(navigate).toHaveBeenCalledWith("/config", {
-      state: { fromOnboarding: true, section: "services" },
+    expect(navigate).toHaveBeenCalledWith("/config/services", {
+      state: { fromOnboarding: true },
     });
   });
 

@@ -75,6 +75,13 @@ export const walkInAppointment = async (token, data) => {
     return res.data;
 };
 
+// ADR p70, plan F2.2/F2.3: horario, cierres y ajustes que usa la agenda. Bajo
+// `appointment.list` (VET y ASSISTANT no tienen `organization.retrieve`).
+export const getAgendaConfig = async () => {
+    const res = await api.get("appointments/agenda-config/");
+    return res.data;
+};
+
 export const getAppointmentHistory = async (id) => {
     const res = await api.get(`appointments/${id}/history/`);
     return res.data;

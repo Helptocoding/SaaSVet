@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/authContext";
+import { CONFIG_PERMS } from "../features/config/permissions";
 import { STAFF_MANAGEMENT_PERMS } from "../features/staff/permissions";
 import { Icon } from "./icons";
 import styles from "./AppShell.module.css";
@@ -82,7 +83,9 @@ const Sidebar = ({ onLogout, mobileOpen = false, onClose, onNavigate }) => {
 
     if (initializing) return null;
 
-    const canConfigure = Boolean(can?.("organization.update"));
+    // ADR p70 D8: Configuración la ve quien gestiona algo de ella (la clínica o
+    // el catálogo de servicios), no solo quien edita la clínica.
+    const canConfigure = Boolean(canAny?.(CONFIG_PERMS));
     // El operador de plataforma tiene `*.*`: ninguna capacidad lo distingue de
     // un ADMIN, así que su sección se decide por rol.
     const isPlatformOperator = user?.role === "ADMIN_SAAS";
@@ -124,7 +127,7 @@ const Sidebar = ({ onLogout, mobileOpen = false, onClose, onNavigate }) => {
                     <div className={styles.brandText}>
                         <div className={styles.brandName}>SaaslyVet</div>
                         <div className={styles.brandOrg}>
-                            {user?.organization_name || "Sistema"}
+                            {user?.organization_public_name || user?.organization_name || "Sistema"}
                         </div>
                     </div>
                     <button
@@ -180,14 +183,19 @@ const Sidebar = ({ onLogout, mobileOpen = false, onClose, onNavigate }) => {
 
             {/* User footer */}
             <div className={styles.userFooter}>
-                <div className={styles.userMeta}>
+                <Link
+                    to="/account"
+                    className={styles.userMeta}
+                    aria-label="Mi cuenta"
+                    onClick={() => { if (mobileOpen) onNavigate?.(); }}
+                >
                     <div className={styles.userName}>
                         {user?.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : user?.username}
                     </div>
                     <div className={styles.userRole}>
                         {ROLE_LABELS[user?.role] || user?.role}
                     </div>
-                </div>
+                </Link>
                 <button
                     onClick={onLogout}
                     className={styles.logout}

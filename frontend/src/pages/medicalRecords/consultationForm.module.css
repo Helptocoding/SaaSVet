@@ -1296,6 +1296,14 @@ textarea.control {
   font-variant-numeric: tabular-nums;
 }
 
+/* ADR p70 D4: el total de cargos no incluye IVA. */
+.resumenNote {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--c-text-3);
+  text-align: right;
+}
+
 /* ── Section title row ── */
 
 .secTitleRow {

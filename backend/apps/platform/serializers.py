@@ -22,6 +22,8 @@ from rest_framework import serializers
 
 from apps.core.sanitize import sanitize_text
 from apps.organizations.models import Organization
+from apps.organizations.services import TIMEZONE_NOT_SUPPORTED_MESSAGE
+from apps.organizations.timezones import DEFAULT_TIMEZONE, TIMEZONE_CODES
 
 
 User = get_user_model()
@@ -46,7 +48,7 @@ class ProvisionOrgSerializer(serializers.Serializer):
     timezone = serializers.CharField(
         max_length=64,
         required=False,
-        default='America/Mexico_City',
+        default=DEFAULT_TIMEZONE,
     )
     tax_rate = serializers.DecimalField(
         max_digits=5,
@@ -78,6 +80,12 @@ class ProvisionOrgSerializer(serializers.Serializer):
                 "Ya existe una organización con ese nombre."
             )
         return clean
+
+    def validate_timezone(self, value):
+        # ADR p70 D1: el mismo catálogo cerrado que Configuración.
+        if value not in TIMEZONE_CODES:
+            raise serializers.ValidationError(TIMEZONE_NOT_SUPPORTED_MESSAGE)
+        return value
 
     def validate_tax_rate(self, value):
         if value < Decimal('0') or value > Decimal('1'):

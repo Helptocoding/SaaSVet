@@ -188,6 +188,8 @@ el cuerpo HTTP completo. Para depurar usar siempre `console.error(apiError(err))
 - **Cliente ambiguo (409)**: `{code: 'owner_ambiguous', message, candidate_count: int}` (INV-C, ADR p57). Ese teléfono tiene **dos o más** expedientes y el sistema **no elige**. **No hay candidato en el cuerpo a propósito** — ofrecerlo sería sugerir la elección prohibida. La UI muestra que el dato está por ordenar y no ofrece ninguna acción de «continuar igual»; la salida es corregir los expedientes duplicados desde Clientes
 - **Caso de identidad (409)**: `{code, message}` con `code` ∈ `no_identity_case` · `verification_required` · `owner_changed` · `already_linked` (FLUJO-C, ADR p57 §5.5). Los produce la bandeja al **verificar** o **autorizar**. `verification_required` es el más frecuente y **no es un error del usuario**: falta registrar una verificación aprobada *de ese mismo caso y candidato* antes de poder vincular — por eso el botón «Autorizar vínculo» sale deshabilitado hasta que la haya
 - **Conflicto al liberar (409)**: `{code: 'release_conflict', reason, message}` (F3, ADR p57 §5.6). La conversación cambió mientras se liberaba. La bandeja **recarga el caso y vuelve a preguntar**; **nunca** reintenta en bucle — el backend ya reintentó una vez, y dos vueltas con el mundo moviéndose significan que hay otra persona operando. `reason` ∈ `suspension_changed` · `state_changed` · `claim_changed` · `turn_in_progress` · `handoff_changed`
+- **Zona horaria bloqueada (409)**: `{code: 'timezone_change_blocked', message, future_appointments: int}` (ADR p70 D1). La clínica tiene citas por atender y su zona no se cambia. **No es un error técnico**: `ClinicSection` (selector cerrado con el catálogo `features/config/timezones.json`, confirmación con `useConfirm` antes de guardar) vuelve a la zona guardada y ofrece «Ver citas». Nada se escribió. Tras un cambio exitoso, `refreshUser()` actualiza `organization_timezone`. Helper `isTimezoneChangeBlocked(err)` en `utils/apiError.js`. **Nunca** reintentar
+- **Cita con otra zona (409)**: `{code: 'appointment_timezone_changed', message}` (ADR p70 D1, opción c). Al «Reprogramar» una cita cancelada o no presentada cuya zona ya no es la de la clínica. **No es un error técnico**: la cita sigue como estaba y el `message` pide crear una nueva. `handleStatusChange` lo muestra con `apiError`; **nunca** reintentar
 - **Turno en vuelo (409)**: `{code: 'turn_in_progress', message}` (F3). El asistente está respondiendo justo ahora; se reintenta en segundos. No es un error del usuario
 - **Horario ocupado (400)**: `{code: 'slot_taken', message, errors: {error: [message]}}` (INV-D, ADR p57). El veterinario ya tiene una cita activa en ese intervalo, lo detecte el pre-chequeo o lo rechace la restricción de PostgreSQL. Aplica también a la **atención sin cita** y a la **reactivación** de una cita cancelada; la UI ofrece otro horario u otro veterinario. **No existe bandera de forzado**. El cuerpo es un superset del 400 anterior → `apiError` ya lo resuelve por `errors{}` sin cambios
 - Endpoint deprecado removido (410): `{code: 'endpoint_sunset', message}` (post-Sunset RFC 8594). Hoy ningún endpoint lo emite: `/api/organizations/<pk>/` se retiró por completo en el orden 6 y responde 404.
@@ -695,6 +697,28 @@ favor de `PATCH /<id>/status/`, que es la vía con auditoría y precondición. N
 tenía consumidores, así que dejar la función viva solo invitaba a reintroducir
 la vía deprecada.
 
+### Agenda con el horario de la clínica (ADR p70 D7, plan F2.2/F2.3)
+
+`pages/appointments.jsx` pide `getAgendaConfig()` (`GET /api/appointments/agenda-config/`, bajo
+`appointment.list`) en lugar de `getOrgSettings()`, que daba 403 en silencio a VET y ASSISTANT.
+Las funciones puras viven en `features/appointments/agendaHours.js` (con pruebas):
+`businessHoursFrom`, `visibleTimeRange` (una hora de margen y sin dejar citas fuera),
+`closureBackgroundEvents`, `scheduleWarning` y `endTimeFor`. Fechas locales ISO y horas
+`HH:MM` comparadas como texto, sin la zona del navegador.
+
+- Fuera de horario o en un cierre: `useConfirm` antes de crear (`SidebarForm`), de guardar una
+  edición que mueve la cita (`EditModal`) o de aplicar un arrastre (`eventDrop`/`eventResize`,
+  que se deshace si no se confirma). **Nunca bloquea** (D7 a).
+- Los cierres son eventos de fondo sin `appointment`: `eventClick`, `eventAllow` y
+  `eventDidMount` lo comprueban antes de usarlo.
+- Si la configuración no carga, la agenda funciona como antes (07:00–20:00, sin sombreado ni
+  avisos, fin +30) y el error va a consola con `apiError`.
+- La atención sin cita no pregunta: ya está ocurriendo.
+- Botones de hora del formulario: `hourOptions` (horas del día sin descanso; día que no se
+  atiende → las de la semana; la elegida siempre visible; sin horario 7–19). Sin hora explícita,
+  `selectSlot` usa `defaultHour` (primera apertura del día; 9 sin horario). Con hora explícita
+  conserva sus minutos (`slot.minute`) y `startChoices` añade ese botón (p. ej. 10:30).
+
 ### IDs en llamadas a la API (ADR p18 — Día 6)
 
 Los modelos con `public_id` exponen UUID en las URLs del backend. Usar siempre `item.public_id` en las llamadas, nunca `item.id`:
@@ -819,7 +843,7 @@ export const updateMedicalRecord = async (token, id, data) => {
 - `api/inventory.js` — `updateProduct`
 - `api/prescriptions.js` — `updatePrescription`
 - `api/billing.js` — `updateService`
-- `api/appointments.js` — `updateAppointment`
+- `api/appointments.js` — `updateAppointment` (el `status` que envía se ignora: el estado de una cita solo cambia por `updateAppointmentStatus`, ADR p70 D1)
 
 ## Infraestructura de API
 
@@ -1093,6 +1117,90 @@ Consumidores: **Inventario** (filtran la tabla), **Dashboard** (indicadores de h
 `/dashboard/summary/`; reemplaza al retirado `KpiStrip`) y **Mascotas** (conteos de
 `/pets/stats/` y citas de la semana). Pies: un dato real o qué cuenta el número —
 **nunca** deltas o comparativos que el backend no calcula.
+
+### Precios: `formatMoney` y `PriceLabel` (ADR p70 D4)
+
+- `utils/money.js` es el **formateador único** de montos (`formatMoney`, es-MX, MXN, dos
+  decimales) y rotula tasas (`formatTaxRate("0.1600")` → «16 %»). Sustituye a los locales
+  (`formatCurrency`, `fmtMXN`, `toFixed(2)` con «$» pegado) en Servicios, Inventario,
+  POS, consulta y Cobros. El «Valor del stock» de Inventario sigue con `fmtCur` (agregado
+  sin decimales, no es un precio).
+- Regla: para el personal, todo precio unitario previo al documento dice «sin IVA»; donde
+  el backend entrega `price_with_tax` / `sale_price_with_tax`, se muestra también «con
+  IVA». Cobros, el pago del POS y el panel de la consulta desglosan subtotal sin IVA, IVA
+  (con su tasa) y total. **React no calcula impuestos.**
+- `components/PriceLabel.jsx`: presentacional (`base`, `withTax` opcional). Sin `withTax`
+  no inventa el total.
+- `/me/` expone `organization_tax_rate` solo para rotular («IVA 16 %»).
+
+### Configuración y Mi cuenta (ADR p70 D8, plan F1.2)
+
+- **Rutas:** un apartado por dominio en `/config/:section` (`pages/config/index.jsx`): Clínica,
+  Horario, Cobros (caja obligatoria, crédito y plazo), Atención (confirmación previa, atender sin
+  registrar la mascota, expediente automático, historial de estados), Servicios e Historial de
+  cambios. `/config` y un apartado sin permiso o inexistente llevan al primero visible,
+  conservando `location.state` (la vuelta del primer uso).
+- **Guarda** (`pages/config.jsx`): `canAny(CONFIG_PERMS)` de `features/config/permissions.js`
+  (`organization.update` y `service.create/update/destroy`); sin eso, `/`. Clínica, Horario,
+  Cobros, Atención e Historial piden `organization.update`; Servicios, cualquiera de los de
+  servicio. La configuración de la clínica solo se pide si se puede editar.
+- **Sin decisiones por rol:** se retiró `canManage = role !== "ASSISTANT"`. Única excepción
+  documentada, igual que en `Sidebar.jsx`: el operador de plataforma (`ADMIN_SAAS`, `*.*`) se
+  reconoce por rol; sin clínica ve el aviso de que no hay configuración.
+- **Reglas:** `RulesSection` recibe sus reglas (`features/config/rules.js`) y guarda **solo las
+  suyas**: lo tocado en otro apartado sin guardar no viaja. «Urgencias sin cita» ya no se muestra
+  (se retira en F1.6, D5).
+- **Mi cuenta** (`pages/account/index.jsx`, `/account`): datos de solo lectura (nombre, rol,
+  clínica, usuario, correo), `ChangePasswordForm` en línea (oculto en la demo) y `MfaSettings`.
+  Se entra por el bloque de usuario del menú lateral y por el avatar de la barra superior. Se
+  retiraron `AccountSection`, el botón «Cambiar contraseña» de la barra y el evento
+  `open-change-password`. `/change-password` sigue para el cambio obligatorio.
+- **Menú:** «Configuración» visible con `canAny(CONFIG_PERMS)`.
+- **Nombre público** (ADR p70 D5): el encabezado del menú usa `user.organization_public_name`
+  (comercial o legal) y cae en `organization_name`. Clínica muestra el nombre legal de solo
+  lectura; WhatsApp se rotula «(informativo)» y hay campo de interior, piso o referencia.
+- Los interruptores de `ToggleRow` llevan su etiqueta como nombre accesible.
+- **Guardado (plan F1.3):** el layout guarda por separado lo último guardado y el borrador
+  (`features/config/drafts.js`). Un apartado con cambios lleva un punto en el menú (y texto para
+  lectores de pantalla) y el aviso «Cambios sin guardar · Descartar». Moverse entre apartados
+  conserva los borradores; salir de `/config` con cambios pide confirmación (`useBlocker` +
+  `useConfirm`) y cerrar la pestaña, `beforeunload`. Los `PATCH` llevan **solo lo que cambió**
+  (C16); sin cambios no se envía nada. Los errores van a su campo con `handleFormError`; el
+  encabezado de Clínica muestra lo guardado. Carga fallida: `EmptyState` con «Reintentar».
+- **Horario:** validación previa por día (`features/config/schedule.js`) con los mismos mensajes
+  que el servidor (prueba de contraste en el backend); los errores, propios o `day_N` del
+  servidor, se pintan en la fila del día. A ≤880 px cada día es un bloque con sus campos
+  rotulados (antes se ocultaban las columnas del descanso).
+- **Cierres (F2.1, ADR p70 D6):** bloque «Cierres» bajo el Horario (`pages/config/ClosuresSection.jsx`).
+  No es parte del borrador: registrar y cancelar se guardan al momento. Lista de cierres
+  próximos (`getClosures`), alta con `DateField` (primer día desde hoy en la zona de la clínica,
+  último desde el primero) y motivo obligatorio, validada antes con los mismos mensajes que el
+  servidor (`features/config/closures.js`); errores de campo con `handleFormError` y
+  `409 closure_overlap` como aviso. Si el alta trae `affected_appointments > 0`, aviso de que esas
+  citas no se movieron, con «Ver citas». Cancelar pide `useConfirm`. Fechas con
+  `formatAbsenceRange` (sin pasar por la zona del navegador).
+- **Atención — duración (F2.3):** «Duración habitual de una cita» (5–240 min) en `RulesSection`
+  (`showDuration`); se valida antes con el mensaje del servidor (`features/config/rules.js`
+  `durationError`) y viaja solo si cambió. La agenda la usa para la hora de fin.
+- **Servicios (F1.7):** acciones según `service.create`, `service.update` y `service.destroy`.
+  Desactivar (con confirmación que dice qué deja de pasar) y activar desde la lista; interruptor
+  «Activo» al editar; «Mostrar inactivos (N)» porque el layout pide la lista con
+  `include_inactive`. Eliminar con historial (`409`) muestra el motivo del backend y ofrece
+  desactivarlo. Errores del formulario en su campo.
+- **Reglas (F1.5):** nombre y efecto exactos en `features/config/rules.js` («Atender sin
+  registrar la mascota», «Al completar una cita, crear su expediente si no lo tiene», caja y
+  crédito con lo que hacen). Activar o desactivar la caja obligatoria o el crédito pide
+  confirmación antes de cambiar el borrador.
+
+### Configuración: historial de cambios (ADR p70 D9)
+
+`pages/config/HistorySection.jsx` (apartado «Historial de cambios», visible con
+`can("organization.update")`) lee `getConfigHistory({page})` (`api/organizations.js`, 25 por
+página, `Pagination`). `features/config/history.js` (`describeConfigEvent`) traduce cada evento a
+un título y detalles «Campo: antes → después», con nombres de zona del catálogo, montos con
+`formatMoney` y días del horario legibles; los textos largos solo dicen que cambiaron. Sin autor
+(eliminado) muestra «Alguien que ya no está en el equipo». Carga con esqueleto, error con
+«Reintentar» y vacío explicado. El frontend no calcula diferencias: las guarda el backend.
 
 ### EmptyState (estado vacío accionable)
 
@@ -1481,8 +1589,8 @@ Mientras la activación esté incompleta, **`FirstRunAssistant`** se monta como
   paciente / **Importar Excel**, gateado por `can("import.create")` y oculto si
   `user.is_demo`). Datos de clínica y servicios = solo primary.
 - **Flujo sin intervención (auto-redirect)**: cada CTA navega con
-  `{ state: { fromOnboarding: true } }` (+ `section` cuando el destino es `/config`:
-  `"clinic"` o `"services"` — sin eso ambos CTAs caían en la sección por defecto).
+  `{ state: { fromOnboarding: true } }`. Los de Configuración van a su apartado por ruta
+  (`/config/clinic`, `/config/services`, ADR p70 F1.2); antes viajaba un `state.section`.
   El módulo destino, tras el create-success **de creación** (no edición), si
   `location.state?.fromOnboarding` → `navigate('/', { state: { onboardingStep: '<key>' } })`.
   Al volver, `FirstRunAssistant` lee ese `onboardingStep` → **micro-celebración**
@@ -1810,7 +1918,9 @@ backend) + `specialties.js` (`specialtyLabel`, `orderSpecialties`, `sameSpecialt
 `features/staff/SpecialtyPicker.jsx`: casillas, varias a la vez, en el alta y la edición de
 quien atiende pacientes. Tabla y ficha muestran `specialty_label`. Configuración → Servicios
 elige una especialidad opcional por servicio.
-| `/config`           | Configuracion       | Solo ADMIN   |
+| `/config`           | Configuración: lleva al primer apartado visible | Quien gestiona algo de ella (`organization.update` o `service.create/update/destroy`); sin eso redirige a `/` (ADR p70 D8) |
+| `/config/:section`  | Un apartado: `clinic`, `schedule`, `billing`, `care`, `services`, `history` | Cada uno según su capacidad; uno sin permiso o inexistente lleva al primero visible |
+| `/account`          | Mi cuenta           | Todo usuario autenticado |
 
 ## Testing (Vitest + Testing Library) — P1-4
 

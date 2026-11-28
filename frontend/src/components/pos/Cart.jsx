@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { Icon } from "../icons";
 import { getProductLots } from "../../api/inventory";
+import { formatMoney } from "../../utils/money";
 import s from "./pos.module.css";
 
 /* Selector de lote (FEFO) para un ítem de producto con tracks_lots.
@@ -56,8 +57,8 @@ const Cart = ({ items, updateQuantity, updateRx, removeItem, disabled }) => (
                 <tr>
                     <th>Concepto</th>
                     <th style={{ width: "80px", textAlign: "center" }}>Cant.</th>
-                    <th style={{ width: "100px", textAlign: "right" }}>P. unit</th>
-                    <th style={{ width: "110px", textAlign: "right" }}>Subtotal</th>
+                    <th style={{ width: "100px", textAlign: "right" }}>P. unit sin IVA</th>
+                    <th style={{ width: "110px", textAlign: "right" }}>Subtotal sin IVA</th>
                     <th style={{ width: "44px" }}></th>
                 </tr>
             </thead>
@@ -89,9 +90,9 @@ const Cart = ({ items, updateQuantity, updateRx, removeItem, disabled }) => (
                                     onChange={e => updateQuantity(item.key, e.target.value)}
                                 />
                             </td>
-                            <td style={{ textAlign: "right" }}>${item.unitPrice.toFixed(2)}</td>
+                            <td style={{ textAlign: "right" }}>{formatMoney(item.unitPrice)}</td>
                             <td style={{ textAlign: "right", fontWeight: 600 }}>
-                                ${((Number(item.quantity) || 0) * item.unitPrice).toFixed(2)}
+                                {formatMoney((Number(item.quantity) || 0) * item.unitPrice)}
                             </td>
                             <td style={{ textAlign: "right" }}>
                                 <button

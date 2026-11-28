@@ -1,6 +1,7 @@
 import { Icon } from "../icons";
 import PaymentLinesEditor from "../PaymentLinesEditor";
 import { paymentLinesValid } from "../../utils/payments";
+import { formatMoney, formatTaxRate } from "../../utils/money";
 import s from "./pos.module.css";
 
 /* ── PaymentPanel — total + pago del POS ──
@@ -16,7 +17,7 @@ const PaymentPanel = ({
     processing, cashBlocked, canRingUp,
     onRingUp, onConfirmCharge, onBackToCart,
 }) => {
-    const fmt = (v) => Number(v || 0).toFixed(2);
+    const taxLabel = formatTaxRate(invoice?.tax_rate);
     const paying = mode === "paying" && invoice;
     const payBlockers = invoice?.actions?.pay?.blockers || [];
     const payBlocked = invoice?.actions?.pay?.allowed === false;
@@ -28,11 +29,11 @@ const PaymentPanel = ({
                 <>
                     <div className={s.totalBlock}>
                         <span className={s.totalLabel}>Total a cobrar</span>
-                        <span className={s.totalAmount}>${fmt(invoice.total)}</span>
+                        <span className={s.totalAmount}>{formatMoney(invoice.total)}</span>
                     </div>
                     <div className={s.totalsBreakdown}>
-                        <div className={s.breakdownRow}><span>Subtotal</span><span>${fmt(invoice.subtotal)}</span></div>
-                        <div className={s.breakdownRow}><span>IVA</span><span>${fmt(invoice.tax_amount)}</span></div>
+                        <div className={s.breakdownRow}><span>Subtotal sin IVA</span><span>{formatMoney(invoice.subtotal)}</span></div>
+                        <div className={s.breakdownRow}><span>{taxLabel ? `IVA (${taxLabel})` : "IVA"}</span><span>{formatMoney(invoice.tax_amount)}</span></div>
                     </div>
                     <PaymentLinesEditor
                         total={Number(invoice.total)}
@@ -53,7 +54,7 @@ const PaymentPanel = ({
                         disabled={processing || cashBlocked || payBlocked || !paymentLinesValid(lines, Number(invoice.total), true)}
                         title={cashBlocked ? "Abre una caja para cobrar" : payBlockedTitle}
                     >
-                        {processing ? <Icon.Loader s={16} /> : `Confirmar cobro $${fmt(invoice.total)}`}
+                        {processing ? <Icon.Loader s={16} /> : `Confirmar cobro ${formatMoney(invoice.total)}`}
                     </button>
                     <button
                         className="btn btn-ghost btn-sm"
@@ -67,8 +68,8 @@ const PaymentPanel = ({
             ) : (
                 <>
                     <div className={s.totalBlock}>
-                        <span className={s.totalLabel}>Total estimado</span>
-                        <span className={s.totalAmount}>${fmt(subtotal)}</span>
+                        <span className={s.totalLabel}>Subtotal sin IVA</span>
+                        <span className={s.totalAmount}>{formatMoney(subtotal)}</span>
                         <span className={s.totalHint}>El IVA se calcula al cobrar, según la configuración de la clínica.</span>
                     </div>
                     <button

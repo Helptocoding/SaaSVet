@@ -29,6 +29,7 @@ import ConsultationRail, { SaveIndicator } from "./ConsultationRail";
 import EvaluationSection from "./EvaluationSection";
 import TreatmentSection from "./TreatmentSection";
 import ChargesSection from "./ChargesSection";
+import { formatMoney } from "../../utils/money";
 import styles from "./consultationForm.module.css";
 
 const CONSULTATION_TYPES = [
@@ -216,10 +217,8 @@ export default function ConsultationForm({
     });
   }, []);
 
-  const fmtMXN = useMemo(() => {
-    const f = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
-    return (v) => f.format(Number(v) || 0);
-  }, []);
+  // Formateador único de montos (ADR p70 D4).
+  const fmtMXN = formatMoney;
 
   const fmtDate = useMemo(
     () => (ds) =>
@@ -1007,7 +1006,7 @@ export default function ConsultationForm({
                       </div>
                     ))}
                     <div className={`${styles.resumenRow} ${styles.subtotalHighlight}`}>
-                      <span>Total</span>
+                      <span>Total sin IVA</span>
                       <span className={styles.mono}>{fmtMXN(doneTotal)}</span>
                     </div>
                   </div>
@@ -1114,10 +1113,12 @@ export default function ConsultationForm({
                           <span>Servicios</span>
                           <span className={styles.mono}>{fmtMXN(servicesTotal)}</span>
                         </div>
+                        {/* ADR p70 D4: este total no incluye IVA; el backend lo suma al cobrar. */}
                         <div className={styles.resumenTotal}>
-                          <b>Total a cobrar</b>
+                          <b>Total sin IVA</b>
                           <span className={styles.resumenTotalVal}>{fmtMXN(grandTotal)}</span>
                         </div>
+                        <p className={styles.resumenNote}>El IVA se suma al cobrar.</p>
                       </div>
                     </div>
                   )}

@@ -26,6 +26,9 @@ BOTTOM_MARGIN = 2.3 * cm
 CONTENT_WIDTH = PAGE_W - 2 * MARGIN_X
 
 _HEADER_BASELINE_Y = PAGE_H - 1.55 * cm
+# Con línea de contacto (ADR p70, plan F2.4) el nombre sube para dejarle sitio.
+_HEADER_NAME_WITH_CONTACT_Y = PAGE_H - 1.28 * cm
+_HEADER_CONTACT_Y = PAGE_H - 1.70 * cm
 _HEADER_RULE_Y = PAGE_H - 1.95 * cm
 _FOOTER_RULE_Y = 1.55 * cm
 _FOOTER_TEXT_Y = 1.18 * cm
@@ -43,7 +46,33 @@ def _fit_text(cnv, text, font, max_size, min_size, max_width):
     return text + '…', size
 
 
-def _draw_chrome(cnv, doc, *, org_name, kicker, generated_text, theme, watermark):
+def _single_line(value):
+    """Texto de un campo en una sola línea: sin saltos ni espacios repetidos."""
+    return ' '.join(safe_pdf_text(value).split())
+
+
+def clinic_contact_line(organization):
+    """«Tel. 5512345678 · Calle 1, Int. 2, Colonia, Ciudad, Estado, C.P. 01000».
+
+    Solo lo capturado (plan F2.4); cadena vacía si no hay nada. Lee campos de la
+    fila de la organización ya cargada: no hace consultas.
+    """
+    phone = _single_line(getattr(organization, 'phone', '') or '')
+    parts = [_single_line(getattr(organization, field, '') or '')
+             for field in ('address_line1', 'address_line2', 'district', 'city', 'state')]
+    address = ', '.join(part for part in parts if part)
+    postal_code = _single_line(getattr(organization, 'postal_code', '') or '')
+    if postal_code:
+        address = f'{address}, C.P. {postal_code}' if address else f'C.P. {postal_code}'
+    pieces = []
+    if phone:
+        pieces.append(f'Tel. {phone}')
+    if address:
+        pieces.append(address)
+    return ' · '.join(pieces)
+
+
+def _draw_chrome(cnv, doc, *, org_name, contact, kicker, generated_text, theme, watermark):
     """Membrete + pie de página. Corre en cada página (callback onPage)."""
     cnv.saveState()
 
@@ -61,17 +90,26 @@ def _draw_chrome(cnv, doc, *, org_name, kicker, generated_text, theme, watermark
         cnv.drawCentredString(0, 0, watermark)
         cnv.restoreState()
 
-    # Header: nombre de la clínica (izquierda) + tipo de documento (derecha).
+    # Header: nombre de la clínica (izquierda) + tipo de documento (derecha) y,
+    # si se capturaron, teléfono y dirección debajo del nombre (plan F2.4). Todo
+    # va al canvas (`drawString`), que no interpreta marcado.
+    name_y = _HEADER_NAME_WITH_CONTACT_Y if contact else _HEADER_BASELINE_Y
     kicker_w = cnv.stringWidth(kicker, theme.font_bold, 7.5)
     name_max_w = CONTENT_WIDTH - kicker_w - 0.6 * cm
     name, name_size = _fit_text(cnv, org_name, theme.font_bold, 13, 9, name_max_w)
     cnv.setFont(theme.font_bold, name_size)
     cnv.setFillColor(theme.brand)
-    cnv.drawString(MARGIN_X, _HEADER_BASELINE_Y, name)
+    cnv.drawString(MARGIN_X, name_y, name)
 
     cnv.setFont(theme.font_bold, 7.5)
     cnv.setFillColor(theme.muted)
-    cnv.drawRightString(PAGE_W - MARGIN_X, _HEADER_BASELINE_Y, kicker)
+    cnv.drawRightString(PAGE_W - MARGIN_X, name_y, kicker)
+
+    if contact:
+        line, line_size = _fit_text(cnv, contact, theme.font, 7.5, 6, CONTENT_WIDTH)
+        cnv.setFont(theme.font, line_size)
+        cnv.setFillColor(theme.muted)
+        cnv.drawString(MARGIN_X, _HEADER_CONTACT_Y, line)
 
     cnv.setStrokeColor(theme.brand)
     cnv.setLineWidth(1.1)
@@ -122,11 +160,13 @@ def render_branded_pdf(buffer, story, *, organization, doc_kicker, pdf_title,
     Construye el PDF con membrete sobre ``buffer``.
 
     El caller arma ``story`` (flowables con el contenido del dominio); aquí
-    solo se agrega el chrome visual: header, footer, numeración y watermark.
-    No ejecuta queries.
+    solo se agrega el chrome visual: header (nombre público, teléfono y
+    dirección), footer, numeración y watermark. No ejecuta queries.
     """
     theme = theme or get_theme_for_organization(organization)
-    org_name = safe_pdf_text(getattr(organization, 'name', '') or '')
+    # ADR p70 D5: el membrete lleva el nombre ante los clientes (comercial o legal).
+    org_name = safe_pdf_text(
+        getattr(organization, 'public_name', None) or getattr(organization, 'name', '') or '')
     generated_local = org_now_local(organization).strftime('%d/%m/%Y %H:%M')
 
     doc = SimpleDocTemplate(
@@ -138,6 +178,7 @@ def render_branded_pdf(buffer, story, *, organization, doc_kicker, pdf_title,
     chrome = partial(
         _draw_chrome,
         org_name=org_name,
+        contact=clinic_contact_line(organization),
         kicker=safe_pdf_text(doc_kicker or '').upper(),
         generated_text=f"Generado el {generated_local}",
         theme=theme,

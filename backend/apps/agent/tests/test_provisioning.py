@@ -10,6 +10,7 @@ from django.core.management import CommandError, call_command
 from django.test import TestCase
 
 from apps.agent.models import AgentSettings
+from apps.agent.tests.agent_settings_fixtures import ensure_clinic_phone
 from apps.channels.models import ChannelAccount
 from apps.core.models import Permission, Role
 from apps.core.permissions_codes import PERMISSIONS
@@ -95,6 +96,7 @@ class ProvisionChannelTests(TestCase):
         clínica (bandeja), no del comando."""
         _provision(self.org, "888000888")
         settings_obj = AgentSettings.objects.get(organization=self.org)
+        ensure_clinic_phone(self.org)  # INV-L: encender exige teléfono válido.
         settings_obj.enabled = True
         settings_obj.save(update_fields=["enabled"])
 

@@ -184,25 +184,25 @@ class OrganizationSettingsViewTests(APITestCase):
     def setUp(self):
         self.client.force_authenticate(self.admin)
 
+    RETIRED = ('locale', 'appointment_buffer_minutes', 'allow_emergency_walkin', 'week_starts_on')
+
     def test_get_returns_default_settings(self):
         r = self.client.get('/api/organizations/settings/')
         self.assertEqual(r.status_code, status.HTTP_200_OK)
-        self.assertEqual(r.data['locale'], 'es-MX')
         self.assertEqual(r.data['currency_code'], 'MXN')
         self.assertEqual(r.data['default_appointment_duration_minutes'], 30)
-        self.assertEqual(r.data['appointment_buffer_minutes'], 0)
-        self.assertEqual(r.data['week_starts_on'], 1)
-        self.assertEqual(r.data['allow_emergency_walkin'], False)
+        # ADR p70 D5: los ajustes sin efecto ya no existen.
+        for field in self.RETIRED:
+            self.assertNotIn(field, r.data)
 
     def test_patch_updates_settings(self):
         r = self.client.patch(
             '/api/organizations/settings/',
-            {'default_appointment_duration_minutes': 45, 'appointment_buffer_minutes': 15},
+            {'default_appointment_duration_minutes': 45},
             format='json',
         )
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(r.data['default_appointment_duration_minutes'], 45)
-        self.assertEqual(r.data['appointment_buffer_minutes'], 15)
 
     def test_patch_invalid_duration_returns_400(self):
         r = self.client.patch(
@@ -212,48 +212,28 @@ class OrganizationSettingsViewTests(APITestCase):
         )
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_patch_invalid_buffer_returns_400(self):
-        r = self.client.patch(
-            '/api/organizations/settings/',
-            {'appointment_buffer_minutes': 999},
-            format='json',
-        )
-        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+    def test_retired_settings_are_rejected_by_name(self):
+        # ADR p70 D5: se retiraron por no tener efecto. Enviarlos es 400 con su
+        # nombre, no un 200 que fingiría guardarlos; y no se escribe nada más.
+        for field, value in (('appointment_buffer_minutes', 15), ('week_starts_on', 2),
+                             ('allow_emergency_walkin', True), ('locale', 'en-US')):
+            r = self.client.patch(
+                '/api/organizations/settings/',
+                {field: value, 'default_appointment_duration_minutes': 50},
+                format='json',
+            )
+            self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, field)
+            self.assertIn(field, r.data['errors'])
+        r = self.client.get('/api/organizations/settings/')
+        self.assertEqual(r.data['default_appointment_duration_minutes'], 30)
 
-    def test_patch_invalid_week_starts_on_returns_400(self):
-        r = self.client.patch(
-            '/api/organizations/settings/',
-            {'week_starts_on': 0},
-            format='json',
-        )
-        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_patch_currency_code_uppercases(self):
+    def test_currency_is_read_only(self):
         r = self.client.patch(
             '/api/organizations/settings/',
             {'currency_code': 'usd'},
             format='json',
         )
         self.assertEqual(r.status_code, status.HTTP_200_OK)
-        self.assertEqual(r.data['currency_code'], 'USD')
-
-    def test_patch_allow_emergency_walkin(self):
-        r = self.client.patch(
-            '/api/organizations/settings/',
-            {'allow_emergency_walkin': True},
-            format='json',
-        )
-        self.assertEqual(r.status_code, status.HTTP_200_OK)
-        self.assertEqual(r.data['allow_emergency_walkin'], True)
-
-    def test_patch_requires_no_extra_fields(self):
-        r = self.client.patch(
-            '/api/organizations/settings/',
-            {'locale': 'en-US'},
-            format='json',
-        )
-        self.assertEqual(r.status_code, status.HTTP_200_OK)
-        self.assertEqual(r.data['locale'], 'en-US')
         self.assertEqual(r.data['currency_code'], 'MXN')
 
     def test_blocks_user_without_organization(self):
@@ -296,8 +276,8 @@ class OrganizationConfigurationViewTests(APITestCase):
     def test_aggregate_settings_shape(self):
         r = self.client.get('/api/settings/configuration/')
         settings = r.data['settings']
-        self.assertEqual(settings['locale'], 'es-MX')
         self.assertEqual(settings['currency_code'], 'MXN')
+        self.assertNotIn('locale', settings)
 
     def test_aggregate_schedule_shape(self):
         r = self.client.get('/api/settings/configuration/')

@@ -12,6 +12,7 @@ from apps.organizations.models import Organization
 from apps.agent.models import Conversation, TurnWork
 from apps.agent.services import ingest_inbound_message
 from apps.agent import durable
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 class DurableTurnTests(TransactionTestCase):
@@ -106,7 +107,7 @@ class B3LocalIntegrationTests(TestCase):
         from apps.agent.models import AgentSettings
         from apps.users.services import ensure_agent_user
         agent, _ = ensure_agent_user(self.org)
-        return AgentSettings.objects.create(organization=self.org, enabled=True, agent_user=agent)
+        return create_enabled_agent_settings(self.org, agent_user=agent)
 
     def staff_client(self):
         from django.contrib.auth import get_user_model
@@ -417,7 +418,7 @@ class B3LocalIntegrationTests(TestCase):
         from apps.agent.llm import StubLLMClient, LLMResult
         from apps.users.services import ensure_agent_user
         agent, _ = ensure_agent_user(self.org)
-        AgentSettings.objects.create(organization=self.org, enabled=True, agent_user=agent)
+        create_enabled_agent_settings(self.org, agent_user=agent)
         stub = StubLLMClient(scripted=[LLMResult(kind='text', text='Hola, puedo ayudarte.')])
         complete = stub.complete
         def during(**kwargs):

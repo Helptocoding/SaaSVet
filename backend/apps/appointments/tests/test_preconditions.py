@@ -715,3 +715,53 @@ class ConcurrentWritersTests(TransactionTestCase):
         # Una sola transición efectiva y una sola fila de auditoría.
         self.assertEqual(
             AppointmentStatusChange.objects.filter(appointment=self.appt).count(), 1)
+
+
+class DetailPatchDoesNotWriteStatusTests(PreconditionTestBase):
+    """El estado de una cita existente solo cambia por `PATCH /status/`
+    (decisión del PO, 2026-11-27). En el `PATCH` de detalle `status` es de solo
+    lectura: antes era escribible y esquivaba `ALLOWED_TRANSITIONS`, la
+    auditoría y las comprobaciones de cada transición."""
+
+    def _patch_detail(self, appt, **changes):
+        return self.client.patch(f"/api/appointments/{appt.public_id}/", {
+            **changes, "expected_state": self._state_of(appt),
+        }, format="json")
+
+    def test_it_does_not_reactivate_a_canceled_appointment(self):
+        appt = self._create_appt()
+        response = self.client.patch(f"/api/appointments/{appt.public_id}/status/", {
+            "status": "canceled", "expected_state": self._state_of(appt),
+        }, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        appt.refresh_from_db()
+        audit = AppointmentStatusChange.objects.filter(appointment=appt).count()
+
+        response = self._patch_detail(appt, status="scheduled")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        self.assertEqual(response.json()["status"], "canceled")
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "canceled")
+        self.assertEqual(AppointmentStatusChange.objects.filter(appointment=appt).count(), audit)
+
+    def test_it_neither_skips_nor_reopens_states(self):
+        appt = self._create_appt(days=4)
+        self._patch_detail(appt, status="done")
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "scheduled")
+
+        Appointment.objects.filter(pk=appt.pk).update(status="done")
+        appt.refresh_from_db()
+        self._patch_detail(appt, status="scheduled")
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "done")
+        self.assertFalse(AppointmentStatusChange.objects.filter(appointment=appt).exists())
+
+    def test_resending_the_current_status_still_saves_the_edit(self):
+        # Es lo que manda la interfaz al editar: el mismo estado que ya tiene.
+        appt = self._create_appt(days=5)
+        response = self._patch_detail(appt, status="scheduled", reason="control anual")
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        appt.refresh_from_db()
+        self.assertEqual((appt.status, appt.reason), ("scheduled", "control anual"))

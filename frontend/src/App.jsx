@@ -18,6 +18,7 @@ import Cash from "./pages/cash";
 import Prescriptions from "./pages/prescriptions";
 import Analytics from "./pages/analytics";
 import Config from "./pages/config";
+import Account from "./pages/account";
 import Imports from "./pages/imports/index";
 import Inbox from "./pages/inbox";
 import CreateOrganization from "./pages/platform/createOrganization";
@@ -156,6 +157,9 @@ const router = createBrowserRouter([
       { path: "/inbox", element: wrap(Inbox) },
       { path: "/analytics", element: wrap(Analytics) },
       { path: "/config", element: wrap(Config) },
+      // ADR p70 F1.2: un apartado por ruta; `/config` lleva al primero visible.
+      { path: "/config/:section", element: wrap(Config) },
+      { path: "/account", element: wrap(Account) },
       { path: "/imports", element: wrap(Imports) },
       { path: "/platform/organizations/new", element: wrap(CreateOrganization) },
       { path: "/change-password", element: wrapNoGate(ChangePassword) },

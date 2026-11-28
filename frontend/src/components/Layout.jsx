@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useAuth } from "../auth/authContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import NotificationBell from "./notifications/NotificationBell";
 import FeedbackButton from "./FeedbackButton";
@@ -92,17 +92,11 @@ const Layout = ({ children }) => {
                         <div className={styles.topbarActions}>
                             <FeedbackButton />
                             {can?.("notification.list") && <NotificationBell />}
-                            {location.pathname === "/config" && !user?.is_demo && (
-                                <button
-                                    onClick={() => window.dispatchEvent(new CustomEvent("open-change-password"))}
-                                    className={styles.passwordAction}
-                                >
-                                    Cambiar contraseña
-                                </button>
-                            )}
-                            <div className={styles.avatar} aria-label="Perfil de usuario">
+                            {/* ADR p70 F1.2: la cuenta personal (contraseña, verificación
+                                en dos pasos) vive en /account, para todos. */}
+                            <Link to="/account" className={styles.avatar} aria-label="Mi cuenta" title="Mi cuenta">
                                 {(user?.first_name?.[0] || user?.username?.[0] || "U").toUpperCase()}
-                            </div>
+                            </Link>
                         </div>
                     </header>
                 )}

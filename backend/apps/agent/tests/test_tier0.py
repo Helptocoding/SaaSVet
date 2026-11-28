@@ -16,6 +16,7 @@ from apps.agent.tier0 import (
 )
 from apps.organizations.models import Organization
 from apps.agent.tests.harness import set_schedule_day
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 HOURS = {
     "mon": [["09:00", "19:00"]],
@@ -88,16 +89,14 @@ class RenderFirstReplyTests(TestCase):
         self.assertEqual(text, T0_DISABLED.format(clinic="Clínica Patitas"))
 
     def test_enabled_without_hours_renders_plain_greet(self):
-        settings_obj = AgentSettings.objects.create(
-            organization=self.org, enabled=True,
+        settings_obj = create_enabled_agent_settings(self.org,
         )
         text = render_first_reply(settings_obj, self.org)
         self.assertEqual(text, T0_GREET.format(clinic="Clínica Patitas"))
         self.assertNotIn(T0_AFTER_HOURS_SUFFIX, text)
 
     def test_enabled_after_hours_appends_suffix(self):
-        settings_obj = AgentSettings.objects.create(
-            organization=self.org, enabled=True,
+        settings_obj = create_enabled_agent_settings(self.org,
         )
         # 2026-07-13 es lunes: abierto 09-19, así que a las 22:00 está cerrado.
         set_schedule_day(self.org, 0, "09:00", "19:00")

@@ -300,6 +300,51 @@ NO_OVERLAP_CONSTRAINT = 'appointment_no_overlap_per_vet'
 
 ACTIVE_STATUSES = ('scheduled', 'confirmed', 'in_progress')
 
+
+def future_active_appointments_count(organization_id, now):
+    """Citas activas cuyo fin aún no pasa (ADR p70 D1).
+
+    Son las que un cambio de zona horaria desalinearía: guardan su hora local y
+    el instante UTC calculado con la zona vigente al crearlas. Las filas sin
+    instante (legacy) se cuentan siempre, por precaución. Se usa `all_objects`,
+    igual que la restricción de no-solapamiento: `is_active` no es su predicado.
+    """
+    from django.db.models import Q
+    return Appointment.all_objects.filter(
+        organization_id=organization_id, status__in=ACTIVE_STATUSES,
+    ).filter(Q(end_datetime__gt=now) | Q(end_datetime__isnull=True)).count()
+
+
+APPOINTMENT_TIMEZONE_CHANGED_MESSAGE = (
+    'Esta cita se programó con otra zona horaria de la clínica y no se puede '
+    'reactivar. Crea una cita nueva.'
+)
+
+
+class AppointmentTimezoneChanged(APIException):
+    """409 `appointment_timezone_changed` — reactivar con otra zona (ADR p70 D1).
+
+    Decisión del PO (2026-11-27, opción c): una cita cancelada o no presentada
+    no bloquea el cambio de zona, así que puede quedar con instantes calculados
+    con la zona anterior. Reactivarla los reutilizaría desalineados; se rechaza
+    y la cita sigue como estaba. No se recalcula nada: el recálculo está en
+    espera. Es la misma regla que el reagendado del agente (`validate_mutation`).
+    """
+    status_code = 409
+    default_detail = APPOINTMENT_TIMEZONE_CHANGED_MESSAGE
+    default_code = 'appointment_timezone_changed'
+
+
+def reject_if_timezone_changed(appointment, organization):
+    """Debe recibir la organización tomada con `FOR SHARE` en la misma
+    transacción (`creation.share_lock_organization`): así no pierde la carrera
+    contra un cambio de zona. Mismo predicado que `mutations.validate_mutation`:
+    una fila sin instantes (legacy) no tiene nada que desalinear."""
+    if (appointment.start_datetime is not None
+            and appointment.timezone_at_creation != organization.timezone):
+        raise AppointmentTimezoneChanged()
+
+
 SLOT_TAKEN_MESSAGE = 'Ya existe una cita para este veterinario en ese horario'
 
 

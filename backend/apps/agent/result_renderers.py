@@ -32,7 +32,8 @@ def _price(entry, concept, currency):
     contracts.require(type(amount) is Decimal and amount.is_finite() and amount > 0)
     contracts.require(isinstance(currency, str) and bool(re.fullmatch('[A-Z]{3}', currency)))
     contracts.require(entry.get('currency') == currency)
-    return f'{concept}: ${amount:,.2f} {currency}.'
+    # ADR p70 D4: `amount` es el precio con IVA; se dice expresamente.
+    return f'{concept}: ${amount:,.2f} {currency}, IVA incluido.'
 
 
 def effect_matches(tool, outcome, *, context=None, partial=False):

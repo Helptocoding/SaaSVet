@@ -913,6 +913,13 @@ class HumanHandoff(OrganizationalModel):
             raise ValidationError('Handoff acknowledgement outside organization')
 
 
+AGENT_REQUIRES_CLINIC_PHONE_MESSAGE = (
+    "Antes de activar las respuestas automáticas, captura el teléfono "
+    "de la clínica en Configuración → Clínica. El asistente lo necesita "
+    "para decirle a un cliente a dónde llamar en una urgencia."
+)
+
+
 class AgentSettings(models.Model):
     """Configuración del subsistema por organización (espejo del patrón
     OrganizationSettings). v1.1 §7-C7: solo 4 campos en F0 — cada knob se
@@ -956,6 +963,25 @@ class AgentSettings(models.Model):
     )
     # UX-08: nudge único de flujo abandonado (PR-18). Por-org, default on.
     nudge_enabled = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        """INV-L (ADR p70 D2): encender exige el teléfono PERSISTIDO de la clínica.
+
+        Bloquea primero la fila de la organización —el mismo orden que
+        `Organization.save` al escribir el teléfono— y lee el valor bajo ese
+        bloqueo. Apagar nunca se impide: es el kill switch.
+        """
+        update_fields = kwargs.get('update_fields')
+        enabling = self.enabled and (update_fields is None or 'enabled' in update_fields)
+        if not enabling:
+            return super().save(*args, **kwargs)
+        from apps.core.validators import is_valid_mx_phone
+        from apps.organizations.models import lock_organization_phone
+        with transaction.atomic():
+            phone = lock_organization_phone(self.organization_id)
+            if not is_valid_mx_phone(phone or ''):
+                raise ValidationError({'enabled': [AGENT_REQUIRES_CLINIC_PHONE_MESSAGE]})
+            return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"AgentSettings — {self.organization.name} ({'ON' if self.enabled else 'OFF'})"

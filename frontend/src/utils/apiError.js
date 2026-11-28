@@ -121,3 +121,13 @@ export function isAppointmentChanged(err) {
 export function appointmentChangedCurrent(err) {
     return err?.response?.data?.current || null;
 }
+
+/**
+ * `409 timezone_change_blocked` (ADR p70 D1): la clínica tiene citas por atender
+ * y su zona horaria no se cambia. No es una avería: el mensaje del backend dice
+ * cuántas son; la pantalla ofrece ir a Citas. Nunca se reintenta.
+ */
+export function isTimezoneChangeBlocked(err) {
+    return err?.response?.status === 409
+        && err?.response?.data?.code === "timezone_change_blocked";
+}

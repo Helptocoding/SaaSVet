@@ -1,13 +1,17 @@
 import styles from "./config.module.css";
 
-/** Fila de ajuste: etiqueta + descripción a la izquierda, control a la derecha. */
-export const SettingRow = ({ label, desc, children }) => (
+/** Fila de ajuste: etiqueta + descripción a la izquierda, control a la derecha.
+ *  `error`: mensaje del servidor (o de la validación previa) para ese campo. */
+export const SettingRow = ({ label, desc, error, errorId, children }) => (
   <div className={styles.settingRow}>
     <div>
       <p className={styles.settingLabel}>{label}</p>
       {desc && <p className={styles.settingDesc}>{desc}</p>}
     </div>
-    <div className={styles.settingControl}>{children}</div>
+    <div className={styles.settingControl}>
+      {children}
+      {error && <p id={errorId} className={styles.fieldError} role="alert">{error}</p>}
+    </div>
   </div>
 );
 
@@ -22,6 +26,7 @@ export const ToggleRow = ({ label, desc, on, disabled, onToggle }) => (
       <button
         type="button"
         role="switch"
+        aria-label={label}
         aria-checked={!!on}
         disabled={disabled}
         onClick={onToggle}

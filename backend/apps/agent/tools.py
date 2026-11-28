@@ -240,16 +240,30 @@ def _product_text_score(product, query):
     return 100
 
 
+def _price_with_tax(raw):
+    """Precio CON IVA que entrega la API (ADR p70 D4), o None si falta o no es > 0.
+
+    Nunca se recurre al precio sin IVA: lo que se cita al cliente es lo que paga.
+    """
+    value = contracts.decimal_field(raw, nullable=True)
+    return value if value is not None and value > 0 else None
+
+
+def _quoted_price(value):
+    return f"${value:,.2f} IVA incluido" if value is not None else None
+
+
 def _available_product_details(product, currency=None):
     """Datos comerciales permitidos exclusivamente cuando hay existencia."""
     details = {'stock': product.get('stock_quantity', 0)}
     presentations = product.get('presentations') or []
     exhausted = []
     for presentation in presentations:
+        price_value = _price_with_tax(presentation.get('sale_price_with_tax'))
         exhausted.append({
             'presentacion': presentation.get('name') or product.get('name', ''),
-            'precio': presentation.get('sale_price'),
-            'amount': contracts.decimal_field(presentation.get('sale_price'), nullable=True),
+            'precio': _quoted_price(price_value),
+            'amount': price_value,
             'currency': currency,
             'stock': presentation.get('stock', 0),
         })
@@ -689,14 +703,13 @@ def get_service_catalog(conversation, executor, args, triggered_by=None):
 
     projection = []
     for service in services[:MAX_ITEMS]:
-        # ServiceSerializer expone `base_price` (billing/serializers.py:52).
-        price_value = contracts.decimal_field(service['base_price'], nullable=True)
+        price_value = _price_with_tax(service.get('price_with_tax'))
         projection.append({
             'servicio': service.get('name', ''),
-            # Precio nulo/0 → None: el planner responde "lo cotiza el
-            # equipo", jamás "$0" (spec INT-11).
-            'precio': f"${price_value:,.2f}" if price_value and price_value > 0 else None,
-            'amount': price_value if price_value and price_value > 0 else None,
+            # Precio nulo/0 o sin precio con IVA → None: el planner responde "lo
+            # cotiza el equipo", jamás "$0" (spec INT-11) ni el precio sin IVA.
+            'precio': _quoted_price(price_value),
+            'amount': price_value,
             'currency': currency, 'service_id': service['public_id'],
         })
     source.scope['local_filters'] = {'name_contains': query, 'is_active': True}
@@ -1220,7 +1233,7 @@ def suggest_retention_slots(conversation, executor, *, max_days=7):
         return None, []
     day = org_today_local(org) + timedelta(days=1)
     for _ in range(max_days):
-        ranges = clinic_context.weekday_ranges(org, day.weekday())
+        ranges = clinic_context.day_ranges(org, day)
         if ranges:
             slots = _free_slots_for_day(
                 org, executor, day, vets, ranges,
@@ -1260,7 +1273,7 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
         return ToolOutcome(ok=False, client_error='past_date')
 
     agent_settings = AgentSettings.objects.filter(organization=org).first()
-    ranges = clinic_context.weekday_ranges(org, day.weekday())
+    ranges = clinic_context.day_ranges(org, day)
     if not ranges:
         return ToolOutcome(kind='READ', data=[], validated=True, completeness='complete',
                            scope=_scope(conversation, date=date_str),
@@ -1323,7 +1336,7 @@ def _exact_slot_status(org, executor, date_str, time_str, vets, *,
     if day == org_today_local(org) and hhmm <= org_now_local(org).strftime('%H:%M'):
         return 'past_date', None
 
-    ranges = clinic_context.weekday_ranges(org, day.weekday())
+    ranges = clinic_context.day_ranges(org, day)
     end_time = _appt_end_time(hhmm)
     if not ranges:
         return 'closed', None

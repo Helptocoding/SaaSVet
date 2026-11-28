@@ -79,6 +79,33 @@ def schedule_windows(row):
     return ((row.opens_at, row.closes_at),)
 
 
+def opening_windows(organization_id, day, row):
+    """Ventanas en que la clínica atiende ESE día (ADR p70 D6, plan F2.1).
+
+    Las del horario semanal (`schedule_windows(row)`), salvo que un cierre
+    excepcional vigente cubra el día: entonces ninguna. El agente lo usa para
+    agendar y reagendar; el personal solo recibe un aviso. Quien la llama con la
+    fila del horario tomada con `FOR SHARE` queda serializado con el registro de
+    cierres, que bloquea esa fila con `FOR UPDATE`.
+    """
+    from apps.organizations.services import is_closed_on
+    if is_closed_on(organization_id, day):
+        return ()
+    return schedule_windows(row)
+
+
+def share_lock_organization(organization_id):
+    """`FOR SHARE` sobre la organización y su fila FRESCA (ADR p70 D1).
+
+    Quien derive un instante de la zona horaria lo llama dentro de su
+    transacción, antes de leer la zona: así espera a un cambio de zona en curso
+    (`FOR NO KEY UPDATE`) y calcula con la zona confirmada. Devuelve None si la
+    organización no existe.
+    """
+    rows = _share_rows(Organization, pk=organization_id)
+    return rows[0] if rows else None
+
+
 def _share_rows(model, **filters):
     """PostgreSQL shared row lock: concurrent readers, config/identity writers wait.
 
@@ -175,7 +202,7 @@ def validate_creation(command, *, require_schedule=False, expected_timezone=None
     if require_schedule:
         if sanitize_text(command.reason, max_length=255) != command.reason:
             raise CreationRejected('precondition_failed')
-        windows = schedule_windows(schedules[0] if schedules else None)
+        windows = opening_windows(org.pk, command.date, schedules[0] if schedules else None)
         if not any(start <= command.start_time and command.end_time <= end for start, end in windows):
             raise CreationRejected('schedule_closed')
     if slot_conflicts(command, start_utc, end_utc):

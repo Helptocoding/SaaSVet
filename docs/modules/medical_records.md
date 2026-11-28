@@ -173,7 +173,8 @@ La ruta `/prescriptions` se conserva como visor secundario para consulta, reimpr
 | `GET /api/prescriptions/<uuid>/pdf/` | `prescription.retrieve` | Receta médica |
 
 Ambos se generan con la capa compartida `apps/core/pdf/` (tema verde bosque, membrete
-por página, "Página N de M"). Reglas:
+por página con el nombre público, teléfono y dirección de la clínica — ADR p70, plan F2.4 —,
+"Página N de M"). Reglas:
 
 - **Contenido**: el view del dominio arma los flowables (QUÉ); `core/pdf` solo aporta
   presentación (CÓMO). No agregar queries dentro del tema — el N+1 guard del PDF de

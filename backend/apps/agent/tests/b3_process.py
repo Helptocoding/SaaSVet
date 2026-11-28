@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 def main():
@@ -32,7 +33,7 @@ def main():
         from apps.users.services import ensure_agent_user
         conv = worker.Conversation.objects.get(pk=conv_id)
         actor, _ = ensure_agent_user(conv.organization)
-        AgentSettings.objects.create(organization=conv.organization, enabled=True, agent_user=actor)
+        create_enabled_agent_settings(conv.organization, agent_user=actor)
         stub = StubLLMClient(scripted=[])
         def timeout(**kwargs):
             if connection.in_atomic_block:

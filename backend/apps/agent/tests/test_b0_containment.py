@@ -22,6 +22,7 @@ from .harness import (
     ControlledTransport, CriticalB0Runner, FailureBarrier, InjectedFailure,
     PersistedTurnHarness,
 )
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 CORPUS_PATH = Path(__file__).with_name('fixtures') / 'b0_critical.json'
 # IDs estables externos al fixture: quitarlo, vaciarlo o omitir un caso falla.
@@ -61,8 +62,7 @@ class B0ContainmentTests(TestCase):
         self.channel = ChannelAccount.objects.create(
             organization=self.org, external_account_id='b0-test')
         self.user, _ = ensure_agent_user(self.org)
-        AgentSettings.objects.create(
-            organization=self.org, enabled=True, agent_user=self.user)
+        create_enabled_agent_settings(self.org, agent_user=self.user)
         self.contact = ContactIdentity.objects.create(
             organization=self.org, external_id='5215512345678',
             owner=self.owner, verification_level=ContactIdentity.VERIFICATION_CONFIRMED,

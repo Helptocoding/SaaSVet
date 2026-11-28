@@ -54,6 +54,9 @@ from apps.organizations.views import (
     OrganizationSettingsView,
     OrganizationScheduleView,
     OrganizationConfigurationView,
+    OrganizationConfigHistoryView,
+    OrganizationClosureListCreateView,
+    OrganizationClosureCancelView,
 )
 from rest_framework_simplejwt.views import (
     TokenBlacklistView,
@@ -293,6 +296,9 @@ urlpatterns = [
     path('api/organizations/schedule/', OrganizationScheduleView.as_view(), name='organization-schedule'),
     path('api/organizations/settings/', OrganizationSettingsView.as_view()),
     path('api/organizations/me/', OrganizationMeView.as_view(), name='organization-me'),
+    path('api/organizations/config-history/', OrganizationConfigHistoryView.as_view(), name='organization-config-history'),
+    path('api/organizations/closures/', OrganizationClosureListCreateView.as_view(), name='organization-closures'),
+    path('api/organizations/closures/<str:pk>/cancel/', OrganizationClosureCancelView.as_view(), name='organization-closure-cancel'),
     path('api/settings/configuration/', OrganizationConfigurationView.as_view(), name='configuration-aggregate'),
     path('api/appointments/', include('apps.appointments.urls')),
     path('api/token/', ThrottledTokenObtainPairView.as_view(), name='token_obtain_pair'),

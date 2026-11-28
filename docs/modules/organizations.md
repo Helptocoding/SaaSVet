@@ -606,6 +606,7 @@ La regla vive en **`apps/core/validators.py`** (dueño único) y la consumen
 | Formato | Normaliza a dígitos; exige exactamente **10** (México-only, misma decisión Q5 que `agent.services.normalize_wa_id`) |
 | Relleno evidente | Rechaza todos los dígitos iguales (`1111111111`) y secuencias triviales (`1234567890`, `9876543210`) |
 | Vacío | `Organization.phone` lo permite (`allow_blank=True` — la org nace sin él y el ADMIN debe poder guardar el resto de la sección). `Owner.phone` **no** (alta manual siempre exige teléfono) |
+| Una vez capturado (ADR p70, INV-L) | Un teléfono válido solo cambia por otro válido: vaciarlo o volverlo inválido → **400** en el campo. Lo garantiza `Organization.save()`, que compara contra el valor **persistido** bajo bloqueo de la fila (`lock_organization_phone`), así que también cubre el admin de Django, las semillas y una petición que cargó la organización antes. Es la mitad de INV-L: encender el agente exige un teléfono válido (`agent.md` § Gate del kill switch) |
 
 **Lo que NO pasa nunca**: un valor no vacío que no normaliza. Antes
 `validate_phone` solo quitaba los no-dígitos, así que `"5"` se guardaba como `"5"`
@@ -679,6 +680,52 @@ tenerlas hasta que alguien abra Configuración.
 > dice), mientras que **cero filas** significa "sin configurar" (el agente
 > calla en vez de inventar un horario).
 
+### Cierres excepcionales — `OrganizationClosure` (ADR p70 D6, plan F2.1)
+
+Días completos en que la clínica no atiende aunque el horario semanal diga que sí (un día
+festivo, un inventario). Son fechas **locales** de la clínica, la misma unidad que la fecha de una
+cita.
+
+| Campo | Descripción |
+|---|---|
+| `start_date`, `end_date` | Primer y último día (incluidos) |
+| `reason` | Motivo, obligatorio, máximo 120 caracteres (texto sanitizado) |
+| `created_by`, `created_at` | Quién y cuándo |
+| `cancelled_at`, `cancelled_by` | Cancelación; ambos o ninguno (restricción en base de datos) |
+
+Reglas (las mismas que las ausencias de ADR p67):
+
+- el último día no es anterior al primero, no terminó antes de hoy y dura como máximo 366 días;
+- no se cruza con otro cierre vigente → **`409 closure_overlap`**, cero escrituras;
+- cancelar no borra: deja `cancelled_at/by`, reabre esos días y repetirlo no cambia nada.
+
+**Qué bloquea (D6 a):** al **agente**, que deja de ofrecer y de agendar o reagendar esos días
+(`schedule_closed`) y considera la clínica cerrada si el cierre es hoy. Al **personal** no lo
+bloquea: puede atender una urgencia en un día cerrado. Las citas que ya existen esos días **no se
+mueven**: la respuesta del alta trae `affected_appointments` (citas por atender en el rango) para
+avisar.
+
+**Bloqueo:** registrar o cancelar toma `FOR UPDATE` sobre las filas de `OrganizationSchedule` de
+los días de la semana afectados, en orden de `weekday`. La creación y la reprogramación del agente
+toman `FOR SHARE` sobre la fila del día antes de comprobar el horario, así que un cierre y una cita
+del agente ese día se serializan: la que llega segunda ve a la primera confirmada.
+
+**Fuente única:** `organizations.services.is_closed_on(organization_id, day)`. La consumen
+`appointments.creation.opening_windows` (alta y reprogramación del agente) y
+`agent.clinic_context.day_ranges` / `closed_today`.
+
+**Endpoints** (`organization.update`, solo la organización propia):
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| `GET` | `/api/organizations/closures/` | Cierres vigentes que no han terminado, ordenados por fecha |
+| `POST` | `/api/organizations/closures/` | `{start_date, end_date, reason}` → 201 con el cierre y `affected_appointments` |
+| `POST` | `/api/organizations/closures/<public_id>/cancel/` | Cancela; 404 si es de otra clínica |
+
+Cada cierre: `public_id`, `start_date`, `end_date`, `reason`, `is_active`, `created_by_name`,
+`created_at`, `cancelled_at`; sin PK. Migración `organizations.0020`; `seed_demo_clinic` borra los
+de la demo.
+
 ## Configuracion de la clinica
 
 ```
@@ -687,32 +734,46 @@ PATCH /api/organizations/settings/
 Authorization: Bearer <token ADMIN>
 ```
 
-Toggles disponibles:
+Ajustes vigentes (todos tienen un consumidor; ADR p70 D5):
 
-| Campo                              | Default | Descripcion                                                   |
-|------------------------------------|---------|---------------------------------------------------------------|
-| `auto_create_medical_record`       | `false` | Crea consulta automaticamente al completar una cita           |
-| `require_confirmation_before_start`| `false` | La cita debe confirmarse antes de iniciar                     |
-| `allow_anonymous_walkin`           | `false` | Permite walk-in sin mascota registrada                        |
-| `show_status_change_history`       | `true`  | Muestra historial de cambios de estado en citas               |
-| `require_open_cash_session`        | `false` | Si `True`, `post_checkout(..., pay=True)` / `pay_invoice` exigen una caja abierta del actor. |
-| `locale`                           | `es-MX` | Locale del sistema                                            |
-| `currency_code`                    | `MXN`   | Codigo de moneda ISO-4217                                     |
-| `default_appointment_duration_minutes` | `30` | Duracion sugerida al crear citas nuevas. No modifica citas existentes. |
-| `appointment_buffer_minutes`       | `0`     | Intervalo entre citas                                         |
-| `allow_emergency_walkin`           | `false` | Permite urgencias sin cita                                    |
-| `week_starts_on`                   | `1`     | Primer dia de la semana (1=lunes, 7=domingo)                  |
+| Campo | Default | Apartado | Efecto |
+|---|---|---|---|
+| `require_confirmation_before_start` | `false` | Atención | Una cita solo pasa a `in_progress` desde `confirmed` |
+| `allow_anonymous_walkin` | `false` | Atención | La atención sin cita puede empezar sin mascota (usa la genérica; se vincula antes de `done`) |
+| `auto_create_medical_record` | `false` | Atención | Al completar una cita sin consulta, abre una vacía (`open`) |
+| `show_status_change_history` | `true` | Atención | Muestra el historial de estados en el detalle de la cita |
+| `require_open_cash_session` | `false` | Cobros | Cobrar (`post_checkout(..., pay=True)`, `pay_invoice`) y devolver exigen caja abierta del actor |
+| `allow_post_unpaid` | `false` | Cobros | Permite emitir una factura sin pago (crédito), con vencimiento y aceptación; se paga después por el total |
+| `credit_default_days` | `30` | Cobros | Plazo sugerido del crédito (1–365 días) |
+| `default_appointment_duration_minutes` | `30` | Atención | Duración habitual: la agenda calcula con ella la hora de fin de una cita nueva (5–240). No modifica citas existentes; el agente y la atención sin cita siguen en 30 |
+| `currency_code` | `MXN` | — | **Solo lectura**: el `PATCH` lo ignora |
 
-Campos desde Fase 1 (ADR p53):
-- `locale` (default `es-MX`)
-- `currency_code` (default `MXN`)
-- `default_appointment_duration_minutes` (default `30`)
-- `appointment_buffer_minutes` (default `0`)
-- `allow_emergency_walkin` (default `False`)
-- `week_starts_on` (default `1`)
+**Retirados** (ADR p70 D5, migración `organizations.0019`): `locale`,
+`appointment_buffer_minutes`, `allow_emergency_walkin` y `week_starts_on`. Nada los leía. Enviarlos
+en el `PATCH` es `400` con el nombre del campo («Este ajuste se retiró: no tenía efecto en el
+sistema.»), sin escribir nada más.
+
+**Datos de contacto en los PDFs** (plan F2.4): bajo el nombre público, el membrete de consulta,
+receta y cobro lleva `Tel. <phone> · <dirección>, C.P. <código>` con solo lo capturado
+(`apps.core.pdf.document.clinic_contact_line`); sin datos no hay línea. Se dibuja en el canvas
+(sin marcado), en una sola línea que se reduce o se corta con «…», y no hace consultas. No se
+afirma que la receta cumpla los requisitos legales de una receta veterinaria en México: está sin
+verificar.
+
+**Nombre público** (D5): `Organization.public_name` = `display_name` o, si está vacío, `name`. Lo
+usan el membrete de los PDFs (`render_branded_pdf`), el agente (`build_persona_preamble`, el
+contexto `clinica` y el saludo de tier 0) y el menú (`/me/` publica `organization_public_name`
+junto a `organization_name`). Configuración → Clínica muestra el nombre legal de solo lectura.
+`whatsapp` es informativo: el agente lo comparte como dato de contacto y no cambia el número
+desde el que responde.
 
 `default_appointment_duration_minutes` solo define el valor sugerido al crear nuevas
 citas; no modifica citas existentes ni reorganiza la agenda automaticamente.
+
+**Quién lee el horario, los cierres y estos ajustes en la agenda:** VET y ASSISTANT no tienen
+`organization.retrieve`; la agenda los lee de `GET /api/appointments/agenda-config/`
+(`appointment.list`), que expone solo el horario, los cierres vigentes y la duración, el
+historial de estados y la atención sin mascota registrada (ADR p70 D7, ver `appointments.md`).
 
 Ver ADR `2026-04-28-organization-settings-toggles.md` para el racional de cada toggle.
 Ver ADR `2026-05-27-p28-cash-session-cierre-z.md` para el toggle de caja.
@@ -802,21 +863,83 @@ Corte del fallback (deuda B3): **aplazado** en el orden 6. El gate de 7 dias de 
 
 **Default DRF (PR-4A / ADR p15):** `REST_FRAMEWORK['DEFAULT_PERMISSION_CLASSES'] = ('rest_framework.permissions.IsAuthenticated',)`. Cualquier vista nueva que olvide declarar `permission_classes` queda cerrada por defecto. Las vistas publicas (`/api/token/`, `/api/token/refresh/`) declaran `AllowAny` explicito.
 
-## Zona horaria por organizacion
+## Zona horaria por organizacion (ADR p70 D1)
 
-Cada organizacion tiene su propia zona horaria. Actualmente solo se soporta Mexico.
-
-Cambiar el timezone:
+Cada organización tiene su zona horaria. Se elige de un **catálogo cerrado de México**
+(`apps/organizations/timezones.py`, con nombre para personas: «Centro — Ciudad de México»,
+«Sureste — Cancún (Quintana Roo)», …). El frontend tiene una copia en
+`frontend/src/features/config/timezones.json` y una prueba exige que coincidan.
 
 ```
 PATCH /api/organizations/me/
-Authorization: Bearer <token ADMIN>
+Authorization: Bearer <token con organization.update>
 { "timezone": "America/Monterrey" }
 ```
 
-El cambio queda auditado en `OrganizationTimezoneAudit` con `changed_by` y timestamps del cambio.
+- **Fuera del catálogo → 400.** Reenviar la zona vigente no es un cambio y se admite aunque
+  esté fuera (bases anteriores). El alta de plataforma usa el mismo catálogo.
+- **Con citas por atender → `409 timezone_change_blocked`**, sin escribir nada (tampoco los
+  demás campos del mismo PATCH):
+
+  ```json
+  { "code": "timezone_change_blocked",
+    "message": "No se puede cambiar la zona horaria: hay 2 citas por atender. …",
+    "future_appointments": 2 }
+  ```
+
+  Cuenta las citas `scheduled`, `confirmed` e `in_progress` cuyo fin no ha pasado. Las citas
+  guardan fecha y hora local junto al instante calculado con la zona: cambiarla las
+  desalinearía. Los dos modos de recálculo («corregir» y «mudanza») están definidos en el ADR
+  y en espera. Las canceladas y no presentadas no bloquean; si después se intenta reactivar una
+  con otra zona, `/status/` responde `409 appointment_timezone_changed` (decisión del PO,
+  opción c).
+- **Servicio único**: `organizations/services.change_organization_timezone`. Bloquea la fila de
+  la organización con `FOR NO KEY UPDATE`, cuenta las citas, guarda la zona y deja el evento
+  `timezone_changed` del historial (§ Historial de cambios) en la misma transacción.
+- **Serialización con las citas**: toda escritura de cita que calcule un instante a partir de la
+  zona toma antes la fila con `FOR SHARE` y lee la zona de esa fila (ver
+  [`appointments.md`](appointments.md) § Zona horaria y bloqueos). Una cita creada a la vez que
+  el cambio espera y usa la zona nueva, o el cambio ve la cita y responde 409.
+- `PATCH me/` guarda **solo los campos enviados** (`update_fields`). Un `save()` completo
+  escribiría la zona de la instancia cargada con la sesión y podría deshacer un cambio de zona
+  hecho mientras tanto, sin pasar por el bloqueo ni dejar registro.
+- Fuera del contrato, a propósito: el admin de Django (operadores), igual que en INV-J.
+- Migración `organizations.0017`: llevó a `America/Mexico_City` las zonas fuera del catálogo
+  (bases de desarrollo y CI; no hay datos reales).
 
 Los filtros de fecha en facturas (`paid_on`, `created_on`) respetan la timezone de la organizacion.
+
+## Historial de cambios de Configuración (ADR p70 D9)
+
+Toda escritura de Configuración pasa por un servicio, que compara contra lo guardado y bloqueado,
+escribe **solo lo que cambió** y registra un `OrganizationConfigEvent` en la misma transacción.
+Sin cambios no hay evento; un rollback no deja evento.
+
+| Escritura | Servicio | Evento |
+|---|---|---|
+| `PATCH /api/organizations/me/` | `organizations.services.update_clinic_profile` | `clinic_updated`; la zona, `timezone_changed` (por `change_organization_timezone`) |
+| `PATCH /api/organizations/settings/` | `update_operating_rules` | `rules_updated` |
+| `PUT /api/organizations/schedule/` | `replace_schedule` | `schedule_replaced`, solo con los días que cambiaron (`weekday_N`) |
+| Alta, edición y borrado de servicios | `billing.catalog_services` (`create_service`, `update_service`, `delete_service`) | `service_created`, `service_updated`, `service_activated`, `service_deactivated`, `service_deleted` |
+| Registrar o cancelar un cierre | `create_closure`, `cancel_closure` | `closure_added`, `closure_cancelled` |
+
+- **Modelo** `OrganizationConfigEvent`, de solo inserción (`save` sobre una fila existente y
+  `delete` lanzan error): `organization` (PROTECT), `actor` (SET_NULL), `occurred_at`, `kind`,
+  `changes` (`{campo: [antes, después]}`; horas en `HH:MM`, montos como texto), `subject` (el
+  servicio: `{type, public_id, name}`, para nombrarlo aunque su nombre no cambie) y `request_id`.
+  Son datos de la empresa, no de personas. Los cierres (F2.1) registran `closure_added` y
+  `closure_cancelled`, con el cierre como `subject` (`{type, public_id, start_date, end_date}`).
+- **Escritor único**: `organizations.services.record_config_event`. Un gate estático
+  (`tests/test_config_history.py`) falla si otro módulo crea eventos.
+- **Endpoint**: `GET /api/organizations/config-history/` — `organization.update` (D9), solo la
+  organización propia, del más reciente al más antiguo, paginado de 25 (`?page=`). Cada evento:
+  `kind`, `kind_label`, `occurred_at`, `actor_name`, `subject`, `changes`; sin PK.
+- **Absorbe `OrganizationTimezoneAudit`**: la migración `organizations.0018` copió cada registro
+  como evento `timezone_changed` (mismo autor y fecha) y retiró el modelo.
+- **Demo**: `seed_demo_clinic` borra el historial de la demo al reiniciarla y al eliminarla.
+- **`PUT` de horario** (F1.4): un elemento que no es objeto o un `weekday` que no es entero
+  (texto, booleano, decimal) es `400`, nunca `500`. Los mensajes por día son para personas
+  (`SCHEDULE_*` en `serializers.py`) y el frontend los repite en su validación previa.
 
 ## Cascade lockdown (PR-4B / ADR p16)
 

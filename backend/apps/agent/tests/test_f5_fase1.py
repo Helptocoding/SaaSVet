@@ -39,6 +39,7 @@ from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
 from apps.users.models import User
 from apps.users.services import ensure_agent_user
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 _AGENT_DIR = pathlib.Path(__file__).resolve().parent.parent
 
@@ -165,7 +166,7 @@ class Fase1Base(TestCase):
     def setUp(self):
         executor_module._token_cache.clear()
         self.agent_user, _ = ensure_agent_user(self.org)
-        AgentSettings.objects.create(organization=self.org, enabled=True,
+        create_enabled_agent_settings(self.org,
                                      agent_user=self.agent_user)
         self.channel = ChannelAccount.objects.create(
             organization=self.org, external_account_id="920920920")

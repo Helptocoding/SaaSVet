@@ -114,6 +114,10 @@ def validate_row(row, schema, scope):
         require(text(row.get('name')) and type(row.get('is_active')) is bool)
         require('base_price' in row)
         decimal_field(row['base_price'], nullable=True)
+        # ADR p70 D4: el agente cita el precio CON IVA. Si la API no lo trae, el
+        # precio es dato incompleto (lo cotiza el equipo), nunca el base sin IVA.
+        if 'price_with_tax' in row:
+            decimal_field(row['price_with_tax'], nullable=True)
         if 'currency' in row:
             require(row['currency'] == scope.get('currency'))
     elif schema == 'product':
@@ -130,6 +134,8 @@ def validate_row(row, schema, scope):
             decimal_field(entry.get('stock'))
             require('sale_price' in entry)
             decimal_field(entry['sale_price'], nullable=True)
+            if 'sale_price_with_tax' in entry:
+                decimal_field(entry['sale_price_with_tax'], nullable=True)
     else:
         raise InvalidResponse('unknown_schema')
 

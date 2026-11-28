@@ -8,13 +8,14 @@ keys de React, consistente con InvoiceItem/VitalSigns (ADR p18).
 """
 import unicodedata
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from rest_framework import serializers
 
 from apps.channels.models import Message
 from apps.core.validators import is_valid_mx_phone
 
-from .models import AgentSettings, Conversation
+from .models import AGENT_REQUIRES_CLINIC_PHONE_MESSAGE, AgentSettings, Conversation
 
 # Claves que YA tienen campo propio en la configuración de clínica (ADR p53).
 # Aceptarlas aquí recrearía la segunda fuente de verdad que se eliminó al
@@ -254,14 +255,20 @@ class AgentSettingsSerializer(serializers.ModelSerializer):
         """
         if not value:
             return value
+        # Solo adelanta el mensaje: la garantía (INV-L, ADR p70 D2) es
+        # `AgentSettings.save`, que relee el teléfono bajo el bloqueo de la
+        # organización.
         org = getattr(self.instance, 'organization', None)
         if org is None or not is_valid_mx_phone(getattr(org, 'phone', '')):
-            raise serializers.ValidationError(
-                "Antes de activar las respuestas automáticas, captura el teléfono "
-                "de la clínica en Configuración → Clínica. El asistente lo necesita "
-                "para decirle a un cliente a dónde llamar en una urgencia."
-            )
+            raise serializers.ValidationError(AGENT_REQUIRES_CLINIC_PHONE_MESSAGE)
         return value
+
+    def update(self, instance, validated_data):
+        try:
+            return super().update(instance, validated_data)
+        except DjangoValidationError as exc:
+            detail = exc.message_dict if hasattr(exc, 'error_dict') else exc.messages
+            raise serializers.ValidationError(detail) from exc
 
     def validate_faq_facts(self, value):
         if not isinstance(value, dict):

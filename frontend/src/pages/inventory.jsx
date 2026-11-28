@@ -5,6 +5,7 @@ import { newOperationUuid } from "../utils/idempotency";
 import handleFormError from "../utils/handleFormError";
 import { toList } from "../utils/toList";
 import { stockStatus, matchesStockFilter, productStockQty, productStockValue, compareInventoryProducts, computeInitialStock, fmt, fmtCur } from "../utils/inventory";
+import { formatMoney } from "../utils/money";
 import {
     getProducts, createProduct, updateProduct, deleteProduct,
     adjustStock, createPresentation, updatePresentation,
@@ -175,7 +176,7 @@ const INVENTORY_SKELETON_COLUMNS = [
     { label: "Categoría", cell: () => <Skeleton width={84} height={20} borderRadius="var(--r-full)" /> },
     { label: "Stock", width: 70 },
     { label: "Estado", cell: () => <Skeleton width={78} height={20} borderRadius="var(--r-full)" /> },
-    { label: "Precio unit.", width: 56 },
+    { label: "Precio sin IVA", width: 56 },
     { label: "Valor en stock", width: 64 },
 ];
 const SKELETON_CHIP_WIDTHS = [52, 104, 82, 92, 60];
@@ -1197,7 +1198,7 @@ const Inventory = () => {
                                 <SortHeader col="cat" label="Categoría" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
                                 <SortHeader col="stock" label="Stock" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
                                 <SortHeader col="status" label="Estado" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-                                <SortHeader col="price" label="Precio unit." sortCol={sortCol} sortDir={sortDir} onSort={handleSort} align="right" />
+                                <SortHeader col="price" label="Precio sin IVA" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} align="right" />
                                 <SortHeader col="value" label="Valor en stock" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} align="right" />
                                 {canManage && <th>Acciones</th>}
                             </tr>
@@ -1271,12 +1272,16 @@ const Inventory = () => {
                                         </td>
                                         <td style={{ textAlign: "right" }}>
                                             {salePrice > 0 ? (
-                                                <div className={s.valMain}>${fmtCur(salePrice)}</div>
+                                                <div className={s.valMain}>{formatMoney(salePrice)}</div>
                                             ) : (
                                                 <span style={{ color: "var(--c-text-3)", fontSize: "12px" }}>—</span>
                                             )}
                                             {unitDisplay && salePrice > 0 && (
                                                 <div className={s.valSub}>por {unitDisplay}</div>
+                                            )}
+                                            {/* ADR p70 D4: total con IVA calculado por el backend. */}
+                                            {salePrice > 0 && pres?.sale_price_with_tax && (
+                                                <div className={s.valSub}>{formatMoney(pres.sale_price_with_tax)} con IVA</div>
                                             )}
                                         </td>
                                         <td style={{ textAlign: "right" }}>
@@ -1436,14 +1441,14 @@ const Inventory = () => {
                                             </div>
                                             <div className={s.summaryTable}>
                                                 <div className={s.summaryTableHead}>
-                                                    <span>Nombre</span><span>Contiene</span><span>Precio venta</span><span>Costo</span>
+                                                    <span>Nombre</span><span>Contiene</span><span>Precio sin IVA</span><span>Costo</span>
                                                 </div>
                                                 {salesPres.map((p, i) => (
                                                     <div key={i} className={s.summaryTableRow}>
                                                         <span style={{ fontWeight: 600 }}>{p.name || "—"}</span>
                                                         <span>{p.conversion_factor} {baseUnitLabelForSales}</span>
-                                                        <span>${parseFloat(p.sale_price || 0).toFixed(2)}</span>
-                                                        <span style={{ color: "var(--c-text-3)" }}>{p.purchase_price ? `$${parseFloat(p.purchase_price).toFixed(2)}` : "—"}</span>
+                                                        <span>{formatMoney(p.sale_price)}</span>
+                                                        <span style={{ color: "var(--c-text-3)" }}>{p.purchase_price ? formatMoney(p.purchase_price) : "—"}</span>
                                                     </div>
                                                 ))}
                                             </div>

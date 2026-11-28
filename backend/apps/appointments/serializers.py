@@ -21,6 +21,34 @@ from .services import (
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
+    def get_fields(self):
+        """Al editar, `status` es de solo lectura (decisión del PO, 2026-11-27).
+
+        El estado de una cita existente solo cambia por `PATCH /status/`, que
+        aplica `ALLOWED_TRANSITIONS`, deja `AppointmentStatusChange` y hace las
+        comprobaciones de cada transición (fecha pasada, zona, ausencia, hueco).
+        Antes este campo era escribible en el `PATCH` de detalle y esquivaba
+        todo eso: reactivaba una cancelada o reabría una `done`. Como cualquier
+        campo de solo lectura de DRF, un `status` enviado se ignora; la
+        interfaz manda el que la cita ya tiene. El alta sigue aceptándolo.
+        """
+        fields = super().get_fields()
+        if isinstance(self.instance, Appointment):
+            fields['status'].read_only = True
+        return fields
+
+    def _timezone_organization(self):
+        """Organización con la que se calculan instantes (ADR p70 D1).
+
+        La vista de edición la toma con `FOR SHARE` y la pasa en el contexto;
+        sin ella (creación, que recalcula bajo bloqueo en `creation.py`) se usa
+        la de la sesión solo para el pre-chequeo.
+        """
+        locked = self.context.get('locked_organization')
+        if locked is not None:
+            return locked
+        return self.context['request'].user.organization
+
     def update(self, instance, validated_data):
         # Validation and locks remain in the human endpoint. Share only the
         # schedule transformation with the restricted B8C command; one save.
@@ -32,7 +60,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
                 start=validated_data.get('start_time', instance.start_time),
                 end=validated_data.get('end_time', instance.end_time),
                 veterinarian_id=getattr(validated_data.get('veterinarian', instance.veterinarian), 'pk', None),
-                org=self.context['request'].user.organization)
+                org=self._timezone_organization())
         return super().update(instance, validated_data)
 
     def create(self, validated_data):
@@ -175,7 +203,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return attrs
 
-        org = request.user.organization
+        org = self._timezone_organization()
 
         local_date = attrs.get('date', instance.date if instance else None)
         start_time = attrs.get('start_time', instance.start_time if instance else None)
@@ -189,15 +217,26 @@ class AppointmentSerializer(serializers.ModelSerializer):
         if end_time <= start_time:
             raise serializers.ValidationError({'end_time': 'La hora fin debe ser mayor a la hora inicio'})
 
-        start_utc = local_date_time_to_utc(org, local_date, start_time)
-        end_utc = local_date_time_to_utc(org, local_date, end_time)
-
         # A2-1 (PR-14): el guard de fecha-pasada aplica en creación Y en
         # cualquier update que MUEVA la fecha/hora (reagendado). Antes solo
         # corría en creación → un PATCH podía mover una cita al pasado.
         date_or_time_changing = any(
             f in attrs for f in ('date', 'start_time', 'end_time')
         )
+        # ADR p70 D1, opción A del PO (2026-11-27): el instante se calcula al
+        # crear, al mover fecha u hora, o si la fila aún no lo tiene (legacy).
+        # Editar otra cosa (notas, motivo, veterinario) conserva el guardado:
+        # recalcularlo con la zona vigente era el modo «corregir», en espera, y
+        # dejaba reactivar una cancelada tras un cambio de zona.
+        recompute_instants = (
+            not instance or date_or_time_changing
+            or instance.start_datetime is None or instance.end_datetime is None
+        )
+        if recompute_instants:
+            start_utc = local_date_time_to_utc(org, local_date, start_time)
+            end_utc = local_date_time_to_utc(org, local_date, end_time)
+        else:
+            start_utc, end_utc = instance.start_datetime, instance.end_datetime
         if (not instance or date_or_time_changing) and start_utc < now():
             raise serializers.ValidationError(
                 {"date": "No se pueden agendar citas en el pasado."}
@@ -245,9 +284,10 @@ class AppointmentSerializer(serializers.ModelSerializer):
                     {'pet': 'La mascota no pertenece al propietario seleccionado'}
                 )
 
-        attrs['start_datetime'] = start_utc
-        attrs['end_datetime'] = end_utc
-        attrs['timezone_at_creation'] = str(get_context_timezone(org))
+        if recompute_instants:
+            attrs['start_datetime'] = start_utc
+            attrs['end_datetime'] = end_utc
+            attrs['timezone_at_creation'] = str(get_context_timezone(org))
 
         # Sanitizar campos de texto libre
         for field, limit in (('reason', 255), ('notes', 5000), ('cancellation_reason', 500)):

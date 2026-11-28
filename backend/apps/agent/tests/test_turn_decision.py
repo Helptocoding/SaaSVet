@@ -20,6 +20,7 @@ from apps.agent.models import (
 )
 from apps.channels.models import ChannelAccount, Message
 from apps.organizations.models import Organization
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 # Nombres de compromiso/etapa que `Because` NUNCA puede contener como
@@ -83,8 +84,7 @@ class TurnDecisionSetupMixin:
             organization=self.org, channel_account=self.channel,
             contact=self.contact,
         )
-        self.settings = AgentSettings.objects.create(
-            organization=self.org, enabled=True,
+        self.settings = create_enabled_agent_settings(self.org,
         )
 
     def _inbound(self, text):

@@ -1526,7 +1526,8 @@ def _after_hours_prefix(conversation, agent_settings, *, burst_text=''):
         return ''
     from . import clinic_context
     org = conversation.organization
-    open_now = tier0.is_open_now(
+    # ADR p70 D6: un cierre excepcional hoy cuenta como cerrado.
+    open_now = False if clinic_context.closed_today(org) else tier0.is_open_now(
         clinic_context.effective_business_hours(org, agent_settings),
         org.timezone)
     if open_now is not False:          # None = sin horario configurado

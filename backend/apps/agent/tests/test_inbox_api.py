@@ -779,8 +779,12 @@ class InboxSettingsTests(InboxApiTestCase):
         self.assertFalse(AgentSettings.objects.get(organization=self.org).enabled)
 
     def test_enable_with_legacy_invalid_phone_is_rejected(self):
-        """Filas guardadas antes de que el serializer validara (p.ej. `"5"`)."""
-        self._capture_clinic_phone("5")
+        """Filas guardadas antes de que el serializer validara (p.ej. `"5"`).
+
+        Desde p70 `Organization.save()` ya no admite ese valor y la migración
+        0016 los vació; la fila heredada se simula por debajo de `save()`."""
+        Organization.objects.filter(pk=self.org.pk).update(phone="5")
+        self.org.refresh_from_db()
         self.client.force_authenticate(self.admin)
         r = self.client.patch(
             "/api/inbox/settings/", {"enabled": True}, format="json",
@@ -788,10 +792,15 @@ class InboxSettingsTests(InboxApiTestCase):
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.content)
 
     def test_disabling_never_requires_a_phone(self):
-        """Apagar el agente SIEMPRE debe poder hacerse (es el kill switch)."""
+        """Apagar el agente SIEMPRE debe poder hacerse (es el kill switch).
+
+        Incluso en el estado que INV-L (ADR p70) ya no deja crear: encendido y sin
+        teléfono. Se simula una fila previa a la migración 0031, por debajo de
+        `save()`."""
         AgentSettings.objects.update_or_create(
-            organization=self.org, defaults={"enabled": True},
+            organization=self.org, defaults={"enabled": False},
         )
+        AgentSettings.objects.filter(organization=self.org).update(enabled=True)
         self.assertEqual(self.org.phone, "")
         self.client.force_authenticate(self.admin)
         r = self.client.patch(

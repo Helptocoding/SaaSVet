@@ -1,7 +1,8 @@
 # ADR p53: Separacion de agregados para la configuracion de la clinica
 
 **Fecha:** 2026-07-21
-**Estado:** Aceptado (diseño) — sin implementación aún
+**Estado:** Implementado; ampliado por [ADR p70](2026-11-26-p70-configuracion-clinica-fase-2.md)
+(2026-11-27: historial de cambios, ajustes sin efecto retirados, nombre público)
 **Relacionados:**
 - `docs/modules/organizations.md`
 - `docs/modules/appointments.md`
@@ -219,6 +220,10 @@ Se permite desde Fase 1 introducir en `OrganizationSettings` otros campos operat
 - `appointment_buffer_minutes`
 - `allow_emergency_walkin`
 - `week_starts_on`
+
+> **Actualización (ADR p70 D5, 2026-11-27):** `locale`, `appointment_buffer_minutes`,
+> `allow_emergency_walkin` y `week_starts_on` se retiraron sin llegar a tener consumidor;
+> `currency_code` quedó de solo lectura.
 
 ## Restricciones deliberadas de Fase 1
 

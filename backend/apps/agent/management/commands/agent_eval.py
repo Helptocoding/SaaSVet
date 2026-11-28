@@ -149,7 +149,12 @@ class Command(BaseCommand):
         from apps.users.services import ensure_agent_user
         from apps.billing.models import Service
 
-        org = Organization.objects.create(name="EVAL SCRATCH", timezone="America/Mexico_City")
+        # Contacto primero: INV-L (ADR p70 D2) no admite encender el agente de
+        # una clínica sin teléfono válido. Horario y contacto son la fuente única
+        # de la configuración de clínica.
+        org = Organization.objects.create(
+            name="EVAL SCRATCH", timezone="America/Mexico_City",
+            phone="5510002000", address_line1="Av. Reforma 100")
         role, _ = Role.objects.get_or_create(name="AGENT", organization=org,
                                              defaults={"is_system_role": True})
         role.permissions.set([
@@ -163,10 +168,6 @@ class Command(BaseCommand):
             default_veterinarian=vet,
             faq_facts={"estacionamiento": "Sí, gratuito para clientes"},
         )
-        # Horario y datos de contacto: fuente única = configuración de clínica.
-        Organization.objects.filter(pk=org.pk).update(
-            phone="55-1000-2000", address_line1="Av. Reforma 100")
-        org.refresh_from_db()
         for weekday in range(1, 7):          # lunes a sábado
             OrganizationSchedule.objects.update_or_create(
                 organization=org, weekday=weekday,

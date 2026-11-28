@@ -23,7 +23,8 @@ del sistema. No se asume SOC2, ISO, SIEM ni un SOC 24/7.
 ### Audit trail (modelos append-only en DB)
 `InvoiceAuditLog`, `AppointmentStatusChange`,
 `Payment` / `RefundPayment` / `RefundReversal`, `VitalSigns`, `CashMovement`,
-`OrganizationTimezoneAudit`, `DashboardSnapshotAudit`.
+`OrganizationConfigEvent` (cambios de Configuración, incluida la zona horaria; ADR p70 D9),
+`DashboardSnapshotAudit`.
 
 Estos modelos son de solo inserción: sirven como evidencia inmutable durante una
 investigación.

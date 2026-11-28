@@ -251,7 +251,8 @@ class ToolsThroughRealApiTests(TestCase):
         outcome = self._run("get_service_catalog", {"query": "consulta"})
         self.assertTrue(outcome.ok)
         self.assertEqual(outcome.data[0]["servicio"], "Consulta general")
-        self.assertEqual(outcome.data[0]["precio"], "$350.00")
+        # ADR p70 D4: precio con IVA (la organización de prueba tiene tasa 0).
+        self.assertEqual(outcome.data[0]["precio"], "$350.00 IVA incluido")
 
     def test_check_product_availability_category_query_includes_available_price_and_stock(self):
         outcome = self._run("check_product_availability",
@@ -261,7 +262,7 @@ class ToolsThroughRealApiTests(TestCase):
         self.assertTrue(product["disponible"])
         self.assertIn("stock", product)
         self.assertEqual(float(product["stock"]), 5.0)
-        self.assertEqual(product["precio"], "250.00")
+        self.assertEqual(product["precio"], "$250.00 IVA incluido")
 
     def test_product_text_search_uses_description_and_excludes_inactive(self):
         Product.objects.create(

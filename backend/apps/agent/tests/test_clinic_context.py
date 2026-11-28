@@ -15,6 +15,7 @@ from apps.agent.models import AgentSettings, ContactIdentity, Conversation
 from apps.agent.tools import get_clinic_info
 from apps.channels.models import ChannelAccount
 from apps.organizations.models import Organization, OrganizationSchedule
+from apps.agent.tests.agent_settings_fixtures import create_enabled_agent_settings
 
 
 class _FakeExecutor:
@@ -189,15 +190,14 @@ class GetClinicInfoIntegrationTests(TestCase):
         self.ex = _FakeExecutor()
 
     def test_org_overrides_legacy_faq(self):
-        AgentSettings.objects.create(
-            organization=self.org, enabled=True,
+        create_enabled_agent_settings(self.org,
             faq_facts={"teléfono": "0000000000", "estacionamiento": "Sí"})
         out = get_clinic_info(self.conv, self.ex, {})
         self.assertEqual(out.data["teléfono"], "5544332211")   # config nueva gana
         self.assertEqual(out.data["estacionamiento"], "Sí")    # legacy se conserva
 
     def test_schedule_is_the_only_source_of_hours(self):
-        AgentSettings.objects.create(organization=self.org, enabled=True)
+        create_enabled_agent_settings(self.org)
         # Ajustar el horario sembrado del lunes a 09-18.
         OrganizationSchedule.objects.filter(
             organization=self.org, weekday=1).update(

@@ -65,6 +65,7 @@ from apps.agent import tools, planner, guards, result_renderers as renderers
 from apps.agent.executor import ToolExecutor, TransportResponse
 from apps.agent.llm import LLMResult, StubLLMClient
 from apps.agent.models import AgentSettings, ToolExecution
+from apps.agent.tests.agent_settings_fixtures import ensure_clinic_phone
 from apps.agent.turn_context import build_turn_context
 from apps.appointments.models import Appointment
 from apps.channels.models import Message
@@ -217,15 +218,46 @@ class B2ApiResultsTests(TestCase):
     def test_price_uses_field_not_coincident_id(self):
         service = Service.objects.get(organization=self.org)
         body = {'id': 329, 'public_id': str(service.public_id), 'name': 'Consulta general',
-                'base_price': '500.00', 'is_active': True}
+                'base_price': '500.00', 'price_with_tax': '500.00', 'is_active': True}
         for identifier, price in ((329, '500.00'), (500, '329.00')):
             with self.subTest(identifier=identifier):
-                body.update(id=identifier, base_price=price)
+                body.update(id=identifier, base_price=price, price_with_tax=price)
                 self._fake(TransportResponse(200, [deepcopy(body)], parse_valid=True))
                 outcome = self._run('get_service_catalog')
                 text = renderers.render_read('get_service_catalog', outcome, self._context())
-                self.assertIn(f'${Decimal(price):,.2f} MXN', text)
+                self.assertIn(f'${Decimal(price):,.2f} MXN, IVA incluido', text)
                 self.assertNotIn(f'${identifier}.00', text)
+
+    def test_the_quoted_price_is_the_one_with_tax_never_the_base(self):
+        """ADR p70 D4: se cita lo que el cliente paga; sin precio con IVA, lo
+        confirma el equipo (nunca el precio sin IVA)."""
+        base = {'public_id': str(uuid4()), 'name': 'Consulta', 'is_active': True,
+                'base_price': '500.00'}
+        cases = (('580.00', 'READ', '$580.00 MXN, IVA incluido'),
+                 ('missing', 'READ', 'el equipo puede confirmar su precio'),
+                 (None, 'READ', 'el equipo puede confirmar su precio'),
+                 ('USD 1', 'ERROR', None))
+        for with_tax, kind, expected in cases:
+            with self.subTest(with_tax=with_tax):
+                body = dict(base)
+                if with_tax != 'missing':
+                    body['price_with_tax'] = with_tax
+                self._fake(TransportResponse(200, [body], parse_valid=True))
+                outcome = self._run('get_service_catalog')
+                self.assertEqual(outcome.kind, kind)
+                if expected:
+                    text = renderers.render_read('get_service_catalog', outcome, self._context())
+                    self.assertIn(expected, text)
+                    self.assertNotIn('$500.00', text)
+
+    def test_real_api_quotes_the_tax_of_the_clinic(self):
+        Organization.objects.filter(pk=self.org.pk).update(tax_rate=Decimal('0.1600'))
+        self.conversation.organization = Organization.objects.get(pk=self.org.pk)
+        Service.objects.create(organization=self.org, name='Revisión dental', base_price='500.00')
+        outcome = self._run('get_service_catalog')
+        text = renderers.render_read('get_service_catalog', outcome, self._context())
+        self.assertIn('Revisión dental: $580.00 MXN, IVA incluido.', text)
+        self.assertNotIn('$500.00', text)
 
     def test_missing_null_and_invalid_price(self):
         base = {'public_id': str(uuid4()), 'name': 'Consulta', 'is_active': True}
@@ -317,6 +349,7 @@ class B2ApiResultsTests(TestCase):
         appt = Appointment.objects.get(organization=self.org)
         handle = tools._add_ref(self.conversation, 'cita', appt.public_id)
         settings = AgentSettings.objects.get(organization=self.org)
+        ensure_clinic_phone(self.org)  # INV-L: encender exige teléfono válido.
         settings.enabled = True
         settings.agent_user = self.agent_user
         settings.save()

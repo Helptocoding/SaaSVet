@@ -270,13 +270,14 @@ def render_first_reply(agent_settings, organization, now=None):
     - Encendido → T0-GREET, con sufijo de fuera-de-horario si el horario
       está configurado y estamos cerrados.
     """
-    clinic = organization.name
+    clinic = organization.public_name   # ADR p70 D5: comercial o legal
     if agent_settings is None or not agent_settings.enabled:
         return T0_DISABLED.format(clinic=clinic)
 
     from . import clinic_context
     text = T0_GREET.format(clinic=clinic)
-    open_now = is_open_now(
+    # ADR p70 D6: un cierre excepcional hoy cuenta como cerrado.
+    open_now = False if clinic_context.closed_today(organization) else is_open_now(
         clinic_context.effective_business_hours(organization, agent_settings),
         organization.timezone, now=now,
     )
